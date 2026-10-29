@@ -3,6 +3,7 @@ import { Hash, Table, Code2, FileText, Sparkles, Check, Copy, Download, AlertTri
 import WorkCard from './WorkCard.jsx'
 import SecurityNote from './SecurityNote.jsx'
 import PolicyNote from './PolicyNote.jsx'
+import { useT } from '../i18n/index.jsx'
 
 // ResultCard - renders the actual ANSWER WorkCoPilot returns (not guidance): a
 // number, a table, a draft, a query, or an analysis. Built on the shared
@@ -105,6 +106,7 @@ function CopyAction({ text, label = 'Copy' }) {
 }
 
 export default function ResultCard({ result, security = null, policy = null, className = '' }) {
+  const t = useT()
   ensureAssets()
   if (!result) return null
   const { kind = 'text', body, basis, verifyBy, confidence, need, grounded, caveat } = result
@@ -118,7 +120,7 @@ export default function ResultCard({ result, security = null, policy = null, cla
   const tone = draft ? 'amber' : (kind === 'code' ? 'cyan' : undefined)
 
   const renderBody = () => {
-    if (!bodyStr.trim()) return <p className="rc-prose rc-empty">No result text came back.</p>
+    if (!bodyStr.trim()) return <p className="rc-prose rc-empty">{t('resultCard.emptyBody')}</p>
     if (kind === 'number') return <div className="rc-number">{bodyStr}</div>
     if (kind === 'code') {
       return (
@@ -169,7 +171,7 @@ export default function ResultCard({ result, security = null, policy = null, cla
       {draft && need && String(need).trim() ? (
         <div className="rc-need">
           <AlertTriangle size={15} />
-          <span><b>I need:</b> {String(need).trim()}</span>
+          <span><b>{t('resultCard.need')}</b> {String(need).trim()}</span>
         </div>
       ) : null}
 
@@ -197,14 +199,14 @@ export default function ResultCard({ result, security = null, policy = null, cla
 
         {basis && String(basis).trim() ? (
           <div className="rc-fact">
-            <span className="rc-trust-k">How I got it</span>
+            <span className="rc-trust-k">{t('resultCard.howIGotIt')}</span>
             <p>{String(basis).trim()}</p>
           </div>
         ) : null}
 
         {verifyBy && String(verifyBy).trim() ? (
           <div className="rc-fact">
-            <span className="rc-trust-k">Verify by</span>
+            <span className="rc-trust-k">{t('resultCard.verifyBy')}</span>
             <p>{String(verifyBy).trim()}</p>
           </div>
         ) : null}

@@ -10,6 +10,7 @@
 // same-origin 'storage' event. Every read/write is wrapped so blocked or
 // private-mode storage never throws; the default is Medium.
 import { useCallback, useEffect, useState } from 'react'
+import { useT } from '../i18n/index.jsx'
 
 export const LEVELS = [
   { id: 'easy', label: 'Easy', title: 'Plain words, every click spelled out' },
@@ -47,12 +48,13 @@ export function useGuideLevel(sessionId) {
 // is passed in (plain colors or CSS var strings) so it looks native on the
 // light console, the dark floater and the bare PiP document alike. No motion.
 export default function GuideLevelControl({ level, onChange, theme, compact = false }) {
-  const t = theme || {}
-  const border = t.border || 'var(--border)'
-  const muted = t.muted || 'var(--text-muted)'
-  const panel = t.panel || 'transparent'
-  const accent = t.accent || 'var(--em)'
-  const accentSoft = t.accentSoft || 'var(--em-soft, rgba(14,159,110,.12))'
+  const t = useT()
+  const th = theme || {}
+  const border = th.border || 'var(--border)'
+  const muted = th.muted || 'var(--text-muted)'
+  const panel = th.panel || 'transparent'
+  const accent = th.accent || 'var(--em)'
+  const accentSoft = th.accentSoft || 'var(--em-soft, rgba(14,159,110,.12))'
   const cur = clampLevel(level)
   const onKey = (e) => {
     const i = LEVELS.findIndex((l) => l.id === cur)
@@ -67,7 +69,7 @@ export default function GuideLevelControl({ level, onChange, theme, compact = fa
     try { e.currentTarget.querySelectorAll('button')[n].focus() } catch { /* ignore */ }
   }
   return (
-    <div role="radiogroup" aria-label="Guidance strength" onKeyDown={onKey}
+    <div role="radiogroup" aria-label={t('guideLevel.groupAria')} onKeyDown={onKey}
       style={{ display: 'inline-flex', alignItems: 'center', gap: 1, flex: '0 0 auto', maxWidth: '100%', border: `1px solid ${border}`, borderRadius: 8, padding: 2, background: panel }}>
       {LEVELS.map((l) => {
         const on = l.id === cur

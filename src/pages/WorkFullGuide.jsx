@@ -28,6 +28,7 @@ import FadeSwap from './work/FadeSwap.jsx'
 import { stepWindow, progressText, planMarker } from '../shared/step_window.js'
 import { usageTimeLeft, usageTasksLine } from './work/usageCopy.js'
 import { useSurfaceScheme } from '../theme/useSurfaceScheme.js'
+import { useT } from '../i18n/index.jsx'
 
 const POLL_MS = 2500
 const POLL_PAUSED_MS = 6000
@@ -43,6 +44,7 @@ async function getJSON(url) {
 // in a dark box with internal horizontal scroll. `fs` scales the code with the
 // rest of the guidance text so the reader's size choice applies here too.
 function Mono({ lines, label, theme, fs = 1 }) {
+  const t = useT()
   const c = theme
   const [copied, setCopied] = useState(false)
   const text = Array.isArray(lines) ? lines.join('\n') : String(lines || '')
@@ -53,7 +55,7 @@ function Mono({ lines, label, theme, fs = 1 }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '6px 11px', borderBottom: `1px solid ${c.codeBorder}`, fontSize: 11.5, fontWeight: 600, color: c.codeMuted, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label || 'Run this'}</span>
         <button onClick={copy} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'transparent', border: `1px solid ${c.codeBorder}`, color: copied ? c.accent : c.codeMuted, borderRadius: 6, padding: '2px 9px', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
-          {copied ? <><Check size={12} /> Copied</> : 'Copy'}
+          {copied ? <><Check size={12} /> {t('fullGuide.copied')}</> : 'Copy'}
         </button>
       </div>
       <pre style={{ margin: 0, padding: '11px 13px', fontSize: Math.round(13 * fs * 10) / 10, lineHeight: 1.55, color: c.codeText, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', overflowX: 'auto', whiteSpace: 'pre' }}>{text}</pre>
@@ -62,6 +64,7 @@ function Mono({ lines, label, theme, fs = 1 }) {
 }
 
 export default function WorkFullGuide() {
+  const t = useT()
   const [session, setSession] = useState(null)
   const [usage, setUsage] = useState(null)
   const [status, setStatus] = useState('loading') // loading | ok | empty | signin | error
@@ -161,11 +164,11 @@ export default function WorkFullGuide() {
   // Rolling 5-step window (current + next 4; done hidden) + the quiet progress
   // line, both from the shared single source so all three surfaces agree.
   const win = stepWindow(steps)
-  const progress = progressText(steps)
+  const progress = progressText(steps, t)
   // Plan hours left this month + the task slots in use, from the shared plan
   // model (usageCopy.js), so this screen agrees with the console and the dashboard.
-  const timeLeft = usage ? usageTimeLeft(usage) : ''
-  const tasksLine = usage ? usageTasksLine(usage) : ''
+  const timeLeft = usage ? usageTimeLeft(usage, t) : ''
+  const tasksLine = usage ? usageTasksLine(usage, t) : ''
   const exhausted = !!(usage && usage.exhausted)
   const guidance = (session && session.guidance) || ''
   const observation = (session && session.observation) || ''
@@ -195,21 +198,21 @@ export default function WorkFullGuide() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
           <span style={S.dot(paused ? c.warn : (status === 'ok' ? c.accent : c.muted))} />
           <span style={S.brand}>WorkCoPilot</span>
-          {wide && <span style={S.subtle}>Full-screen guidance</span>}
+          {wide && <span style={S.subtle}>{t('fullGuide.subtitle')}</span>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: wide ? 14 : 9, flex: '0 1 auto', flexWrap: wide ? 'nowrap' : 'wrap', justifyContent: 'flex-end', minWidth: 0 }}>
           {status === 'ok' && (
             <span style={S.pill}>
-              {paused ? <><Pause size={13} /> Paused</> : <><span style={{ ...S.live }} /> Live</>}
+              {paused ? <><Pause size={13} /> {t('fullGuide.paused')}</> : <><span style={{ ...S.live }} /> {t('fullGuide.live')}</>}
             </span>
           )}
           <span style={{ ...S.time, color: exhausted ? c.warn : c.muted }} title={exhausted ? 'Your plan hours for this month are used up' : 'Plan hours left this month'}><Clock size={14} /> {timeLeft || '--'}</span>
-          {tasksLine && <span style={S.time} title="Tasks open right now, of the most you can have open at once"><ListChecks size={14} /> {tasksLine}</span>}
+          {tasksLine && <span style={S.time} title={t('fullGuide.tasksTip')}><ListChecks size={14} /> {tasksLine}</span>}
           {status === 'ok' && <GuideLevelControl level={level} onChange={setLevel} compact={!wide} theme={{ border: c.border, muted: c.muted, panel: c.panel, accent: c.accent, accentSoft: c.accentSoft }} />}
           <GuideFontControl scale={scale} dec={dec} inc={inc} reset={reset} atMin={atMin} atMax={atMax}
             theme={{ border: c.border, text: c.text, muted: c.muted, panel: c.panel, accent: c.accent }} />
-          <button style={S.iconBtn} onClick={() => setDark((d) => !d)} title="Light or dark" aria-label="Toggle light or dark">{dark ? <Sun size={16} /> : <Moon size={16} />}</button>
-          {!inDesktop && <button style={S.iconBtn} onClick={toggleFs} title={fs ? 'Exit full screen' : 'Full screen'} aria-label="Toggle full screen">{fs ? <Minimize size={16} /> : <Maximize size={16} />}</button>}
+          <button style={S.iconBtn} onClick={() => setDark((d) => !d)} title={t('fullGuide.themeTip')} aria-label={t('fullGuide.themeAria')}>{dark ? <Sun size={16} /> : <Moon size={16} />}</button>
+          {!inDesktop && <button style={S.iconBtn} onClick={toggleFs} title={fs ? 'Exit full screen' : 'Full screen'} aria-label={t('fullGuide.fullScreenAria')}>{fs ? <Minimize size={16} /> : <Maximize size={16} />}</button>}
         </div>
       </div>
 
@@ -234,14 +237,14 @@ export default function WorkFullGuide() {
                         {allDone ? (
                           <div style={S.nowCard}>
                             <span style={S.nowBar} />
-                            <div style={{ ...S.nowK, color: c.accent }}><Check size={14} strokeWidth={2.5} /> All steps done</div>
-                            <div style={S.nowText}>Every step is confirmed. Head back to the main window to finish up and get your summary.</div>
+                            <div style={{ ...S.nowK, color: c.accent }}><Check size={14} strokeWidth={2.5} /> {t('fullGuide.allDone')}</div>
+                            <div style={S.nowText}>{t('fullGuide.allDoneBody')}</div>
                           </div>
                         ) : (
                           <>
                             {prominent && reading}
                             <StepCard step={cur || { text: guidance || 'Reading your screen for the next move' }} index={cur ? curIdx : null} total={total} guidance={cur ? guidance : ''}
-                              hint={paused ? <span className="gv-step-hint">Paused in the main window.</span> : <span className="gv-step-hint">Live. Mark it done in the main window or the floater.</span>} />
+                              hint={paused ? <span className="gv-step-hint">{t('fullGuide.pausedHint')}</span> : <span className="gv-step-hint">{t('fullGuide.liveHint')}</span>} />
                             {!prominent && reading}
                           </>
                         )}
@@ -260,7 +263,7 @@ export default function WorkFullGuide() {
 
           <aside style={S.rail}>
             <div style={S.railHead}>
-              <span style={S.railTitle}>Roadmap</span>
+              <span style={S.railTitle}>{t('fullGuide.roadmap')}</span>
               <span style={S.railCount}>{progress || `${doneN} of ${total} done`}</span>
             </div>
             <div style={S.track}><span style={{ ...S.fill, width: `${pct}%` }} /></div>
@@ -279,7 +282,7 @@ export default function WorkFullGuide() {
               })}
             </div>
             {total > win.length && (
-              <button className="wfg-link" style={S.planBtn} onClick={() => setPlanOpen(true)}>View full plan</button>
+              <button className="wfg-link" style={S.planBtn} onClick={() => setPlanOpen(true)}>{t('fullGuide.viewFullPlan')}</button>
             )}
           </aside>
         </div>
@@ -297,13 +300,13 @@ export default function WorkFullGuide() {
           upcoming marker and the goal at the top. This is NOT the session
           report; it just shows the whole plan the window summarizes. */}
       {planOpen && session && (
-        <div style={S.planOv} onClick={() => setPlanOpen(false)} role="dialog" aria-modal="true" aria-label="Full plan">
+        <div style={S.planOv} onClick={() => setPlanOpen(false)} role="dialog" aria-modal="true" aria-label={t('fullGuide.planDialogAria')}>
           <div style={S.planCard} onClick={(e) => e.stopPropagation()}>
             <div style={S.planHead}>
-              <span style={S.planTitle}>Full plan</span>
-              <button style={S.iconBtn} onClick={() => setPlanOpen(false)} title="Close" aria-label="Close full plan"><Minimize size={16} /></button>
+              <span style={S.planTitle}>{t('fullGuide.fullPlan')}</span>
+              <button style={S.iconBtn} onClick={() => setPlanOpen(false)} title={t('fullGuide.closeTip')} aria-label={t('fullGuide.closeAria')}><Minimize size={16} /></button>
             </div>
-            {session.goal && <div style={S.planGoal}><span style={S.goalK}>Your goal</span><div style={S.goalText}>{session.goal}</div></div>}
+            {session.goal && <div style={S.planGoal}><span style={S.goalK}>{t('fullGuide.yourGoal')}</span><div style={S.goalText}>{session.goal}</div></div>}
             <div style={S.planCount}>{progress || `${doneN} of ${total} done`}</div>
             <div style={S.planList}>
               {steps.map((s, i) => {
@@ -313,7 +316,7 @@ export default function WorkFullGuide() {
                   <div key={i} style={S.stepRow(isNow, isDone)}>
                     <span style={S.stepBadge(isNow, isDone)}>{isDone ? <Check size={14} strokeWidth={2.5} /> : i + 1}</span>
                     <span style={S.stepText(isNow, isDone)}><RichText text={s.text} accent={c.accent} /></span>
-                    {isNow && <span style={S.planTag(c.accent)}>Now</span>}
+                    {isNow && <span style={S.planTag(c.accent)}>{t('fullGuide.now')}</span>}
                   </div>
                 )
               })}

@@ -3,6 +3,7 @@ import { Mail, FileText, ListTree, List, Table, Code2, StickyNote, PenLine, Chec
 import WorkCard from './WorkCard.jsx'
 import SecurityNote from './SecurityNote.jsx'
 import PolicyNote from './PolicyNote.jsx'
+import { useT } from '../i18n/index.jsx'
 
 // ComposeCard - renders a FINISHED document WorkCoPilot wrote (not guidance, not a
 // one-line answer): a letter, report, resume section, contract clause, red-line
@@ -135,6 +136,7 @@ function CopyAction({ text, label = 'Copy' }) {
 }
 
 export default function ComposeCard({ compose, security = null, policy = null, className = '' }) {
+  const t = useT()
   ensureAssets()
   if (!compose) return null
   const { title, format, body, basis, caveat } = compose
@@ -147,7 +149,7 @@ export default function ComposeCard({ compose, security = null, policy = null, c
   const code = fmt === 'code' ? readCode(bodyStr) : null
 
   const renderBody = () => {
-    if (!bodyStr.trim()) return <p className="cc-prose cc-empty">No document came back.</p>
+    if (!bodyStr.trim()) return <p className="cc-prose cc-empty">{t('composeCard.emptyBody')}</p>
     if (fmt === 'code') {
       return (
         <div className="cc-code">
@@ -218,7 +220,7 @@ export default function ComposeCard({ compose, security = null, policy = null, c
         <div className="cc-trust">
           {basis && String(basis).trim() ? (
             <div className="cc-fact">
-              <span className="cc-trust-k"><BookOpen size={12} /> What I based it on</span>
+              <span className="cc-trust-k"><BookOpen size={12} /> {t('composeCard.basedOn')}</span>
               <p>{String(basis).trim()}</p>
             </div>
           ) : null}

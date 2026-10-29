@@ -12,7 +12,8 @@
     "acme.com",
     "alex@yourcompany.com",
     "https://api.together.xyz/v1",
-    "meta-llama/Llama-3.3-70B-Instruct-Turbo"
+    "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+    "common"
   ],
   "files": []
 }
