@@ -6,6 +6,9 @@
 // jurisdictions. The legal entity is named per the owner's ownership hierarchy
 // (COE Security LLC -> AdmireVeda -> WorkCoPilot). Same light design language as
 // WorkSecurity (.wsx-*).
+// i18n: every visible string comes from the `disclaimerPage` namespace
+// (src/i18n/locales/en/disclaimerPage.js); the legal entity, the two mailboxes
+// and the date stay constants here and are interpolated, never translated.
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Scale, ArrowLeft, ArrowRight, Compass, Hand, AlertTriangle, ShieldCheck, Lock, Mail } from 'lucide-react'
@@ -13,50 +16,54 @@ import SiteFooter from '../components/SiteFooter.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
 import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
+import { useT, interpolate } from '../i18n/index.jsx'
 
 const LAST_UPDATED = '2026-10-22'
 const CONTACT = 'support@coesecurity.com'          // security, legal, privacy, DPA
 const SUPPORT = 'support@admireveda.com'           // product support, billing
 const ENTITY = 'COE Security LLC'
-const OWNERSHIP = 'WorkCoPilot, by AdmireVeda, a product of COE Security LLC.'
-const TEMPLATE_NOTICE = 'This is a template provided for transparency and is being finalized with legal counsel; it is not yet a binding agreement.'
 
 // Brand fonts are self-hosted and loaded globally in src/main.jsx; no runtime
 // Google Fonts link is injected here.
 
-// The three things a reader should leave with, before the detail.
+// The three things a reader should leave with, before the detail. Icon + tone are
+// design, so they stay here; the words are disclaimerPage.glance.cards[i].
 const GLANCE = [
-  { icon: Compass, tone: 'cyan', eyebrow: 'Guidance', title: 'Practical help, not professional advice', body: 'WorkCoPilot shows you a sensible next step on your own screen. It is not legal, financial, medical, tax or other professional advice.' },
-  { icon: Hand, tone: 'ok', eyebrow: 'Your hands', title: 'You decide what to run', body: 'It is read-only. It never clicks, types or runs anything for you. Destructive steps are flagged for you to confirm before you act.' },
-  { icon: AlertTriangle, tone: 'amber', eyebrow: 'Accuracy', title: 'Verify before you rely on it', body: 'Guidance is best-effort. AI can be wrong or out of date, and the built-in security checks are a backstop, not a promise.' },
+  { icon: Compass, tone: 'cyan' },
+  { icon: Hand, tone: 'ok' },
+  { icon: AlertTriangle, tone: 'amber' },
 ]
 
-// Section list drives both the sticky table of contents and the article.
+// Section list drives both the sticky table of contents and the article. Titles
+// are disclaimerPage.sections.<id>.
 const SECTIONS = [
-  { id: 'advice', n: '01', title: 'Guidance, not professional advice' },
-  { id: 'control', n: '02', title: 'You are in control, and responsible' },
-  { id: 'accuracy', n: '03', title: 'Accuracy and the limits of AI' },
-  { id: 'checks', n: '04', title: 'Security checks are a backstop' },
-  { id: 'compliance', n: '05', title: 'Compliance' },
-  { id: 'warranty', n: '06', title: 'No warranty and limitation of liability' },
-  { id: 'contact', n: '07', title: 'Contact' },
+  { id: 'advice', n: '01' },
+  { id: 'control', n: '02' },
+  { id: 'accuracy', n: '03' },
+  { id: 'checks', n: '04' },
+  { id: 'compliance', n: '05' },
+  { id: 'warranty', n: '06' },
+  { id: 'contact', n: '07' },
 ]
 
 function Sec({ id, children }) {
+  const t = useT()
   const s = SECTIONS.find((x) => x.id === id)
   return (
     <section className="wlx-sec" id={id} aria-labelledby={id + '-h'}>
-      <h2 id={id + '-h'}><span className="wlx-n" aria-hidden="true">{s.n}</span>{s.title}</h2>
+      <h2 id={id + '-h'}><span className="wlx-n" aria-hidden="true">{s.n}</span>{t('disclaimerPage.sections.' + id)}</h2>
       {children}
     </section>
   )
 }
 
-function Items({ items }) {
+// `items` is a translated list of { name, how }; `vars` interpolates {support}
+// into the row that names the mailbox.
+function Items({ items, vars }) {
   return (
     <ul className="wlx-list">
-      {items.map(([name, how]) => (
-        <li key={name}><span className="wlx-name">{name}</span><span className="wlx-how">{how}</span></li>
+      {items.map(({ name, how }) => (
+        <li key={name}><span className="wlx-name">{name}</span><span className="wlx-how">{interpolate(how, vars)}</span></li>
       ))}
     </ul>
   )
@@ -66,11 +73,14 @@ function Items({ items }) {
 // cards (WorkCard.Head renders H3s), decorative icons hidden, visible focus rings.
 export default function WorkDisclaimer() {
   const nav = useNavigate()
+  const t = useT()
   useSeo({
-    title: 'Disclaimer - WorkCoPilot by AdmireVeda',
-    description: 'What WorkCoPilot is and is not: practical guidance rather than professional advice, read-only so you decide what to run, best-effort accuracy, security checks as a backstop, and the limits of liability.',
+    title: t('disclaimerPage.seo.title'),
+    description: t('disclaimerPage.seo.description'),
     path: '/workcopilot/disclaimer',
   })
+  const mail = { contact: CONTACT, support: SUPPORT }
+  const cards = t('disclaimerPage.glance.cards')
   return (
     <div className="wlx">
       <style>{CSS}</style>
@@ -78,27 +88,28 @@ export default function WorkDisclaimer() {
 
       <main id="main">
       <section className="wlx-hero">
-        <div className="wlx-eyebrow"><Scale size={14} aria-hidden="true" /> Disclaimer &middot; WorkCoPilot</div>
-        <h1>What WorkCoPilot is, and what it is not</h1>
-        <p>WorkCoPilot gives you practical, step-by-step guidance on your own screen so you can get work done. It does not act for you, it is not professional advice, and it can be wrong. This page sets out those limits in plain language so you know where you stand.</p>
+        <div className="wlx-eyebrow"><Scale size={14} aria-hidden="true" /> {t('disclaimerPage.hero.eyebrow')}</div>
+        <h1>{t('disclaimerPage.hero.h1')}</h1>
+        <p>{t('disclaimerPage.hero.lead')}</p>
         <div className="wlx-meta">
-          <span><b>Last updated</b> {LAST_UPDATED}</span>
+          <span><b>{t('disclaimerPage.hero.lastUpdated')}</b> {LAST_UPDATED}</span>
           <span className="wlx-sep" aria-hidden="true" />
-          <span>Plain-language terms, written to be read</span>
+          <span>{t('disclaimerPage.hero.tagline')}</span>
         </div>
-        <div className="wlx-template" role="note"><b>Template.</b> {TEMPLATE_NOTICE}</div>
-        <div className="wlx-owner">{OWNERSHIP}</div>
+        <div className="wlx-template" role="note"><b>{t('disclaimerPage.hero.templateLabel')}</b> {t('disclaimerPage.hero.templateNotice')}</div>
+        <div className="wlx-owner">{t('disclaimerPage.hero.ownership')}</div>
       </section>
 
       <section className="wlx-block" aria-labelledby="wlx-glance-h">
-        <h2 id="wlx-glance-h" className="wlx-sr">At a glance</h2>
+        <h2 id="wlx-glance-h" className="wlx-sr">{t('disclaimerPage.glance.h2')}</h2>
         <div className="wlx-glance">
           {GLANCE.map((g, i) => {
             const Ic = g.icon
+            const c = cards[i]
             return (
-              <WorkCard key={g.eyebrow} theme="light" tone={g.tone} delay={i * 70} texPos={['0% 0%', '50% 50%', '100% 100%'][i]} className="wlx-gcard">
-                <WorkCard.Head icon={Ic} eyebrow={g.eyebrow} title={g.title} />
-                <WorkCard.Body>{g.body}</WorkCard.Body>
+              <WorkCard key={c.eyebrow} theme="light" tone={g.tone} delay={i * 70} texPos={['0% 0%', '50% 50%', '100% 100%'][i]} className="wlx-gcard">
+                <WorkCard.Head icon={Ic} eyebrow={c.eyebrow} title={c.title} />
+                <WorkCard.Body>{c.body}</WorkCard.Body>
               </WorkCard>
             )
           })}
@@ -107,70 +118,60 @@ export default function WorkDisclaimer() {
 
       <section className="wlx-block wlx-doc">
         <nav className="wlx-toc" aria-labelledby="wlx-toc-h">
-          <div className="wlx-toct" id="wlx-toc-h">On this page</div>
+          <div className="wlx-toct" id="wlx-toc-h">{t('disclaimerPage.toc.title')}</div>
           <ol>
-            {SECTIONS.map((s) => <li key={s.id}><a href={'#' + s.id}><span className="wlx-n" aria-hidden="true">{s.n}</span>{s.title}</a></li>)}
+            {SECTIONS.map((s) => <li key={s.id}><a href={'#' + s.id}><span className="wlx-n" aria-hidden="true">{s.n}</span>{t('disclaimerPage.sections.' + s.id)}</a></li>)}
           </ol>
         </nav>
 
         <article className="wlx-art">
           <Sec id="advice">
-            <p>WorkCoPilot gives practical guidance to help you act: what to look at next, what to click, what a setting means, how a command is usually written. It is a working aid.</p>
-            <p>It is not legal, financial, medical, tax, accounting, engineering or other professional advice, and using it does not create a professional relationship with us. Where a step touches money, health, legal duties, safety or regulated work, confirm it against your own requirements and with a qualified professional before you rely on it.</p>
-            <div className="wlx-note"><Scale size={14} aria-hidden="true" /><span>This page is a plain-language statement of the product's limits. It is not a substitute for your own legal review of how WorkCoPilot fits your situation.</span></div>
+            <p>{t('disclaimerPage.advice.p1')}</p>
+            <p>{t('disclaimerPage.advice.p2')}</p>
+            <div className="wlx-note"><Scale size={14} aria-hidden="true" /><span>{t('disclaimerPage.advice.note')}</span></div>
           </Sec>
 
           <Sec id="control">
-            <p>WorkCoPilot is read-only by design. It watches your screen, with sensitive values redacted on your device, and tells you what it would do next. It never clicks, types, submits, or runs anything for you.</p>
-            <Items items={[
-              ['You decide what to run', 'Every action in your systems is yours. You choose whether to follow a step, change it, or stop.'],
-              ['Destructive steps are flagged', 'When a suggested step could delete, overwrite, pay, send, or otherwise be hard to undo, WorkCoPilot flags it so you can confirm it deliberately before you act.'],
-              ['Your systems, your rules', 'You remain responsible for having the right permissions, following your employer\'s and your customers\' policies, and keeping to the terms of the tools you use.'],
-              ['Your accounts', 'You are responsible for keeping your sign-in details safe and for what is done under your account.'],
-            ]} />
+            <p>{t('disclaimerPage.control.lead')}</p>
+            <Items items={t('disclaimerPage.control.items')} />
           </Sec>
 
           <Sec id="accuracy">
-            <p>Guidance is produced with the help of AI and is best-effort. AI can misread a screen, miss context, be out of date about a tool that has changed, or simply be wrong. It can sound confident while being wrong.</p>
-            <Items items={[
-              ['Verify before you rely on it', 'Check anything that matters against the tool\'s own documentation, your own records, or a person who knows the system.'],
-              ['Screens are read, not understood perfectly', 'WorkCoPilot reads your screen on your device, after redaction. Small text, unusual layouts and redacted values can lead to a wrong read.'],
-              ['Tools change', 'Menus, commands and defaults move. A step that was right last month may not be right today.'],
-              ['Tell us', `If guidance was wrong or unsafe, write to ${SUPPORT} so we can look into it.`],
-            ]} />
+            <p>{t('disclaimerPage.accuracy.lead')}</p>
+            <Items items={t('disclaimerPage.accuracy.items')} vars={mail} />
           </Sec>
 
           <Sec id="checks">
-            <p>WorkCoPilot writes commands, code and scripts the secure way by default and runs checks for common problems such as injection, exposed secrets and over-broad permissions before it gives them to you. It also looks at dependencies it suggests.</p>
-            <p>Those checks are a helpful backstop. They are not a guarantee that a command, script or dependency is safe, correct, or right for your environment. Review what you run, test it where it is safe to test, and keep your own security controls in place.</p>
+            <p>{t('disclaimerPage.checks.p1')}</p>
+            <p>{t('disclaimerPage.checks.p2')}</p>
           </Sec>
 
           <Sec id="compliance">
-            <p>WorkCoPilot provides controls and audit evidence that support your compliance work: on-device redaction and tokenization, read-only operation, per-company data policies that admins arm and lock, and per-session reports and audit logs.</p>
-            <p>Those controls do not make you compliant, and we do not claim that the product is certified against any framework. Compliance is achieved and held by your organization, working with its own auditors and advisers. See the <a href="/workcopilot/security#compliance">Security page</a> for how the controls map to common frameworks, and the <a href="/workcopilot/privacy">Privacy Policy</a> for how your data is handled.</p>
+            <p>{t('disclaimerPage.compliance.p1')}</p>
+            <p>{t.rich('disclaimerPage.compliance.p2', null, { security: (c) => <a href="/workcopilot/security#compliance">{c}</a>, privacy: (c) => <a href="/workcopilot/privacy">{c}</a> })}</p>
           </Sec>
 
           <Sec id="warranty">
-            <p>WorkCoPilot is offered by AdmireVeda, a product of {ENTITY}, which is the legal entity behind the service. In this section, &ldquo;we&rdquo; means {ENTITY}, AdmireVeda and WorkCoPilot together.</p>
-            <p>WorkCoPilot is provided as is and as available. To the extent the law allows, we make no warranty, express or implied, about the guidance, including that it is accurate, complete, current, fit for a particular purpose, or free of errors.</p>
-            <p>To the extent the law allows, we are not liable for loss or damage arising from actions you take, or do not take, based on the guidance, including lost data, lost revenue, downtime, or costs of recovery. You act on the guidance at your own discretion, and you remain responsible for the outcome in your systems.</p>
-            <p>Nothing on this page limits rights that cannot be limited under the law that applies to you.</p>
-            <div className="wlx-note"><ShieldCheck size={14} aria-hidden="true" /><span><b>Why this is here.</b> It would be easy to write a page of dense legalese. We would rather be clear: WorkCoPilot is a guide that never acts for you, and the judgment and the responsibility stay with you.</span></div>
+            <p>{t('disclaimerPage.warranty.p1', { entity: ENTITY })}</p>
+            <p>{t('disclaimerPage.warranty.p2')}</p>
+            <p>{t('disclaimerPage.warranty.p3')}</p>
+            <p>{t('disclaimerPage.warranty.p4')}</p>
+            <div className="wlx-note"><ShieldCheck size={14} aria-hidden="true" /><span>{t.rich('disclaimerPage.warranty.note')}</span></div>
           </Sec>
 
           <Sec id="contact">
-            <p>Legal, privacy and security questions: <a href={'mailto:' + CONTACT}>{CONTACT}</a></p>
-            <p>Product support and billing: <a href={'mailto:' + SUPPORT}>{SUPPORT}</a></p>
+            <p>{t('disclaimerPage.contact.inquiries')} <a href={'mailto:' + CONTACT}>{CONTACT}</a></p>
+            <p>{t('disclaimerPage.contact.support')} <a href={'mailto:' + SUPPORT}>{SUPPORT}</a></p>
           </Sec>
         </article>
       </section>
 
-      <section className="wlx-cta" aria-label="Related pages">
-        <button className="wlx-btn" onClick={() => nav('/workcopilot/privacy')}><Lock size={16} aria-hidden="true" /> Privacy Policy</button>
-        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/terms')}><Scale size={15} aria-hidden="true" /> Terms</button>
-        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/security')}><ShieldCheck size={15} aria-hidden="true" /> Security</button>
-        <a className="wlx-btn alt" href={'mailto:' + CONTACT}><Mail size={15} aria-hidden="true" /> Contact</a>
-        <button className="wlx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} aria-hidden="true" /></button>
+      <section className="wlx-cta" aria-label={t('disclaimerPage.cta.ariaLabel')}>
+        <button className="wlx-btn" onClick={() => nav('/workcopilot/privacy')}><Lock size={16} aria-hidden="true" /> {t('disclaimerPage.cta.privacy')}</button>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/terms')}><Scale size={15} aria-hidden="true" /> {t('disclaimerPage.cta.terms')}</button>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/security')}><ShieldCheck size={15} aria-hidden="true" /> {t('disclaimerPage.cta.security')}</button>
+        <a className="wlx-btn alt" href={'mailto:' + CONTACT}><Mail size={15} aria-hidden="true" /> {t('disclaimerPage.cta.contact')}</a>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot')}>{t('disclaimerPage.cta.back')} <ArrowRight size={15} aria-hidden="true" /></button>
       </section>
       </main>
       <SiteFooter />

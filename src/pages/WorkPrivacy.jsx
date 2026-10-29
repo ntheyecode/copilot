@@ -7,6 +7,9 @@
 // States guarantees, not mechanisms (docs/business-rules.md).
 // The fuller data-flow lives on /workcopilot/security; this page is the policy
 // a reader can cite. Same light design language as WorkSecurity (.wsx-*).
+// i18n: every visible string comes from the `privacyPage` namespace
+// (src/i18n/locales/en/privacyPage.js); the legal entity, the two mailboxes and
+// the date stay constants here and are interpolated, never translated.
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Lock, ArrowLeft, ArrowRight, Monitor, Send, Database, ShieldCheck, Scale, Mail, Gavel, FileSignature, Cookie } from 'lucide-react'
@@ -14,57 +17,61 @@ import SiteFooter from '../components/SiteFooter.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
 import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
+import { useT, interpolate } from '../i18n/index.jsx'
 
 const LAST_UPDATED = '2026-10-23'
 const CONTACT = 'support@coesecurity.com'          // security, legal, privacy, DPA
 const SUPPORT = 'support@admireveda.com'           // product support, billing
 const ENTITY = 'COE Security LLC'
-const OWNERSHIP = 'WorkCoPilot, by AdmireVeda, a product of COE Security LLC.'
-const TEMPLATE_NOTICE = 'This is a template provided for transparency and is being finalized with legal counsel; it is not yet a binding agreement.'
 
 // Brand fonts are self-hosted and loaded globally in src/main.jsx; no runtime
 // Google Fonts link is injected here.
 
-// The three facts a reader should leave with, before the detail.
+// The three facts a reader should leave with, before the detail. Icon + tone are
+// design, so they stay here; the words are privacyPage.glance.cards[i].
 const GLANCE = [
-  { icon: Monitor, tone: 'ok', eyebrow: 'On your device', title: 'Sensitive values never leave in clear', body: 'PII, PHI and secrets are stripped or tokenized on your own device, in screen text and typed text, before any request is sent. The answer is rebuilt on your device.' },
-  { icon: Send, tone: 'cyan', eyebrow: 'What leaves', title: 'Only what is needed to guide the step', body: 'Reduced-size screen frames and the governed text. On the desktop app, documents are read locally and only the governed text is sent.' },
-  { icon: Database, tone: 'amber', eyebrow: 'What we keep', title: 'A record of the session, until you delete it', body: 'A per-session report, audit log and your session history. Stored keys, secrets and report artifacts are encrypted at rest. Data is kept until you or your admin delete it, or a configured retention window purges older sessions on a schedule.' },
+  { icon: Monitor, tone: 'ok' },
+  { icon: Send, tone: 'cyan' },
+  { icon: Database, tone: 'amber' },
 ]
 
-// Section list drives both the sticky table of contents and the article.
+// Section list drives both the sticky table of contents and the article. Titles
+// are privacyPage.sections.<id>.
 const SECTIONS = [
-  { id: 'about', n: '01', title: 'About this policy' },
-  { id: 'collect', n: '02', title: 'What we collect' },
-  { id: 'categories', n: '03', title: 'Data categories' },
-  { id: 'leaves', n: '04', title: 'What leaves your device' },
-  { id: 'store', n: '05', title: 'What we store and for how long' },
-  { id: 'protect', n: '06', title: 'How it is protected' },
-  { id: 'cookies', n: '07', title: 'Cookies and storage' },
-  { id: 'third', n: '08', title: 'Third parties' },
-  { id: 'bases', n: '09', title: 'Legal bases for processing' },
-  { id: 'transfers', n: '10', title: 'International data transfers' },
-  { id: 'choices', n: '11', title: 'Your choices and rights' },
-  { id: 'california', n: '12', title: 'California privacy rights' },
-  { id: 'changes', n: '13', title: 'Changes to this policy' },
-  { id: 'contact', n: '14', title: 'Contact' },
+  { id: 'about', n: '01' },
+  { id: 'collect', n: '02' },
+  { id: 'categories', n: '03' },
+  { id: 'leaves', n: '04' },
+  { id: 'store', n: '05' },
+  { id: 'protect', n: '06' },
+  { id: 'cookies', n: '07' },
+  { id: 'third', n: '08' },
+  { id: 'bases', n: '09' },
+  { id: 'transfers', n: '10' },
+  { id: 'choices', n: '11' },
+  { id: 'california', n: '12' },
+  { id: 'changes', n: '13' },
+  { id: 'contact', n: '14' },
 ]
 
 function Sec({ id, children }) {
+  const t = useT()
   const s = SECTIONS.find((x) => x.id === id)
   return (
     <section className="wlx-sec" id={id} aria-labelledby={id + '-h'}>
-      <h2 id={id + '-h'}><span className="wlx-n" aria-hidden="true">{s.n}</span>{s.title}</h2>
+      <h2 id={id + '-h'}><span className="wlx-n" aria-hidden="true">{s.n}</span>{t('privacyPage.sections.' + id)}</h2>
       {children}
     </section>
   )
 }
 
-function Items({ items }) {
+// `items` is a translated list of { name, how }; `vars` interpolates {contact} /
+// {support} into the rows that name a mailbox.
+function Items({ items, vars }) {
   return (
     <ul className="wlx-list">
-      {items.map(([name, how]) => (
-        <li key={name}><span className="wlx-name">{name}</span><span className="wlx-how">{how}</span></li>
+      {items.map(({ name, how }) => (
+        <li key={name}><span className="wlx-name">{name}</span><span className="wlx-how">{interpolate(how, vars)}</span></li>
       ))}
     </ul>
   )
@@ -74,11 +81,14 @@ function Items({ items }) {
 // cards (WorkCard.Head renders H3s), decorative icons hidden, visible focus rings.
 export default function WorkPrivacy() {
   const nav = useNavigate()
+  const t = useT()
   useSeo({
-    title: 'Privacy Policy - WorkCoPilot by AdmireVeda',
-    description: 'What WorkCoPilot collects, what leaves your device after on-device redaction, what is stored and for how long (including de-identified learnings that keep guidance current), how it is protected, the third parties involved, and your rights and choices.',
+    title: t('privacyPage.seo.title'),
+    description: t('privacyPage.seo.description'),
     path: '/workcopilot/privacy',
   })
+  const mail = { contact: CONTACT, support: SUPPORT }
+  const cards = t('privacyPage.glance.cards')
   return (
     <div className="wlx">
       <style>{CSS}</style>
@@ -86,27 +96,28 @@ export default function WorkPrivacy() {
 
       <main id="main">
       <section className="wlx-hero">
-        <div className="wlx-eyebrow"><Lock size={14} aria-hidden="true" /> Privacy Policy &middot; WorkCoPilot</div>
-        <h1>How WorkCoPilot handles your data</h1>
-        <p>WorkCoPilot guides you through work on your own screen. It is read-only by design, and sensitive data is stripped or tokenized on your own device before anything is sent. This page says, in plain language, what we collect, what leaves your device, what we store, and the choices you have.</p>
+        <div className="wlx-eyebrow"><Lock size={14} aria-hidden="true" /> {t('privacyPage.hero.eyebrow')}</div>
+        <h1>{t('privacyPage.hero.h1')}</h1>
+        <p>{t('privacyPage.hero.lead')}</p>
         <div className="wlx-meta">
-          <span><b>Last updated</b> {LAST_UPDATED}</span>
+          <span><b>{t('privacyPage.hero.lastUpdated')}</b> {LAST_UPDATED}</span>
           <span className="wlx-sep" aria-hidden="true" />
-          <span>Plain-language disclosure of what the product does today</span>
+          <span>{t('privacyPage.hero.tagline')}</span>
         </div>
-        <div className="wlx-template" role="note"><b>Template.</b> {TEMPLATE_NOTICE}</div>
-        <div className="wlx-owner">{OWNERSHIP}</div>
+        <div className="wlx-template" role="note"><b>{t('privacyPage.hero.templateLabel')}</b> {t('privacyPage.hero.templateNotice')}</div>
+        <div className="wlx-owner">{t('privacyPage.hero.ownership')}</div>
       </section>
 
       <section className="wlx-block" aria-labelledby="wlx-glance-h">
-        <h2 id="wlx-glance-h" className="wlx-sr">At a glance</h2>
+        <h2 id="wlx-glance-h" className="wlx-sr">{t('privacyPage.glance.h2')}</h2>
         <div className="wlx-glance">
           {GLANCE.map((g, i) => {
             const Ic = g.icon
+            const c = cards[i]
             return (
-              <WorkCard key={g.eyebrow} theme="light" tone={g.tone} delay={i * 70} texPos={['0% 0%', '50% 50%', '100% 100%'][i]} className="wlx-gcard">
-                <WorkCard.Head icon={Ic} eyebrow={g.eyebrow} title={g.title} />
-                <WorkCard.Body>{g.body}</WorkCard.Body>
+              <WorkCard key={c.eyebrow} theme="light" tone={g.tone} delay={i * 70} texPos={['0% 0%', '50% 50%', '100% 100%'][i]} className="wlx-gcard">
+                <WorkCard.Head icon={Ic} eyebrow={c.eyebrow} title={c.title} />
+                <WorkCard.Body>{c.body}</WorkCard.Body>
               </WorkCard>
             )
           })}
@@ -115,169 +126,106 @@ export default function WorkPrivacy() {
 
       <section className="wlx-block wlx-doc">
         <nav className="wlx-toc" aria-labelledby="wlx-toc-h">
-          <div className="wlx-toct" id="wlx-toc-h">On this page</div>
+          <div className="wlx-toct" id="wlx-toc-h">{t('privacyPage.toc.title')}</div>
           <ol>
-            {SECTIONS.map((s) => <li key={s.id}><a href={'#' + s.id}><span className="wlx-n" aria-hidden="true">{s.n}</span>{s.title}</a></li>)}
+            {SECTIONS.map((s) => <li key={s.id}><a href={'#' + s.id}><span className="wlx-n" aria-hidden="true">{s.n}</span>{t('privacyPage.sections.' + s.id)}</a></li>)}
           </ol>
         </nav>
 
         <article className="wlx-art">
           <Sec id="about">
-            <p>This policy covers WorkCoPilot: the web app, the desktop app and the mobile app. It describes how the product treats your data when you sign in, run a guided session, and review your reports.</p>
-            <p><b>Who is responsible.</b> WorkCoPilot is offered by AdmireVeda, a product of {ENTITY}. {ENTITY} is the legal entity and the controller of the account, sign-in and billing details described below. For the content of your guided sessions, your organization decides what is shared and {ENTITY} acts on its behalf as described in the <a href="/workcopilot/dpa">Data Processing Addendum</a>.</p>
-            <p>It is written to be read, not to impress. Where a behavior is under your control, or where we have not finished something, we say so. The <a href="/workcopilot/security#data-handling">Security page</a> shows the full data flow, step by step, with before-and-after examples of the on-device protection.</p>
-            <div className="wlx-note"><Scale size={14} aria-hidden="true" /><span>This page is a plain-language disclosure of how the product works. It is not legal advice and it is not a substitute for your own legal review of how WorkCoPilot fits your obligations.</span></div>
+            <p>{t('privacyPage.about.p1')}</p>
+            <p>{t.rich('privacyPage.about.p2', { entity: ENTITY }, { a: (c) => <a href="/workcopilot/dpa">{c}</a> })}</p>
+            <p>{t.rich('privacyPage.about.p3', null, { a: (c) => <a href="/workcopilot/security#data-handling">{c}</a> })}</p>
+            <div className="wlx-note"><Scale size={14} aria-hidden="true" /><span>{t('privacyPage.about.note')}</span></div>
           </Sec>
 
           <Sec id="collect">
-            <p>WorkCoPilot works with a small set of data, most of which stays on your device.</p>
-            <Items items={[
-              ['Account details', 'The sign-in details for your account, such as your email address. They are supplied by you, by your company admin, or by your identity provider when your company uses enterprise single sign-on.'],
-              ['Your screen and text during a session', 'What is on your screen and what you type or paste while WorkCoPilot guides you. Screen frames are read on your device, and sensitive values are redacted or tokenized there before anything is sent.'],
-              ['Documents you attach', 'On the desktop app, attached documents are read locally on your machine. Only the governed (redacted or tokenized) text is sent, never the file itself.'],
-              ['Session records', 'A report for each session, an audit log for each session, and your session history, so you can reopen and review past work.'],
-              ['Usage', 'The guided minutes you use, so your plan\'s allowance can be applied.'],
-              ['What it learns about tools', 'To keep guidance current, WorkCoPilot may keep generalized, de-identified learnings about how a tool or task currently works, such as where a setting now lives. These contain no personal data, secrets, screen images or document content. For a company account they are kept in that company\'s own knowledge base and benefit only its members; for individual accounts they are kept in our platform knowledge base to improve the service for everyone.'],
-              ['Billing', 'Payment details are entered with and held by Stripe, our billing provider. We receive what is needed to run your subscription, such as your plan and its status.'],
-            ]} />
+            <p>{t('privacyPage.collect.lead')}</p>
+            <Items items={t('privacyPage.collect.items')} />
           </Sec>
 
           <Sec id="categories">
-            <p>WorkCoPilot is designed for everyday working screens and text. Use it for the kinds of data below, and keep to the limits that follow.</p>
-            <h3>What it is designed for</h3>
-            <Items items={[
-              ['Work screens and text', 'Business applications, consoles, tickets, dashboards, spreadsheets, documents, code and commands that you are working in and are authorized to use.'],
-              ['Incidental personal data', 'Names, work email addresses, identifiers and similar details that appear in the course of that work.'],
-              ['Account and billing details', 'Sign-in details, plan and usage, as described above.'],
-            ]} />
-            <h3>What not to submit</h3>
-            <p>Do not submit data you are not authorized to process, data belonging to others that you have no right to share, or data your organization or the law forbids you from sharing with a service like this. If your work involves regulated data, make sure your organization has approved that use first. The <a href="/workcopilot/acceptable-use">Acceptable Use Policy</a> sets out the rules in full.</p>
-            <h3>Sensitive data stays protected</h3>
-            <p>Sensitive data such as personal data, health data, secrets, keys and card numbers is stripped or tokenized on your own device before anything is sent, and you or your company admin can add your own words and patterns. This is a safeguard, and it does not replace your own duty to share only what you are allowed to.</p>
+            <p>{t('privacyPage.categories.lead')}</p>
+            <h3>{t('privacyPage.categories.designedH')}</h3>
+            <Items items={t('privacyPage.categories.designed')} />
+            <h3>{t('privacyPage.categories.notSubmitH')}</h3>
+            <p>{t.rich('privacyPage.categories.notSubmit', null, { a: (c) => <a href="/workcopilot/acceptable-use">{c}</a> })}</p>
+            <h3>{t('privacyPage.categories.sensitiveH')}</h3>
+            <p>{t('privacyPage.categories.sensitive')}</p>
           </Sec>
 
           <Sec id="leaves">
-            <p>Before anything is sent, PII, PHI and secrets are stripped or tokenized on your own device, in both the text read from your screen and the text you type. The real values stay on your device, and the full answer is rebuilt there. The AI never sees the real sensitive values.</p>
-            <Items items={[
-              ['Reduced-size screen frames', 'Reduced in size before sending. Any line holding a sensitive value is blacked out on your device before the frame is sent.'],
-              ['Governed text', 'What you typed or pasted, with sensitive values already replaced by tokens on your device.'],
-              ['Governed text from documents', 'On the desktop app, the text extracted locally from an attached document, after redaction and tokenization. The file itself is not sent.'],
-              ['Nothing is done for you', 'WorkCoPilot is read-only. It never clicks, types, or changes a system of record on your behalf, so nothing it sends can act in your systems.'],
-            ]} />
+            <p>{t('privacyPage.leaves.lead')}</p>
+            <Items items={t('privacyPage.leaves.items')} />
           </Sec>
 
           <Sec id="store">
-            <p>We store a record of each session and nothing more. Your source material is not kept.</p>
-            <h3>Not stored</h3>
-            <Items items={[
-              ['Uploaded source documents', 'Files you attach are not kept as stored source material.'],
-              ['Raw screen frames', 'Frames are used to guide the current step and are not kept as stored source material.'],
-              ['Real sensitive values', 'Stripped or tokenized on your device before anything is sent, so they are not ours to store.'],
-            ]} />
-            <h3>Stored</h3>
-            <Items items={[
-              ['Session report', 'One per session. It can include milestone screenshots, which are redacted on your device before they are captured. Milestone screenshots are on by default, and you or your company admin can turn them off.'],
-              ['Audit log', 'One per session, recording what was transmitted, so you can see exactly what left your device.'],
-              ['Session history', 'Your list of past sessions.'],
-              ['Sign-in session', 'A session cookie is used to keep you signed in.'],
-              ['Generalized learnings', 'De-identified facts about how tools and tasks currently work, kept so future guidance stays current. They hold no personal data, secrets, screens or document content, and they are not tied to any one session, so deleting a session does not change them. A company\'s learnings stay within that company\'s knowledge base and are removed with the company account, or earlier on request.'],
-            ]} />
-            <h3>For how long</h3>
-            <p>By default data is kept until you or your company admin delete it, with no automatic deletion. An automatic retention window can be configured so that sessions older than a set number of days are purged on a schedule. Either way, you and your admin can delete a session at any time.</p>
+            <p>{t('privacyPage.store.lead')}</p>
+            <h3>{t('privacyPage.store.notStoredH')}</h3>
+            <Items items={t('privacyPage.store.notStored')} />
+            <h3>{t('privacyPage.store.storedH')}</h3>
+            <Items items={t('privacyPage.store.stored')} />
+            <h3>{t('privacyPage.store.howLongH')}</h3>
+            <p>{t('privacyPage.store.howLong')}</p>
           </Sec>
 
           <Sec id="protect">
-            <Items items={[
-              ['On-device redaction first', 'The main protection is that sensitive values are removed or tokenized on your device before any request is sent. Built-in detectors cover values such as emails, phone numbers, card numbers, SSNs, keys and private hosts, and you or your admin can add your own words and patterns.'],
-              ['Encryption at rest', 'Stored keys, secrets and report artifacts, including milestone screenshots, are encrypted at rest with AES-256-GCM.'],
-              ['Read-only by design', 'WorkCoPilot guides. It never runs anything in your systems, so it cannot change a system of record.'],
-              ['Role-based control', 'Company admins set and lock the data policy for their members, and review the sessions of their own members.'],
-            ]} />
+            <Items items={t('privacyPage.protect.items')} />
           </Sec>
 
           <Sec id="cookies">
-            <p>WorkCoPilot uses one strictly necessary sign-in cookie and, with your consent, a first-party referral cookie and functional browser storage (for example your language and theme). It sets no advertising cookies and no cross-site tracking.</p>
-            <p>The full list, with the purpose and lifetime of each cookie and storage key, is in the <a href="/workcopilot/cookie-policy">Cookie Policy</a>. You can turn functional and attribution storage on or off at any time from the <b>Cookie preferences</b> link in the footer, and rejecting non-essential storage is as easy as accepting it.</p>
+            <p>{t('privacyPage.cookies.p1')}</p>
+            <p>{t.rich('privacyPage.cookies.p2', null, { a: (c) => <a href="/workcopilot/cookie-policy">{c}</a> })}</p>
           </Sec>
 
           <Sec id="third">
-            <p>These are the third parties involved in providing the service. The <a href="/workcopilot/subprocessors">Subprocessors</a> page lists the role each one plays.</p>
-            <Items items={[
-              ['The AI provider', 'Guidance is produced by an AI provider. By default it runs on the platform\'s keys. Your company, or you, can instead run WorkCoPilot on your own AI keys, which keeps the governed data inside your own provider boundary. The specific model in use is not shown to end users.'],
-              ['Stripe', 'Billing and payment details are handled by Stripe.'],
-              ['Your identity provider', 'When your company uses enterprise single sign-on, your identity provider authenticates you.'],
-            ]} />
+            <p>{t.rich('privacyPage.third.lead', null, { a: (c) => <a href="/workcopilot/subprocessors">{c}</a> })}</p>
+            <Items items={t('privacyPage.third.items')} />
           </Sec>
 
           <Sec id="bases">
-            <p>Where data protection law (such as the EU/UK GDPR) applies, we rely on these legal bases to process your personal data.</p>
-            <Items items={[
-              ['Performing our contract', 'To give you the service you signed up for - your account, sign-in, running guided sessions and billing - we process the data needed to do that.'],
-              ['Legitimate interests', 'To keep the service secure, prevent abuse, and keep guidance current through de-identified learnings, balanced against your rights and freedoms.'],
-              ['Consent', 'For non-essential storage such as the referral cookie, we rely on your consent, which you can withdraw at any time from Cookie preferences.'],
-              ['Legal obligation', 'Where the law requires us to keep certain records (for example for tax or accounting), we process data to meet that obligation.'],
-            ]} />
+            <p>{t('privacyPage.bases.lead')}</p>
+            <Items items={t('privacyPage.bases.items')} />
           </Sec>
 
           <Sec id="transfers">
-            <p>We and our subprocessors may process data in countries other than the one you are in. Where personal data is transferred across borders, we rely on an appropriate safeguard for that transfer - such as the relevant standard contractual clauses or a transfer being to a country with an adequacy decision - as applicable to the parties involved.</p>
-            <p>The <a href="/workcopilot/subprocessors">Subprocessors</a> page and the <a href="/workcopilot/dpa">Data Processing Addendum</a> describe who is involved and how transfers are handled for company accounts.</p>
+            <p>{t('privacyPage.transfers.p1')}</p>
+            <p>{t.rich('privacyPage.transfers.p2', null, { subs: (c) => <a href="/workcopilot/subprocessors">{c}</a>, dpa: (c) => <a href="/workcopilot/dpa">{c}</a> })}</p>
           </Sec>
 
           <Sec id="choices">
-            <p>Wherever the law gives you them, you have these rights over your personal data. You can use the tools in the product, or write to us and we will help.</p>
-            <Items items={[
-              ['Access', 'Ask what personal data we hold about you and get a copy. Your session reports and history are available to you in the product.'],
-              ['Correction', 'Ask us to correct personal data that is wrong or incomplete. You can update your own account details, or ask us to.'],
-              ['Deletion', 'Ask us to delete your personal data. You can delete your own sessions at any time, and we will delete your account data on request, subject to any duty to keep a record that the law requires.'],
-              ['Export', 'Ask for your data in a portable format that you can take elsewhere.'],
-              ['Objection and limits', 'Ask us to limit or stop processing where the law gives you that right.'],
-              ['Company accounts', 'If your account is managed by your company, some requests go through your company admin, who controls your company\'s data and its settings.'],
-            ]} />
-            <h3>Your choices</h3>
-            <Items items={[
-              ['Delete sessions', 'You can delete any of your sessions at any time. Deleting a session removes it.'],
-              ['Company data', 'Company admins manage their company\'s data, including deleting member sessions and reviewing member reports and audit logs.'],
-              ['Milestone screenshots', 'On by default. You or your company admin can turn them off.'],
-              ['Your own AI keys', 'You or your company can run WorkCoPilot on your own AI keys so the governed data stays inside your boundary.'],
-              ['What counts as sensitive', 'On top of the built-in detectors, you or your company admin can add custom words and patterns to redact, tokenize or block.'],
-              ['Questions or requests', `For privacy requests, write to ${CONTACT}. For product help or billing, write to ${SUPPORT}.`],
-            ]} />
+            <p>{t('privacyPage.choices.lead')}</p>
+            <Items items={t('privacyPage.choices.rights')} />
+            <h3>{t('privacyPage.choices.yourChoicesH')}</h3>
+            <Items items={t('privacyPage.choices.yourChoices')} vars={mail} />
           </Sec>
 
           <Sec id="california">
-            <p>If you are a California resident, the California Consumer Privacy Act as amended by the CPRA gives you specific rights. We honor these rights for California residents.</p>
-            <Items items={[
-              ['Right to know and access', 'Request the categories and specific pieces of personal information we have collected about you, and a copy of it.'],
-              ['Right to delete', 'Request deletion of your personal information, subject to any record we are required by law to keep.'],
-              ['Right to correct', 'Request correction of inaccurate personal information.'],
-              ['Sale and sharing', 'We do not sell your personal information, and we do not share it for cross-context behavioral advertising. There is nothing to opt out of on that front; you can still decline the referral cookie from Cookie preferences.'],
-              ['Sensitive information', 'We do not use sensitive personal information to infer characteristics about you. On-device redaction keeps sensitive values from leaving your device in the first place.'],
-              ['No discrimination', 'We will not discriminate against you for exercising any of these rights.'],
-              ['How to exercise', `Write to ${CONTACT}. We will verify your request and respond within the time the law allows. An authorized agent may act for you where the law permits.`],
-            ]} />
+            <p>{t('privacyPage.california.lead')}</p>
+            <Items items={t('privacyPage.california.items')} vars={mail} />
           </Sec>
 
           <Sec id="changes">
-            <p>When this page changes, the "Last updated" date at the top changes with it. Where a change matters to how your data is handled, we will say what changed in plain language.</p>
+            <p>{t('privacyPage.changes.p1')}</p>
           </Sec>
 
           <Sec id="contact">
-            <p>Privacy, legal and security inquiries: <a href={'mailto:' + CONTACT}>{CONTACT}</a></p>
-            <p>Product support and billing: <a href={'mailto:' + SUPPORT}>{SUPPORT}</a></p>
-            <div className="wlx-note"><ShieldCheck size={14} aria-hidden="true" /><span><b>Honest framing.</b> WorkCoPilot provides controls and audit evidence that support your privacy and compliance work. It does not make an organization compliant on its own, and we do not claim a certification here. Your organization, working with its own advisers, decides how the product fits your obligations.</span></div>
+            <p>{t('privacyPage.contact.inquiries')} <a href={'mailto:' + CONTACT}>{CONTACT}</a></p>
+            <p>{t('privacyPage.contact.support')} <a href={'mailto:' + SUPPORT}>{SUPPORT}</a></p>
+            <div className="wlx-note"><ShieldCheck size={14} aria-hidden="true" /><span>{t.rich('privacyPage.contact.note')}</span></div>
           </Sec>
         </article>
       </section>
 
-      <section className="wlx-cta" aria-label="Related pages">
-        <button className="wlx-btn" onClick={() => nav('/workcopilot/security')}><ShieldCheck size={16} aria-hidden="true" /> See the full data flow</button>
-        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/terms')}><Gavel size={15} aria-hidden="true" /> Terms</button>
-        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/dpa')}><FileSignature size={15} aria-hidden="true" /> DPA</button>
-        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/cookie-policy')}><Cookie size={15} aria-hidden="true" /> Cookie Policy</button>
-        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/disclaimer')}><Scale size={15} aria-hidden="true" /> Disclaimer</button>
-        <a className="wlx-btn alt" href={'mailto:' + CONTACT}><Mail size={15} aria-hidden="true" /> Contact</a>
-        <button className="wlx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} aria-hidden="true" /></button>
+      <section className="wlx-cta" aria-label={t('privacyPage.cta.ariaLabel')}>
+        <button className="wlx-btn" onClick={() => nav('/workcopilot/security')}><ShieldCheck size={16} aria-hidden="true" /> {t('privacyPage.cta.flow')}</button>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/terms')}><Gavel size={15} aria-hidden="true" /> {t('privacyPage.cta.terms')}</button>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/dpa')}><FileSignature size={15} aria-hidden="true" /> {t('privacyPage.cta.dpa')}</button>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/cookie-policy')}><Cookie size={15} aria-hidden="true" /> {t('privacyPage.cta.cookie')}</button>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/disclaimer')}><Scale size={15} aria-hidden="true" /> {t('privacyPage.cta.disclaimer')}</button>
+        <a className="wlx-btn alt" href={'mailto:' + CONTACT}><Mail size={15} aria-hidden="true" /> {t('privacyPage.cta.contact')}</a>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot')}>{t('privacyPage.cta.back')} <ArrowRight size={15} aria-hidden="true" /></button>
       </section>
       </main>
       <SiteFooter />
