@@ -1037,6 +1037,20 @@ export default {
       note: 'One company policy, set once. Your SOC sees who and what kind, never the values.',
       ctaTeam: 'Talk about your team',
       ctaEnt: 'See every enterprise control',
+      // "How a company runs": the four enterprise capabilities under the
+      // ledger (roles + work flows, team templates, the company brain with
+      // knowledge spaces, recommended practices). One card each; the chips
+      // are the proof strip. Source of truth: docs/product/PRODUCT-DOCUMENTATION.md 4.3-4.4, 5.
+      run: {
+        h3: 'Built for how a company actually runs.',
+        sub: 'Roles, queues, templates and a shared brain, each rule enforced on the server, never only in the UI.',
+        cards: [
+          { t: 'Roles and work flows', d: 'Project managers assign and reassign. Senior PMs rebalance whole projects across managers. GRC watches read-only, with a risk register for work that stalls. Each person works from a queue, independently, or both.', chips: ['Project manager', 'Senior PM', 'GRC oversight', 'Worker', 'Independent', 'Mixed'] },
+          { t: 'One procedure, many people', d: 'Turn a project into a template and assign it to a whole team at once. Each person gets their own run; you see a rollup of who finished and how far, never anyone\'s raw session.', chips: ['Onboarding', 'SOPs', 'Compliance drills'] },
+          { t: 'A company brain that compounds', d: 'A workflow one person proves is served to everyone next time. Organize it into knowledge spaces, pick the right one at plan time, and every entry passes one policy-aware scrub first.', chips: ['Knowledge spaces', 'Scrubbed on entry'] },
+          { t: 'Proven practices, roped in', d: 'On a project it suggests the proven practices for that kind of work. Add one and it becomes a real task. Suggestions improve from what your organization accepts and completes.', chips: ['Suggest', 'Add to the map', 'Learns from acceptance'] },
+        ],
+      },
     },
     fields: {
       eyebrow: 'Many fields. One tool.',
@@ -1084,10 +1098,45 @@ export default {
       ctaShow: 'See data protection in action',
       ctaPaper: 'Security and privacy paper (PDF)',
     },
+    // PROVE section: proof and compliance. Four facts beside one dark product
+    // card (an audit-log sample). {n} = the framework count, read from the
+    // canonical registry (server/compliance_frameworks.js), never typed here.
+    // HONESTY: evidence that supports a compliance program, never a certification.
+    prove: {
+      eyebrow: 'Proof and compliance',
+      h2: 'Every task ends with <em>proof</em>, not a promise.',
+      sub: 'What was done, confirmed on screen as it happened, written up and sealed so anyone can check it is genuine.',
+      points: [
+        { t: 'Task report', d: 'Confirmed steps with their how-to, the outcome, and scrubbed milestone screenshots. It reports "5 of 6 done" when that is the truth.' },
+        { t: 'Audit log', d: 'A timestamped record of every step and every send, kept for each session.' },
+        { t: 'Authenticity seal', d: 'Each report is sealed with SHA-256 and HMAC. Anyone can confirm it is genuine at a public verify endpoint.' },
+        { t: 'Compliance, per task', d: 'An optional report maps the work to {n} frameworks. Evidence that supports your program, never a certification claim.' },
+      ],
+      // The dark card: an illustrative audit log. `at` (a clock time) and `s`
+      // (ok | warn | info | seal: the line color) are data, not copy.
+      log: {
+        title: 'Audit log',
+        task: 'Rotate the production API key',
+        lines: [
+          { at: '14:02:11', k: 'step 3 of 5', m: 'verified on screen', s: 'ok' },
+          { at: '14:02:40', k: 'step 4 of 5', m: 'wrong value caught, corrected', s: 'warn' },
+          { at: '14:05:02', k: 'step 5 of 5', m: 'verified on screen', s: 'ok' },
+          { at: '14:05:09', k: 'report', m: '4 milestone shots, scrubbed on-device', s: 'info' },
+          { at: '14:05:10', k: 'seal', m: 'SHA-256 + HMAC applied', s: 'seal' },
+          { at: '14:05:10', k: 'verify', m: 'genuine', s: 'ok' },
+        ],
+        sealed: 'Sealed report',
+      },
+      frameworksLbl: 'Maps to {n} frameworks',
+      more: '+{n} more',
+      cta: 'See the compliance coverage',
+    },
     pricing: {
       eyebrow: 'Pricing',
       h2: 'Simple plans. Real guided time.',
-      sub: 'Hours of expert guidance every month. AI included.',
+      // Open-task slots (several tasks in progress at once) replaced the old
+      // per-day task cap; documents as context are on every plan.
+      sub: 'Hours of expert guidance every month. Several tasks open at once. AI included.',
       billingAria: 'Billing period',
       monthly: 'Monthly',
       annual: 'Annual',
@@ -1110,9 +1159,11 @@ export default {
       feats: {
         // The hours line is NOT here: it is the card's hero, rendered from the
         // live pricing config (pricing.badge*) so a change follows.
-        lite: ['Step-by-step guidance', 'Exact commands, code & links', 'Privacy & security built in'],
+        // Reference documents (context grounding) are on EVERY plan, with a
+        // per-plan cap; the higher plans carry more document context per task.
+        lite: ['Step-by-step guidance', 'Exact commands, code & links', 'Your own documents as context', 'Privacy & security built in'],
         basic: ['Everything in Lite', 'Roadmaps included', 'Floating guide + session write-up'],
-        advanced: ['Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'],
+        advanced: ['Everything in Basic', 'More document context per task', 'Visual examples where they help', 'Priority guidance'],
         premium: ['Everything in Advanced', 'Projects: a large goal as a map of tasks', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'],
       },
       trustStripe: 'Secure checkout, powered by Stripe',
@@ -1126,7 +1177,25 @@ export default {
     // removed: the full feature list lives on /workcopilot/enterprise.
     enterprise: {
       stripAria: 'Enterprise controls',
-      chips: ['SSO (OIDC)', 'Mandatory MFA', 'Unlimited seats', 'Your SOPs and playbooks', 'Audit logs', 'SOC / SIEM relay', 'DPA', 'On-prem on request'],
+      // Refreshed 2026-10-28 against PRODUCT-DOCUMENTATION.md 6: seat and hour
+      // pools (not "unlimited seats"), your own AI keys, on-device DLP rules,
+      // encryption at rest, the per-machine MSI. The SOPs/playbooks line became
+      // the company-brain card (home.roi.run).
+      chips: ['SSO (OIDC)', 'Mandatory MFA', 'Seat and hour pools', 'Your own AI keys', 'On-device DLP rules', 'Encryption at rest', 'Audit logs', 'SOC / SIEM relay', 'Per-machine MSI', 'DPA', 'On-prem on request'],
+    },
+    // EVERYWHERE section: platforms, languages, personalization. {n} = the
+    // count of translated (non-English) languages, read from the locale
+    // registry (src/i18n/locales.js); the language chips are the registry's
+    // own endonyms, so neither can drift from what actually ships.
+    everywhere: {
+      eyebrow: 'Yours, everywhere',
+      h2: 'One guide. <em>Every screen</em>, every language, your way.',
+      sub: 'The same guide on desktop, Android and the web, in the language and the look you choose, remembered across your devices.',
+      cards: [
+        { t: 'Every platform', d: 'A signed Windows app, with a per-machine MSI for silent IT roll-out, an Android app, and the web. On desktop, OCR runs on-device, so images and diagrams are read locally. UI improvements reach every app without a reinstall.', chips: ['Windows', 'Enterprise MSI', 'Android', 'Web', 'On-device OCR'] },
+        { t: 'Your language', d: 'The whole product and every email it sends, in {n} languages plus US and British English. Pick it at first sign-in and change it any time.', chips: [] },
+        { t: 'Your look, remembered', d: 'Light, Dark or Heavy. Contrast-tested brand accents. Larger text, reduced motion, high contrast, bigger targets and a readable font. Set once, applied live, kept across your devices.', chips: ['Light', 'Dark', 'Heavy', 'Accessibility'] },
+      ],
     },
     final: {
       h2: 'Stop guessing. Start finishing.',

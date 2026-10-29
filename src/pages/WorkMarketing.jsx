@@ -6,7 +6,16 @@ import {
   Lock, Zap, Rocket, Target, ScanEye, ListChecks, AlertTriangle,
   Building2, Download,
   Server, Blocks, Bot, Megaphone, Calculator, Scale, Shapes, Trophy, X, MessageSquareOff,
+  FileCheck2, ScrollText, Fingerprint, ClipboardCheck,
+  UserCog, Copy, BrainCircuit, Lightbulb,
+  MonitorSmartphone, Languages, Palette,
 } from 'lucide-react'
+// Counts shown on the page come from the registries that ship, never typed:
+// the compliance framework set (server/compliance_frameworks.js is pure data,
+// imported into the client like work-scrub.js and compute_spec.js already are)
+// and the locale registry (the language chips are its own endonyms).
+import { COMPLIANCE_FRAMEWORKS } from '../../server/compliance_frameworks.js'
+import { LOCALES } from '../i18n/locales.js'
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'   // shared top nav (one link list, mobile disclosure menu) - same as every inner page
 import { revealOnScroll } from '../reveal.js'            // the ONE scroll-reveal mechanism for the site (timing + crawler/print safety)
@@ -19,7 +28,7 @@ import FieldVignettes from '../components/FieldVignettes.jsx'   // real-screen f
 import { useAuth } from '../auth.jsx'
 import { api } from '../api.js'
 import useSeo from '../useSeo.js'
-import { useLocale, renderRich } from '../i18n/index.jsx'   // every visible string on this page comes from the locale catalog (home.*)
+import { useLocale, renderRich, interpolate } from '../i18n/index.jsx'   // every visible string on this page comes from the locale catalog (home.*)
 // The plan contract (/api/work/pricing) is read through ONE view model shared
 // with the pricing page, so the two can never say different numbers.
 import { normalizePricing, planValueLines, planHoursShare, annualMonthlyRate, annualTotal, expiryFootnote, money, hours, PLAN_IDS } from '../pricingModel.js'
@@ -38,11 +47,22 @@ import { FIELD_FAMILIES, FIELD_TOTAL } from './WorkFields.jsx'
 // in order, and every block leads with the payoff, one line each.
 //   HERO       one promise + one short line + CTAs + three trust cues + live demo
 //   HOW        four benefit tiles (say the goal -> next move -> caught -> documented)
+//   NOT A CHAT the duel (chat pane vs guide console) + three difference cards
 //   FIELDS     one strip of eight field chips
 //   PROOF      security + privacy, one card each
-//   ENTERPRISE one section: the before/after ledger + control chips
+//   PROVE      proof + compliance: four facts beside ONE dark audit-log card
+//              (report, audit log, authenticity seal, per-task compliance)
+//   ENTERPRISE one section: the before/after ledger, then the four "how a
+//              company runs" cards (roles + flows, team templates, company
+//              brain + knowledge spaces, recommended practices) + control chips
+//   EVERYWHERE platforms (desktop + MSI, Android, web, on-device OCR),
+//              languages (from the locale registry), personalization
 //   PRICING    the plan cards
 //   FINAL CTA
+// 2026-10-28: PROVE, the enterprise "runs" cards and EVERYWHERE were added so
+// the page reflects what ships (docs/product/PRODUCT-DOCUMENTATION.md is the
+// catalog of record); the pricing lines moved to documents-on-every-plan and
+// open-task slots.
 // Removed in this pass: the "best model" band with its mono plan/guide/watch/
 // correct receipt (mechanism, not benefit; its promise is now the HOW eyebrow),
 // the "any app" glyph strip (now one trust cue), the hidden people / pillars /
@@ -129,6 +149,34 @@ export default function WorkMarketing() {
   const marquee = t('home.marquee')
   // The three trust cues under the hero CTAs (icon here, text in home.cues).
   const cueIcons = [AppWindow, Lock, Zap]
+  // PROVE: the four proof facts (icon here, copy in home.prove.points, same
+  // order). The framework count is the canonical registry's length.
+  const FRAMEWORK_COUNT = COMPLIANCE_FRAMEWORKS.length
+  const proveIcons = [ScrollText, ClipboardCheck, Fingerprint, FileCheck2]
+  const provePoints = t('home.prove.points').map((p, i) => ({ ...p, ic: proveIcons[i] || Check, d: interpolate(p.d, { n: FRAMEWORK_COUNT }) }))
+  // ENTERPRISE "how a company runs" cards: icon + tone here, copy in
+  // home.roi.run.cards (same order).
+  const runMeta = [
+    { ic: UserCog, tone: '' },
+    { ic: Copy, tone: 'cyan' },
+    { ic: BrainCircuit, tone: 'violet' },
+    { ic: Lightbulb, tone: 'amber' },
+  ]
+  const runCards = t('home.roi.run.cards').map((c, i) => ({ ...runMeta[i], ...c }))
+  // EVERYWHERE cards. The language card's chips are the registry endonyms of
+  // every translated (non-English) locale, each tagged with its own language so
+  // the browser picks the right script font; {n} is that count.
+  const LANGS = LOCALES.filter((l) => !l.code.startsWith('en'))
+  const everyMeta = [
+    { ic: MonitorSmartphone, tone: 'cyan' },
+    { ic: Languages, tone: '' },
+    { ic: Palette, tone: 'amber' },
+  ]
+  const everyCards = t('home.everywhere.cards').map((c, i) => ({
+    ...everyMeta[i], ...c,
+    d: interpolate(c.d, { n: LANGS.length }),
+    chips: i === 1 ? LANGS.map((l) => ({ k: l.code, label: l.name, lang: l.tag, dir: l.dir })) : (c.chips || []).map((ch) => ({ k: ch, label: ch })),
+  }))
   // Every plan number on the cards comes from the live server pricing
   // (/api/work/pricing -> store.getWorkPricing()): plans, hour, hoursMonthly
   // (guided hours included per calendar month) and hoursExpiry (forfeit |
@@ -285,6 +333,37 @@ export default function WorkMarketing() {
         </div>
       </section>
 
+      {/* PROVE - proof and compliance: what a task leaves behind. Four facts
+          (task report, audit log, authenticity seal, per-task compliance) in
+          light tiles beside ONE dark product card, an illustrative audit log
+          ending in the seal and the framework chips. The dark card on the light
+          page is the site's depth-contrast signature; it follows the light
+          PROOF duo, never the hero (the "two black boxes" rule above). The
+          framework count and names come from the canonical registry. One
+          orange CTA, to the compliance roll-call on the security page. */}
+      <section className="wm-sec wm-prove" id="proof-of-work">
+        <span id="compliance" aria-hidden="true" />
+        <div className="wm-wrap">
+          <div className="wm-eyebrow" data-reveal><FileCheck2 size={14} /> {t('home.prove.eyebrow')}</div>
+          <h2 className="wm-h2" data-reveal>{t.rich('home.prove.h2')}</h2>
+          <p className="wm-sub" data-reveal>{t('home.prove.sub')}</p>
+          <div className="wm-prove-grid">
+            <ul className="wm-prove-points" data-reveal>
+              {provePoints.map((p) => (
+                <li key={p.t}>
+                  <span className="wm-prove-ic" aria-hidden="true"><p.ic size={18} /></span>
+                  <div><b>{p.t}</b><p>{p.d}</p></div>
+                </li>
+              ))}
+            </ul>
+            <AuditLogCard t={t} />
+          </div>
+          <div className="wm-fld-more" data-reveal>
+            <a className="wm-cta" href="/workcopilot/security#compliance">{t('home.prove.cta')} <ArrowRight size={16} className="wm-arrow" /></a>
+          </div>
+        </div>
+      </section>
+
       {/* ENTERPRISE - the ONE companies-and-teams section (owner, 2026-10-26:
           the page had two). The money argument is the focal ledger: the same
           six budget lines a decision-maker pays for, Before -> With WorkCoPilot.
@@ -331,6 +410,26 @@ export default function WorkMarketing() {
             )
           })()}
 
+          {/* How a company runs: roles + work flows, team templates, the company
+              brain with knowledge spaces, recommended practices. Four shared
+              WorkCards; the chips are each card's proof strip. Copy in
+              home.roi.run (same order as runMeta). */}
+          <div className="wm-run">
+            <div className="wm-run-head" data-reveal>
+              <h3>{t('home.roi.run.h3')}</h3>
+              <p>{t('home.roi.run.sub')}</p>
+            </div>
+            <div className="wm-run-grid">
+              {runCards.map((c, i) => (
+                <WorkCard key={c.t} theme="light" tone={c.tone || undefined} delay={i * 80} texPos={`${(i * 41) % 100}% ${i % 2 ? '0%' : '100%'}`}>
+                  <WorkCard.Head align="start" icon={<c.ic size={18} />} title={c.t} />
+                  <WorkCard.Body>{c.d}</WorkCard.Body>
+                  <WorkCard.Proof>{c.chips.map((ch) => <span key={ch} className="dp-chip">{ch}</span>)}</WorkCard.Proof>
+                </WorkCard>
+              ))}
+            </div>
+          </div>
+
           {/* Enterprise controls, as chips: the assurance line under the money line. */}
           <div className="wm-roi-controls" data-reveal aria-label={t('home.enterprise.stripAria')}>
             <span className="wm-roi-controls-lbl"><ShieldCheck size={14} /> {t('home.roi.controlsLbl')}</span>
@@ -347,6 +446,29 @@ export default function WorkMarketing() {
               <a className="wm-cta" href="/workcopilot/contact">{t('home.roi.ctaTeam')} <ArrowRight size={16} className="wm-arrow" /></a>
               <a className="wm-cta ghost" href="/workcopilot/enterprise">{t('home.roi.ctaEnt')} <ArrowRight size={15} className="wm-arrow" /></a>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* EVERYWHERE - platforms, languages, personalization: three shared
+          WorkCards. The language chips are the locale registry's endonyms
+          (each tagged lang= so the browser picks the right script font) and
+          the count in the copy is that registry's length; the platform and
+          theme chips are catalog copy. No CTA of its own: the download strip in
+          the final section is the action for this content. */}
+      <section className="wm-sec wm-every" id="everywhere">
+        <div className="wm-wrap">
+          <div className="wm-eyebrow" data-reveal><MonitorSmartphone size={14} /> {t('home.everywhere.eyebrow')}</div>
+          <h2 className="wm-h2" data-reveal>{t.rich('home.everywhere.h2')}</h2>
+          <p className="wm-sub" data-reveal>{t('home.everywhere.sub')}</p>
+          <div className="wm-every-grid">
+            {everyCards.map((c, i) => (
+              <WorkCard key={c.t} theme="light" tone={c.tone || undefined} delay={i * 80} texPos={`${(i * 37) % 100}% ${i % 2 ? '100%' : '0%'}`}>
+                <WorkCard.Head align="start" icon={<c.ic size={18} />} title={c.t} />
+                <WorkCard.Body>{c.d}</WorkCard.Body>
+                <WorkCard.Proof>{c.chips.map((ch) => <span key={ch.k} className="dp-chip" lang={ch.lang} dir={ch.dir}>{ch.label}</span>)}</WorkCard.Proof>
+              </WorkCard>
+            ))}
           </div>
         </div>
       </section>
@@ -518,6 +640,42 @@ function RedactLockMark() {
     </svg>
   )
 }
+// The PROVE section's dark product card: an illustrative audit log for one
+// task (six lines, mono), the sealed-report line, and the framework chips. Line
+// copy is translated (home.prove.log); the clock times, the hash fragment and
+// the framework names are data and stay LTR. The framework names and count are
+// the canonical registry (server/compliance_frameworks.js), so this card can
+// never advertise a framework the compliance report does not map.
+const LOG_FRAMEWORKS_SHOWN = 6
+function AuditLogCard({ t }) {
+  const log = t('home.prove.log')
+  const names = COMPLIANCE_FRAMEWORKS.map((f) => f.name)
+  return (
+    <div className="wm-log" data-reveal>
+      <div className="wm-log-head"><span className="d r" /><span className="d y" /><span className="d g" /><b>{log.title}</b><span className="wm-log-task">{log.task}</span></div>
+      <ol className="wm-log-lines" aria-label={log.title}>
+        {log.lines.map((l, i) => (
+          <li key={i} className={`s-${l.s}`}>
+            <span className="wm-log-at" dir="ltr">{l.at}</span>
+            <span className="wm-log-k">{l.k}</span>
+            <span className="wm-log-m">
+              {l.s === 'ok' && <Check size={11} strokeWidth={3} aria-hidden="true" />}
+              {l.s === 'warn' && <AlertTriangle size={11} aria-hidden="true" />}
+              {l.m}
+            </span>
+          </li>
+        ))}
+      </ol>
+      <div className="wm-log-seal"><Fingerprint size={14} aria-hidden="true" /> <b>{log.sealed}</b> <code dir="ltr">sha256:9f3c2a...b71e</code></div>
+      <div className="wm-log-fw">
+        <span className="wm-log-fwlbl">{t('home.prove.frameworksLbl', { n: names.length })}</span>
+        {names.slice(0, LOG_FRAMEWORKS_SHOWN).map((n) => <span key={n} className="wm-log-chip" dir="ltr">{n}</span>)}
+        {names.length > LOG_FRAMEWORKS_SHOWN && <span className="wm-log-chip more">{t('home.prove.more', { n: names.length - LOG_FRAMEWORKS_SHOWN })}</span>}
+      </div>
+    </div>
+  )
+}
+
 // Two compact teaser cards under the hero: our strongest security and privacy
 // facts, each one true of the product today. Both route to the showcase page.
 function TrustDuo({ nav, t }) {
@@ -1353,6 +1511,72 @@ const CSS = `
 .wm:not([data-wm="dark"]) .wm-notchat{background:linear-gradient(180deg,rgba(255,154,77,.06),transparent 60%)}
 /* FIELD VIGNETTES - the four real-screen pictures under the field chips. */
 .wm-fv{margin-top:22px}
+/* PROVE - proof and compliance: four light fact tiles (2x2) beside ONE dark
+   product card, the audit log. 7/5 split, stacked under 900px, tiles 1-up
+   under 560px. The dark card paints the design system's product-* tokens
+   (product-surface #0b1424, product-ink #e6edf7, product-muted #9aa6b8,
+   product-accent #8cf5c4, product-accent-2 #39d3ff, product-redact #ffd27a)
+   as its own variables, so it stays dark in BOTH page themes on purpose: that
+   contrast is the signature. Titles fall back to --tx where the light-only
+   --ink-brand is not defined (the opt-in dark theme), so nothing goes
+   dark-on-dark. */
+.wm-prove{border-top:1px solid var(--line)}
+.wm-prove-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:28px;align-items:center;margin-top:30px}
+.wm-prove-grid>*{min-width:0}
+.wm-prove-points{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.wm-prove-points li{display:flex;gap:12px;align-items:flex-start;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 16px 15px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 14px 30px -24px rgba(17,23,38,.2)}
+.wm-prove-points li>div{min-width:0}
+.wm-prove-ic{display:inline-flex;align-items:center;justify-content:center;flex:none;width:38px;height:38px;border-radius:11px;color:#fff;background:linear-gradient(135deg,#10a271,#0a93c4);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 8px 18px -8px rgba(10,147,196,.6)}
+.wm-prove-points li b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:16px;letter-spacing:-.01em;line-height:1.25;color:var(--ink-brand,var(--tx));margin-bottom:4px}
+.wm-prove-points li p{margin:0;font-size:13.5px;line-height:1.5;color:var(--mut)}
+.wm-log{--pl-s:#0b1424;--pl-s2:#131f33;--pl-line:#24324a;--pl-ink:#e6edf7;--pl-mut:#9aa6b8;--pl-acc:#8cf5c4;--pl-acc2:#39d3ff;--pl-redact:#ffd27a;
+  background:var(--pl-s);color:var(--pl-ink);border:1px solid var(--pl-line);border-radius:20px;padding:14px 16px 16px;min-width:0;max-width:100%;overflow:hidden;
+  box-shadow:0 24px 64px rgba(6,42,34,.22),0 4px 12px rgba(12,18,34,.12)}
+.wm-log>*{min-width:0}
+.wm-log-head{display:flex;align-items:center;gap:7px;font-size:13px;padding:2px 2px 12px;border-bottom:1px solid var(--pl-line)}
+.wm-log-head .d{width:9px;height:9px;border-radius:50%;flex:none}
+.wm-log-head b{font-family:"Bricolage Grotesque",sans-serif;margin-left:6px;white-space:nowrap}
+.wm-log-task{margin-left:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11.5px;color:var(--pl-mut)}
+.wm-log-lines{list-style:none;margin:0;padding:12px 0 0;display:flex;flex-direction:column;gap:7px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;line-height:1.5}
+.wm-log-lines li{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:0 12px;align-items:baseline;min-width:0}
+.wm-log-at{color:var(--pl-mut);font-size:11px;white-space:nowrap}
+.wm-log-k{color:var(--pl-acc2);white-space:nowrap}
+.wm-log-m{display:inline-flex;align-items:center;flex-wrap:wrap;gap:5px;min-width:0;overflow-wrap:anywhere;color:var(--pl-ink)}
+.wm-log-m svg{flex:none}
+.wm-log-lines li.s-ok .wm-log-m{color:var(--pl-acc)}
+.wm-log-lines li.s-warn .wm-log-m{color:var(--pl-redact)}
+.wm-log-lines li.s-seal .wm-log-m{color:var(--pl-acc2)}
+.wm-log-seal{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:14px;padding:9px 11px;border-radius:11px;border:1px solid rgba(140,245,196,.3);background:rgba(140,245,196,.07);font-size:12px}
+.wm-log-seal svg{color:var(--pl-acc);flex:none}
+.wm-log-seal b{font-weight:700;color:var(--pl-ink)}
+.wm-log-seal code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;color:var(--pl-mut);overflow-wrap:anywhere}
+.wm-log-fw{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:12px}
+.wm-log-fwlbl{flex:0 0 100%;font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--pl-mut);margin-bottom:2px}
+.wm-log-chip{display:inline-flex;align-items:center;white-space:nowrap;font-size:11px;font-weight:600;color:var(--pl-ink);border:1px solid var(--pl-line);background:var(--pl-s2);border-radius:999px;padding:4px 10px}
+.wm-log-chip.more{color:var(--pl-acc);border-color:rgba(140,245,196,.35)}
+.wm:not([data-wm="dark"]) .wm-prove{background:linear-gradient(180deg,rgba(10,157,102,.04),transparent 55%)}
+@media(max-width:900px){.wm-prove-grid{grid-template-columns:1fr;gap:18px}}
+@media(max-width:560px){.wm-prove-points{grid-template-columns:1fr;gap:10px}.wm-log{border-radius:16px;padding:12px 12px 14px}}
+/* ENTERPRISE - "how a company runs": four shared WorkCards under the ledger
+   (roles + flows, team templates, company brain, recommended practices).
+   4-up, 2-up under 1080px, 1-up under 560px; min-width:0 so a long title
+   wraps inside its card and the proof chips wrap as a row. */
+.wm-run{margin-top:34px;padding-top:28px;border-top:1px solid var(--line)}
+.wm-run-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 24px;margin-bottom:18px}
+.wm-run-head h3{margin:0;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(22px,2.6vw,30px);letter-spacing:-.02em;line-height:1.1;color:var(--ink-brand,var(--tx))}
+.wm-run-head p{margin:0;color:var(--mut);font-size:15px;line-height:1.5;max-width:52ch}
+.wm-run-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.wm-run-grid .wc-card{min-width:0}
+@media(max-width:1080px){.wm-run-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.wm-run-grid{grid-template-columns:1fr;gap:12px}}
+/* EVERYWHERE - platforms, languages, personalization: three shared WorkCards,
+   1-up under 900px. The language chips (registry endonyms, several scripts)
+   live in the proof strip, which wraps as a row; each chip is nowrap. */
+.wm-every{border-top:1px solid var(--line)}
+.wm-every-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:30px}
+.wm-every-grid .wc-card{min-width:0}
+.wm:not([data-wm="dark"]) .wm-every{background:linear-gradient(180deg,rgba(10,134,207,.045),transparent 55%)}
+@media(max-width:900px){.wm-every-grid{grid-template-columns:1fr;gap:12px}}
 /* PROOF - the security/privacy duo sits under its own heading now; the duo's
    default top gap (44px, for the old headless placement) tightens to match. */
 .wm-proof .wm-duo{margin-top:30px}
