@@ -10,7 +10,9 @@
 // Visual system = the WorkCoPilot site (WorkMarketing.jsx, light theme): page
 // #f4f7fb, white hairline cards, deep-green display headings, green #0e9f6e and
 // blue #0a84c2 as the emphasis accents, orange #f26a43 for the primary CTA only.
-// US spelling, no em-dashes.
+// US spelling, no em-dashes. Every user-facing string comes from the
+// affiliatePage i18n namespace (src/i18n/locales/en/affiliatePage.js); the
+// icons, ids and layout stay in code.
 import React, { useEffect, useState, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
@@ -22,6 +24,7 @@ import {
 import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
 import { api } from '../api.js'
 import useSeo from '../useSeo.js'
+import { useT } from '../i18n/index.jsx'
 
 const usd = (n) => `$${(Number(n) || 0).toFixed(2)}`
 const fmtDate = (v) => {
@@ -32,15 +35,17 @@ const fmtDate = (v) => {
 }
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 // Social platforms we ask for (key = what the server stores under `socials`).
-// lucide has no brand marks, so each gets a short text monogram instead.
+// lucide has no brand marks, so each gets a short text monogram instead. The
+// labels are the networks' own names (never translated); "Other" and every
+// placeholder come from affiliatePage.form.socials.*.
 const SOCIALS = [
-  { k: 'tiktok', label: 'TikTok', mark: 'TT', ph: '@yourhandle', at: true },
-  { k: 'instagram', label: 'Instagram', mark: 'IG', ph: '@yourhandle', at: true },
-  { k: 'youtube', label: 'YouTube', mark: 'YT', ph: '@channel or channel link', at: false },
-  { k: 'twitter', label: 'X (Twitter)', mark: 'X', ph: '@yourhandle', at: true },
-  { k: 'facebook', label: 'Facebook', mark: 'FB', ph: 'Page name or link', at: false },
-  { k: 'linkedin', label: 'LinkedIn', mark: 'in', ph: 'Profile or company page link', at: false },
-  { k: 'other', label: 'Other', mark: '+', ph: 'Newsletter, podcast, Discord, blog...', at: false },
+  { k: 'tiktok', label: 'TikTok', mark: 'TT', at: true },
+  { k: 'instagram', label: 'Instagram', mark: 'IG', at: true },
+  { k: 'youtube', label: 'YouTube', mark: 'YT', at: false },
+  { k: 'twitter', label: 'X (Twitter)', mark: 'X', at: true },
+  { k: 'facebook', label: 'Facebook', mark: 'FB', at: false },
+  { k: 'linkedin', label: 'LinkedIn', mark: 'in', at: false },
+  { k: 'other', label: null, mark: '+', at: false },
 ]
 const EMPTY_SOCIALS = Object.fromEntries(SOCIALS.map((s) => [s.k, '']))
 // Fallback commission shown ONLY while /api/affiliate/public has not delivered a
@@ -49,9 +54,10 @@ const EMPTY_SOCIALS = Object.fromEntries(SOCIALS.map((s) => [s.k, '']))
 const DEFAULT_RATE_PCT = 30
 
 export default function AffiliatePage() {
+  const t = useT()
   useSeo({
-    title: 'WorkCoPilot Affiliate Program - Partner with AdmireVeda',
-    description: 'Recommend WorkCoPilot and earn a share of every referred person\'s first payment, paid out through Stripe. Applications are reviewed by our team.',
+    title: t('affiliatePage.seo.title'),
+    description: t('affiliatePage.seo.description'),
     path: '/affiliate',
   })
   const [sp, setSp] = useSearchParams()
@@ -78,7 +84,7 @@ export default function AffiliatePage() {
         const [pubR, meR] = await Promise.allSettled([api.affiliatePublic(), api.workMe()])
         if (!alive) return
         if (pubR.status === 'fulfilled' && pubR.value) setPub(pubR.value)
-        else setPubErr((pubR.reason && pubR.reason.message) || 'Could not load the program details.')
+        else setPubErr((pubR.reason && pubR.reason.message) || t('affiliatePage.errors.loadProgram'))
         const m = meR.status === 'fulfilled' && meR.value ? meR.value : { signedIn: false, user: null }
         setMe(m)
         if (!m.signedIn) return
@@ -91,13 +97,13 @@ export default function AffiliatePage() {
               if (alive) setPayoutsEnabled(r.payoutsEnabled == null ? null : !!r.payoutsEnabled)
               if (alive) {
                 setConnectNote(r.onboarded
-                  ? 'Stripe setup is complete. Payouts are active on your account.'
+                  ? t('affiliatePage.connect.complete')
                   : connect === 'refresh'
-                    ? 'Your Stripe setup link expired or was interrupted. You can resume it below.'
-                    : 'Stripe has not finished verifying your details yet. You can resume setup below.')
+                    ? t('affiliatePage.connect.expired')
+                    : t('affiliatePage.connect.pending'))
               }
             } catch (e) {
-              if (alive) setConnectNote(`Could not refresh your Stripe status: ${(e && e.message) || 'please try again.'}`)
+              if (alive) setConnectNote(t('affiliatePage.errors.refreshStripe', { reason: (e && e.message) || t('affiliatePage.errors.refreshStripeFallback') }))
             }
             const next = new URLSearchParams(sp); next.delete('connect')
             setSp(next, { replace: true })
@@ -105,7 +111,7 @@ export default function AffiliatePage() {
           if (alive) setDash(d)
         } catch (e) {
           if (e && e.status === 404) return   // signed in, not an affiliate: landing view
-          if (alive) setDashErr((e && e.message) || 'Could not load your affiliate dashboard.')
+          if (alive) setDashErr((e && e.message) || t('affiliatePage.errors.loadDashboard'))
         }
       } finally { if (alive) setLoading(false) }
     })()
@@ -122,15 +128,15 @@ export default function AffiliatePage() {
       <style>{CSS}</style>
       <header className="af-nav">
         <div className="af-wrap af-nav-in">
-          <a href="/" aria-label="AdmireVeda home"><AdmireVedaLogo size={26} /></a>
-          <a className="af-back" href="/"><ArrowLeft size={15} /> Back to WorkCoPilot</a>
+          <a href="/" aria-label={t('affiliatePage.nav.homeAria')}><AdmireVedaLogo size={26} /></a>
+          <a className="af-back" href="/"><ArrowLeft size={15} /> {t('affiliatePage.nav.back')}</a>
         </div>
       </header>
 
       <main className="af-main">
         <div className="af-wrap">
           {loading ? (
-            <div className="af-loading"><Loader2 size={20} className="af-spin" /> Loading the affiliate program</div>
+            <div className="af-loading"><Loader2 size={20} className="af-spin" /> {t('affiliatePage.loading')}</div>
           ) : dash ? (
             <Dashboard d={dash} payoutsEnabled={payoutsEnabled} connectNote={connectNote} onDashChange={setDash} />
           ) : (
@@ -141,11 +147,11 @@ export default function AffiliatePage() {
 
       <footer className="af-foot">
         <div className="af-wrap af-foot-in">
-          <span>&copy; {new Date().getFullYear()} COE Security LLC &middot; WorkCoPilot by AdmireVeda</span>
+          <span>&copy; {new Date().getFullYear()} {t('affiliatePage.footer.copyright')}</span>
           <nav className="af-foot-links">
-            <a href="/workcopilot/terms">Terms</a>
-            <a href="/workcopilot/privacy">Privacy</a>
-            <a href="mailto:support@admireveda.com">Support</a>
+            <a href="/workcopilot/terms">{t('affiliatePage.footer.terms')}</a>
+            <a href="/workcopilot/privacy">{t('affiliatePage.footer.privacy')}</a>
+            <a href="mailto:support@admireveda.com">{t('affiliatePage.footer.support')}</a>
           </nav>
         </div>
       </footer>
@@ -166,6 +172,7 @@ function SecHead({ icon: Ic, kicker, title, sub }) {
 }
 
 function Landing({ pub, pubErr, rate, me, dashErr }) {
+  const t = useT()
   const user = me && me.user
   const rateWord = `${rate}%`
   // Primary CTA: glide to the form and put the cursor in the first field.
@@ -182,34 +189,34 @@ function Landing({ pub, pubErr, rate, me, dashErr }) {
       {/* HERO: copy left, the real illustration right. Balanced, no voids. */}
       <section className="af-hero">
         <div className="af-hero-copy">
-          <div className="af-eyebrow"><Megaphone size={14} /> Affiliate program</div>
-          <h1 className="af-h1">Recommend WorkCoPilot. <em>Earn {rateWord} on every referral.</em></h1>
+          <div className="af-eyebrow"><Megaphone size={14} /> {t('affiliatePage.hero.eyebrow')}</div>
+          <h1 className="af-h1">{t.rich('affiliatePage.hero.h1', { rate: rateWord })}</h1>
           <p className="af-lead">
-            You already point people to tools that help them work better. Make it pay: earn <b>{rateWord} of every referred person&rsquo;s first payment</b>, sent automatically through Stripe. The people you refer get <b>a free month</b> when they choose annual billing.
+            {t.rich('affiliatePage.hero.lead', { rate: rateWord })}
           </p>
           <div className="af-hero-cta">
-            <button type="button" className="af-cta" onClick={goApply}>Apply to become an affiliate <ArrowRight size={16} /></button>
-            <a className="af-textlink" href="/">See what you&rsquo;d be recommending <ArrowRight size={14} /></a>
+            <button type="button" className="af-cta" onClick={goApply}>{t('affiliatePage.hero.apply')} <ArrowRight size={16} /></button>
+            <a className="af-textlink" href="/">{t('affiliatePage.hero.see')} <ArrowRight size={14} /></a>
           </div>
-          <ul className="af-trust" aria-label="Program assurances">
-            <li><Check size={14} /> About 2 minutes to apply</li>
-            <li><Check size={14} /> Reviewed by a person</li>
-            <li><Check size={14} /> Automatic Stripe payouts</li>
+          <ul className="af-trust" aria-label={t('affiliatePage.hero.trustAria')}>
+            <li><Check size={14} /> {t('affiliatePage.hero.trust1')}</li>
+            <li><Check size={14} /> {t('affiliatePage.hero.trust2')}</li>
+            <li><Check size={14} /> {t('affiliatePage.hero.trust3')}</li>
           </ul>
         </div>
         <figure className="af-hero-fig">
-          <img src="/affiliate-hero.webp" alt="Diverse creators sharing WorkCoPilot, with a rising growth arrow and coins" width="1600" height="1066" fetchpriority="high" decoding="async" />
-          <figcaption className="af-fig-chip earn"><Coins size={15} /> <b>Earn {rateWord}</b> of each first payment</figcaption>
-          <figcaption className="af-fig-chip gift"><Gift size={15} /> <b>Free month</b> for your audience</figcaption>
+          <img src="/affiliate-hero.webp" alt={t('affiliatePage.hero.imgAlt')} width="1600" height="1066" fetchpriority="high" decoding="async" />
+          <figcaption className="af-fig-chip earn"><Coins size={15} /> {t.rich('affiliatePage.hero.chipEarn', { rate: rateWord })}</figcaption>
+          <figcaption className="af-fig-chip gift"><Gift size={15} /> {t.rich('affiliatePage.hero.chipGift')}</figcaption>
         </figure>
       </section>
 
       {/* at-a-glance stats, in the site's stat-tile language */}
-      <div className="af-stats3" aria-label="Program at a glance">
-        <div className="af-stat3"><b>{rateWord}</b><span>of each referral&rsquo;s first payment</span></div>
-        <div className="af-stat3"><b>Stripe</b><span>automatic payouts to your account</span></div>
-        <div className="af-stat3"><b>1 month</b><span>free for everyone you refer, on annual billing</span></div>
-        <div className="af-stat3"><b>2 min</b><span>to apply; name and email is all we need</span></div>
+      <div className="af-stats3" aria-label={t('affiliatePage.glance.aria')}>
+        <div className="af-stat3"><b>{rateWord}</b><span>{t('affiliatePage.glance.rate')}</span></div>
+        <div className="af-stat3"><b>Stripe</b><span>{t('affiliatePage.glance.stripe')}</span></div>
+        <div className="af-stat3"><b>{t('affiliatePage.glance.month')}</b><span>{t('affiliatePage.glance.monthSub')}</span></div>
+        <div className="af-stat3"><b>{t('affiliatePage.glance.min')}</b><span>{t('affiliatePage.glance.minSub')}</span></div>
       </div>
 
       <Boosters rateWord={rateWord} />
@@ -218,27 +225,27 @@ function Landing({ pub, pubErr, rate, me, dashErr }) {
 
       {/* APPLY */}
       <section className="af-apply" id="apply">
-        <SecHead icon={Send} kicker="Apply" title="Two minutes now. A referral link for as long as you want it." sub="Name and email are all we need. The rest helps us say yes faster. You get a confirmation email right away, and we email you the moment we decide." />
+        <SecHead icon={Send} kicker={t('affiliatePage.applySec.kicker')} title={t('affiliatePage.applySec.title')} sub={t('affiliatePage.applySec.sub')} />
         <div className="af-apply-grid">
           <div className="af-apply-side">
             <PerkCard rateWord={rateWord} />
             {pubErr ? <div className="af-note warn"><AlertTriangle size={14} /> {pubErr}</div> : null}
             {dashErr ? <div className="af-note warn"><AlertTriangle size={14} /> {dashErr}</div> : null}
             <div className="af-card af-rulescard">
-              <div className="af-card-k"><ShieldCheck size={14} /> The fine print, in plain words</div>
+              <div className="af-card-k"><ShieldCheck size={14} /> {t('affiliatePage.applySec.rulesK')}</div>
               <ul className="af-rules">
-                <li><Check size={15} /> <span>Commission is <b>{rateWord} of the referred person&rsquo;s first payment</b>. Renewals and later purchases do not earn commission.</span></li>
-                <li><Check size={15} /> <span>Payouts are sent through <b>Stripe</b> once your pending balance reaches the program minimum, shown in your dashboard.</span></li>
-                <li><Check size={15} /> <span>A referral counts when the person signs up through your link and then pays.</span></li>
-                <li><Check size={15} /> <span>Honest promotion only: no spam, no misleading claims, no bidding on the WorkCoPilot or AdmireVeda names in paid search.</span></li>
+                <li><Check size={15} /> <span>{t.rich('affiliatePage.applySec.rule1', { rate: rateWord })}</span></li>
+                <li><Check size={15} /> <span>{t.rich('affiliatePage.applySec.rule2')}</span></li>
+                <li><Check size={15} /> <span>{t('affiliatePage.applySec.rule3')}</span></li>
+                <li><Check size={15} /> <span>{t('affiliatePage.applySec.rule4')}</span></li>
               </ul>
             </div>
           </div>
           {pub && pub.enabled === false ? (
             <div className="af-card af-closed">
               <div className="af-closed-ic"><PauseCircle size={26} /></div>
-              <h3>Affiliate applications are closed right now.</h3>
-              <p>We are not taking new affiliates at the moment. Check back later, or <a href="/workcopilot/contact">contact us</a> if you have a partnership in mind.</p>
+              <h3>{t('affiliatePage.applySec.closedTitle')}</h3>
+              <p>{t.rich('affiliatePage.applySec.closedBody', null, { a: (c) => <a href="/workcopilot/contact">{c}</a> })}</p>
             </div>
           ) : (
             <ApplyForm user={user} />
@@ -250,22 +257,25 @@ function Landing({ pub, pubErr, rate, me, dashErr }) {
 }
 
 // Why people join: four white cards with the site's green->blue icon tiles.
-const BOOSTERS = (rateWord) => [
-  { ic: Coins, t: 'Real money for referrals you already make', d: `${rateWord} of each referred person's first payment, credited to you the moment it clears.` },
-  { ic: Gift, t: 'A gift for your audience, not a pitch', d: 'Everyone who signs up through your link gets a free month on annual billing. You are handing them a deal.' },
-  { ic: CreditCard, t: 'Automatic Stripe payouts', d: 'Connect your Stripe account once. Earnings are paid out to you; we never see your bank details.' },
-  { ic: Zap, t: 'Low friction, human review', d: 'About two minutes to apply. A person reads every application and emails you the decision.' },
+// Icons + ids live here; the title/description per id come from
+// affiliatePage.boosters.<id>.t / .d ({rate} interpolated).
+const BOOSTERS = [
+  { ic: Coins, k: 'money' },
+  { ic: Gift, k: 'gift' },
+  { ic: CreditCard, k: 'stripe' },
+  { ic: Zap, k: 'review' },
 ]
 function Boosters({ rateWord }) {
+  const t = useT()
   return (
     <section className="af-sec">
-      <SecHead icon={Sparkles} kicker="Why affiliates join" title="You earn. Your audience saves. Everyone wins." sub="A program built so the recommendation is good for the people you send, not just for you." />
+      <SecHead icon={Sparkles} kicker={t('affiliatePage.boosters.kicker')} title={t('affiliatePage.boosters.title')} sub={t('affiliatePage.boosters.sub')} />
       <div className="af-boost">
-        {BOOSTERS(rateWord).map((b) => (
-          <div className="af-card af-boost-card" key={b.t}>
+        {BOOSTERS.map((b) => (
+          <div className="af-card af-boost-card" key={b.k}>
             <span className="af-tile"><b.ic size={20} /></span>
-            <b>{b.t}</b>
-            <p>{b.d}</p>
+            <b>{t(`affiliatePage.boosters.${b.k}.t`, { rate: rateWord })}</b>
+            <p>{t(`affiliatePage.boosters.${b.k}.d`, { rate: rateWord })}</p>
           </div>
         ))}
       </div>
@@ -274,27 +284,29 @@ function Boosters({ rateWord }) {
 }
 
 // How it works: five connected steps on a green->blue track. Horizontal on
-// desktop, a vertical timeline on phones (CSS handles the swap).
-const FLOW = (rateWord) => [
-  { ic: Send, t: 'Apply', d: 'Fill in the short form below. A confirmation lands in your inbox right away.' },
-  { ic: Search, t: 'We review', d: 'A person reads every application, including your audience and social channels.' },
-  { ic: KeyRound, t: 'Approved', d: 'Your approval email has a link to set your password and open your dashboard.' },
-  { ic: Share2, t: 'Share your link', d: 'Your personal referral link and code are ready. Share them wherever your audience listens.' },
-  { ic: Wallet, t: 'Earn', d: `You get ${rateWord} of each referral's first payment. They get a free month on annual billing.` },
+// desktop, a vertical timeline on phones (CSS handles the swap). Copy per step
+// id comes from affiliatePage.flow.<id>.t / .d.
+const FLOW = [
+  { ic: Send, k: 'apply' },
+  { ic: Search, k: 'review' },
+  { ic: KeyRound, k: 'approved' },
+  { ic: Share2, k: 'share' },
+  { ic: Wallet, k: 'earn' },
 ]
 function Flow({ rateWord }) {
+  const t = useT()
   return (
     <section className="af-sec af-flow-sec">
-      <SecHead icon={Sparkles} kicker="How it works" title="Five steps, from application to payout." />
+      <SecHead icon={Sparkles} kicker={t('affiliatePage.flow.kicker')} title={t('affiliatePage.flow.title')} />
       <ol className="af-flow">
-        {FLOW(rateWord).map((s, i) => (
-          <li key={s.t} className="af-flow-step" style={{ '--i': i }}>
+        {FLOW.map((s, i) => (
+          <li key={s.k} className="af-flow-step" style={{ '--i': i }}>
             <div className="af-flow-node">
               <span className="af-flow-ic"><s.ic size={22} /></span>
               <span className="af-flow-n">{i + 1}</span>
             </div>
-            <b>{s.t}</b>
-            <p>{s.d}</p>
+            <b>{t(`affiliatePage.flow.${s.k}.t`, { rate: rateWord })}</b>
+            <p>{t(`affiliatePage.flow.${s.k}.d`, { rate: rateWord })}</p>
           </li>
         ))}
       </ol>
@@ -304,17 +316,18 @@ function Flow({ rateWord }) {
 
 // Who you would be recommending it to: the site's own photos, honest captions.
 function Audience() {
+  const t = useT()
   return (
     <section className="af-sec af-aud">
-      <SecHead icon={Users} kicker="Who it is for" title="Anyone with work on a screen." sub="WorkCoPilot guides people step by step through any tool, any process. If your audience ever gets stuck at a keyboard, you have something real to recommend." />
+      <SecHead icon={Users} kicker={t('affiliatePage.audience.kicker')} title={t('affiliatePage.audience.title')} sub={t('affiliatePage.audience.sub')} />
       <div className="af-aud-grid">
         <figure className="af-photo">
-          <img src="/people-done.jpg" alt="Two colleagues solving a hard problem together at a laptop" loading="lazy" width="1200" height="900" />
-          <figcaption><b>Teams and small companies</b><span>Specialist work shipped in-house, guided to the exact next step.</span></figcaption>
+          <img src="/people-done.jpg" alt={t('affiliatePage.audience.teamsAlt')} loading="lazy" width="1200" height="900" />
+          <figcaption><b>{t('affiliatePage.audience.teamsT')}</b><span>{t('affiliatePage.audience.teamsD')}</span></figcaption>
         </figure>
         <figure className="af-photo">
-          <img src="/people-focus.jpg" alt="A professional finishing a complex task at a laptop" loading="lazy" width="1200" height="900" />
-          <figcaption><b>Individuals and learners</b><span>Unstuck in seconds, with the precise click, command or setting.</span></figcaption>
+          <img src="/people-focus.jpg" alt={t('affiliatePage.audience.soloAlt')} loading="lazy" width="1200" height="900" />
+          <figcaption><b>{t('affiliatePage.audience.soloT')}</b><span>{t('affiliatePage.audience.soloD')}</span></figcaption>
         </figure>
       </div>
     </section>
@@ -323,23 +336,24 @@ function Audience() {
 
 // The deal in one card: what you earn, what they get.
 function PerkCard({ rateWord }) {
+  const t = useT()
   return (
-    <div className="af-card af-perk" aria-label="What you earn and what your referrals get">
+    <div className="af-card af-perk" aria-label={t('affiliatePage.perk.aria')}>
       <div className="af-perk-row">
         <span className="af-tile"><Wallet size={20} /></span>
         <div>
-          <span className="af-perk-k">You earn</span>
+          <span className="af-perk-k">{t('affiliatePage.perk.youEarn')}</span>
           <b className="af-perk-v">{rateWord}</b>
-          <p>of each referred person&rsquo;s first payment, paid out through Stripe.</p>
+          <p>{t('affiliatePage.perk.youEarnSub')}</p>
         </div>
       </div>
       <div className="af-perk-plus" aria-hidden><span>+</span></div>
       <div className="af-perk-row">
         <span className="af-tile"><Gift size={20} /></span>
         <div>
-          <span className="af-perk-k">They get</span>
-          <b className="af-perk-v">A free month</b>
-          <p>when they sign up through your link and choose annual billing.</p>
+          <span className="af-perk-k">{t('affiliatePage.perk.theyGet')}</span>
+          <b className="af-perk-v">{t('affiliatePage.perk.freeMonth')}</b>
+          <p>{t('affiliatePage.perk.theyGetSub')}</p>
         </div>
       </div>
     </div>
@@ -347,6 +361,7 @@ function PerkCard({ rateWord }) {
 }
 
 function ApplyForm({ user }) {
+  const t = useT()
   const [form, setForm] = useState({ name: '', email: '', phone: '', website: '', audience: '', notes: '', socials: { ...EMPTY_SOCIALS } })
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
@@ -370,8 +385,8 @@ function ApplyForm({ user }) {
     if (e) e.preventDefault()
     if (busy) return
     const name = form.name.trim(), email = form.email.trim()
-    if (!name) { setErr('Please add your name.'); return }
-    if (!email || !EMAIL_RE.test(email)) { setErr('Please add a valid email address.'); return }
+    if (!name) { setErr(t('affiliatePage.form.errName')); return }
+    if (!email || !EMAIL_RE.test(email)) { setErr(t('affiliatePage.form.errEmail')); return }
     setBusy(true); setErr('')
     try {
       // Only the socials they filled in travel (the server trims anyway).
@@ -387,8 +402,8 @@ function ApplyForm({ user }) {
       })
       setDone(true)
     } catch (error) {
-      if (error && error.status === 409) setErr((error && error.message) || 'An application for this email already exists. We will be in touch.')
-      else setErr((error && error.message) || 'Could not send your application. Please try again.')
+      if (error && error.status === 409) setErr((error && error.message) || t('affiliatePage.form.errDuplicate'))
+      else setErr((error && error.message) || t('affiliatePage.form.errSend'))
     } finally { setBusy(false) }
   }
 
@@ -396,58 +411,62 @@ function ApplyForm({ user }) {
     return (
       <div className="af-card af-ok">
         <div className="af-ok-ic"><Check size={26} /></div>
-        <h3>Application received.</h3>
-        <p>Thank you, {form.name.split(' ')[0] || 'there'}. We emailed you a confirmation at <b>{form.email}</b>. We review every application, and you&rsquo;ll get an email the moment we decide. If approved, that email has a link to set your password and open your dashboard.</p>
-        <ul className="af-ok-steps" aria-label="What happens next">
-          <li><span className="af-ok-dot"><Mail size={13} /></span><span><b>Now:</b> a confirmation is in your inbox.</span></li>
-          <li><span className="af-ok-dot"><Search size={13} /></span><span><b>Next:</b> a person reviews your application.</span></li>
-          <li><span className="af-ok-dot"><KeyRound size={13} /></span><span><b>If approved:</b> set your password from the email and open your dashboard.</span></li>
+        <h3>{t('affiliatePage.form.doneTitle')}</h3>
+        <p>{t.rich('affiliatePage.form.doneBody', { name: form.name.split(' ')[0] || t('affiliatePage.form.thereFallback'), email: form.email })}</p>
+        <ul className="af-ok-steps" aria-label={t('affiliatePage.form.nextAria')}>
+          <li><span className="af-ok-dot"><Mail size={13} /></span><span>{t.rich('affiliatePage.form.nextNow')}</span></li>
+          <li><span className="af-ok-dot"><Search size={13} /></span><span>{t.rich('affiliatePage.form.nextReview')}</span></li>
+          <li><span className="af-ok-dot"><KeyRound size={13} /></span><span>{t.rich('affiliatePage.form.nextApproved')}</span></li>
         </ul>
-        <a className="af-cta alt" href="/">Back to WorkCoPilot</a>
+        <a className="af-cta alt" href="/">{t('affiliatePage.form.backHome')}</a>
       </div>
     )
   }
 
+  const opt = <span className="opt">{t('affiliatePage.form.optional')}</span>
   return (
     <div className="af-card af-formcard">
       <div className="af-formhead">
         <span className="af-tile sm"><Send size={16} /></span>
-        <div><b>Your affiliate application</b><span>About two minutes. Name and email are all we need; everything else helps us say yes faster.</span></div>
+        <div><b>{t('affiliatePage.form.headTitle')}</b><span>{t('affiliatePage.form.headSub')}</span></div>
       </div>
       <form className="af-form" onSubmit={submit} noValidate>
       {user && user.email ? (
-        <div className="af-note"><UserCheck size={14} /> You are signed in as <b>{user.email}</b>. You can apply with this account, and your affiliate dashboard will live under it once approved.</div>
+        <div className="af-note"><UserCheck size={14} /> {t.rich('affiliatePage.form.signedInAs', { email: user.email })}</div>
       ) : null}
-      <div className="af-form-sec"><span className="af-form-sec-ic"><UserCheck size={13} /></span> Contact</div>
+      <div className="af-form-sec"><span className="af-form-sec-ic"><UserCheck size={13} /></span> {t('affiliatePage.form.secContact')}</div>
       <div className="af-grid2">
-        <div className="af-field"><label htmlFor="af-name">Your name</label><input id="af-name" value={form.name} maxLength={120} autoComplete="name" onChange={(e) => set('name', e.target.value)} placeholder="Alex Morgan" /></div>
-        <div className="af-field"><label htmlFor="af-email">Email</label><input id="af-email" type="email" value={form.email} maxLength={160} autoComplete="email" onChange={(e) => set('email', e.target.value)} placeholder="you@yourdomain.com" /></div>
+        <div className="af-field"><label htmlFor="af-name">{t('affiliatePage.form.nameLabel')}</label><input id="af-name" value={form.name} maxLength={120} autoComplete="name" onChange={(e) => set('name', e.target.value)} placeholder={t('affiliatePage.form.namePlaceholder')} /></div>
+        <div className="af-field"><label htmlFor="af-email">{t('affiliatePage.form.emailLabel')}</label><input id="af-email" type="email" value={form.email} maxLength={160} autoComplete="email" onChange={(e) => set('email', e.target.value)} placeholder={t('affiliatePage.form.emailPlaceholder')} /></div>
       </div>
       <div className="af-grid2">
-        <div className="af-field"><label htmlFor="af-phone">Phone <span className="opt">(optional)</span></label><div className="af-prefix"><Phone size={14} /><input id="af-phone" type="tel" value={form.phone} maxLength={40} inputMode="tel" autoComplete="tel" onChange={(e) => set('phone', e.target.value)} placeholder="+1 555 123 4567" /></div></div>
-        <div className="af-field"><label htmlFor="af-web">Website <span className="opt">(optional)</span></label><input id="af-web" value={form.website} maxLength={300} inputMode="url" autoComplete="url" onChange={(e) => set('website', e.target.value)} placeholder="https://yoursite.com" /></div>
+        <div className="af-field"><label htmlFor="af-phone">{t('affiliatePage.form.phoneLabel')} {opt}</label><div className="af-prefix"><Phone size={14} /><input id="af-phone" type="tel" value={form.phone} maxLength={40} inputMode="tel" autoComplete="tel" onChange={(e) => set('phone', e.target.value)} placeholder={t('affiliatePage.form.phonePlaceholder')} /></div></div>
+        <div className="af-field"><label htmlFor="af-web">{t('affiliatePage.form.websiteLabel')} {opt}</label><input id="af-web" value={form.website} maxLength={300} inputMode="url" autoComplete="url" onChange={(e) => set('website', e.target.value)} placeholder={t('affiliatePage.form.websitePlaceholder')} /></div>
       </div>
 
-      <div className="af-form-sec"><span className="af-form-sec-ic"><AtSign size={13} /></span> Social media <span className="opt">(optional, but it is how we vet affiliates){socialCount ? ` - ${socialCount} added` : ''}</span></div>
+      <div className="af-form-sec"><span className="af-form-sec-ic"><AtSign size={13} /></span> {t('affiliatePage.form.secSocial')} <span className="opt">{t('affiliatePage.form.socialOptional')}{socialCount ? t('affiliatePage.form.socialAdded', { n: socialCount }) : ''}</span></div>
       <div className="af-socials">
-        {SOCIALS.map((s) => (
+        {SOCIALS.map((s) => {
+          const ph = t(`affiliatePage.form.socials.${s.k}`)
+          return (
           <div className="af-social" key={s.k}>
-            <label htmlFor={`af-so-${s.k}`}><span className={`af-social-mark m-${s.k}`} aria-hidden>{s.mark}</span>{s.label}</label>
+            <label htmlFor={`af-so-${s.k}`}><span className={`af-social-mark m-${s.k}`} aria-hidden>{s.mark}</span>{s.label || t('affiliatePage.form.socials.otherLabel')}</label>
             <div className={`af-prefix${s.at ? ' at' : ''}`}>
               {s.at ? <span className="af-at" aria-hidden>@</span> : null}
               <input id={`af-so-${s.k}`} value={form.socials[s.k]} maxLength={200} autoComplete="off" spellCheck={false}
-                onChange={(e) => setSocial(s.k, s.at ? e.target.value.replace(/^@+/, '') : e.target.value)} placeholder={s.at ? s.ph.replace(/^@/, '') : s.ph} />
+                onChange={(e) => setSocial(s.k, s.at ? e.target.value.replace(/^@+/, '') : e.target.value)} placeholder={s.at ? ph.replace(/^@/, '') : ph} />
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
 
-      <div className="af-form-sec"><span className="af-form-sec-ic"><Megaphone size={13} /></span> Your audience</div>
-      <div className="af-field"><label htmlFor="af-aud">Who is your audience? <span className="opt">(optional)</span></label><input id="af-aud" value={form.audience} maxLength={300} onChange={(e) => set('audience', e.target.value)} placeholder="For example: IT admins at small companies, bootcamp students, finance teams" /></div>
-      <div className="af-field"><label htmlFor="af-notes">Anything else <span className="opt">(optional)</span></label><textarea id="af-notes" rows={4} value={form.notes} maxLength={2000} onChange={(e) => set('notes', e.target.value)} placeholder="How you plan to share WorkCoPilot, or anything we should know." /></div>
+      <div className="af-form-sec"><span className="af-form-sec-ic"><Megaphone size={13} /></span> {t('affiliatePage.form.secAudience')}</div>
+      <div className="af-field"><label htmlFor="af-aud">{t('affiliatePage.form.audienceLabel')} {opt}</label><input id="af-aud" value={form.audience} maxLength={300} onChange={(e) => set('audience', e.target.value)} placeholder={t('affiliatePage.form.audiencePlaceholder')} /></div>
+      <div className="af-field"><label htmlFor="af-notes">{t('affiliatePage.form.notesLabel')} {opt}</label><textarea id="af-notes" rows={4} value={form.notes} maxLength={2000} onChange={(e) => set('notes', e.target.value)} placeholder={t('affiliatePage.form.notesPlaceholder')} /></div>
       {err ? <div className="af-err" role="alert"><AlertTriangle size={14} /> {err}</div> : null}
-      <button className="af-cta" type="submit" disabled={busy}>{busy ? <Loader2 size={16} className="af-spin" /> : <Send size={16} />} Send my application</button>
-      <p className="af-fine">By applying you agree to promote WorkCoPilot honestly. We only use these details to review your application and run the program. You get a confirmation email right away, and a decision email when we have reviewed it.</p>
+      <button className="af-cta" type="submit" disabled={busy}>{busy ? <Loader2 size={16} className="af-spin" /> : <Send size={16} />} {t('affiliatePage.form.send')}</button>
+      <p className="af-fine">{t('affiliatePage.form.fine')}</p>
       </form>
     </div>
   )
@@ -455,6 +474,7 @@ function ApplyForm({ user }) {
 
 /* ---------------------------------------------------------------- DASHBOARD */
 function Dashboard({ d, payoutsEnabled, connectNote, onDashChange }) {
+  const t = useT()
   const [copied, setCopied] = useState(false)
   const [onboardBusy, setOnboardBusy] = useState(false)
   const [onboardErr, setOnboardErr] = useState('')
@@ -482,8 +502,8 @@ function Dashboard({ d, payoutsEnabled, connectNote, onDashChange }) {
     try {
       const r = await api.affiliateConnectOnboard()
       if (r && r.url) { window.location = r.url; return }
-      setOnboardErr('Stripe did not return a setup link. Please try again in a moment.')
-    } catch (e) { setOnboardErr((e && e.message) || 'Could not start Stripe setup. Please try again.') }
+      setOnboardErr(t('affiliatePage.dash.errNoLink'))
+    } catch (e) { setOnboardErr((e && e.message) || t('affiliatePage.dash.errStart')) }
     finally { setOnboardBusy(false) }
   }
 
@@ -494,24 +514,25 @@ function Dashboard({ d, payoutsEnabled, connectNote, onDashChange }) {
     try {
       const r = await api.affiliateConnectRefresh()
       onDashChange({ ...d, stripeOnboarded: !!r.onboarded, stripeConnected: !!r.connected })
-    } catch (e) { setRefreshErr((e && e.message) || 'Could not check your Stripe status.') }
+    } catch (e) { setRefreshErr((e && e.message) || t('affiliatePage.dash.errCheck')) }
     finally { setRefreshBusy(false) }
   }
 
   const suspended = d.status === 'suspended'
   const rows = Array.isArray(d.referralRows) ? d.referralRows : []
   const firstName = (d.name || '').split(' ')[0]
+  const ratePct = `${Number(d.ratePct) || 0}%`
 
   return (
     <>
       <section className="af-dash-head">
         <div>
-          <div className="af-eyebrow"><Megaphone size={14} /> Affiliate dashboard</div>
-          <h1 className="af-h1 sm">{firstName ? <>Welcome back, <em>{firstName}.</em></> : <>Your <em>affiliate</em> dashboard.</>}</h1>
-          <p className="af-lead">You earn <b>{Number(d.ratePct) || 0}%</b> of each referral&rsquo;s first payment. Share your link, and this page keeps the score.</p>
+          <div className="af-eyebrow"><Megaphone size={14} /> {t('affiliatePage.dash.eyebrow')}</div>
+          <h1 className="af-h1 sm">{firstName ? t.rich('affiliatePage.dash.welcome', { name: firstName }) : t.rich('affiliatePage.dash.welcomeAnon')}</h1>
+          <p className="af-lead">{t.rich('affiliatePage.dash.lead', { rate: ratePct })}</p>
         </div>
         <div className="af-dash-meta">
-          <span className={`af-chip ${suspended ? 'warn' : 'ok'}`}>{suspended ? <PauseCircle size={13} /> : <BadgeCheck size={13} />} {suspended ? 'On hold' : 'Approved affiliate'}</span>
+          <span className={`af-chip ${suspended ? 'warn' : 'ok'}`}>{suspended ? <PauseCircle size={13} /> : <BadgeCheck size={13} />} {suspended ? t('affiliatePage.dash.onHold') : t('affiliatePage.dash.approved')}</span>
           <span className="af-chip mono"><Link2 size={13} /> {d.code || '-'}</span>
         </div>
       </section>
@@ -519,62 +540,60 @@ function Dashboard({ d, payoutsEnabled, connectNote, onDashChange }) {
       {suspended ? (
         <div className="af-note warn big" role="status">
           <PauseCircle size={16} />
-          <div><b>Your affiliate account is on hold.</b> New referrals are not being credited while it is paused. Your earned balance stays on record. If you have questions, write to <a href="mailto:support@admireveda.com">support@admireveda.com</a>.</div>
+          <div>{t.rich('affiliatePage.dash.holdNote', null, { a: (c) => <a href="mailto:support@admireveda.com">{c}</a> })}</div>
         </div>
       ) : null}
 
       <section className="af-card af-linkcard">
         <div className="af-linkcard-top">
           <div>
-            <div className="af-card-k"><Link2 size={14} /> Your referral link</div>
-            <p className="af-card-d">Anyone who signs up through this link and makes their first payment earns you {Number(d.ratePct) || 0}% of that payment.</p>
+            <div className="af-card-k"><Link2 size={14} /> {t('affiliatePage.dash.linkK')}</div>
+            <p className="af-card-d">{t('affiliatePage.dash.linkD', { rate: ratePct })}</p>
           </div>
         </div>
         <div className="af-linkrow">
-          <input className="af-linkinput" readOnly value={d.referralLink || ''} onFocus={(e) => e.target.select()} aria-label="Your referral link" />
+          <input className="af-linkinput" readOnly value={d.referralLink || ''} onFocus={(e) => e.target.select()} aria-label={t('affiliatePage.dash.linkAria')} />
           <button type="button" className={`af-cta${copied ? ' done' : ''}`} onClick={copy} disabled={!d.referralLink}>
-            {copied ? <Check size={16} /> : <Copy size={16} />} {copied ? 'Copied' : 'Copy link'}
+            {copied ? <Check size={16} /> : <Copy size={16} />} {copied ? t('affiliatePage.dash.copied') : t('affiliatePage.dash.copy')}
           </button>
         </div>
       </section>
 
-      <section className="af-stats" aria-label="Your numbers">
-        <Stat ic={MousePointerClick} k="Clicks" v={Number(d.clicks) || 0} hint="visits through your link" />
-        <Stat ic={UserCheck} k="Conversions" v={Number(d.conversions) || 0} hint="referrals who paid" />
-        <Stat ic={Wallet} k="Earned" v={usd(d.earnedUsd)} hint="commission credited" />
-        <Stat ic={Clock} k="Pending" v={usd(d.pendingUsd)} hint={d.minPayoutUsd != null ? `paid out at ${usd(d.minPayoutUsd)}` : 'awaiting payout'} />
-        <Stat ic={BadgeCheck} k="Paid" v={usd(d.paidUsd)} hint="sent to your Stripe account" />
+      <section className="af-stats" aria-label={t('affiliatePage.dash.statsAria')}>
+        <Stat ic={MousePointerClick} k={t('affiliatePage.dash.clicks')} v={Number(d.clicks) || 0} hint={t('affiliatePage.dash.clicksHint')} />
+        <Stat ic={UserCheck} k={t('affiliatePage.dash.conversions')} v={Number(d.conversions) || 0} hint={t('affiliatePage.dash.conversionsHint')} />
+        <Stat ic={Wallet} k={t('affiliatePage.dash.earned')} v={usd(d.earnedUsd)} hint={t('affiliatePage.dash.earnedHint')} />
+        <Stat ic={Clock} k={t('affiliatePage.dash.pending')} v={usd(d.pendingUsd)} hint={d.minPayoutUsd != null ? t('affiliatePage.dash.pendingHintMin', { amount: usd(d.minPayoutUsd) }) : t('affiliatePage.dash.pendingHint')} />
+        <Stat ic={BadgeCheck} k={t('affiliatePage.dash.paid')} v={usd(d.paidUsd)} hint={t('affiliatePage.dash.paidHint')} />
       </section>
 
       <section className="af-two">
         <div className="af-card">
-          <div className="af-card-k"><CreditCard size={14} /> Payouts</div>
+          <div className="af-card-k"><CreditCard size={14} /> {t('affiliatePage.dash.payoutsK')}</div>
           {connectNote ? <div className={`af-note${d.stripeOnboarded ? '' : ' warn'}`} style={{ marginTop: 10 }}>{d.stripeOnboarded ? <Check size={14} /> : <AlertTriangle size={14} />} {connectNote}</div> : null}
           {d.stripeOnboarded ? (
             <>
-              <div className="af-payout-state"><span className="af-chip ok"><BadgeCheck size={13} /> Payouts active (Stripe)</span></div>
+              <div className="af-payout-state"><span className="af-chip ok"><BadgeCheck size={13} /> {t('affiliatePage.dash.payoutsActive')}</span></div>
               <p className="af-card-d">
-                Your Stripe account is connected. The WorkCoPilot team runs payouts{d.minPayoutUsd != null ? ` once your pending balance reaches ${usd(d.minPayoutUsd)}` : ''}; each payout appears in the Paid total and in your Stripe dashboard.
-                {payoutsEnabled === false ? ' Stripe is still reviewing your account details, so a payout may be held until that review finishes.' : ''}
+                {d.minPayoutUsd != null ? t('affiliatePage.dash.payoutsConnectedMin', { amount: usd(d.minPayoutUsd) }) : t('affiliatePage.dash.payoutsConnected')}
+                {payoutsEnabled === false ? ' ' + t('affiliatePage.dash.payoutsReview') : ''}
               </p>
             </>
           ) : (
             <>
-              <h3 className="af-h3">{d.stripeConnected ? 'Finish setting up payouts' : 'Set up payouts'}</h3>
+              <h3 className="af-h3">{d.stripeConnected ? t('affiliatePage.dash.finishPayouts') : t('affiliatePage.dash.setupPayouts')}</h3>
               <p className="af-card-d">
-                {d.stripeConnected
-                  ? 'You started Stripe setup but it is not finished yet. Pick up where you left off so your earnings can be paid out.'
-                  : 'Connect a Stripe account to receive your commission. Stripe handles identity and bank details; we never see them.'}
+                {d.stripeConnected ? t('affiliatePage.dash.resumeBody') : t('affiliatePage.dash.connectBody')}
               </p>
               {onboardErr ? <div className="af-err" role="alert"><AlertTriangle size={14} /> {onboardErr}</div> : null}
               {refreshErr ? <div className="af-err" role="alert"><AlertTriangle size={14} /> {refreshErr}</div> : null}
               <div className="af-btnrow">
                 <button type="button" className="af-cta" onClick={startOnboard} disabled={onboardBusy}>
-                  {onboardBusy ? <Loader2 size={16} className="af-spin" /> : <CreditCard size={16} />} {d.stripeConnected ? 'Resume Stripe setup' : 'Set up with Stripe'}
+                  {onboardBusy ? <Loader2 size={16} className="af-spin" /> : <CreditCard size={16} />} {d.stripeConnected ? t('affiliatePage.dash.resumeStripe') : t('affiliatePage.dash.setupStripe')}
                 </button>
                 {d.stripeConnected ? (
                   <button type="button" className="af-cta alt" onClick={recheck} disabled={refreshBusy}>
-                    {refreshBusy ? <Loader2 size={15} className="af-spin" /> : null} I already finished
+                    {refreshBusy ? <Loader2 size={15} className="af-spin" /> : null} {t('affiliatePage.dash.alreadyFinished')}
                   </button>
                 ) : null}
               </div>
@@ -582,38 +601,38 @@ function Dashboard({ d, payoutsEnabled, connectNote, onDashChange }) {
           )}
         </div>
         <div className="af-card af-ratecard">
-          <div className="af-card-k"><Sparkles size={14} /> Your rate</div>
-          <div className="af-rate"><b>{Number(d.ratePct) || 0}%</b><span>of each referral&rsquo;s first payment</span></div>
+          <div className="af-card-k"><Sparkles size={14} /> {t('affiliatePage.dash.rateK')}</div>
+          <div className="af-rate"><b>{ratePct}</b><span>{t('affiliatePage.dash.rateSub')}</span></div>
           <ul className="af-rules compact">
-            <li><Check size={14} /> <span>Credited when the referred person&rsquo;s first payment clears.</span></li>
-            <li><Check size={14} /> <span>Renewals and later purchases do not earn commission.</span></li>
-            <li><Check size={14} /> <span>Voided if the payment is refunded or reversed.</span></li>
+            <li><Check size={14} /> <span>{t('affiliatePage.dash.rateRule1')}</span></li>
+            <li><Check size={14} /> <span>{t('affiliatePage.dash.rateRule2')}</span></li>
+            <li><Check size={14} /> <span>{t('affiliatePage.dash.rateRule3')}</span></li>
           </ul>
         </div>
       </section>
 
       <section className="af-ledger">
         <div className="af-ledger-head">
-          <h2 className="af-h2">Referrals</h2>
-          <span className="af-ledger-count">{rows.length} {rows.length === 1 ? 'referral' : 'referrals'}</span>
+          <h2 className="af-h2">{t('affiliatePage.dash.referrals')}</h2>
+          <span className="af-ledger-count">{t.n('affiliatePage.dash.referralCount', rows.length)}</span>
         </div>
         {rows.length === 0 ? (
           <div className="af-card af-empty">
             <Share2 size={22} />
-            <b>No referrals yet.</b>
-            <p>Share your link above. When someone signs up through it and makes their first payment, the referral appears here with your commission.</p>
+            <b>{t('affiliatePage.dash.emptyTitle')}</b>
+            <p>{t('affiliatePage.dash.emptyBody')}</p>
           </div>
         ) : (
           <div className="af-table-wrap">
             <table className="af-table">
               <thead>
                 <tr>
-                  <th>Referred user</th>
-                  <th>Their first payment</th>
-                  <th>Rate</th>
-                  <th>Your commission</th>
-                  <th>Status</th>
-                  <th>Date</th>
+                  <th>{t('affiliatePage.dash.thUser')}</th>
+                  <th>{t('affiliatePage.dash.thPayment')}</th>
+                  <th>{t('affiliatePage.dash.thRate')}</th>
+                  <th>{t('affiliatePage.dash.thCommission')}</th>
+                  <th>{t('affiliatePage.dash.thStatus')}</th>
+                  <th>{t('affiliatePage.dash.thDate')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -624,7 +643,7 @@ function Dashboard({ d, payoutsEnabled, connectNote, onDashChange }) {
                     <td className="af-mono">{r.rate != null ? `${Number(r.rate) <= 1 ? Math.round(Number(r.rate) * 100) : Number(r.rate)}%` : '-'}</td>
                     <td className="af-mono af-strong">{usd(r.commissionUsd)}</td>
                     <td><RefStatus s={r.status} /></td>
-                    <td className="af-mono af-faint" title={r.paidAt ? `Paid ${fmtDate(r.paidAt)}` : undefined}>{fmtDate(r.createdAt)}{r.status === 'paid' && r.paidAt ? <span className="af-paidon"> &middot; paid {fmtDate(r.paidAt)}</span> : null}</td>
+                    <td className="af-mono af-faint" title={r.paidAt ? t('affiliatePage.dash.paidOnTitle', { date: fmtDate(r.paidAt) }) : undefined}>{fmtDate(r.createdAt)}{r.status === 'paid' && r.paidAt ? <span className="af-paidon"> &middot; {t('affiliatePage.dash.paidOn', { date: fmtDate(r.paidAt) })}</span> : null}</td>
                   </tr>
                 ))}
               </tbody>
@@ -647,10 +666,11 @@ function Stat({ ic: Ic, k, v, hint }) {
 }
 
 function RefStatus({ s }) {
+  const t = useT()
   const k = String(s || '').toLowerCase()
-  if (k === 'paid') return <span className="af-chip ok"><BadgeCheck size={12} /> Paid</span>
-  if (k === 'void') return <span className="af-chip muted">Void</span>
-  return <span className="af-chip pend"><Clock size={12} /> Earned</span>
+  if (k === 'paid') return <span className="af-chip ok"><BadgeCheck size={12} /> {t('affiliatePage.dash.statusPaid')}</span>
+  if (k === 'void') return <span className="af-chip muted">{t('affiliatePage.dash.statusVoid')}</span>
+  return <span className="af-chip pend"><Clock size={12} /> {t('affiliatePage.dash.statusEarned')}</span>
 }
 
 const CSS = `

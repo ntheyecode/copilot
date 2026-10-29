@@ -31,6 +31,7 @@ import { Clock, Pause, Play, X, Maximize2, Loader2, Sparkles, Type, Smile, Check
 import AliveBuddy, { readBuddyPref, resolveCharacter } from '../components/AliveBuddy.jsx'
 import BuddyPicker from '../components/BuddyPicker.jsx'
 import RichText, { plainText } from '../components/RichText.jsx'
+import { useT } from '../i18n/index.jsx'
 
 const ACCENT = '#1f9d6b'   // emerald ink (on white cloud)
 const AMBER = '#b7791f'    // paused / warn ink (on white cloud)
@@ -57,6 +58,7 @@ async function getJSON(url, opts) {
 }
 
 export default function WorkBuddy() {
+  const t = useT()                                  // buddyPage.* strings
   const [session, setSession] = useState(null)   // active session or null
   const [usage, setUsage] = useState(null)        // usage snapshot or null
   const [status, setStatus] = useState('loading') // loading | ok | empty | error
@@ -175,8 +177,8 @@ export default function WorkBuddy() {
   // comes forward in plan mode (its 'show' / 'focus' hides this buddy).
   useEffect(() => {
     if (!completed) return undefined
-    const t = setTimeout(() => { openMain() }, 1600)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => { openMain() }, 1600)
+    return () => clearTimeout(timer)
   }, [completed, openMain])
   const openGuide = useCallback(() => { try { window.workDesktop?.openFullGuide?.() } catch { /* ignore */ } }, [])
   // HIDDEN = truly gone: the page renders NOTHING (zero desktop footprint). The
@@ -216,12 +218,12 @@ export default function WorkBuddy() {
   const curIdx = session ? (Number.isFinite(session.currentStep) ? session.currentStep : 0) : 0
   const allDone = total > 0 && curIdx >= total
   const stepTitle = allDone
-    ? 'All steps done'
-    : plainText((steps[curIdx] && (steps[curIdx].text || steps[curIdx].title)) || (session && session.goal) || 'Getting ready')
+    ? t('buddyPage.allDone')
+    : plainText((steps[curIdx] && (steps[curIdx].text || steps[curIdx].title)) || (session && session.goal) || t('buddyPage.gettingReady'))
   const nextMove = allDone
-    ? 'You are all set. Open the full window to finish up.'
-    : (session && session.guidance) || (steps[curIdx] && (steps[curIdx].text || steps[curIdx].title)) || 'Watching your screen for the next move'
-  const progressLabel = total > 0 ? (allDone ? `${total} of ${total}` : `Step ${Math.min(curIdx + 1, total)} of ${total}`) : null
+    ? t('buddyPage.allSet')
+    : (session && session.guidance) || (steps[curIdx] && (steps[curIdx].text || steps[curIdx].title)) || t('buddyPage.watching')
+  const progressLabel = total > 0 ? (allDone ? t('buddyPage.progressDone', { total }) : t('buddyPage.progressStep', { n: Math.min(curIdx + 1, total), total })) : null
   const progressPct = total > 0 ? Math.round((Math.min(curIdx, total) / total) * 100) : 0
   const remaining = usage ? usage.remainingSeconds : null
   const exhausted = !!(usage && usage.exhausted)
@@ -236,8 +238,8 @@ export default function WorkBuddy() {
     lastStepRef.current = curIdx
     if (status === 'ok' && !allDone && Number.isFinite(curIdx) && curIdx > prev) {
       setPulse(true)
-      const t = setTimeout(() => { if (aliveRef.current) setPulse(false) }, 900)
-      return () => clearTimeout(t)
+      const timer = setTimeout(() => { if (aliveRef.current) setPulse(false) }, 900)
+      return () => clearTimeout(timer)
     }
     return undefined
   }, [curIdx, status, allDone])
@@ -254,11 +256,11 @@ export default function WorkBuddy() {
     : 'thinking'
 
   // Calm one-liners for the non-active states, shown in the cloud.
-  const calmMsg = completed ? 'Session completed. Your summary is ready in the main window.'
-    : status === 'loading' ? 'Waking up and connecting'
-    : status === 'error' ? 'Cannot reach the server. Retrying.'
-    : status === 'signin' ? 'Sign in to WorkCoPilot in the main window and your steps show up here.'
-    : status === 'empty' ? 'No active task yet. Open WorkCoPilot to start one.'
+  const calmMsg = completed ? t('buddyPage.calm.completed')
+    : status === 'loading' ? t('buddyPage.calm.loading')
+    : status === 'error' ? t('buddyPage.calm.error')
+    : status === 'signin' ? t('buddyPage.calm.signin')
+    : status === 'empty' ? t('buddyPage.calm.empty')
     : ''
 
   const S = styles
@@ -306,20 +308,20 @@ export default function WorkBuddy() {
         <div style={{ ...S.controls, opacity: controlsVisible ? 1 : 0, transform: controlsVisible ? 'translateY(0)' : 'translateY(4px)', pointerEvents: controlsVisible ? 'auto' : 'none' }}>
           {showPicker && (
             <div style={S.pickerPanel}>
-              <span style={S.pickerLabel}>Pick your buddy</span>
+              <span style={S.pickerLabel}>{t('buddyPage.pickBuddy')}</span>
               <BuddyPicker pref={charPref} size={30} onPick={(p) => { setCharPref(p) }} />
             </div>
           )}
           <div style={S.controlsRow}>
-            <button title={showPicker ? 'Close buddy picker' : 'Change buddy'} aria-label="Change buddy" aria-pressed={showPicker} style={iconBtn(showPicker ? S.iconBtnOn : null)} onClick={() => setShowPicker((v) => !v)}><Smile size={14} /></button>
-            <button title={textOnly ? 'Show the buddy' : 'Text only'} aria-label="Text only" aria-pressed={textOnly} style={iconBtn(textOnly ? S.iconBtnOn : null)} onClick={toggleTextOnly}><Type size={13} /></button>
-            <button title={motionOff ? 'Resume buddy motion' : 'Freeze buddy motion'} aria-label="Freeze buddy motion" aria-pressed={motionOff} style={iconBtn(motionOff ? null : S.iconBtnOn)} onClick={toggleMotion}><Sparkles size={13} /></button>
+            <button title={showPicker ? t('buddyPage.controls.closePicker') : t('buddyPage.controls.changeBuddy')} aria-label={t('buddyPage.controls.changeBuddy')} aria-pressed={showPicker} style={iconBtn(showPicker ? S.iconBtnOn : null)} onClick={() => setShowPicker((v) => !v)}><Smile size={14} /></button>
+            <button title={textOnly ? t('buddyPage.controls.showBuddy') : t('buddyPage.controls.textOnly')} aria-label={t('buddyPage.controls.textOnly')} aria-pressed={textOnly} style={iconBtn(textOnly ? S.iconBtnOn : null)} onClick={toggleTextOnly}><Type size={13} /></button>
+            <button title={motionOff ? t('buddyPage.controls.resumeMotion') : t('buddyPage.controls.freezeMotion')} aria-label={t('buddyPage.controls.freezeMotion')} aria-pressed={motionOff} style={iconBtn(motionOff ? null : S.iconBtnOn)} onClick={toggleMotion}><Sparkles size={13} /></button>
             <span style={S.sep} />
-            <button title={paused ? 'Resume guidance' : 'Pause guidance'} aria-label={paused ? 'Resume guidance' : 'Pause guidance'} style={{ ...iconBtn(paused ? S.iconBtnOn : null), opacity: (idRef.current && !busy) ? 1 : 0.45 }} onClick={togglePause} disabled={!idRef.current || busy}>{paused ? <Play size={13} /> : <Pause size={13} />}</button>
-            <button title="Open full guide" aria-label="Open full guide" style={iconBtn()} onClick={openGuide}><BookOpen size={13} /></button>
-            <button title="Open full window" aria-label="Open full window" style={iconBtn()} onClick={openMain}><Maximize2 size={13} /></button>
-            <button title="Hide buddy (pauses and saves your progress)" aria-label="Hide buddy" style={iconBtn()} onClick={hideBuddy}><Minus size={14} /></button>
-            <button title="Close buddy" aria-label="Close buddy" style={iconBtn(S.iconBtnKill)} onClick={killBuddy}><X size={14} /></button>
+            <button title={paused ? t('buddyPage.controls.resumeGuidance') : t('buddyPage.controls.pauseGuidance')} aria-label={paused ? t('buddyPage.controls.resumeGuidance') : t('buddyPage.controls.pauseGuidance')} style={{ ...iconBtn(paused ? S.iconBtnOn : null), opacity: (idRef.current && !busy) ? 1 : 0.45 }} onClick={togglePause} disabled={!idRef.current || busy}>{paused ? <Play size={13} /> : <Pause size={13} />}</button>
+            <button title={t('buddyPage.controls.openGuide')} aria-label={t('buddyPage.controls.openGuide')} style={iconBtn()} onClick={openGuide}><BookOpen size={13} /></button>
+            <button title={t('buddyPage.controls.openWindow')} aria-label={t('buddyPage.controls.openWindow')} style={iconBtn()} onClick={openMain}><Maximize2 size={13} /></button>
+            <button title={t('buddyPage.controls.hideTitle')} aria-label={t('buddyPage.controls.hide')} style={iconBtn()} onClick={hideBuddy}><Minus size={14} /></button>
+            <button title={t('buddyPage.controls.close')} aria-label={t('buddyPage.controls.close')} style={iconBtn(S.iconBtnKill)} onClick={killBuddy}><X size={14} /></button>
           </div>
         </div>
 
@@ -343,7 +345,7 @@ export default function WorkBuddy() {
                 {/* The next move is THE thing to read: it flashes emerald for a beat
                     when a step advances, and a confirm check pops beside the label. */}
                 <div style={S.moveText} className={pulse ? 'wb-flash' : undefined}><RichText text={nextMove} accent={ACCENT} /></div>
-                {pulse && <span className="wb-confirm" role="status"><Check size={11} strokeWidth={3} /> Step confirmed</span>}
+                {pulse && <span className="wb-confirm" role="status"><Check size={11} strokeWidth={3} /> {t('buddyPage.stepConfirmed')}</span>}
                 <div style={S.metaRow}>
                   {progressLabel && (
                     <span style={S.progWrap}>
@@ -353,7 +355,7 @@ export default function WorkBuddy() {
                   )}
                   <span style={S.metaTime}>
                     <Clock size={11} style={{ marginRight: 4, opacity: 0.8 }} />
-                    {remaining == null ? '--' : (exhausted ? 'No time left' : fmtTime(remaining))}
+                    {remaining == null ? '--' : (exhausted ? t('buddyPage.noTimeLeft') : fmtTime(remaining))}
                   </span>
                 </div>
               </>
@@ -363,7 +365,7 @@ export default function WorkBuddy() {
                   ? <Check size={14} style={{ color: ACCENT, marginRight: 6, flex: '0 0 auto' }} />
                   : status === 'loading' && <Loader2 size={13} style={{ ...S.spin, marginRight: 6, flex: '0 0 auto' }} />}
                 <span>{calmMsg}</span>
-                {completed && <button type="button" onClick={openMain} style={{ ...S.iconBtn, width: 'auto', padding: '0 9px', marginLeft: 8, color: ACCENT, background: 'rgba(31,157,107,0.12)', fontSize: 11.5, fontWeight: 700, whiteSpace: 'nowrap' }}>Open WorkCoPilot</button>}
+                {completed && <button type="button" onClick={openMain} style={{ ...S.iconBtn, width: 'auto', padding: '0 9px', marginLeft: 8, color: ACCENT, background: 'rgba(31,157,107,0.12)', fontSize: 11.5, fontWeight: 700, whiteSpace: 'nowrap' }}>{t('buddyPage.openWorkCoPilot')}</button>}
               </div>
             )}
           </div>

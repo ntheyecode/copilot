@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { api } from '../api.js'
+import { useT } from '../i18n/index.jsx'
 import {
   CreditCard, ExternalLink, FileText, AlertTriangle, Loader2, Check,
   ArrowUpRight, ArrowDownRight, CalendarClock, ShieldCheck, Ban, Info, Lock,
@@ -23,15 +24,21 @@ import {
 // from live pricing and shown only when known. The change endpoint may 404
 // while another agent wires it; that reads as "coming online", never a crash
 // (SUPREME RULE III no-silent-fail, VIII graceful-degrade).
+//
+// Every user-facing string comes from the billingWidget i18n namespace. Plan
+// names (Lite/Basic/Advanced/Premium) are product names and are never
+// translated; the subscription / invoice status words are looked up by their
+// id (billingWidget.status.* / invStatus.*) with a capitalized raw id as the
+// fallback for an id the dictionary does not know yet.
 
-const STATUS_LABEL = {
-  active: 'Active', trialing: 'Trial', past_due: 'Past due',
-  canceled: 'Canceled', none: 'No active plan',
-}
 const PLAN_ORDER = ['lite', 'basic', 'advanced', 'premium']
 const cap = (s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : '')
 
 export default function WorkBilling({ user, pricing, invoices, billingConfigured = true, onReload }) {
+  const t = useT()
+  const statusLabel = (s) => (t.has(`billingWidget.status.${s}`) ? t(`billingWidget.status.${s}`) : cap(s))
+  const invStatusLabel = (s) => (t.has(`billingWidget.invStatus.${s}`) ? t(`billingWidget.invStatus.${s}`) : cap(s))
+  const cycleLower = (c) => (c === 'annual' ? t('billingWidget.cycle.annualLower') : t('billingWidget.cycle.monthlyLower'))
   // Prefer the freshest subscription we have: one returned by a change we just
   // made overrides the (possibly stale) prop so the panel never shows the old
   // plan after an upgrade (SUPREME RULE III: operator sees the true state).
@@ -100,9 +107,9 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
     try {
       const r = await api.workBillingPortal()
       if (r && r.url) { window.location = r.url; return }
-      setPortalErr('Could not open billing. Please try again.')
+      setPortalErr(t('billingWidget.errors.portalOpen'))
     } catch (e) {
-      setPortalErr((e && e.message) ? e.message : 'Billing is not available right now.')
+      setPortalErr((e && e.message) ? e.message : t('billingWidget.errors.portalUnavailable'))
     } finally { setPortalBusy(false) }
   }
 
@@ -131,7 +138,7 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
       // (which can also change the plan) available. Never crash or show a red
       // error for it (SUPREME RULE VIII: actionable, graceful).
       if (e && e.status === 404) { setComingOnline(true); setConfirm(null) }
-      else setChangeErr((e && e.message) ? e.message : 'Could not change your plan right now. Please try again, or use Manage billing.')
+      else setChangeErr((e && e.message) ? e.message : t('billingWidget.errors.change'))
     } finally { setChangeBusy(false) }
   }
 
@@ -139,24 +146,24 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
   const neverCheckedOut = status === 'none' && !(Array.isArray(invoices) && invoices.length > 0)
 
   return (
-    <div className="wb" role="region" aria-label="Billing and subscription">
+    <div className="wb" role="region" aria-label={t('billingWidget.aria')}>
       <style>{CSS}</style>
 
       {/* Header: identity of the section + the one always-safe action (portal). */}
       <div className="wb-head">
         <span className="wb-ic"><CreditCard size={18} /></span>
         <div className="wb-head-txt">
-          <h3>Billing and plan</h3>
-          <p>Manage your subscription, payment method and invoices. Changes are handled securely through Stripe.</p>
+          <h3>{t('billingWidget.head.title')}</h3>
+          <p>{t('billingWidget.head.sub')}</p>
         </div>
         <button className="wb-btn ghost" onClick={openPortal} disabled={portalBusy}>
           {portalBusy ? <Loader2 size={15} className="spin" /> : <ExternalLink size={15} />}
-          <span>Manage billing</span>
+          <span>{t('billingWidget.head.manage')}</span>
         </button>
       </div>
 
       {!billingConfigured && (
-        <div className="wb-note info"><Info size={15} /> <span>Billing is being set up. Your plan details and invoices will appear here once it is live.</span></div>
+        <div className="wb-note info"><Info size={15} /> <span>{t('billingWidget.settingUp')}</span></div>
       )}
 
       {/* Past-due banner: the one thing that needs action now. */}
@@ -164,12 +171,12 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
         <div className="wb-banner warn" role="alert">
           <AlertTriangle size={17} />
           <div className="wb-banner-txt">
-            <b>Your last payment did not go through.</b>
-            <span>Update your payment method to keep your access. Your plan stays active while you fix this.</span>
+            <b>{t('billingWidget.pastDue.title')}</b>
+            <span>{t('billingWidget.pastDue.body')}</span>
           </div>
           <button className="wb-btn warm" onClick={openPortal} disabled={portalBusy}>
             {portalBusy ? <Loader2 size={15} className="spin" /> : <CreditCard size={15} />}
-            <span>Fix payment</span>
+            <span>{t('billingWidget.pastDue.fix')}</span>
           </button>
         </div>
       )}
@@ -178,7 +185,7 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
       {cancelAtPeriodEnd && status !== 'past_due' && periodEnd && (
         <div className="wb-note muted">
           <CalendarClock size={15} />
-          <span>{status === 'canceled' ? 'Your plan is canceled.' : 'Your plan is set to cancel.'} You keep full access until <b>{fmtDate(periodEnd)}</b>. You can pick a plan again any time before then.</span>
+          <span>{status === 'canceled' ? t('billingWidget.canceledNote.canceled') : t('billingWidget.canceledNote.scheduled')} {t.rich('billingWidget.canceledNote.access', { date: fmtDate(periodEnd) })}</span>
         </div>
       )}
 
@@ -186,24 +193,24 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
       <div className="wb-current">
         <div className="wb-cur-main">
           <div className="wb-cur-row">
-            <span className="wb-plan-name">{plan ? cap(plan) : 'No plan'}</span>
-            <span className={`wb-status ${statusCls}`}>{STATUS_LABEL[status] || cap(status)}</span>
-            {cycle && <span className="wb-chip">{cycle === 'annual' ? 'Annual' : 'Monthly'}</span>}
+            <span className="wb-plan-name">{plan ? cap(plan) : t('billingWidget.current.noPlan')}</span>
+            <span className={`wb-status ${statusCls}`}>{statusLabel(status)}</span>
+            {cycle && <span className="wb-chip">{cycle === 'annual' ? t('billingWidget.cycle.annual') : t('billingWidget.cycle.monthly')}</span>}
           </div>
           <div className="wb-cur-meta">
             {plan && priceForPlan(plan, cycle || 'monthly') != null && (
               <span className="wb-meta-item">
                 {money(priceForPlan(plan, cycle || 'monthly'))}
-                <i>/{(cycle || 'month') === 'annual' ? 'year' : 'month'}</i>
+                <i>/{(cycle || 'month') === 'annual' ? t('billingWidget.current.perYear') : t('billingWidget.current.perMonth')}</i>
               </span>
             )}
             {plan && hoursMonthly(plan) != null && (
-              <span className="wb-meta-item">{hoursMonthly(plan)} {hoursMonthly(plan) === 1 ? 'hour' : 'hours'} / month</span>
+              <span className="wb-meta-item">{t.n('billingWidget.current.hoursPerMonth', hoursMonthly(plan))}</span>
             )}
             {periodEnd && (
               <span className="wb-meta-item">
                 <CalendarClock size={13} />
-                {cancelAtPeriodEnd ? 'Access until' : (status === 'trialing' ? 'Trial ends' : 'Renews')} {fmtDate(periodEnd)}
+                {cancelAtPeriodEnd ? t('billingWidget.current.accessUntil') : (status === 'trialing' ? t('billingWidget.current.trialEnds') : t('billingWidget.current.renews'))} {fmtDate(periodEnd)}
               </span>
             )}
           </div>
@@ -218,8 +225,10 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
             {result.summary
               ? result.summary
               : (result.effective === 'now'
-                ? `You are now on ${cap(result.plan)} (${result.cycle === 'annual' ? 'annual' : 'monthly'}). The change is effective immediately.`
-                : `Your switch to ${cap(result.plan)} (${result.cycle === 'annual' ? 'annual' : 'monthly'}) is scheduled${result.effectiveDate ? ` for ${fmtDate(result.effectiveDate)}` : ' for the end of your current period'}. You keep your current plan until then.`)}
+                ? t('billingWidget.result.now', { plan: cap(result.plan), cycle: cycleLower(result.cycle) })
+                : (result.effectiveDate
+                  ? t('billingWidget.result.scheduledOn', { plan: cap(result.plan), cycle: cycleLower(result.cycle), date: fmtDate(result.effectiveDate) })
+                  : t('billingWidget.result.scheduledPeriodEnd', { plan: cap(result.plan), cycle: cycleLower(result.cycle) })))}
           </span>
         </div>
       )}
@@ -228,7 +237,7 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
       {comingOnline && (
         <div className="wb-note info" role="status">
           <Info size={15} />
-          <span>In-app plan changes are coming online shortly. In the meantime you can change your plan through <button className="wb-link" onClick={openPortal} disabled={portalBusy}>Manage billing</button>.</span>
+          <span>{t.rich('billingWidget.comingOnline', null, { a: (c) => <button className="wb-link" onClick={openPortal} disabled={portalBusy}>{c}</button> })}</span>
         </div>
       )}
 
@@ -238,11 +247,11 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
       {canChange && (
         <div className="wb-change">
           <div className="wb-change-head">
-            <h4>Change your plan</h4>
+            <h4>{t('billingWidget.change.title')}</h4>
             {(annualReady || cycle === 'annual') ? (
-              <div className="wb-toggle" role="tablist" aria-label="Billing cycle">
-                <button role="tab" aria-selected={pickCycle === 'monthly'} className={pickCycle === 'monthly' ? 'on' : ''} onClick={() => setPickCycle('monthly')}>Monthly</button>
-                <button role="tab" aria-selected={pickCycle === 'annual'} className={pickCycle === 'annual' ? 'on' : ''} onClick={() => setPickCycle('annual')}>Annual <i>-20%</i></button>
+              <div className="wb-toggle" role="tablist" aria-label={t('billingWidget.change.cycleAria')}>
+                <button role="tab" aria-selected={pickCycle === 'monthly'} className={pickCycle === 'monthly' ? 'on' : ''} onClick={() => setPickCycle('monthly')}>{t('billingWidget.cycle.monthly')}</button>
+                <button role="tab" aria-selected={pickCycle === 'annual'} className={pickCycle === 'annual' ? 'on' : ''} onClick={() => setPickCycle('annual')}>{t('billingWidget.cycle.annual')} <i>-20%</i></button>
               </div>
             ) : null}
           </div>
@@ -258,21 +267,21 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
                 <div key={p.id} className={`wb-plan ${isCurrent ? 'current' : ''}`}>
                   <div className="wb-plan-top">
                     <span className="wb-plan-nm">{p.name}</span>
-                    {isCurrent && <span className="wb-plan-tag">Current</span>}
+                    {isCurrent && <span className="wb-plan-tag">{t('billingWidget.change.current')}</span>}
                   </div>
                   <div className="wb-plan-price">
-                    {price != null ? <>{money(price)}<i>/{pickCycle === 'annual' ? 'yr' : 'mo'}</i></> : <span className="wb-plan-na">Contact us</span>}
+                    {price != null ? <>{money(price)}<i>/{pickCycle === 'annual' ? t('billingWidget.cycle.perYr') : t('billingWidget.cycle.perMo')}</i></> : <span className="wb-plan-na">{t('billingWidget.change.contactUs')}</span>}
                   </div>
-                  {p.hrs != null && <div className="wb-plan-sub">{p.hrs} {p.hrs === 1 ? 'hour' : 'hours'} of guided time / month</div>}
+                  {p.hrs != null && <div className="wb-plan-sub">{t.n('billingWidget.change.hoursGuided', p.hrs)}</div>}
                   <button
                     className={`wb-btn ${dir === 'up' ? 'solid' : 'outline'} wb-plan-cta`}
                     disabled={isCurrent || price == null || changeBusy}
                     onClick={() => beginChange(p.id, pickCycle)}
                   >
-                    {isCurrent ? <><Check size={14} /> Your plan</>
-                      : dir === 'up' ? <><ArrowUpRight size={14} /> Upgrade</>
-                      : dir === 'down' ? <><ArrowDownRight size={14} /> Downgrade</>
-                      : <>Switch to {pickCycle === 'annual' ? 'annual' : 'monthly'}</>}
+                    {isCurrent ? <><Check size={14} /> {t('billingWidget.change.yourPlan')}</>
+                      : dir === 'up' ? <><ArrowUpRight size={14} /> {t('billingWidget.change.upgrade')}</>
+                      : dir === 'down' ? <><ArrowDownRight size={14} /> {t('billingWidget.change.downgrade')}</>
+                      : <>{pickCycle === 'annual' ? t('billingWidget.change.switchAnnual') : t('billingWidget.change.switchMonthly')}</>}
                   </button>
                 </div>
               )
@@ -281,9 +290,9 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
           {changeErr && <div className="wb-note warn" role="alert"><AlertTriangle size={15} /> <span>{changeErr}</span></div>}
 
           <div className="wb-cancel-row">
-            <span className="wb-cancel-txt"><ShieldCheck size={14} /> Downgrades take effect at your next renewal; upgrades apply right away with prorated credit.</span>
+            <span className="wb-cancel-txt"><ShieldCheck size={14} /> {t('billingWidget.change.note')}</span>
             {!cancelAtPeriodEnd && (
-              <button className="wb-link danger" onClick={() => setCancelOpen(true)}><Ban size={14} /> Cancel plan</button>
+              <button className="wb-link danger" onClick={() => setCancelOpen(true)}><Ban size={14} /> {t('billingWidget.change.cancel')}</button>
             )}
           </div>
         </div>
@@ -291,29 +300,29 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
 
       {/* No subscription yet (billing live, account never checked out). */}
       {neverCheckedOut && billingConfigured && (
-        <div className="wb-note info"><Info size={15} /> <span>You do not have a plan yet. Start one from the plan chooser above to unlock guidance, then manage it here.</span></div>
+        <div className="wb-note info"><Info size={15} /> <span>{t('billingWidget.noPlanYet')}</span></div>
       )}
 
       {/* Invoices. */}
       <div className="wb-inv-sec">
         <div className="wb-inv-head">
-          <h4>Invoices</h4>
-          <button className="wb-link" onClick={openPortal} disabled={portalBusy}><ExternalLink size={13} /> Payment method</button>
+          <h4>{t('billingWidget.invoices.title')}</h4>
+          <button className="wb-link" onClick={openPortal} disabled={portalBusy}><ExternalLink size={13} /> {t('billingWidget.invoices.paymentMethod')}</button>
         </div>
         {invoices == null ? (
-          <div className="wb-empty"><Loader2 size={14} className="spin" /> Loading invoices...</div>
+          <div className="wb-empty"><Loader2 size={14} className="spin" /> {t('billingWidget.invoices.loading')}</div>
         ) : invoices.length === 0 ? (
-          <div className="wb-empty">No invoices yet. They appear here after your first payment.</div>
+          <div className="wb-empty">{t('billingWidget.invoices.empty')}</div>
         ) : (
           <ul className="wb-inv-list">
             {invoices.map((inv) => (
               <li key={inv.id} className="wb-inv-row">
                 <span className="wb-inv-amt">{invMoney(inv.amount, inv.currency)}</span>
                 <span className="wb-inv-dt">{fmtDate(inv.created)}{inv.number ? ` · ${inv.number}` : ''}</span>
-                <span className={`wb-inv-st ${inv.status === 'paid' ? 'paid' : ''}`}>{cap(inv.status || 'open')}</span>
+                <span className={`wb-inv-st ${inv.status === 'paid' ? 'paid' : ''}`}>{invStatusLabel(inv.status || 'open')}</span>
                 <span className="wb-inv-links">
-                  {inv.hostedInvoiceUrl && <a href={inv.hostedInvoiceUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={13} /> View</a>}
-                  {inv.invoicePdf && <a href={inv.invoicePdf} target="_blank" rel="noopener noreferrer"><FileText size={13} /> PDF</a>}
+                  {inv.hostedInvoiceUrl && <a href={inv.hostedInvoiceUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={13} /> {t('billingWidget.invoices.view')}</a>}
+                  {inv.invoicePdf && <a href={inv.invoicePdf} target="_blank" rel="noopener noreferrer"><FileText size={13} /> {t('billingWidget.invoices.pdf')}</a>}
                 </span>
               </li>
             ))}
@@ -326,8 +335,8 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
           details and card data are handled on Stripe's PCI-compliant pages; we
           never store card numbers. */}
       <div className="wb-trust">
-        <span className="wb-trust-badge"><Lock size={13} /> Secured by Stripe</span>
-        <span className="wb-trust-txt"><ShieldCheck size={13} /> PCI-compliant checkout · your card details are never stored on our servers.</span>
+        <span className="wb-trust-badge"><Lock size={13} /> {t('billingWidget.trust.badge')}</span>
+        <span className="wb-trust-txt"><ShieldCheck size={13} /> {t('billingWidget.trust.text')}</span>
       </div>
 
       {/* Confirm a plan change. Honest copy mirroring the server contract. */}
@@ -339,24 +348,22 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
         const price = priceForPlan(confirm.plan, cyc)
         return (
           <div className="wb-ov" onClick={() => !changeBusy && setConfirm(null)}>
-            <div className="wb-modal" role="dialog" aria-modal="true" aria-label="Confirm plan change" onClick={(e) => e.stopPropagation()}>
-              <h3>{isUp ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />} {isUp ? 'Upgrade' : 'Change'} to {cap(confirm.plan)}</h3>
+            <div className="wb-modal" role="dialog" aria-modal="true" aria-label={t('billingWidget.confirm.aria')} onClick={(e) => e.stopPropagation()}>
+              <h3>{isUp ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />} {isUp ? t('billingWidget.confirm.upgradeTo', { plan: cap(confirm.plan) }) : t('billingWidget.confirm.changeTo', { plan: cap(confirm.plan) })}</h3>
               <div className="wb-modal-plan">
-                <span className="wb-modal-plan-nm">{cap(confirm.plan)} <i>{cyc === 'annual' ? 'Annual' : 'Monthly'}</i></span>
-                {price != null && <span className="wb-modal-plan-pr">{money(price)}<i>/{cyc === 'annual' ? 'yr' : 'mo'}</i></span>}
+                <span className="wb-modal-plan-nm">{cap(confirm.plan)} <i>{cyc === 'annual' ? t('billingWidget.cycle.annual') : t('billingWidget.cycle.monthly')}</i></span>
+                {price != null && <span className="wb-modal-plan-pr">{money(price)}<i>/{cyc === 'annual' ? t('billingWidget.cycle.perYr') : t('billingWidget.cycle.perMo')}</i></span>}
               </div>
               <p className="wb-modal-note">
-                {isUp
-                  ? 'This upgrade takes effect immediately. Stripe prorates your current period, so you are only charged the difference now.'
-                  : 'This change takes effect at the end of your current billing period. You keep your current plan and its included hours until then, with no new charge today.'}
+                {isUp ? t('billingWidget.confirm.upNote') : t('billingWidget.confirm.downNote')}
               </p>
-              <p className="wb-modal-fine">You will see the exact amount and timing confirmed on the next screen. You can change or cancel again any time.</p>
+              <p className="wb-modal-fine">{t('billingWidget.confirm.fine')}</p>
               {changeErr && <div className="wb-note warn" role="alert"><AlertTriangle size={15} /> <span>{changeErr}</span></div>}
               <div className="wb-modal-btns">
-                <button className="wb-btn ghost" onClick={() => setConfirm(null)} disabled={changeBusy}>Not now</button>
+                <button className="wb-btn ghost" onClick={() => setConfirm(null)} disabled={changeBusy}>{t('billingWidget.confirm.notNow')}</button>
                 <button className="wb-btn solid" onClick={applyChange} disabled={changeBusy}>
                   {changeBusy ? <Loader2 size={15} className="spin" /> : <Check size={15} />}
-                  <span>Confirm {isUp ? 'upgrade' : 'change'}</span>
+                  <span>{isUp ? t('billingWidget.confirm.confirmUpgrade') : t('billingWidget.confirm.confirmChange')}</span>
                 </button>
               </div>
             </div>
@@ -367,16 +374,16 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
       {/* Confirm cancel. Routes to the portal, which performs the cancel. */}
       {cancelOpen && (
         <div className="wb-ov" onClick={() => !portalBusy && setCancelOpen(false)}>
-          <div className="wb-modal" role="dialog" aria-modal="true" aria-label="Cancel plan" onClick={(e) => e.stopPropagation()}>
-            <h3><Ban size={18} /> Cancel your plan?</h3>
-            <p className="wb-modal-note">Your plan stays active and you keep full access until the end of your current billing period{periodEnd ? <> (<b>{fmtDate(periodEnd)}</b>)</> : ''}. You will not be charged again. You can pick a plan back up any time.</p>
-            <p className="wb-modal-fine">Cancellation is completed on the secure Stripe portal, where you can confirm and see your exact end date.</p>
+          <div className="wb-modal" role="dialog" aria-modal="true" aria-label={t('billingWidget.cancelModal.aria')} onClick={(e) => e.stopPropagation()}>
+            <h3><Ban size={18} /> {t('billingWidget.cancelModal.title')}</h3>
+            <p className="wb-modal-note">{periodEnd ? t.rich('billingWidget.cancelModal.noteDate', { date: fmtDate(periodEnd) }) : t('billingWidget.cancelModal.note')}</p>
+            <p className="wb-modal-fine">{t('billingWidget.cancelModal.fine')}</p>
             {portalErr && <div className="wb-note warn" role="alert"><AlertTriangle size={15} /> <span>{portalErr}</span></div>}
             <div className="wb-modal-btns">
-              <button className="wb-btn ghost" onClick={() => setCancelOpen(false)} disabled={portalBusy}>Keep my plan</button>
+              <button className="wb-btn ghost" onClick={() => setCancelOpen(false)} disabled={portalBusy}>{t('billingWidget.cancelModal.keep')}</button>
               <button className="wb-btn danger" onClick={openPortal} disabled={portalBusy}>
                 {portalBusy ? <Loader2 size={15} className="spin" /> : <ExternalLink size={15} />}
-                <span>Continue to cancel</span>
+                <span>{t('billingWidget.cancelModal.continue')}</span>
               </button>
             </div>
           </div>

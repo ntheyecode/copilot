@@ -21,6 +21,8 @@
 //   * NO AI model name and NO AI/token cost appears anywhere on this page. The
 //     payload carries none; none is added here.
 //   * US English spelling. No em-dashes.
+//   * Every user-facing string comes from the execPage i18n namespace (plus the
+//     shared companyAdmin.gate.* hand-off keys); the unit formatters take `t`.
 //
 // All data comes from api.workExecProductivity(days); branding from
 // api.workMyCompany(); CSV from api.workExecCsvUrl(days). Charts are inline SVG
@@ -43,11 +45,11 @@ const POLL_MS = 45000
 const nf = new Intl.NumberFormat('en-US')
 const fmtInt = (n) => nf.format(Math.round(Number(n) || 0))
 const fmtMoney = (n) => '$' + nf.format(Math.round(Number(n) || 0))
-const fmtHours = (n) => {
+const fmtHours = (n, t) => {
   const v = Number(n) || 0
-  return (Math.abs(v) >= 100 ? fmtInt(v) : v.toFixed(1)) + ' h'
+  return t('execPage.fmt.hours', { v: Math.abs(v) >= 100 ? fmtInt(v) : v.toFixed(1) })
 }
-const fmtMin = (n) => (Number(n) || 0).toFixed(1) + ' min'
+const fmtMin = (n, t) => t('execPage.fmt.minutes', { v: (Number(n) || 0).toFixed(1) })
 const fmtTime = (iso) => { try { return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) } catch { return '' } }
 const fmtDay = (d) => { try { return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) } catch { return d } }
 const stamp = () => {
@@ -133,6 +135,7 @@ function Tip({ tip }) {
 
 // ---- Trend: area + line with crosshair hover -------------------------------
 function TrendChart({ data, pal }) {
+  const t = useT()
   const [ref, w] = useMeasure()
   const [hover, setHover] = useState(null)
   const H = 260, padL = 36, padR = 16, padT = 16, padB = 28
@@ -157,10 +160,10 @@ function TrendChart({ data, pal }) {
     setHover(best)
   }
 
-  if (!pts.length) return <ChartEmpty label="No completed tasks in this window yet." />
+  if (!pts.length) return <ChartEmpty label={t('execPage.charts.trendEmpty')} />
   return (
     <div className="wx-chartwrap" ref={ref} onMouseLeave={() => setHover(null)}>
-      <svg viewBox={`0 0 ${w} ${H}`} width="100%" height={H} role="img" aria-label="Completion trend" style={{ display: 'block' }}>
+      <svg viewBox={`0 0 ${w} ${H}`} width="100%" height={H} role="img" aria-label={t('execPage.charts.trendAria')} style={{ display: 'block' }}>
         <defs>
           <linearGradient id={uid} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={pal.brand} stopOpacity="0.30" />
@@ -195,7 +198,7 @@ function TrendChart({ data, pal }) {
       {hover != null && pts[hover] && (
         <div className="wx-tip wx-tip-anchor" style={{ left: `${(x(hover) / w) * 100}%`, top: 8 }}>
           <span className="wx-tip-k">{fmtDay(pts[hover].date)}</span>
-          <span className="wx-tip-v">{fmtInt(pts[hover].count)} completed</span>
+          <span className="wx-tip-v">{t('execPage.charts.trendTip', { count: fmtInt(pts[hover].count) })}</span>
         </div>
       )}
     </div>
@@ -203,11 +206,13 @@ function TrendChart({ data, pal }) {
 }
 
 // ---- horizontal ranked bars (task types / contributors) --------------------
-function RankBars({ rows, color, pal, unit = 'tasks', emptyLabel }) {
+function RankBars({ rows, color, pal, unit, emptyLabel }) {
+  const t = useT()
+  const unitLabel = unit || t('execPage.charts.tasksUnit')
   const [tip, setTip] = useState(null)
   const list = Array.isArray(rows) ? rows : []
   const max = Math.max(1, ...list.map((r) => r.value))
-  if (!list.length) return <ChartEmpty label={emptyLabel || 'Nothing to show yet.'} />
+  if (!list.length) return <ChartEmpty label={emptyLabel || t('execPage.charts.barsEmpty')} />
   return (
     <div className="wx-bars" onMouseLeave={() => setTip(null)}>
       {list.map((r, i) => {
@@ -216,7 +221,7 @@ function RankBars({ rows, color, pal, unit = 'tasks', emptyLabel }) {
           <div
             key={i}
             className="wx-bar-row"
-            onMouseMove={(e) => { const host = e.currentTarget.closest('.wx-bars'); if (!host) return; const b = host.getBoundingClientRect(); setTip({ x: e.clientX - b.left + 12, y: e.clientY - b.top - 6, label: r.label, value: `${fmtInt(r.value)} ${unit}` }) }}
+            onMouseMove={(e) => { const host = e.currentTarget.closest('.wx-bars'); if (!host) return; const b = host.getBoundingClientRect(); setTip({ x: e.clientX - b.left + 12, y: e.clientY - b.top - 6, label: r.label, value: t('execPage.charts.barsTip', { count: fmtInt(r.value), unit: unitLabel }) }) }}
           >
             <div className="wx-bar-label" title={r.label}>{r.label}</div>
             <div className="wx-bar-track" style={{ background: pal.track }}>
@@ -233,14 +238,15 @@ function RankBars({ rows, color, pal, unit = 'tasks', emptyLabel }) {
 
 // ---- depth: one stacked bar, sequential ramp, direct labels ----------------
 function DepthBar({ depth, pal }) {
+  const t = useT()
   const [tip, setTip] = useState(null)
   const segs = [
-    { key: 'quick', label: 'Quick', sub: '1 to 3 steps', value: depth?.quick || 0, color: pal.depth[0] },
-    { key: 'standard', label: 'Standard', sub: '4 to 7 steps', value: depth?.standard || 0, color: pal.depth[1] },
-    { key: 'deep', label: 'Deep', sub: '8+ steps', value: depth?.deep || 0, color: pal.depth[2] },
+    { key: 'quick', label: t('execPage.charts.depthQuick'), sub: t('execPage.charts.depthQuickSub'), value: depth?.quick || 0, color: pal.depth[0] },
+    { key: 'standard', label: t('execPage.charts.depthStandard'), sub: t('execPage.charts.depthStandardSub'), value: depth?.standard || 0, color: pal.depth[1] },
+    { key: 'deep', label: t('execPage.charts.depthDeep'), sub: t('execPage.charts.depthDeepSub'), value: depth?.deep || 0, color: pal.depth[2] },
   ]
   const total = segs.reduce((a, s) => a + s.value, 0)
-  if (!total) return <ChartEmpty label="No completed tasks to profile yet." />
+  if (!total) return <ChartEmpty label={t('execPage.charts.depthEmpty')} />
   return (
     <div className="wx-depth" onMouseLeave={() => setTip(null)}>
       <div className="wx-depth-track">
@@ -249,7 +255,7 @@ function DepthBar({ depth, pal }) {
             key={s.key}
             className="wx-depth-seg"
             style={{ flexGrow: s.value, background: s.color }}
-            onMouseMove={(e) => { const b = e.currentTarget.closest('.wx-depth').getBoundingClientRect(); setTip({ x: e.clientX - b.left + 12, y: e.clientY - b.top - 6, label: `${s.label} (${s.sub})`, value: `${fmtInt(s.value)} tasks, ${Math.round((s.value / total) * 100)}%` }) }}
+            onMouseMove={(e) => { const b = e.currentTarget.closest('.wx-depth').getBoundingClientRect(); setTip({ x: e.clientX - b.left + 12, y: e.clientY - b.top - 6, label: t('execPage.charts.depthTipLabel', { label: s.label, sub: s.sub }), value: t('execPage.charts.depthTip', { count: fmtInt(s.value), pct: Math.round((s.value / total) * 100) }) }) }}
           >
             {(s.value / total) > 0.12 && <span className="wx-depth-pct">{Math.round((s.value / total) * 100)}%</span>}
           </div>
@@ -280,9 +286,10 @@ function ChartEmpty({ label }) {
 // one hero tile with the brand-green gradient, exactly like the reference's
 // single accent card.
 function Kpi({ icon: Icon, label, value, sub, est, accent }) {
+  const t = useT()
   return (
     <div className={`wka-card${accent ? ' accent' : ''}`}>
-      <div className="k"><Icon size={15} /> {label}{est && <span className="wx-est" title="Hypothetical estimate, not an actual figure">Est.</span>}</div>
+      <div className="k"><Icon size={15} /> {label}{est && <span className="wx-est" title={t('execPage.estTitle')}>{t('execPage.est')}</span>}</div>
       <div className="v">{value}</div>
       {sub && <div className="foot">{sub}</div>}
     </div>
@@ -307,13 +314,14 @@ function Card({ title, hint, icon: Icon, children, wide }) {
 // top bar carries the product identity + a live-status chip; the white-label
 // company brand + title live in the main area so they ride along in exports.
 function Shell({ company, live, children, mainRef }) {
+  const t = useT()
   const companyName = (company && company.name) || 'WorkCoPilot'
   return (
     <div className="wka wd-tokens">
       <style>{WORKADMIN_CSS}{WX_CSS}</style>
       <header className="wka-top">
         <span className="wka-dot" aria-hidden="true" />
-        <div className="wka-brand"><b>WorkCoPilot</b><span>Executive</span></div>
+        <div className="wka-brand"><b>WorkCoPilot</b><span>{t('execPage.brand.executive')}</span></div>
         <div className="wka-top-right">
           <span className="wka-chip">{companyName}</span>
           {live}
@@ -364,12 +372,12 @@ export default function WorkExec() {
     } catch (e) {
       // Keep the last good data on a transient poll failure; only hard-error
       // when we have nothing to show.
-      setData((prev) => { if (!prev) { setErr(friendlyError(e, 'Could not load productivity.')); setErrStatus(Number(e && e.status) || 0) } else setStale(true); return prev })
+      setData((prev) => { if (!prev) { setErr(friendlyError(e, t('execPage.errors.load'))); setErrStatus(Number(e && e.status) || 0) } else setStale(true); return prev })
     } finally {
       inFlight.current = false
       setRefreshing(false)
     }
-  }, [days])
+  }, [days, t])
 
   // Live: fetch on range change, then poll in place every 45s. The poll is
   // paused while the tab is hidden; on return to the foreground we refresh once.
@@ -386,10 +394,10 @@ export default function WorkExec() {
 
   // Live-status chip shown in the top bar.
   const liveChip = data ? (
-    <span className={`wka-chip ${stale ? 'warn' : 'ok'} wx-livechip`} title={stale ? 'Showing the last good reading; retrying' : 'Live, refreshes every 45 seconds'}>
+    <span className={`wka-chip ${stale ? 'warn' : 'ok'} wx-livechip`} title={stale ? t('execPage.live.staleTitle') : t('execPage.live.liveTitle')}>
       <span className={`wx-dot${stale ? ' wx-dot-stale' : ''}${refreshing ? ' wx-dot-busy' : ''}`} />
-      {stale ? 'Reconnecting' : 'Live'}
-      <span className="wx-updated">Updated {fmtTime(data.generatedAt)}</span>
+      {stale ? t('execPage.live.reconnecting') : t('execPage.live.live')}
+      <span className="wx-updated">{t('execPage.live.updated', { time: fmtTime(data.generatedAt) })}</span>
     </span>
   ) : null
 
@@ -437,9 +445,9 @@ export default function WorkExec() {
       const imgH = canvas.height * (imgW / canvas.width)
       // page-1 header
       pdf.setFont('helvetica', 'bold'); pdf.setFontSize(14); pdf.setTextColor(17, 23, 38)
-      pdf.text(`${companyName} - Productivity`, margin, 30)
+      pdf.text(t('execPage.pdf.title', { company: companyName }), margin, 30)
       pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9); pdf.setTextColor(120, 120, 140)
-      pdf.text(`Last ${days} days  |  Generated ${genDate}`, margin, 44)
+      pdf.text(t('execPage.pdf.sub', { days, date: genDate }), margin, 44)
       // place the (possibly tall) capture, paginating down the image
       let heightLeft = imgH
       let position = top
@@ -454,7 +462,7 @@ export default function WorkExec() {
       pdf.save(`workcopilot-productivity-${days}d-${stamp()}.pdf`)
     } catch (e) { console.warn('PDF export failed', e) }
     finally { setBusy('') }
-  }, [busy, snapshot, days, companyName, genDate])
+  }, [busy, snapshot, days, companyName, genDate, t])
 
   // ---- states --------------------------------------------------------------
   // Not in a company's scope (403): an ACTIONABLE state, never a dead end (QA
@@ -468,9 +476,9 @@ export default function WorkExec() {
         <div className="wx-content">
           <div className="wka-state wx-scope" role="status">
             <Building2 size={28} style={{ color: 'var(--wka-accent)', marginBottom: 12 }} />
-            <div className="big">{superadmin ? t('companyAdmin.gate.useAdminTitle') : t('workExec.scope.title', 'This view is for company accounts')}</div>
+            <div className="big">{superadmin ? t('companyAdmin.gate.useAdminTitle') : t('execPage.scope.title')}</div>
             <div className="wx-scope-body">
-              {t('workExec.scope.body', 'The executive view shows what a company\'s team completed, the time it represents and where the effort went. It opens for executives and company administrators of a company account.')}
+              {t('execPage.scope.body')}
               {superadmin ? ' ' + t('companyAdmin.gate.useAdminBody') : ''}
             </div>
             <div className="wx-scope-actions">
@@ -494,17 +502,17 @@ export default function WorkExec() {
   if (!data) {
     return (
       <Shell company={company} live={null}>
-        <div className="wx-content"><Loading label="Loading productivity" /></div>
+        <div className="wx-content"><Loading label={t('execPage.loading')} /></div>
       </Shell>
     )
   }
 
   const est = data.estimated || { assumptions: {}, timeSavedHours: 0, dollarsSaved: 0 }
   const assume = est.assumptions || {}
-  const assumeText = `Estimated from about ${assume.manualMinPerStep ?? '-'} min/step of manual effort at ${fmtMoney(assume.laborUsdPerHour ?? 0)}/hr. Hypothetical, not an actual measured figure.`
+  const assumeText = t('execPage.assume', { min: assume.manualMinPerStep ?? '-', rate: fmtMoney(assume.laborUsdPerHour ?? 0) })
   const empty = (data.tasksCompleted || 0) === 0
 
-  const byType = (data.byType || []).map((t) => ({ label: t.type, value: t.count }))
+  const byType = (data.byType || []).map((row) => ({ label: row.type, value: row.count }))
   const topMembers = (data.topMembers || []).map((m) => ({ label: m.name, value: m.tasks }))
 
   return (
@@ -517,80 +525,80 @@ export default function WorkExec() {
             : <span className="wx-logo wx-logo-fallback" aria-hidden="true">{companyName.slice(0, 1).toUpperCase()}</span>}
           <div className="wx-brand-txt">
             <span className="wx-eyebrow">{companyName}</span>
-            <h1 className="wka-h1">Productivity</h1>
+            <h1 className="wka-h1">{t('execPage.head.title')}</h1>
           </div>
         </div>
-        <p className="wka-sub">What your team completed, the time and value it represents, and where the effort went across the last {days} days. Figures marked <b>Est.</b> are hypothetical productivity estimates, not measured actuals.</p>
+        <p className="wka-sub">{t.rich('execPage.head.sub', { days })}</p>
 
         {/* ------- range + export controls ------- */}
         <div className="wka-toolbar wx-noexport">
-          <div className="wx-range" role="group" aria-label="Date range">
+          <div className="wx-range" role="group" aria-label={t('execPage.head.rangeAria')}>
             {RANGES.map((r) => (
-              <button key={r} type="button" className={`wx-range-btn${days === r ? ' is-active' : ''}`} onClick={() => setDays(r)} aria-pressed={days === r}>{r}d</button>
+              <button key={r} type="button" className={`wx-range-btn${days === r ? ' is-active' : ''}`} onClick={() => setDays(r)} aria-pressed={days === r}>{t('execPage.fmt.rangeDays', { n: r })}</button>
             ))}
           </div>
           <span className="wka-spacer" />
           <div className="wx-exports">
             <button type="button" className="wka-btn sm" onClick={exportPdf} disabled={!!busy}>
-              {busy === 'pdf' ? <Loader2 size={14} className="wx-spin" /> : <FileDown size={14} />}<span>PDF</span>
+              {busy === 'pdf' ? <Loader2 size={14} className="wx-spin" /> : <FileDown size={14} />}<span>{t('execPage.head.pdf')}</span>
             </button>
             <button type="button" className="wka-btn sm" onClick={exportImage} disabled={!!busy}>
-              {busy === 'image' ? <Loader2 size={14} className="wx-spin" /> : <ImageDown size={14} />}<span>Image</span>
+              {busy === 'image' ? <Loader2 size={14} className="wx-spin" /> : <ImageDown size={14} />}<span>{t('execPage.head.image')}</span>
             </button>
             <a className="wka-btn sm" href={api.workExecCsvUrl(days)} download>
-              <FileSpreadsheet size={14} /><span>CSV</span>
+              <FileSpreadsheet size={14} /><span>{t('execPage.head.csv')}</span>
             </a>
           </div>
         </div>
 
         {empty ? (
           <div className="wx-empty">
-            <EmptyState title="No completed tasks yet" detail={`Productivity shows here as your team works. This view covers the last ${days} days across ${fmtInt(data.members)} ${data.members === 1 ? 'member' : 'members'}.`} />
+            <EmptyState title={t('execPage.empty.title')} detail={t.n('execPage.empty.detail', Number(data.members) || 0, { days, count: fmtInt(data.members) })} />
           </div>
         ) : (
           <>
             {/* ------- KPI hero tiles ------- */}
             <div className="wka-cards">
-              <Kpi icon={CheckCircle2} label="Tasks completed" value={fmtInt(data.tasksCompleted)} sub={`${fmtInt(data.tasksInProgress)} in progress now`} />
-              <Kpi icon={Clock3} est label="Time saved" value={fmtHours(est.timeSavedHours)} sub="vs. doing it by hand" />
-              <Kpi icon={DollarSign} est accent label="Value delivered" value={fmtMoney(est.dollarsSaved)} sub="productivity value, not a cost" />
-              <Kpi icon={Gauge} label="Effectiveness" value={`${fmtInt(data.effectivenessPct)}%`} sub={`${fmtInt(data.fullyCompletedPct)}% fully completed`} />
+              <Kpi icon={CheckCircle2} label={t('execPage.kpi.tasksCompleted')} value={fmtInt(data.tasksCompleted)} sub={t('execPage.kpi.inProgressNow', { count: fmtInt(data.tasksInProgress) })} />
+              <Kpi icon={Clock3} est label={t('execPage.kpi.timeSaved')} value={fmtHours(est.timeSavedHours, t)} sub={t('execPage.kpi.vsByHand')} />
+              <Kpi icon={DollarSign} est accent label={t('execPage.kpi.valueDelivered')} value={fmtMoney(est.dollarsSaved)} sub={t('execPage.kpi.notACost')} />
+              <Kpi icon={Gauge} label={t('execPage.kpi.effectiveness')} value={`${fmtInt(data.effectivenessPct)}%`} sub={t('execPage.kpi.fullyCompleted', { count: fmtInt(data.fullyCompletedPct) })} />
             </div>
 
             {/* ------- secondary stat tiles ------- */}
             <div className="wka-cards">
-              <Kpi icon={Layers3} label="Avg steps / task" value={fmtInt(data.avgStepsPerTask)} sub="task depth" />
-              <Kpi icon={Timer} label="Avg time / task" value={fmtMin(data.avgMinutesPerTask)} sub="active minutes" />
-              <Kpi icon={Users} label="Team members" value={fmtInt(data.members)} sub="in this company" />
-              <Kpi icon={Activity} label="In progress" value={fmtInt(data.tasksInProgress)} sub="active right now" />
+              <Kpi icon={Layers3} label={t('execPage.kpi.avgSteps')} value={fmtInt(data.avgStepsPerTask)} sub={t('execPage.kpi.taskDepth')} />
+              <Kpi icon={Timer} label={t('execPage.kpi.avgTime')} value={fmtMin(data.avgMinutesPerTask, t)} sub={t('execPage.kpi.activeMinutes')} />
+              <Kpi icon={Users} label={t('execPage.kpi.members')} value={fmtInt(data.members)} sub={t('execPage.kpi.inThisCompany')} />
+              <Kpi icon={Activity} label={t('execPage.kpi.inProgress')} value={fmtInt(data.tasksInProgress)} sub={t('execPage.kpi.activeNow')} />
             </div>
 
             {/* ------- charts ------- */}
             <div className="wx-grid">
-              <Card wide title="Completion trend" hint={`Completed tasks per day over the last ${days} days.`} icon={TrendingUp}>
+              <Card wide title={t('execPage.charts.trendTitle')} hint={t('execPage.charts.trendHint', { days })} icon={TrendingUp}>
                 <TrendChart data={data.trend} pal={pal} />
               </Card>
 
-              <Card title="Task types completed" hint="Which kinds of work your team completed, by category." icon={Layers3}>
-                <RankBars rows={byType} color={pal.brand} pal={pal} emptyLabel="No task types yet." />
+              <Card title={t('execPage.charts.typesTitle')} hint={t('execPage.charts.typesHint')} icon={Layers3}>
+                <RankBars rows={byType} color={pal.brand} pal={pal} emptyLabel={t('execPage.charts.typesEmpty')} />
               </Card>
 
-              <Card title="Task depth" hint="The share of completed work by effort, from quick to deep." icon={Gauge}>
+              <Card title={t('execPage.charts.depthTitle')} hint={t('execPage.charts.depthHint')} icon={Gauge}>
                 <DepthBar depth={data.depth} pal={pal} />
               </Card>
 
-              <Card title="Top contributors" hint="The people who completed the most tasks in this window." icon={Users}>
-                <RankBars rows={topMembers} color={pal.teal} pal={pal} unit="tasks" emptyLabel="No contributors yet." />
+              <Card title={t('execPage.charts.contributorsTitle')} hint={t('execPage.charts.contributorsHint')} icon={Users}>
+                <RankBars rows={topMembers} color={pal.teal} pal={pal} emptyLabel={t('execPage.charts.contributorsEmpty')} />
               </Card>
 
-              <Card title="Estimated impact" hint="Hypothetical productivity value, not a measured figure or a cost." icon={DollarSign}>
+              <Card title={t('execPage.charts.impactTitle')} hint={t('execPage.charts.impactHint')} icon={DollarSign}>
                 <div className="wx-impact">
                   <div className="wx-impact-row">
-                    <span className="wx-impact-l"><Clock3 size={15} /> Time saved <span className="wx-est">Est.</span></span>
-                    <span className="wx-impact-v">{fmtHours(est.timeSavedHours)}</span>
+                    <span className="wx-impact-l"><Clock3 size={15} /> {t('execPage.kpi.timeSaved')} <span className="wx-est">{t('execPage.est')}</span></span>
+                    <span className="wx-impact-v">{fmtHours(est.timeSavedHours, t)}</span>
                   </div>
                   <div className="wx-impact-row">
-                    <span className="wx-impact-l"><DollarSign size={15} /> Value delivered <span className="wx-est">Est.</span></span>
+                    <span className="wx-impact-l"><DollarSign size={15} /> {t('execPage.kpi.valueDelivered')} <span className="wx-est">{t('execPage.est')}</span></span>
                     <span className="wx-impact-v">{fmtMoney(est.dollarsSaved)}</span>
                   </div>
                   <p className="wx-impact-note"><Info size={13} /> {assumeText}</p>
@@ -600,29 +608,29 @@ export default function WorkExec() {
 
             {/* ------- accessible data table (also the honest, exact numbers) ------- */}
             <details className="wka-panel wx-data">
-              <summary><BarChart3 size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-accent)' }} />View the numbers</summary>
+              <summary><BarChart3 size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-accent)' }} />{t('execPage.table.summary')}</summary>
               <div className="wx-data-grid">
                 <table className="wx-table">
-                  <caption>Summary, last {days} days</caption>
+                  <caption>{t('execPage.table.captionSummary', { days })}</caption>
                   <tbody>
-                    <tr><th>Members</th><td>{fmtInt(data.members)}</td></tr>
-                    <tr><th>Tasks completed</th><td>{fmtInt(data.tasksCompleted)}</td></tr>
-                    <tr><th>Tasks in progress</th><td>{fmtInt(data.tasksInProgress)}</td></tr>
-                    <tr><th>Avg steps / task</th><td>{fmtInt(data.avgStepsPerTask)}</td></tr>
-                    <tr><th>Avg time / task</th><td>{fmtMin(data.avgMinutesPerTask)}</td></tr>
-                    <tr><th>Effectiveness</th><td>{fmtInt(data.effectivenessPct)}%</td></tr>
-                    <tr><th>Fully completed</th><td>{fmtInt(data.fullyCompletedPct)}%</td></tr>
-                    <tr><th>Time saved (est.)</th><td>{fmtHours(est.timeSavedHours)}</td></tr>
-                    <tr><th>Value delivered (est.)</th><td>{fmtMoney(est.dollarsSaved)}</td></tr>
+                    <tr><th>{t('execPage.table.members')}</th><td>{fmtInt(data.members)}</td></tr>
+                    <tr><th>{t('execPage.table.tasksCompleted')}</th><td>{fmtInt(data.tasksCompleted)}</td></tr>
+                    <tr><th>{t('execPage.table.tasksInProgress')}</th><td>{fmtInt(data.tasksInProgress)}</td></tr>
+                    <tr><th>{t('execPage.table.avgSteps')}</th><td>{fmtInt(data.avgStepsPerTask)}</td></tr>
+                    <tr><th>{t('execPage.table.avgTime')}</th><td>{fmtMin(data.avgMinutesPerTask, t)}</td></tr>
+                    <tr><th>{t('execPage.table.effectiveness')}</th><td>{fmtInt(data.effectivenessPct)}%</td></tr>
+                    <tr><th>{t('execPage.table.fullyCompleted')}</th><td>{fmtInt(data.fullyCompletedPct)}%</td></tr>
+                    <tr><th>{t('execPage.table.timeSavedEst')}</th><td>{fmtHours(est.timeSavedHours, t)}</td></tr>
+                    <tr><th>{t('execPage.table.valueDeliveredEst')}</th><td>{fmtMoney(est.dollarsSaved)}</td></tr>
                   </tbody>
                 </table>
                 <table className="wx-table">
-                  <caption>Task types</caption>
-                  <tbody>{byType.length ? byType.map((t, i) => <tr key={i}><th>{t.label}</th><td>{fmtInt(t.value)}</td></tr>) : <tr><td colSpan={2}>No data</td></tr>}</tbody>
+                  <caption>{t('execPage.table.captionTypes')}</caption>
+                  <tbody>{byType.length ? byType.map((row, i) => <tr key={i}><th>{row.label}</th><td>{fmtInt(row.value)}</td></tr>) : <tr><td colSpan={2}>{t('execPage.table.noData')}</td></tr>}</tbody>
                 </table>
                 <table className="wx-table">
-                  <caption>Top contributors</caption>
-                  <tbody>{topMembers.length ? topMembers.map((m, i) => <tr key={i}><th>{m.label}</th><td>{fmtInt(m.value)}</td></tr>) : <tr><td colSpan={2}>No data</td></tr>}</tbody>
+                  <caption>{t('execPage.table.captionContributors')}</caption>
+                  <tbody>{topMembers.length ? topMembers.map((m, i) => <tr key={i}><th>{m.label}</th><td>{fmtInt(m.value)}</td></tr>) : <tr><td colSpan={2}>{t('execPage.table.noData')}</td></tr>}</tbody>
                 </table>
               </div>
             </details>
@@ -631,7 +639,7 @@ export default function WorkExec() {
 
         <footer className="wx-foot">
           <Info size={13} />
-          <span>Time saved and value delivered are hypothetical estimates for your own productivity, {assumeText.charAt(0).toLowerCase() + assumeText.slice(1)}</span>
+          <span>{t('execPage.foot', { assume: assumeText.charAt(0).toLowerCase() + assumeText.slice(1) })}</span>
         </footer>
       </div>
     </Shell>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Hash, Table, Calculator, Check, Copy, Download, ShieldCheck, ListChecks } from 'lucide-react'
 import WorkCard from './WorkCard.jsx'
+import { useT } from '../i18n/index.jsx'
 
 // ComputeCard - renders the RESULT of an on-device data computation (a number or a
 // table) that was run locally with runSpec() on the full rows of a CSV / Excel
@@ -24,6 +25,7 @@ import WorkCard from './WorkCard.jsx'
 //
 // The result is handed to the person to copy or download. Nothing is auto-filled
 // into their app - Copy and Download are the only actions (read-only, by design).
+// Every user-facing string comes from the computeCard i18n namespace.
 
 const STYLE_ID = 'computecard-css'
 function ensureAssets() {
@@ -35,56 +37,54 @@ function ensureAssets() {
   document.head.appendChild(s)
 }
 
-// ---- plain-English rendering of the spec (the reproducible basis) ----------
+// ---- plain-language rendering of the spec (the reproducible basis) ----------
 // Purely local: turns the validated DSL into readable steps so the person can
-// see exactly what ran, without anything leaving the device.
-const CMP_WORD = {
-  eq: 'is', ne: 'is not', gt: 'is greater than', gte: 'is at least',
-  lt: 'is less than', lte: 'is at most', contains: 'contains', in: 'is one of',
+// see exactly what ran, without anything leaving the device. The comparison and
+// aggregate words live in the dictionary (computeCard.cmp.* / computeCard.fn.*);
+// an unknown operator falls back to its raw id so a new DSL op is never blank.
+function word(t, group, id) {
+  const key = `computeCard.${group}.${id}`
+  return t.has(key) ? t(key) : id
 }
-const FN_WORD = {
-  sum: 'total', avg: 'average', min: 'minimum', max: 'maximum',
-  count: 'count', countDistinct: 'distinct count',
-}
-function clauseText(w) {
+function clauseText(t, w) {
   if (!w) return ''
   const val = Array.isArray(w.value) ? w.value.join(', ') : String(w.value == null ? '' : w.value)
-  return `${w.col} ${CMP_WORD[w.cmp] || w.cmp} ${val}`.trim()
+  return `${w.col} ${word(t, 'cmp', w.cmp)} ${val}`.trim()
 }
-function aggText(a) {
+function aggText(t, a) {
   if (!a) return ''
-  const fn = FN_WORD[a.fn] || a.fn
-  if (a.fn === 'count') return `count of rows${a.as ? ` as "${a.as}"` : ''}`
-  return `${fn} of ${a.col}${a.as ? ` as "${a.as}"` : ''}`
+  const fn = word(t, 'fn', a.fn)
+  if (a.fn === 'count') return a.as ? t('computeCard.spec.countRowsAs', { as: a.as }) : t('computeCard.spec.countRows')
+  return a.as ? t('computeCard.spec.fnOfColAs', { fn, col: a.col, as: a.as }) : t('computeCard.spec.fnOfCol', { fn, col: a.col })
 }
-function describeSpecPlain(spec) {
+function describeSpecPlain(t, spec) {
   const out = []
   for (const st of ((spec && spec.steps) || [])) {
     if (!st) continue
     if (st.op === 'filter') {
-      const parts = (st.where || []).map(clauseText).filter(Boolean)
-      out.push(`Keep only rows where ${parts.join(' and ')}.`)
+      const parts = (st.where || []).map((w) => clauseText(t, w)).filter(Boolean)
+      out.push(t('computeCard.spec.filter', { where: parts.join(` ${t('computeCard.spec.and')} `) }))
     } else if (st.op === 'derive') {
-      out.push(`Add a column "${st.as}" computed as ${st.expr}.`)
+      out.push(t('computeCard.spec.derive', { as: st.as, expr: st.expr }))
     } else if (st.op === 'select') {
-      out.push(`Keep the columns: ${(st.cols || []).join(', ')}.`)
+      out.push(t('computeCard.spec.select', { cols: (st.cols || []).join(', ') }))
     } else if (st.op === 'group') {
       const by = (st.by || []).join(', ')
-      const aggs = (st.agg || []).map(aggText).filter(Boolean).join(', ')
-      out.push(`Group by ${by || 'the whole table'}, then take the ${aggs}.`)
+      const aggs = (st.agg || []).map((a) => aggText(t, a)).filter(Boolean).join(', ')
+      out.push(t('computeCard.spec.group', { by: by || t('computeCard.spec.wholeTable'), aggs }))
     } else if (st.op === 'sort') {
-      out.push(`Sort by ${st.by} (${st.dir === 'desc' ? 'high to low' : 'low to high'}).`)
+      out.push(t('computeCard.spec.sort', { by: st.by, dir: st.dir === 'desc' ? t('computeCard.spec.highToLow') : t('computeCard.spec.lowToHigh') }))
     } else if (st.op === 'limit') {
-      out.push(`Take the first ${st.n} ${st.n === 1 ? 'row' : 'rows'}.`)
+      out.push(t.n('computeCard.spec.limit', Number(st.n)))
     }
   }
   if (spec && spec.output === 'number') {
     const v = spec.value || {}
     out.push(v.fn === 'count'
-      ? 'Return the count of rows.'
-      : `Return the ${FN_WORD[v.fn] || v.fn} of ${v.col}.`)
+      ? t('computeCard.spec.returnCount')
+      : t('computeCard.spec.returnFn', { fn: word(t, 'fn', v.fn), col: v.col }))
   } else {
-    out.push('Return the resulting table.')
+    out.push(t('computeCard.spec.returnTable'))
   }
   return out
 }
@@ -132,7 +132,8 @@ function slug(name) {
 }
 
 // A self-contained copy control, so the card owns its own clipboard feedback.
-function CopyAction({ text, label = 'Copy' }) {
+function CopyAction({ text, label }) {
+  const t = useT()
   const [done, setDone] = useState(false)
   const copy = async () => {
     try { await navigator.clipboard.writeText(text || ''); setDone(true); setTimeout(() => setDone(false), 1500) }
@@ -140,19 +141,21 @@ function CopyAction({ text, label = 'Copy' }) {
   }
   return (
     <button type="button" className="cm-act" onClick={copy}>
-      {done ? <Check size={13} /> : <Copy size={13} />} {done ? 'Copied' : label}
+      {done ? <Check size={13} /> : <Copy size={13} />} {done ? t('computeCard.copied') : (label || t('computeCard.copy'))}
     </button>
   )
 }
 
 export default function ComputeCard({ result, explanation, caveat, spec, fileName, className = '' }) {
+  const t = useT()
   ensureAssets()
   if (!result) return null
   const isNumber = result.output === 'number'
-  const steps = describeSpecPlain(spec)
+  const steps = describeSpecPlain(t, spec)
   const csv = csvFromResult(result)
   const copyText = isNumber ? cell(result.value) : csv
   const base = slug(fileName)
+  const rowCount = Number(result.rowCount || 0)
 
   const renderBody = () => {
     if (isNumber) {
@@ -161,7 +164,7 @@ export default function ComputeCard({ result, explanation, caveat, spec, fileNam
     const cols = result.columns || []
     const rows = result.rows || []
     if (!cols.length || !rows.length) {
-      return <p className="cm-empty">No rows matched, so the table is empty.</p>
+      return <p className="cm-empty">{t('computeCard.emptyTable')}</p>
     }
     return (
       <div className="cm-tablewrap">
@@ -182,30 +185,30 @@ export default function ComputeCard({ result, explanation, caveat, spec, fileNam
       <WorkCard.Head
         icon={isNumber ? Hash : Table}
         align="start"
-        eyebrow={<span className="cm-eyebrow-in"><Calculator size={11} /> Computed on your device{isNumber ? ' · Number' : ' · Table'}</span>}
-        title={isNumber ? 'The number' : 'The table'}
+        eyebrow={<span className="cm-eyebrow-in"><Calculator size={11} /> {t('computeCard.eyebrow')}{' · '}{isNumber ? t('computeCard.kindNumber') : t('computeCard.kindTable')}</span>}
+        title={isNumber ? t('computeCard.titleNumber') : t('computeCard.titleTable')}
       />
 
       <div className="cm-bodywrap">{renderBody()}</div>
 
       {!isNumber && result.truncated ? (
         <div className="cm-trunc">
-          Showing the first {(result.rows || []).length.toLocaleString()} of {Number(result.rowCount || 0).toLocaleString()} result rows. Download the CSV for the full set.
+          {t('computeCard.truncated', { shown: (result.rows || []).length.toLocaleString(), total: rowCount.toLocaleString() })}
         </div>
       ) : null}
 
       {/* Actions - the result is handed over to copy or download, never auto-filled. */}
       <div className="cm-actions">
-        <CopyAction text={copyText} label={isNumber ? 'Copy' : 'Copy as CSV'} />
+        <CopyAction text={copyText} label={isNumber ? t('computeCard.copy') : t('computeCard.copyCsv')} />
         <button type="button" className="cm-act" onClick={() => downloadText(csv, base + '.csv', 'text/csv')}>
-          <Download size={13} /> Download CSV
+          <Download size={13} /> {t('computeCard.downloadCsv')}
         </button>
       </div>
 
       {/* HOW IT WAS COMPUTED - the reproducible basis: the plain note plus the
-          plain-English spec steps, then the caveat, then the privacy line. */}
+          plain-language spec steps, then the caveat, then the privacy line. */}
       <div className="cm-trust">
-        <span className="cm-trust-k"><ListChecks size={12} /> How it was computed</span>
+        <span className="cm-trust-k"><ListChecks size={12} /> {t('computeCard.howK')}</span>
         {explanation && String(explanation).trim() ? (
           <p className="cm-basis">{String(explanation).trim()}</p>
         ) : null}
@@ -215,7 +218,7 @@ export default function ComputeCard({ result, explanation, caveat, spec, fileNam
           </ol>
         ) : null}
         <p className="cm-count">
-          Run across {Number(result.rowCount || 0).toLocaleString()} {Number(result.rowCount) === 1 ? 'row' : 'rows'} on your device.
+          {t.n('computeCard.runAcross', rowCount, { count: rowCount.toLocaleString() })}
         </p>
 
         {caveat && String(caveat).trim() ? (
@@ -226,7 +229,7 @@ export default function ComputeCard({ result, explanation, caveat, spec, fileNam
 
         <div className="cm-privacy">
           <ShieldCheck size={14} />
-          <span>Run on your device. Your data never left it.</span>
+          <span>{t('computeCard.privacy')}</span>
         </div>
       </div>
     </WorkCard>
