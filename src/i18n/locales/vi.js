@@ -383,7 +383,10 @@ export default {
       },
     },
   },
-  lang: { label: 'Ngôn ngữ', choose: 'Chọn ngôn ngữ của bạn' },
+  lang: {
+    label: 'Ngôn ngữ',
+    choose: 'Chọn ngôn ngữ của bạn',
+  },
   languagePin: {
     title: 'Chọn ngôn ngữ của bạn',
     intro: 'Thao tác này đặt ngôn ngữ của bạn cho ứng dụng WorkCoPilot và cho các email chúng tôi gửi cho bạn.',
@@ -392,10 +395,20 @@ export default {
     saving: 'Đang lưu...',
     error: 'Không thể lưu ngôn ngữ của bạn. Vui lòng thử lại.',
   },
-
   widgets: {
-    copy: { copy: 'Sao chép', copied: 'Đã sao chép', copyCommand: 'Sao chép lệnh', copyAria: 'Sao chép vào bộ nhớ tạm', copiedAria: 'Đã sao chép vào bộ nhớ tạm' },
-    blocks: { terminal: 'Terminal', open: 'Mở {host}', copyThis: 'Sao chép mục này', code: 'mã' },
+    copy: {
+      copy: 'Sao chép',
+      copied: 'Đã sao chép',
+      copyCommand: 'Sao chép lệnh',
+      copyAria: 'Sao chép vào bộ nhớ tạm',
+      copiedAria: 'Đã sao chép vào bộ nhớ tạm',
+    },
+    blocks: {
+      terminal: 'Terminal',
+      open: 'Mở {host}',
+      copyThis: 'Sao chép mục này',
+      code: 'mã',
+    },
     validate: {
       launch: 'Thử ngay với việc của bạn, trực tiếp',
       launchAria: 'Thử WorkCoPilot với chính việc của bạn, trực tiếp',
@@ -407,7 +420,6 @@ export default {
       dismiss: 'Bỏ qua',
       coachB: 'WorkCoPilot có phù hợp với bạn?',
       coachS: 'Mô tả việc của chính bạn và xem nó được lên kế hoạch <b>trực tiếp</b>, từng bước một.',
-      // ASK
       askH: 'Bạn đang cần làm xong việc gì?',
       askSub: 'Mô tả một việc thật. Chỉ vài giây sau, bạn sẽ thấy WorkCoPilot lên kế hoạch cho nó, từng bước, với đúng các thao tác bấm, ô nhập và lệnh cần chạy.',
       askPh: 'VD: Tạo VPC trên AWS và khóa chặt nó, đối chiếu sổ sách tháng trước trong Excel, hoặc: nó có hướng dẫn được ứng dụng nội bộ của tôi không?',
@@ -420,15 +432,20 @@ export default {
       chip6: 'Tạo VPC trên AWS với subnet riêng và siết chặt security group',
       watchIt: 'Xem nó lên kế hoạch cho việc của tôi',
       privacy: 'Chúng tôi chỉ dùng thông tin của bạn để liên hệ về WorkCoPilot. Nội dung việc của bạn được lọc dữ liệu nhạy cảm ngay trên thiết bị trước khi gửi bất cứ gì.',
-      // LEAD (once per session): the plan is being prepared, where do we send it
       prepH: 'Kế hoạch trực tiếp của bạn đang được chuẩn bị',
       leadIntro: 'Cho chúng tôi biết nơi gửi bản đầy đủ, rồi xem nó hiện ra <b>trực tiếp</b>.',
-      firstName: 'Tên', firstNamePh: 'An',
-      lastName: 'Họ', lastNamePh: 'Nguyễn',
-      workEmail: 'Email công việc', workEmailPh: 'an@congty.com',
-      phone: 'Điện thoại', phonePh: '+84 90 000 0000',
-      country: 'Quốc gia', countryPh: 'Chọn quốc gia của bạn',
-      company: 'Công ty', companyPh: 'Tên công ty',
+      firstName: 'Tên',
+      firstNamePh: 'An',
+      lastName: 'Họ',
+      lastNamePh: 'Nguyễn',
+      workEmail: 'Email công việc',
+      workEmailPh: 'an@congty.com',
+      phone: 'Điện thoại',
+      phonePh: '+84 90 000 0000',
+      country: 'Quốc gia',
+      countryPh: 'Chọn quốc gia của bạn',
+      company: 'Công ty',
+      companyPh: 'Tên công ty',
       required: 'Bắt buộc',
       validEmail: 'Nhập email hợp lệ',
       validPhone: 'Nhập số điện thoại hợp lệ',
@@ -436,7 +453,6 @@ export default {
       saving: 'Đang lưu…',
       reveal: 'Xem kế hoạch của tôi',
       editTask: 'Sửa việc của tôi',
-      // REVEAL: the product console, live on the visitor's task
       scan1: 'Đang đọc mục tiêu của bạn',
       scan2: 'Đang kiểm tra những gì WorkCoPilot sẽ thấy trên màn hình của bạn',
       scan3: 'Đang lên kế hoạch chính xác các thao tác bấm, ô nhập và lệnh',
@@ -452,7 +468,9 @@ export default {
       stepOf: 'Bước {n}/{total}',
       ready: 'Trước khi bắt đầu',
       exactlyHow: 'Chính xác cách làm',
-      step_one: '{n} bước', step_two: '{n} bước', step_other: '{n} bước',
+      step_one: '{n} bước',
+      step_two: '{n} bước',
+      step_other: '{n} bước',
       lockedMore_one: 'Thêm {n} bước nữa, chi tiết như vậy, trong phiên trực tiếp',
       lockedMore_two: 'Thêm {n} bước nữa, bước nào cũng chi tiết như vậy, trong phiên trực tiếp',
       lockedMore_other: 'Thêm {n} bước nữa, bước nào cũng chi tiết như vậy, trong phiên trực tiếp',
@@ -476,11 +494,12 @@ export default {
       promise1: 'Sửa ngay khi bạn đi lệch',
       promise2: 'Từng bước một, chờ bạn',
       promise3: 'Xác nhận khi việc đã xong',
-      // The ask: this, every day
       ctaH: 'Được hướng dẫn như vậy, trong mọi việc',
       ctaSub: 'Đúng bước tiếp theo, mọi lúc, ngay trong các ứng dụng bạn đang dùng.',
       recommended: 'Đề xuất cho việc của bạn',
-      hrsMonth_one: '{n} giờ hướng dẫn trực tiếp mỗi tháng', hrsMonth_two: '{n} giờ hướng dẫn trực tiếp mỗi tháng', hrsMonth_other: '{n} giờ hướng dẫn trực tiếp mỗi tháng',
+      hrsMonth_one: '{n} giờ hướng dẫn trực tiếp mỗi tháng',
+      hrsMonth_two: '{n} giờ hướng dẫn trực tiếp mỗi tháng',
+      hrsMonth_other: '{n} giờ hướng dẫn trực tiếp mỗi tháng',
       startWith: 'Bắt đầu với {plan}',
       comparePlans: 'So sánh tất cả các gói',
       trustCancel: 'Không ràng buộc, hủy bất cứ lúc nào',
@@ -493,7 +512,6 @@ export default {
       unreachable: 'Không kết nối được tới phần kiểm tra trực tiếp. Vui lòng thử lại.',
     },
   },
-
   common: {
     signIn: 'Đăng nhập',
     getStarted: 'Bắt đầu',
@@ -511,7 +529,6 @@ export default {
     perMonth: '/tháng',
     perYear: '/năm',
   },
-
   nav: {
     home: 'AdmireVeda WorkCoPilot, trang chủ',
     main: 'Menu chính',
@@ -525,7 +542,6 @@ export default {
     openMenu: 'Mở menu',
     closeMenu: 'Đóng menu',
   },
-
   footer: {
     aria: 'Chân trang',
     tag: 'Chuyên gia của bạn, trên mọi màn hình. Hướng dẫn chỉ-đọc: theo dõi màn hình của bạn và chỉ chính xác bước tiếp theo, trong bất kỳ ứng dụng nào, dữ liệu của bạn luôn được bảo vệ ngay trên thiết bị.',
@@ -546,12 +562,11 @@ export default {
     sales: 'Kinh doanh và doanh nghiệp',
     ownership: 'WorkCoPilot, của AdmireVeda, một sản phẩm của COE Security LLC.',
     note: 'Chỉ dành cho công việc hợp pháp, chính đáng. Đây là hướng dẫn, không phải tư vấn chuyên môn.',
-    cookiePrefs: "Tùy chọn cookie",
-    cookiePolicy: "Chính sách cookie",
-    subprocessors: "Đơn vị xử lý phụ",
-    accessibility: "Khả năng tiếp cận",
+    cookiePrefs: 'Tùy chọn cookie',
+    cookiePolicy: 'Chính sách cookie',
+    subprocessors: 'Đơn vị xử lý phụ',
+    accessibility: 'Khả năng tiếp cận',
   },
-
   home: {
     meta: {
       title: 'WorkCoPilot của AdmireVeda - Chuyên gia của bạn, trên mọi màn hình',
@@ -572,7 +587,10 @@ export default {
         s: 'Dữ liệu nhạy cảm được gỡ bỏ ngay trên máy bạn trước khi gửi bất cứ gì.',
       },
     ],
-    cta: { start: 'Hướng dẫn tôi', demo: 'Xem demo 60 giây' },
+    cta: {
+      start: 'Hướng dẫn tôi',
+      demo: 'Xem demo 60 giây',
+    },
     cuesAria: 'Những điều bạn có thể tin cậy',
     cues: [
       'Hoạt động ngay trong các ứng dụng bạn đang dùng',
@@ -677,10 +695,26 @@ export default {
         h3: 'Được xây dựng cho cách một công ty thực sự vận hành.',
         sub: 'Vai trò, hàng đợi, mẫu và một bộ não chung, mọi quy tắc được thực thi trên máy chủ, không bao giờ chỉ ở giao diện.',
         cards: [
-          { t: 'Vai trò và luồng công việc', d: 'Quản lý dự án giao và giao lại việc. Quản lý dự án cấp cao tái cân bằng toàn bộ dự án giữa các quản lý. GRC giám sát ở chế độ chỉ đọc, với một sổ đăng ký rủi ro cho công việc bị đình trệ. Mỗi người làm việc từ một hàng đợi, độc lập, hoặc cả hai.', chips: ['Quản lý dự án', 'Quản lý cấp cao', 'Giám sát GRC', 'Người thực hiện', 'Độc lập', 'Kết hợp'] },
-          { t: 'Một quy trình, nhiều người', d: 'Biến một dự án thành mẫu và giao cho cả nhóm cùng lúc. Mỗi người có lượt chạy riêng; bạn thấy bản tổng hợp ai đã xong và đến đâu, không bao giờ thấy phiên thô của bất kỳ ai.', chips: ['Nhập môn', 'SOP', 'Diễn tập tuân thủ'] },
-          { t: 'Một bộ não công ty ngày càng lớn', d: 'Luồng công việc mà một người chứng minh sẽ được cung cấp cho mọi người vào lần sau. Sắp xếp nó vào các không gian tri thức, chọn đúng không gian khi lập kế hoạch, và mỗi mục đều đi qua một lần làm sạch có nhận biết chính sách trước tiên.', chips: ['Không gian tri thức', 'Làm sạch khi nhập'] },
-          { t: 'Thực hành đã kiểm chứng, đưa vào', d: 'Trên một dự án, nó gợi ý các thực hành đã kiểm chứng cho loại công việc đó. Thêm một cái và nó trở thành một tác vụ thật. Gợi ý cải thiện từ những gì tổ chức của bạn chấp nhận và hoàn thành.', chips: ['Gợi ý', 'Thêm vào bản đồ', 'Học từ sự chấp nhận'] },
+          {
+            t: 'Vai trò và luồng công việc',
+            d: 'Quản lý dự án giao và giao lại việc. Quản lý dự án cấp cao tái cân bằng toàn bộ dự án giữa các quản lý. GRC giám sát ở chế độ chỉ đọc, với một sổ đăng ký rủi ro cho công việc bị đình trệ. Mỗi người làm việc từ một hàng đợi, độc lập, hoặc cả hai.',
+            chips: ['Quản lý dự án', 'Quản lý cấp cao', 'Giám sát GRC', 'Người thực hiện', 'Độc lập', 'Kết hợp'],
+          },
+          {
+            t: 'Một quy trình, nhiều người',
+            d: 'Biến một dự án thành mẫu và giao cho cả nhóm cùng lúc. Mỗi người có lượt chạy riêng; bạn thấy bản tổng hợp ai đã xong và đến đâu, không bao giờ thấy phiên thô của bất kỳ ai.',
+            chips: ['Nhập môn', 'SOP', 'Diễn tập tuân thủ'],
+          },
+          {
+            t: 'Một bộ não công ty ngày càng lớn',
+            d: 'Luồng công việc mà một người chứng minh sẽ được cung cấp cho mọi người vào lần sau. Sắp xếp nó vào các không gian tri thức, chọn đúng không gian khi lập kế hoạch, và mỗi mục đều đi qua một lần làm sạch có nhận biết chính sách trước tiên.',
+            chips: ['Không gian tri thức', 'Làm sạch khi nhập'],
+          },
+          {
+            t: 'Thực hành đã kiểm chứng, đưa vào',
+            d: 'Trên một dự án, nó gợi ý các thực hành đã kiểm chứng cho loại công việc đó. Thêm một cái và nó trở thành một tác vụ thật. Gợi ý cải thiện từ những gì tổ chức của bạn chấp nhận và hoàn thành.',
+            chips: ['Gợi ý', 'Thêm vào bản đồ', 'Học từ sự chấp nhận'],
+          },
         ],
       },
     },
@@ -690,14 +724,38 @@ export default {
       sub: 'Một trợ lý mà cả công ty bạn dùng được, kỹ thuật hay không. Nó dẫn dắt công việc trong {total} lĩnh vực chuyên môn thuộc {families} nhóm, và các bước đọc như do chuyên gia trong lĩnh vực đó viết. Chọn một lĩnh vực và bắt đầu.',
       statsAria: 'Phạm vi bao phủ',
       cards: [
-        { k: 'Cài đặt và cấu hình kỹ thuật', d: 'Tường lửa, IDS/IPS, đám mây, DevOps, hạ tầng.' },
-        { k: 'Xây dựng và triển khai', d: 'Pipeline, tích hợp, xây dựng trọn gói.' },
-        { k: 'AI và tự động hóa', d: 'Agent, RAG, AI doanh nghiệp, quy trình tự động.' },
-        { k: 'Sản phẩm và đổi mới', d: 'Tạo mẫu, xây dựng và ra mắt một ý tưởng hoàn toàn mới.' },
-        { k: 'Marketing và tăng trưởng', d: 'Chiến dịch, phân tích, ra mắt, tiếp cận.' },
-        { k: 'Kế toán và văn phòng', d: 'Đối chiếu, báo cáo, bảng tính, hồ sơ nộp.' },
-        { k: 'Pháp lý và tuân thủ', d: 'Rà soát, biểu mẫu, quy trình, kiểm tra tuân thủ.' },
-        { k: 'Bất cứ việc gì khác', d: 'Nếu nó ở trên màn hình, bạn sẽ được hướng dẫn.' },
+        {
+          k: 'Cài đặt và cấu hình kỹ thuật',
+          d: 'Tường lửa, IDS/IPS, đám mây, DevOps, hạ tầng.',
+        },
+        {
+          k: 'Xây dựng và triển khai',
+          d: 'Pipeline, tích hợp, xây dựng trọn gói.',
+        },
+        {
+          k: 'AI và tự động hóa',
+          d: 'Agent, RAG, AI doanh nghiệp, quy trình tự động.',
+        },
+        {
+          k: 'Sản phẩm và đổi mới',
+          d: 'Tạo mẫu, xây dựng và ra mắt một ý tưởng hoàn toàn mới.',
+        },
+        {
+          k: 'Marketing và tăng trưởng',
+          d: 'Chiến dịch, phân tích, ra mắt, tiếp cận.',
+        },
+        {
+          k: 'Kế toán và văn phòng',
+          d: 'Đối chiếu, báo cáo, bảng tính, hồ sơ nộp.',
+        },
+        {
+          k: 'Pháp lý và tuân thủ',
+          d: 'Rà soát, biểu mẫu, quy trình, kiểm tra tuân thủ.',
+        },
+        {
+          k: 'Bất cứ việc gì khác',
+          d: 'Nếu nó ở trên màn hình, bạn sẽ được hướng dẫn.',
+        },
       ],
       exploreAll: 'Khám phá chi tiết mọi tình huống sử dụng',
       browseAll: 'hoặc xem tất cả {total} lĩnh vực',
@@ -733,21 +791,63 @@ export default {
       h2: 'Mỗi tác vụ kết thúc bằng <em>bằng chứng</em>, không phải lời hứa.',
       sub: 'Những gì đã làm, được xác nhận trên màn hình ngay khi diễn ra, được ghi lại và niêm phong để bất kỳ ai cũng có thể kiểm tra tính xác thực.',
       points: [
-        { t: 'Báo cáo tác vụ', d: 'Các bước đã xác nhận cùng cách thực hiện, kết quả, và ảnh chụp cột mốc đã được làm sạch. Nó báo cáo «5 trong 6 đã xong» khi đó là sự thật.' },
-        { t: 'Nhật ký kiểm toán', d: 'Một bản ghi có dấu thời gian cho mọi bước và mọi lần gửi, được lưu cho từng phiên.' },
-        { t: 'Dấu niêm phong xác thực', d: 'Mỗi báo cáo được niêm phong bằng SHA-256 và HMAC. Bất kỳ ai cũng có thể xác nhận tính xác thực tại một điểm cuối xác minh công khai.' },
-        { t: 'Tuân thủ, theo từng tác vụ', d: 'Một báo cáo tùy chọn ánh xạ công việc tới {n} khung. Bằng chứng hỗ trợ chương trình của bạn, không bao giờ là tuyên bố chứng nhận.' },
+        {
+          t: 'Báo cáo tác vụ',
+          d: 'Các bước đã xác nhận cùng cách thực hiện, kết quả, và ảnh chụp cột mốc đã được làm sạch. Nó báo cáo «5 trong 6 đã xong» khi đó là sự thật.',
+        },
+        {
+          t: 'Nhật ký kiểm toán',
+          d: 'Một bản ghi có dấu thời gian cho mọi bước và mọi lần gửi, được lưu cho từng phiên.',
+        },
+        {
+          t: 'Dấu niêm phong xác thực',
+          d: 'Mỗi báo cáo được niêm phong bằng SHA-256 và HMAC. Bất kỳ ai cũng có thể xác nhận tính xác thực tại một điểm cuối xác minh công khai.',
+        },
+        {
+          t: 'Tuân thủ, theo từng tác vụ',
+          d: 'Một báo cáo tùy chọn ánh xạ công việc tới {n} khung. Bằng chứng hỗ trợ chương trình của bạn, không bao giờ là tuyên bố chứng nhận.',
+        },
       ],
       log: {
         title: 'Nhật ký kiểm toán',
         task: 'Xoay khóa API sản xuất',
         lines: [
-          { at: '14:02:11', k: 'bước 3 trên 5', m: 'đã xác minh trên màn hình', s: 'ok' },
-          { at: '14:02:40', k: 'bước 4 trên 5', m: 'phát hiện giá trị sai, đã sửa', s: 'warn' },
-          { at: '14:05:02', k: 'bước 5 trên 5', m: 'đã xác minh trên màn hình', s: 'ok' },
-          { at: '14:05:09', k: 'báo cáo', m: '4 ảnh cột mốc, làm sạch trên thiết bị', s: 'info' },
-          { at: '14:05:10', k: 'niêm phong', m: 'đã áp dụng SHA-256 + HMAC', s: 'seal' },
-          { at: '14:05:10', k: 'xác minh', m: 'xác thực', s: 'ok' },
+          {
+            at: '14:02:11',
+            k: 'bước 3 trên 5',
+            m: 'đã xác minh trên màn hình',
+            s: 'ok',
+          },
+          {
+            at: '14:02:40',
+            k: 'bước 4 trên 5',
+            m: 'phát hiện giá trị sai, đã sửa',
+            s: 'warn',
+          },
+          {
+            at: '14:05:02',
+            k: 'bước 5 trên 5',
+            m: 'đã xác minh trên màn hình',
+            s: 'ok',
+          },
+          {
+            at: '14:05:09',
+            k: 'báo cáo',
+            m: '4 ảnh cột mốc, làm sạch trên thiết bị',
+            s: 'info',
+          },
+          {
+            at: '14:05:10',
+            k: 'niêm phong',
+            m: 'đã áp dụng SHA-256 + HMAC',
+            s: 'seal',
+          },
+          {
+            at: '14:05:10',
+            k: 'xác minh',
+            m: 'xác thực',
+            s: 'ok',
+          },
         ],
         sealed: 'Báo cáo đã niêm phong',
       },
@@ -777,12 +877,13 @@ export default {
           'Tài liệu của riêng bạn làm ngữ cảnh',
           'Bảo mật và riêng tư tích hợp sẵn',
         ],
-        basic: [
-          'Mọi thứ trong Lite',
-          'Bao gồm lộ trình',
-          'Hướng dẫn nổi + bản tổng kết phiên',
+        basic: ['Mọi thứ trong Lite', 'Bao gồm lộ trình', 'Hướng dẫn nổi + bản tổng kết phiên'],
+        advanced: [
+          'Mọi thứ trong Basic',
+          'Nhiều ngữ cảnh tài liệu hơn cho mỗi tác vụ',
+          'Ví dụ trực quan khi hữu ích',
+          'Hướng dẫn ưu tiên',
         ],
-        advanced: ['Mọi thứ trong Basic', 'Nhiều ngữ cảnh tài liệu hơn cho mỗi tác vụ', 'Ví dụ trực quan khi hữu ích', 'Hướng dẫn ưu tiên'],
         premium: [
           'Mọi tính năng của Advanced',
           'Dự án: một mục tiêu lớn thành bản đồ các tác vụ',
@@ -818,18 +919,43 @@ export default {
       h2: 'Một hướng dẫn. <em>Mọi màn hình</em>, mọi ngôn ngữ, theo cách của bạn.',
       sub: 'Cùng một hướng dẫn trên máy tính, Android và web, bằng ngôn ngữ và giao diện bạn chọn, được ghi nhớ trên mọi thiết bị của bạn.',
       cards: [
-        { t: 'Mọi nền tảng', d: 'Một ứng dụng Windows đã ký, kèm MSI theo máy để triển khai IT âm thầm, một ứng dụng Android, và web. Trên máy tính, OCR chạy ngay trên thiết bị, nên hình ảnh và sơ đồ được đọc cục bộ. Các cải tiến giao diện đến với mọi ứng dụng mà không cần cài lại.', chips: ['Windows', 'MSI doanh nghiệp', 'Android', 'Web', 'OCR trên thiết bị'] },
-        { t: 'Ngôn ngữ của bạn', d: 'Toàn bộ sản phẩm và mọi email nó gửi, bằng {n} ngôn ngữ cùng tiếng Anh Mỹ và Anh Anh. Chọn ở lần đăng nhập đầu tiên và thay đổi bất cứ lúc nào.', chips: [] },
-        { t: 'Giao diện của bạn, được ghi nhớ', d: 'Sáng, Tối hoặc Đậm. Màu nhấn thương hiệu đã kiểm tra độ tương phản. Chữ lớn hơn, giảm chuyển động, tương phản cao, mục tiêu lớn hơn và phông chữ dễ đọc. Đặt một lần, áp dụng trực tiếp, giữ trên mọi thiết bị của bạn.', chips: ['Sáng', 'Tối', 'Đậm', 'Trợ năng'] },
+        {
+          t: 'Mọi nền tảng',
+          d: 'Một ứng dụng Windows đã ký, kèm MSI theo máy để triển khai IT âm thầm, một ứng dụng Android, và web. Trên máy tính, OCR chạy ngay trên thiết bị, nên hình ảnh và sơ đồ được đọc cục bộ. Các cải tiến giao diện đến với mọi ứng dụng mà không cần cài lại.',
+          chips: ['Windows', 'MSI doanh nghiệp', 'Android', 'Web', 'OCR trên thiết bị'],
+        },
+        {
+          t: 'Ngôn ngữ của bạn',
+          d: 'Toàn bộ sản phẩm và mọi email nó gửi, bằng {n} ngôn ngữ cùng tiếng Anh Mỹ và Anh Anh. Chọn ở lần đăng nhập đầu tiên và thay đổi bất cứ lúc nào.',
+          chips: [],
+        },
+        {
+          t: 'Giao diện của bạn, được ghi nhớ',
+          d: 'Sáng, Tối hoặc Đậm. Màu nhấn thương hiệu đã kiểm tra độ tương phản. Chữ lớn hơn, giảm chuyển động, tương phản cao, mục tiêu lớn hơn và phông chữ dễ đọc. Đặt một lần, áp dụng trực tiếp, giữ trên mọi thiết bị của bạn.',
+          chips: ['Sáng', 'Tối', 'Đậm', 'Trợ năng'],
+        },
       ],
     },
     final: {
       h2: 'Đừng đoán nữa. Hãy để được hướng dẫn.',
       p: 'Mang bất kỳ việc gì đến. WorkCoPilot đưa nó từ bước đầu tiên đến khi hoàn thành.',
       useYourWay: 'Dùng theo cách của bạn',
-      browser: { rec: 'Không cần cài', b: 'Dùng trong trình duyệt', i: 'Không phải cài gì', title: 'WorkCoPilot chạy ngay trong trình duyệt của bạn - không tải về, không cài đặt. Chỉ cần đăng nhập và bắt đầu.' },
-      windows: { b: 'Ứng dụng Windows', i: 'Lớp phủ trên màn hình', aria: 'Tải ứng dụng Windows cho máy tính', title: 'Một cửa sổ nổi nằm trên bất kỳ ứng dụng nào bạn đang làm việc' },
-      android: { b: 'Ứng dụng Android', i: 'Điện thoại và camera' },
+      browser: {
+        rec: 'Không cần cài',
+        b: 'Dùng trong trình duyệt',
+        i: 'Không phải cài gì',
+        title: 'WorkCoPilot chạy ngay trong trình duyệt của bạn - không tải về, không cài đặt. Chỉ cần đăng nhập và bắt đầu.',
+      },
+      windows: {
+        b: 'Ứng dụng Windows',
+        i: 'Lớp phủ trên màn hình',
+        aria: 'Tải ứng dụng Windows cho máy tính',
+        title: 'Một cửa sổ nổi nằm trên bất kỳ ứng dụng nào bạn đang làm việc',
+      },
+      android: {
+        b: 'Ứng dụng Android',
+        i: 'Điện thoại và camera',
+      },
       note2: '<b>Đăng nhập theo cách của bạn.</b> Tiếp tục với Google, Microsoft hoặc Facebook, hoặc tạo tài khoản. Thuộc một đội công ty? Nhập email công việc và bạn sẽ được chuyển tới đăng nhập một lần của công ty. Mọi tài khoản đều được bảo vệ bằng ứng dụng xác thực. <a>Xem đăng nhập doanh nghiệp</a>.',
     },
     disclaimer: '<b>Sử dụng có trách nhiệm.</b> WorkCoPilot chỉ hỗ trợ công việc hợp pháp, chính đáng. Nó sẽ không giúp chế tạo vũ khí hay phương tiện gây hại hàng loạt, tạo mã độc hay mã khai thác, xâm nhập hệ thống hoặc tài khoản không thuộc về bạn, hay làm bất cứ điều gì phi pháp hoặc có hại. Những yêu cầu như vậy sẽ bị từ chối.',
@@ -847,63 +973,227 @@ export default {
       promptLbl: 'PROMPT CHO AI CỦA BẠN',
       beforeAfter: 'TRƯỚC → SAU',
       vulnFixed: 'LỖ HỔNG → ĐÃ SỬA',
-      tagBefore: 'trước', tagAfter: 'sau', tagVuln: 'lỗ hổng', tagFixed: 'đã sửa',
+      tagBefore: 'trước',
+      tagAfter: 'sau',
+      tagVuln: 'lỗ hổng',
+      tagFixed: 'đã sửa',
       scenarios: [
         {
-          tag: 'Riêng tư từ thiết kế', app: 'Bảng điều khiển thanh toán', goal: 'Thiết lập tích hợp thanh toán mà không rò rỉ dữ liệu khách hàng',
+          tag: 'Riêng tư từ thiết kế',
+          app: 'Bảng điều khiển thanh toán',
+          goal: 'Thiết lập tích hợp thanh toán mà không rò rỉ dữ liệu khách hàng',
           steps: [
-            { sees: 'màn hình hiện email khách hàng, số thẻ và một khóa API đang hoạt động', say: 'Đó là dữ liệu cá nhân, thẻ và secret - chúng không bao giờ được đến tay AI', do: 'Chúng bị bôi đen trong ảnh chụp màn hình và thay bằng ký hiệu giữ chỗ trong văn bản, ngay trên thiết bị, trước khi gửi bất cứ gì', click: 'Bảo vệ trên thiết bị', done: 'chỉ [EMAIL], [CARD] và [API_KEY] rời khỏi thiết bị của bạn' },
-            { sees: 'bạn dán một lỗi vẫn còn chứa sk-live-... và một IP nội bộ', say: 'Log dán vào mang theo secret và máy chủ riêng của bạn', do: 'Chúng cũng được thay bằng token, giá trị thật vẫn ở trên máy bạn', click: 'Token hóa', done: 'AI thấy [[SECRET_1]] và [[IP_2]], không bao giờ thấy giá trị thật' },
-            { sees: 'câu trả lời quay về có tham chiếu đến ký hiệu giữ chỗ', step: 'Dựng lại câu trả lời tại chỗ', how: ['Giá trị thật được khôi phục trên thiết bị của bạn', 'Bạn nhận được câu trả lời đầy đủ, dùng được ngay', 'Không có gì nhạy cảm từng được truyền đi'], click: 'Dựng lại', done: 'bạn có câu trả lời thật; AI chưa từng thấy nó' },
+            {
+              sees: 'màn hình hiện email khách hàng, số thẻ và một khóa API đang hoạt động',
+              say: 'Đó là dữ liệu cá nhân, thẻ và secret - chúng không bao giờ được đến tay AI',
+              do: 'Chúng bị bôi đen trong ảnh chụp màn hình và thay bằng ký hiệu giữ chỗ trong văn bản, ngay trên thiết bị, trước khi gửi bất cứ gì',
+              click: 'Bảo vệ trên thiết bị',
+              done: 'chỉ [EMAIL], [CARD] và [API_KEY] rời khỏi thiết bị của bạn',
+            },
+            {
+              sees: 'bạn dán một lỗi vẫn còn chứa sk-live-... và một IP nội bộ',
+              say: 'Log dán vào mang theo secret và máy chủ riêng của bạn',
+              do: 'Chúng cũng được thay bằng token, giá trị thật vẫn ở trên máy bạn',
+              click: 'Token hóa',
+              done: 'AI thấy [[SECRET_1]] và [[IP_2]], không bao giờ thấy giá trị thật',
+            },
+            {
+              sees: 'câu trả lời quay về có tham chiếu đến ký hiệu giữ chỗ',
+              step: 'Dựng lại câu trả lời tại chỗ',
+              how: [
+                'Giá trị thật được khôi phục trên thiết bị của bạn',
+                'Bạn nhận được câu trả lời đầy đủ, dùng được ngay',
+                'Không có gì nhạy cảm từng được truyền đi',
+              ],
+              click: 'Dựng lại',
+              done: 'bạn có câu trả lời thật; AI chưa từng thấy nó',
+            },
           ],
         },
         {
-          tag: 'GenAI dạng agent', app: 'Xây dựng agent', goal: 'Xây dựng agent RAG có gọi công cụ',
+          tag: 'GenAI dạng agent',
+          app: 'Xây dựng agent',
+          goal: 'Xây dựng agent RAG có gọi công cụ',
           steps: [
-            { sees: 'một dự án agent trống đang mở', step: 'Tạo kho vector và nhúng tài liệu của bạn', how: ['Chọn kho vector (pgvector hoặc Chroma)', 'Chia tài liệu thành các đoạn ~800 token có chồng lấn', 'Nhúng các đoạn và đưa vào kho'], click: 'Tạo collection', done: 'collection chứa các vector của bạn' },
-            { sees: 'truy xuất trả về nguyên cả tài liệu', say: 'Trả về toàn bộ tài liệu làm tràn cửa sổ ngữ cảnh và chôn vùi câu trả lời', do: 'Chỉ trả về các đoạn khớp nhất với ngưỡng điểm, không phải cả tệp', click: 'Đặt top-k', done: 'truy xuất trả về các đoạn tập trung' },
-            { sees: 'công cụ đã định nghĩa nhưng agent trả lời tự do', step: 'Nối vòng lặp gọi công cụ', how: ['Gắn công cụ vào mô hình', 'Thêm vòng lặp suy luận, gọi công cụ, quan sát', 'Dừng khi mô hình trả về câu trả lời cuối'], click: 'Gắn công cụ', done: 'agent thực sự gọi công cụ của bạn' },
-            { sees: 'văn bản người dùng bị nối vào system prompt', say: 'Đó là lỗ hổng prompt injection: người dùng có thể ghi đè chỉ dẫn của bạn', do: 'Giữ đầu vào người dùng trong lượt người dùng, không bao giờ đưa vào system prompt, và dùng danh sách cho phép cho tham số công cụ', click: 'Tách vai trò', done: 'văn bản người dùng không thể chiếm quyền system prompt' },
-            { sees: 'bạn muốn một bản khởi đầu để dán vào AI của mình', step: 'Sao chép prompt sẵn dùng, tinh chỉnh theo stack của bạn', how: ['Giới hạn trong kho vector và mô hình của bạn', 'Bảo mật và riêng tư tích hợp sẵn - ký hiệu giữ chỗ, không bao giờ là secret thật', 'Dán vào AI của bạn và đính kèm tài liệu'], click: 'Sao chép prompt', done: 'bạn có một prompt sẵn sàng dán vào AI của mình' },
+            {
+              sees: 'một dự án agent trống đang mở',
+              step: 'Tạo kho vector và nhúng tài liệu của bạn',
+              how: [
+                'Chọn kho vector (pgvector hoặc Chroma)',
+                'Chia tài liệu thành các đoạn ~800 token có chồng lấn',
+                'Nhúng các đoạn và đưa vào kho',
+              ],
+              click: 'Tạo collection',
+              done: 'collection chứa các vector của bạn',
+            },
+            {
+              sees: 'truy xuất trả về nguyên cả tài liệu',
+              say: 'Trả về toàn bộ tài liệu làm tràn cửa sổ ngữ cảnh và chôn vùi câu trả lời',
+              do: 'Chỉ trả về các đoạn khớp nhất với ngưỡng điểm, không phải cả tệp',
+              click: 'Đặt top-k',
+              done: 'truy xuất trả về các đoạn tập trung',
+            },
+            {
+              sees: 'công cụ đã định nghĩa nhưng agent trả lời tự do',
+              step: 'Nối vòng lặp gọi công cụ',
+              how: [
+                'Gắn công cụ vào mô hình',
+                'Thêm vòng lặp suy luận, gọi công cụ, quan sát',
+                'Dừng khi mô hình trả về câu trả lời cuối',
+              ],
+              click: 'Gắn công cụ',
+              done: 'agent thực sự gọi công cụ của bạn',
+            },
+            {
+              sees: 'văn bản người dùng bị nối vào system prompt',
+              say: 'Đó là lỗ hổng prompt injection: người dùng có thể ghi đè chỉ dẫn của bạn',
+              do: 'Giữ đầu vào người dùng trong lượt người dùng, không bao giờ đưa vào system prompt, và dùng danh sách cho phép cho tham số công cụ',
+              click: 'Tách vai trò',
+              done: 'văn bản người dùng không thể chiếm quyền system prompt',
+            },
+            {
+              sees: 'bạn muốn một bản khởi đầu để dán vào AI của mình',
+              step: 'Sao chép prompt sẵn dùng, tinh chỉnh theo stack của bạn',
+              how: [
+                'Giới hạn trong kho vector và mô hình của bạn',
+                'Bảo mật và riêng tư tích hợp sẵn - ký hiệu giữ chỗ, không bao giờ là secret thật',
+                'Dán vào AI của bạn và đính kèm tài liệu',
+              ],
+              click: 'Sao chép prompt',
+              done: 'bạn có một prompt sẵn sàng dán vào AI của mình',
+            },
           ],
         },
         {
-          tag: 'Pentest API', app: 'Burp Suite', goal: 'Pentest API đơn hàng của bạn với Burp Suite',
+          tag: 'Pentest API',
+          app: 'Burp Suite',
+          goal: 'Pentest API đơn hàng của bạn với Burp Suite',
           steps: [
-            { sees: 'Burp đang mở ở tab Proxy', step: 'Định tuyến ứng dụng của bạn qua Burp', how: ['Mở Proxy, rồi Proxy settings', 'Trỏ proxy trình duyệt tới 127.0.0.1:8080', 'Cài chứng chỉ CA của Burp để HTTPS được tin cậy'], click: 'Proxy settings', done: 'các request hiện trong HTTP history' },
-            { sees: 'một GET /api/orders/1024 đã được bắt', step: 'Gửi nó tới Repeater', how: ['Nhấp chuột phải vào request trong HTTP history', 'Chọn "Send to Repeater"', 'Mở tab Repeater'], click: 'Send to Repeater', done: 'request đã được nạp vào Repeater' },
-            { sees: 'id đơn hàng nằm trong đường dẫn và 1024 là của bạn', say: 'Đổi id sang đơn của người dùng khác là để kiểm tra IDOR, lỗi phân quyền ở cấp đối tượng', do: 'Trong Repeater đổi 1024 thành 1025 rồi Send; một mã 200 kèm đơn của người khác là phát hiện thật', click: 'Gửi', done: 'bạn nhận 403 (an toàn) hoặc một phát hiện được ghi lại' },
-            { sees: 'một phản hồi lỗi để lộ toàn bộ stack trace', say: 'Stack trace trao cho kẻ tấn công framework, phiên bản và đường dẫn tệp của bạn', do: 'Ghi lại như phát hiện rò rỉ thông tin và khuyến nghị phản hồi lỗi chung chung', click: 'Ghi phát hiện', done: 'phát hiện đã được ghi lại' },
+            {
+              sees: 'Burp đang mở ở tab Proxy',
+              step: 'Định tuyến ứng dụng của bạn qua Burp',
+              how: [
+                'Mở Proxy, rồi Proxy settings',
+                'Trỏ proxy trình duyệt tới 127.0.0.1:8080',
+                'Cài chứng chỉ CA của Burp để HTTPS được tin cậy',
+              ],
+              click: 'Proxy settings',
+              done: 'các request hiện trong HTTP history',
+            },
+            {
+              sees: 'một GET /api/orders/1024 đã được bắt',
+              step: 'Gửi nó tới Repeater',
+              how: ['Nhấp chuột phải vào request trong HTTP history', 'Chọn "Send to Repeater"', 'Mở tab Repeater'],
+              click: 'Send to Repeater',
+              done: 'request đã được nạp vào Repeater',
+            },
+            {
+              sees: 'id đơn hàng nằm trong đường dẫn và 1024 là của bạn',
+              say: 'Đổi id sang đơn của người dùng khác là để kiểm tra IDOR, lỗi phân quyền ở cấp đối tượng',
+              do: 'Trong Repeater đổi 1024 thành 1025 rồi Send; một mã 200 kèm đơn của người khác là phát hiện thật',
+              click: 'Gửi',
+              done: 'bạn nhận 403 (an toàn) hoặc một phát hiện được ghi lại',
+            },
+            {
+              sees: 'một phản hồi lỗi để lộ toàn bộ stack trace',
+              say: 'Stack trace trao cho kẻ tấn công framework, phiên bản và đường dẫn tệp của bạn',
+              do: 'Ghi lại như phát hiện rò rỉ thông tin và khuyến nghị phản hồi lỗi chung chung',
+              click: 'Ghi phát hiện',
+              done: 'phát hiện đã được ghi lại',
+            },
           ],
         },
         {
-          tag: 'Quản trị ServiceNow', app: 'ServiceNow', goal: 'Phát hành một mục catalog ServiceNow và giới hạn ai được xem',
+          tag: 'Quản trị ServiceNow',
+          app: 'ServiceNow',
+          goal: 'Phát hành một mục catalog ServiceNow và giới hạn ai được xem',
           steps: [
-            { sees: 'một Business Rule mới được đặt chạy trên mọi bảng, mọi thao tác', say: 'Business Rule toàn cục không có điều kiện sẽ chạy trên mọi bản ghi và có thể làm chậm cả instance', do: 'Giới hạn nó vào một bảng và thêm điều kiện để chỉ chạy khi cần', click: 'Giới hạn quy tắc', done: 'quy tắc chỉ chạy ở nơi cần' },
-            { sees: 'ACL của bảng cấp quyền đọc với vai trò trống, nên ai cũng đọc được', say: 'Vai trò trống trên ACL nghĩa là mọi người dùng đã đăng nhập đều đọc được các bản ghi này', do: 'Yêu cầu một vai trò cụ thể để chỉ đúng nhóm mới xem được', click: 'Siết ACL', done: 'chỉ catalog_viewer đọc được các bản ghi' },
-            { sees: 'một biến catalog thu thập số an sinh xã hội của nhân viên trong trường văn bản thường', say: 'Đó là dữ liệu cá nhân nằm trong biến có thể đọc, và không bao giờ được đến tay AI', do: 'Nó được che trên thiết bị của bạn và thay bằng ký hiệu giữ chỗ trước khi gửi bất cứ gì', click: 'Bảo vệ trên thiết bị', done: 'chỉ [SSN] rời khỏi thiết bị của bạn, không bao giờ là giá trị thật' },
+            {
+              sees: 'một Business Rule mới được đặt chạy trên mọi bảng, mọi thao tác',
+              say: 'Business Rule toàn cục không có điều kiện sẽ chạy trên mọi bản ghi và có thể làm chậm cả instance',
+              do: 'Giới hạn nó vào một bảng và thêm điều kiện để chỉ chạy khi cần',
+              click: 'Giới hạn quy tắc',
+              done: 'quy tắc chỉ chạy ở nơi cần',
+            },
+            {
+              sees: 'ACL của bảng cấp quyền đọc với vai trò trống, nên ai cũng đọc được',
+              say: 'Vai trò trống trên ACL nghĩa là mọi người dùng đã đăng nhập đều đọc được các bản ghi này',
+              do: 'Yêu cầu một vai trò cụ thể để chỉ đúng nhóm mới xem được',
+              click: 'Siết ACL',
+              done: 'chỉ catalog_viewer đọc được các bản ghi',
+            },
+            {
+              sees: 'một biến catalog thu thập số an sinh xã hội của nhân viên trong trường văn bản thường',
+              say: 'Đó là dữ liệu cá nhân nằm trong biến có thể đọc, và không bao giờ được đến tay AI',
+              do: 'Nó được che trên thiết bị của bạn và thay bằng ký hiệu giữ chỗ trước khi gửi bất cứ gì',
+              click: 'Bảo vệ trên thiết bị',
+              done: 'chỉ [SSN] rời khỏi thiết bị của bạn, không bao giờ là giá trị thật',
+            },
           ],
         },
         {
-          tag: 'Phát triển Salesforce', app: 'Salesforce Apex', goal: 'Phát hành một Apex trigger không có lỗi bảo mật hay governor limit',
+          tag: 'Phát triển Salesforce',
+          app: 'Salesforce Apex',
+          goal: 'Phát hành một Apex trigger không có lỗi bảo mật hay governor limit',
           steps: [
-            { sees: 'một truy vấn SOQL nằm trong vòng lặp for trên các bản ghi trigger', say: 'Truy vấn trong vòng lặp chạm governor limit của SOQL và thất bại khi nạp hàng loạt', do: 'Đưa truy vấn ra khỏi vòng lặp và làm việc từ một map - xử lý theo lô', click: 'Xử lý theo lô', done: 'một truy vấn phục vụ cả lô' },
-            { sees: 'truy vấn đọc các trường mà không kiểm tra quyền người dùng', say: 'Không có bảo mật cấp trường, trigger có thể để lộ các trường người dùng không được xem', do: 'Thêm WITH SECURITY_ENFORCED để tôn trọng FLS và chia sẻ', click: 'Áp dụng FLS', done: 'truy vấn tôn trọng quyền người dùng' },
-            { sees: 'một khóa API bị gắn cứng trong lớp Apex', say: 'Secret trong mã nguồn Apex rò rỉ ở mọi lần deploy và trong lịch sử metadata', do: 'Chuyển nó vào Named Credential để khóa không bao giờ nằm trong mã', click: 'Dùng Named Credential', done: 'không còn secret nào trong mã' },
+            {
+              sees: 'một truy vấn SOQL nằm trong vòng lặp for trên các bản ghi trigger',
+              say: 'Truy vấn trong vòng lặp chạm governor limit của SOQL và thất bại khi nạp hàng loạt',
+              do: 'Đưa truy vấn ra khỏi vòng lặp và làm việc từ một map - xử lý theo lô',
+              click: 'Xử lý theo lô',
+              done: 'một truy vấn phục vụ cả lô',
+            },
+            {
+              sees: 'truy vấn đọc các trường mà không kiểm tra quyền người dùng',
+              say: 'Không có bảo mật cấp trường, trigger có thể để lộ các trường người dùng không được xem',
+              do: 'Thêm WITH SECURITY_ENFORCED để tôn trọng FLS và chia sẻ',
+              click: 'Áp dụng FLS',
+              done: 'truy vấn tôn trọng quyền người dùng',
+            },
+            {
+              sees: 'một khóa API bị gắn cứng trong lớp Apex',
+              say: 'Secret trong mã nguồn Apex rò rỉ ở mọi lần deploy và trong lịch sử metadata',
+              do: 'Chuyển nó vào Named Credential để khóa không bao giờ nằm trong mã',
+              click: 'Dùng Named Credential',
+              done: 'không còn secret nào trong mã',
+            },
           ],
         },
         {
-          tag: 'Bảo mật đám mây', app: 'AWS IAM', goal: 'Thay chính sách IAM dùng ký tự đại diện bằng quyền tối thiểu',
+          tag: 'Bảo mật đám mây',
+          app: 'AWS IAM',
+          goal: 'Thay chính sách IAM dùng ký tự đại diện bằng quyền tối thiểu',
           steps: [
-            { sees: 'vai trò cấp Action "*" trên Resource "*"', say: 'Đó là toàn quyền admin - một khóa bị lộ là chiếm cả tài khoản', do: 'Giới hạn đúng những hành động ứng dụng này thực hiện, trên tài nguyên của chính nó', click: 'Sửa chính sách', done: 'chính sách được giới hạn trong một bucket' },
-            { sees: 'CloudTrail cho thấy vai trò cũng gọi SQS', step: 'Chỉ thêm những gì thực sự dùng', how: ['Mở CloudTrail, lọc sự kiện theo vai trò này', 'Liệt kê các lệnh gọi API khác nhau mà nó thực sự thực hiện', 'Cấp đúng những lệnh đó - không gì mang tính suy đoán'], click: 'Thêm sqs:SendMessage', done: 'mọi lệnh gọi thật đều được phép, không hơn' },
-            { sees: 'Access Analyzer đánh dấu bucket là công khai', say: 'Chính sách bucket vẫn cho phép principal đại diện, nên ai cũng đọc được', do: 'Xóa Principal "*" để chỉ vai trò này truy cập được dữ liệu', click: 'Sửa chính sách bucket', done: 'Access Analyzer chuyển xanh' },
+            {
+              sees: 'vai trò cấp Action "*" trên Resource "*"',
+              say: 'Đó là toàn quyền admin - một khóa bị lộ là chiếm cả tài khoản',
+              do: 'Giới hạn đúng những hành động ứng dụng này thực hiện, trên tài nguyên của chính nó',
+              click: 'Sửa chính sách',
+              done: 'chính sách được giới hạn trong một bucket',
+            },
+            {
+              sees: 'CloudTrail cho thấy vai trò cũng gọi SQS',
+              step: 'Chỉ thêm những gì thực sự dùng',
+              how: [
+                'Mở CloudTrail, lọc sự kiện theo vai trò này',
+                'Liệt kê các lệnh gọi API khác nhau mà nó thực sự thực hiện',
+                'Cấp đúng những lệnh đó - không gì mang tính suy đoán',
+              ],
+              click: 'Thêm sqs:SendMessage',
+              done: 'mọi lệnh gọi thật đều được phép, không hơn',
+            },
+            {
+              sees: 'Access Analyzer đánh dấu bucket là công khai',
+              say: 'Chính sách bucket vẫn cho phép principal đại diện, nên ai cũng đọc được',
+              do: 'Xóa Principal "*" để chỉ vai trò này truy cập được dữ liệu',
+              click: 'Sửa chính sách bucket',
+              done: 'Access Analyzer chuyển xanh',
+            },
           ],
         },
       ],
     },
   },
-
   login: {
     meta: {
       title: 'Tạo tài khoản hoặc đăng nhập - WorkCoPilot của AdmireVeda',
@@ -933,9 +1223,18 @@ export default {
     pitchP: 'WorkCoPilot theo dõi màn hình của bạn, chỉ chính xác bước tiếp theo và bắt bước sai trước khi nó gây thiệt hại. Với công ty, nó học ứng dụng và quy trình riêng của bạn, một cách riêng tư.',
     proofAria: 'Bạn nhận được gì',
     proof: [
-      { b: 'Chỉ-đọc từ thiết kế', s: 'Không bao giờ nhấp, gõ hay chạy bất cứ gì thay bạn.' },
-      { b: 'Riêng tư trên thiết bị của bạn', s: 'Giá trị nhạy cảm được làm sạch trước khi bất cứ gì rời đi.' },
-      { b: 'Có tài liệu khi hoàn thành', s: 'Bản ghi gọn gàng của mọi bước đã xác nhận.' },
+      {
+        b: 'Chỉ-đọc từ thiết kế',
+        s: 'Không bao giờ nhấp, gõ hay chạy bất cứ gì thay bạn.',
+      },
+      {
+        b: 'Riêng tư trên thiết bị của bạn',
+        s: 'Giá trị nhạy cảm được làm sạch trước khi bất cứ gì rời đi.',
+      },
+      {
+        b: 'Có tài liệu khi hoàn thành',
+        s: 'Bản ghi gọn gàng của mọi bước đã xác nhận.',
+      },
     ],
     plan: {
       aria: 'Bạn đang bắt đầu gói {plan}',
@@ -948,7 +1247,11 @@ export default {
       priceAnnual: '{price}/tháng, thanh toán theo năm ({total}/năm)',
       priceMonthly: '{price}/tháng, thanh toán theo tháng',
     },
-    tabs: { aria: 'Bạn muốn tiếp tục bằng cách nào?', social: 'Mạng xã hội', email: 'Email và SSO' },
+    tabs: {
+      aria: 'Bạn muốn tiếp tục bằng cách nào?',
+      social: 'Mạng xã hội',
+      email: 'Email và SSO',
+    },
     social: {
       google: 'Tiếp tục với Google',
       microsoft: 'Tiếp tục với Microsoft',
@@ -957,7 +1260,10 @@ export default {
       checking: 'Đang kiểm tra khả dụng',
       hint: 'Nhanh và an toàn. Chúng tôi chỉ dùng tên và email của bạn.',
     },
-    ssoEntry: { q: 'Thuộc tài khoản công ty?', btn: 'Tiếp tục với SSO công ty' },
+    ssoEntry: {
+      q: 'Thuộc tài khoản công ty?',
+      btn: 'Tiếp tục với SSO công ty',
+    },
     ssoStep: {
       aria: 'Đăng nhập một lần của công ty',
       back: 'Quay lại',
@@ -971,7 +1277,10 @@ export default {
       toCreate: 'Mới dùng WorkCoPilot? <a>Tạo tài khoản</a>',
       toLogin: 'Đã có tài khoản? <a>Đăng nhập</a>',
     },
-    finishing: { h1: 'Đang hoàn tất đăng nhập', p: 'Chờ một chút trong khi chúng tôi xác nhận tài khoản của bạn.' },
+    finishing: {
+      h1: 'Đang hoàn tất đăng nhập',
+      p: 'Chờ một chút trong khi chúng tôi xác nhận tài khoản của bạn.',
+    },
     profile: {
       h1: 'Hoàn thiện hồ sơ của bạn',
       sub: 'Sắp xong rồi. Tên của bạn sẽ hoàn tất tài khoản, sau đó bạn thiết lập ứng dụng xác thực.',
@@ -1128,12 +1437,7 @@ export default {
         tag: 'Vận hành tài chính',
         app: 'Hệ thống công nợ phải trả',
         goal: 'Duyệt thanh toán hóa đơn Northwind',
-        nav: [
-          'Hộp thư',
-          'Hóa đơn',
-          'Nhà cung cấp',
-          'Báo cáo',
-        ],
+        nav: ['Hộp thư', 'Hóa đơn', 'Nhà cung cấp', 'Báo cáo'],
         steps: [
           {
             tab: 1,
@@ -1171,12 +1475,7 @@ export default {
         tag: 'Logistics',
         app: 'Cổng hãng vận chuyển',
         goal: 'Đặt hãng vận chuyển và in nhãn cho đơn 8820',
-        nav: [
-          'Đơn hàng',
-          'Lô hàng',
-          'Hãng vận chuyển',
-          'Trả hàng',
-        ],
+        nav: ['Đơn hàng', 'Lô hàng', 'Hãng vận chuyển', 'Trả hàng'],
         steps: [
           {
             tab: 1,
@@ -1214,12 +1513,7 @@ export default {
         tag: 'Hành chính y tế',
         app: 'Lịch hẹn phòng khám',
         goal: 'Đặt lịch tái khám và gửi biểu mẫu trước khám',
-        nav: [
-          'Hôm nay',
-          'Lịch',
-          'Bệnh nhân',
-          'Biểu mẫu',
-        ],
+        nav: ['Hôm nay', 'Lịch', 'Bệnh nhân', 'Biểu mẫu'],
         steps: [
           {
             tab: 1,
@@ -1257,12 +1551,7 @@ export default {
         tag: 'Bán lẻ',
         app: 'Hậu văn phòng cửa hàng',
         goal: 'Thiết lập khuyến mãi cuối tuần trên mọi máy tính tiền',
-        nav: [
-          'Bán hàng',
-          'Sản phẩm',
-          'Khuyến mãi',
-          'Nhân viên',
-        ],
+        nav: ['Bán hàng', 'Sản phẩm', 'Khuyến mãi', 'Nhân viên'],
         steps: [
           {
             tab: 2,
@@ -1300,12 +1589,7 @@ export default {
         tag: 'Nhân sự',
         app: 'Hệ thống nhân sự',
         goal: 'Tiếp nhận Priya, bắt đầu làm từ thứ Hai',
-        nav: [
-          'Nhân sự',
-          'Tiếp nhận',
-          'Bảng lương',
-          'Tài liệu',
-        ],
+        nav: ['Nhân sự', 'Tiếp nhận', 'Bảng lương', 'Tài liệu'],
         steps: [
           {
             tab: 1,
@@ -1343,12 +1627,7 @@ export default {
         tag: 'Kỹ thuật',
         app: 'Pipeline phát hành',
         goal: 'Đưa bản hotfix qua pipeline phát hành',
-        nav: [
-          'Repo',
-          'Pipeline',
-          'Phát hành',
-          'Cài đặt',
-        ],
+        nav: ['Repo', 'Pipeline', 'Phát hành', 'Cài đặt'],
         steps: [
           {
             tab: 1,
@@ -1386,12 +1665,7 @@ export default {
         tag: 'Hỗ trợ',
         app: 'Bàn trợ giúp',
         goal: 'Chuyển cấp ticket 5190 với đúng mức ưu tiên',
-        nav: [
-          'Hàng chờ',
-          'Ticket',
-          'Khách hàng',
-          'Báo cáo',
-        ],
+        nav: ['Hàng chờ', 'Ticket', 'Khách hàng', 'Báo cáo'],
         steps: [
           {
             tab: 1,
@@ -1429,12 +1703,7 @@ export default {
         tag: 'Tài chính',
         app: 'Cổng thanh toán',
         goal: 'Thiết lập nhà cung cấp mới trong cổng thanh toán',
-        nav: [
-          'Tài chính',
-          'Nhà cung cấp',
-          'Khách hàng',
-          'Phê duyệt',
-        ],
+        nav: ['Tài chính', 'Nhà cung cấp', 'Khách hàng', 'Phê duyệt'],
         steps: [
           {
             tab: 1,
@@ -1517,6 +1786,202 @@ export default {
     showcaseEyebrow: 'Chọn một lĩnh vực',
     showcaseH2: 'Xem nó hướng dẫn công việc giống việc của bạn.',
     showcaseSub: 'Bảy lĩnh vực, một cách làm: nó theo dõi, dẫn bạn từng bước, sửa bước sai và xác nhận khi xong.',
+    hero: {
+      badge: 'Tình huống sử dụng',
+      h1a: 'Tìm công việc giống của bạn.',
+      h1b: '<em>Rồi hoàn thành nó, có hướng dẫn.</em>',
+      p: 'Chọn công việc bên dưới phù hợp với ngày của bạn. WorkCoPilot hướng dẫn từng bước ngay trên màn hình của bạn, từ cú nhấp đầu tiên đến khi hoàn tất.',
+      chipsAria: 'Chuyển đến một tình huống sử dụng',
+    },
+    cases: [
+      {
+        tag: 'Cài đặt và cấu hình',
+        short: 'Cài đặt',
+        outcome: 'Thiết lập đúng cách, khóa chặt',
+        benefit: 'Mọi thiết lập đều được nêu tên và kiểm tra trực tiếp, để hạ tầng của bạn thực sự an toàn, chứ không chỉ trông có vẻ an toàn.',
+        can: [
+          'Cấu hình tường lửa',
+          'Tăng cường bảo mật máy chủ Linux',
+          'Thiết lập quy tắc IDS / IPS',
+          'Kết nối một pipeline CI/CD',
+        ],
+        guide: {
+          goal: 'Tăng cường bảo mật máy chủ Linux sản xuất',
+          plan: [
+            'Tạo một người dùng sudo không phải root',
+            'Khóa chặt SSH và tường lửa',
+            'Bật cập nhật bảo mật tự động',
+          ],
+          now: 'Đặt tường lửa mặc định từ chối, chỉ cho phép cổng 22 và 443, rồi xác nhận từ một phiên thứ hai trước khi bạn đăng xuất.',
+          done: 'chỉ cổng 22 và 443 mở và đăng nhập bằng mật khẩu bị từ chối',
+        },
+      },
+      {
+        tag: 'Xây dựng và triển khai',
+        short: 'Xây dựng',
+        outcome: 'Từ thư mục trống đến hệ thống đang chạy',
+        benefit: 'Đúng lệnh và mã, theo thứ tự, với những lỗi thường tốn hàng giờ được phát hiện sớm.',
+        can: [
+          'Dựng khung một ứng dụng hoặc dịch vụ mới',
+          'Kết nối hai hệ thống bằng một API',
+          'Xây dựng một pipeline dữ liệu',
+          'Triển khai lên đám mây',
+        ],
+        guide: {
+          goal: 'Thêm webhook thanh toán Stripe',
+          plan: [
+            'Thêm route webhook với raw body',
+            'Xác minh mọi sự kiện, đảm bảo tính idempotent',
+            'Phát lại các sự kiện thử nghiệm, rồi lên môi trường thực',
+          ],
+          now: 'Xác minh chữ ký trước khi tin tưởng sự kiện, và bỏ qua mọi id sự kiện bạn đã thấy để việc thử lại không bao giờ tính phí hai lần.',
+          done: 'một sự kiện được phát lại được chấp nhận một lần và bị bỏ qua ở lần thứ hai',
+        },
+      },
+      {
+        tag: 'AI và tự động hóa',
+        short: 'AI',
+        outcome: 'Các tự động hóa thực sự chạy được',
+        benefit: 'Từng node, thiết lập và kết nối đều được hướng dẫn, để agent hoặc trợ lý hoạt động thay vì âm thầm đứng im.',
+        can: [
+          'Xây dựng một quy trình n8n',
+          'Dựng một trợ lý RAG',
+          'Tự động hóa một việc lặp lại',
+          'Kết nối AI vào công cụ của bạn',
+        ],
+        guide: {
+          goal: 'Triển khai một trợ lý RAG biết trích dẫn nguồn',
+          plan: [
+            'Chia nhỏ, nhúng và lập chỉ mục tài liệu của bạn',
+            'Truy xuất trước khi tạo sinh',
+            'Kiểm thử câu trả lời, rồi triển khai',
+          ],
+          now: 'Truy xuất những đoạn khớp nhất, chỉ truyền những đoạn đó làm ngữ cảnh, và yêu cầu nó trích dẫn nguồn hoặc nói "Tôi không biết".',
+          done: 'câu trả lời trích dẫn đúng tài liệu và từ chối khi không có câu trả lời',
+        },
+      },
+      {
+        tag: 'Sản phẩm và đổi mới',
+        short: 'Sản phẩm',
+        outcome: 'Từ ý tưởng đến khi ra mắt',
+        benefit: 'Được hướng dẫn qua những công cụ bạn chưa từng mở, với tất cả hướng đến kết quả bạn muốn.',
+        can: [
+          'Dựng mẫu một tính năng mới',
+          'Dựng nhanh một trang đích',
+          'Chạy một thử nghiệm nhanh',
+          'Ra mắt phiên bản đầu tiên',
+        ],
+        guide: {
+          goal: 'Ra mắt và theo dõi một trang đích ngay hôm nay',
+          plan: [
+            'Xây dựng trang, viết nội dung',
+            'Kết nối tên miền của bạn',
+            'Xuất bản và chứng minh theo dõi hoạt động',
+          ],
+          now: 'Thêm đoạn mã phân tích, đặt một chuyển đổi trên nút đăng ký, rồi xác nhận một lượt đăng ký thử xuất hiện theo thời gian thực.',
+          done: 'URL thực tải được và một lượt đăng ký thử hiện lên như một chuyển đổi',
+        },
+      },
+      {
+        tag: 'Tiếp thị và tăng trưởng',
+        short: 'Tiếp thị',
+        outcome: 'Khởi chạy, rồi đọc các con số',
+        benefit: 'Được dẫn qua trình quản lý quảng cáo và phân tích, với mọi con số được giải thích bằng ngôn ngữ dễ hiểu.',
+        can: [
+          'Khởi chạy một chiến dịch quảng cáo',
+          'Thiết lập theo dõi chuyển đổi',
+          'Đọc một báo cáo lưu lượng',
+          'Lập kế hoạch cho một đợt ra mắt',
+        ],
+        guide: {
+          goal: 'Khởi chạy một chiến dịch tìm kiếm trên Google Ads',
+          plan: [
+            'Cài thẻ, nhập chuyển đổi',
+            'Đặt ngân sách, từ khóa, theo dõi',
+            'Gửi để xét duyệt, lên môi trường thực',
+          ],
+          now: 'Dùng từ khóa đối sánh chính xác và đối sánh cụm từ, không dùng đối sánh rộng, đặt giới hạn hằng ngày và chi phí mục tiêu mỗi hành động, rồi thêm ba quảng cáo.',
+          done: 'chiến dịch hiển thị Đủ điều kiện và chuyển đổi hiển thị Đang ghi nhận',
+        },
+      },
+      {
+        tag: 'Kế toán và văn phòng',
+        short: 'Kế toán',
+        outcome: 'Sổ sách đã chốt, hồ sơ đã nộp',
+        benefit: 'Được chỉ rõ cần nhập gì, với bất cứ điều gì không khớp sẽ được đánh dấu ngay lập tức.',
+        can: [
+          'Đối chiếu một sao kê ngân hàng',
+          'Lập một báo cáo tài chính',
+          'Tạo và gửi hóa đơn',
+          'Chuẩn bị một hồ sơ nộp',
+        ],
+        guide: {
+          goal: 'Đối chiếu cả tháng đến từng đồng',
+          plan: ['Nhập sao kê, khóa số dư đầu kỳ', 'Khớp mọi khoản, truy tìm chênh lệch', 'Khóa kỳ, xuất báo cáo'],
+          now: 'Tự động khớp các khoản nộp, đối soát từng khoản rút, và khi không cân được hãy so sánh ngày và số tiền của các khoản chưa đối soát.',
+          done: 'số dư đã đối soát bằng với sao kê đến từng xu',
+        },
+      },
+      {
+        tag: 'Tuân thủ và hồ sơ nộp',
+        short: 'Tuân thủ',
+        outcome: 'Các việc tuân thủ, hoàn thành gọn gàng',
+        benefit: 'Biểu mẫu, danh sách kiểm tra và hồ sơ nộp được hoàn thành từng bước, với một bản ghi rõ ràng về những gì đã làm.',
+        can: [
+          'Hoàn thành một danh sách kiểm tra tuân thủ',
+          'Điền một biểu mẫu quy định',
+          'Nộp một hồ sơ trong cổng thông tin',
+          'Lưu một dấu vết kiểm toán',
+        ],
+        guide: {
+          goal: 'Nộp một hồ sơ tuân thủ hằng quý',
+          plan: ['Mở cổng thông tin, bắt đầu tờ khai', 'Điền từng trường, đính kèm bằng chứng', 'Xác thực và nộp'],
+          now: 'Điền từng trường bắt buộc từ hồ sơ của bạn và đính kèm đúng bằng chứng mà biểu mẫu yêu cầu, không thiếu gì.',
+          done: 'cổng thông tin chấp nhận hồ sơ và trả về một số xác nhận',
+        },
+      },
+      {
+        tag: 'Công việc hằng ngày',
+        short: 'Hằng ngày',
+        outcome: 'Kẹt ở một màn hình? Hãy hoàn thành nó',
+        benefit: 'Một công cụ mới, một biểu mẫu bạn không điền xong, một lỗi bạn không hiểu: hãy hướng nó vào màn hình và được dẫn dắt qua từng bước.',
+        can: [
+          'Học nhanh một công cụ mới',
+          'Sửa một lỗi khó hiểu',
+          'Điền một biểu mẫu rắc rối',
+          'Thoát khỏi bế tắc trong một công việc',
+        ],
+        guide: {
+          goal: 'Giải mã và sửa một lỗi khó hiểu',
+          plan: [
+            'Tái hiện lỗi một cách ổn định',
+            'Tìm nguyên nhân thực sự, không phải triệu chứng',
+            'Sửa nó, xác nhận nó đã hết',
+          ],
+          now: 'Dán toàn bộ lỗi: nó đọc toàn bộ stack, nêu tên nguyên nhân thực sự, và chỉ ra tệp cùng dòng cần sửa.',
+          done: 'công việc kết thúc với nhật ký sạch và không có lỗi',
+        },
+      },
+    ],
+    case: {
+      cta: 'Hướng dẫn tôi việc này',
+      ctaAria: 'Hướng dẫn tôi về {tag}',
+    },
+    mini: {
+      aria: 'Phiên hướng dẫn ví dụ: {goal}',
+      watching: 'đang theo dõi',
+      youWant: 'BẠN MUỐN',
+      stepOf: 'Bước {n} trên {total}',
+      srDone: 'Đã xong: ',
+      srNext: 'Tiếp theo: ',
+      doingNow: 'ĐANG LÀM',
+      doneWhen: 'hoàn tất khi {done}',
+    },
+    final: {
+      h2: 'Công việc của bạn là tiếp theo.',
+      p: 'Mang đến bất cứ thứ gì trên màn hình của bạn. WorkCoPilot đưa nó từ bước đầu tiên đến khi hoàn tất.',
+      cta: 'Bắt đầu',
+    },
   },
   fieldsPage: {
     vignettesEyebrow: 'Nhiều lĩnh vực, một người dẫn đường',
@@ -1560,6 +2025,214 @@ export default {
         cap: 'Hỗ trợ',
         job: 'Chuyển cấp ticket',
         alt: 'Nhân viên hỗ trợ đeo tai nghe xử lý hàng chờ ticket',
+      },
+    },
+    eyebrow: 'Công việc chúng tôi hướng dẫn',
+    h1: 'Tìm công việc của bạn. Chúng tôi hướng dẫn nó <em>từng bước một.</em>',
+    lead: 'WorkCoPilot dẫn bạn qua việc thực hiện các công việc thật trong những công cụ bạn đã dùng, mỗi lần một bước. Đây là những nhóm công việc mà nó mạnh.',
+    note: 'Thế mạnh của chúng tôi là làm và hoàn thành công việc trên màn hình. Đọc soát tài liệu dài và phân tích chuyên sâu không phải là mục đích của nó.',
+    startBtn: 'Bắt đầu hướng dẫn tôi',
+    useCasesBtn: 'Xem các tình huống sử dụng',
+    jumpsAria: 'Chuyển đến một nhóm công việc',
+    gridAria: 'Các nhóm công việc và các lĩnh vực trong mỗi nhóm',
+    fieldCount_one: '{n} lĩnh vực',
+    fieldCount_other: '{n} lĩnh vực',
+    tagsAria: 'Các lĩnh vực {family}',
+    ctaH2: 'Công việc của bạn có lẽ nằm trong đây.',
+    ctaP: 'Chọn nó trên màn hình và WorkCoPilot sẽ dẫn bạn qua nó, mỗi lần một bước.',
+    pricingBtn: 'Xem bảng giá',
+    families: {
+      software: {
+        title: 'Phần mềm và kỹ thuật',
+        d: 'Ra mắt mã, thiết lập ngăn xếp, giữ nó chạy.',
+        items: [
+          'Lập trình viên',
+          'Frontend và khả năng tiếp cận',
+          'Phát triển di động',
+          'Phát triển game',
+          'Nhúng / firmware',
+          'Cơ sở dữ liệu',
+          'SDET',
+          'QA',
+          'DevOps',
+          'SRE',
+          'Kỹ thuật mạng',
+          'Quản trị hệ thống / vận hành IT',
+          'Phát triển blockchain',
+          'Phát triển backend và API',
+          'Phát triển web full-stack',
+          'Kiến trúc phần mềm',
+          'Kiến trúc đám mây',
+          'Kỹ thuật nền tảng',
+          'Quản lý phát hành',
+          'Quản trị ERP và CRM',
+          'Tự động hóa low-code và RPA',
+        ],
+      },
+      security: {
+        title: 'Bảo mật và khả năng phục hồi',
+        d: 'Kiểm thử nó, xâm nhập, khoanh vùng, ứng phó.',
+        items: [
+          'Kiểm thử xâm nhập',
+          'Kiểm thử xâm nhập mạng',
+          'Kiểm thử xâm nhập di động',
+          'Bảo mật API',
+          'Bảo mật đám mây',
+          'DevSecOps',
+          'Ứng phó sự cố',
+          'Bảo mật ứng dụng',
+          'Vận hành bảo mật (SOC)',
+          'Quản lý lỗ hổng',
+          'Quản lý danh tính và truy cập',
+          'Điều tra số',
+          'Phân loại mã độc',
+          'Hoạt động red team',
+        ],
+      },
+      data: {
+        title: 'Dữ liệu, AI và ML',
+        d: 'Xây dựng pipeline, huấn luyện mô hình, đọc bảng điều khiển.',
+        items: [
+          'Kỹ thuật dữ liệu',
+          'Phân tích dữ liệu',
+          'MLOps',
+          'Khoa học dữ liệu',
+          'Kỹ thuật machine learning',
+          'AI và kỹ thuật prompt',
+          'Kỹ thuật phân tích',
+          'Business intelligence',
+          'Không gian địa lý và GIS',
+        ],
+      },
+      product: {
+        title: 'Sản phẩm, dự án và thiết kế',
+        d: 'Lập kế hoạch công việc, điều hành bảng, thiết kế màn hình.',
+        items: [
+          'Quản lý sản phẩm',
+          'Quản lý dự án',
+          'Agile / scrum',
+          'Thiết kế UX',
+          'Quản lý chương trình',
+          'Quản lý chương trình kỹ thuật',
+          'PMO và quản lý danh mục',
+          'Quản lý thay đổi',
+          'Nghiên cứu người dùng',
+          'Thiết kế UI và hình ảnh',
+          'Hệ thống thiết kế',
+          'Phân tích sản phẩm',
+        ],
+      },
+      physical: {
+        title: 'OT, IoT và hệ thống vật lý',
+        d: 'Nơi phần mềm gặp máy móc.',
+        items: [
+          'OT / ICS',
+          'IoT',
+          'Robot',
+          'Vận hành hàng không',
+          'Kỹ thuật cơ khí',
+          'Kỹ thuật điện',
+          'Kỹ thuật xây dựng và kết cấu',
+          'Quản lý xây dựng',
+          'Thiết kế CAD và BIM',
+          'Kỹ thuật sản xuất và chất lượng',
+          'Vận hành năng lượng và tiện ích',
+          'Hệ thống cơ sở vật chất và tòa nhà',
+          'Sức khỏe và an toàn môi trường',
+        ],
+      },
+      finance: {
+        title: 'Tài chính và kế toán',
+        d: 'Sổ sách, bảng lương, hóa đơn và hồ sơ nộp, ngay trong công cụ của bạn.',
+        items: [
+          'Ghi sổ và kế toán',
+          'Lập hóa đơn và thanh toán',
+          'Công nợ phải trả và phải thu',
+          'Bảng lương',
+          'Khai thuế và tờ khai thuế',
+          'Quản lý ngân quỹ và tiền mặt',
+          'Vận hành ngân hàng',
+          'Chi phí và đối chiếu',
+          'Xử lý yêu cầu bồi thường bảo hiểm',
+        ],
+      },
+      operations: {
+        title: 'Vận hành doanh nghiệp',
+        d: 'Công việc hằng ngày giữ cho một công ty vận hành.',
+        items: [
+          'Bán hàng',
+          'Nhân sự và tuyển dụng',
+          'Hỗ trợ khách hàng',
+          'Mua sắm và nhà cung cấp',
+          'Chuỗi cung ứng và vận hành',
+          'Quản lý khách hàng',
+          'Thành công của khách hàng',
+          'Vận hành bán hàng và RevOps',
+          'Hành chính văn phòng và trợ lý điều hành',
+          'Lập kế hoạch sự kiện',
+          'Bất động sản và quản lý tài sản',
+          'Bán lẻ và vận hành cửa hàng',
+          'Quản lý nhà hàng và khách sạn',
+          'Logistics và vận tải',
+          'Chính phủ và hành chính công',
+        ],
+      },
+      marketing: {
+        title: 'Nội dung và tiếp thị',
+        d: 'Tạo ra, xuất bản, tiếp cận đúng người.',
+        items: [
+          'Tiếp thị và tăng trưởng',
+          'Nội dung và viết quảng cáo',
+          'SEO',
+          'Mạng xã hội',
+          'Video và truyền thông',
+          'Dịch thuật và bản địa hóa',
+          'Thiết kế đồ họa và thương hiệu',
+          'Tiếp thị email và vòng đời',
+          'Truyền thông trả phí và quảng cáo',
+          'Tiếp thị sản phẩm',
+          'Sản xuất âm thanh và podcast',
+        ],
+      },
+      healthcare: {
+        title: 'Chăm sóc sức khỏe',
+        d: 'Ghi hồ sơ, mã hóa và quy trình chăm sóc, từng bước một.',
+        items: [
+          'Hành nghề bác sĩ',
+          'Điều dưỡng có chứng chỉ',
+          'Điều dưỡng chuyên khoa',
+          'Dược',
+          'Vật lý trị liệu và trị liệu nghề nghiệp',
+          'Chẩn đoán hình ảnh và X-quang',
+          'Khoa học xét nghiệm y khoa',
+          'Mã hóa và lập hóa đơn y tế',
+          'Điều phối nghiên cứu lâm sàng',
+          'Quản lý thông tin y tế',
+          'Vệ sinh và hành nghề nha khoa',
+          'Nhân viên cấp cứu và EMS',
+          'Dinh dưỡng và tiết chế',
+          'Sức khỏe hành vi và tư vấn',
+          'Y tế công cộng',
+        ],
+      },
+      education: {
+        title: 'Giáo dục',
+        d: 'Thiết lập lớp học, hồ sơ và bài giảng.',
+        items: [
+          'Giảng dạy K-12',
+          'Giảng dạy và thuyết giảng đại học',
+          'Quản lý trường học',
+          'Cố vấn học thuật',
+          'Phòng đào tạo và hồ sơ sinh viên',
+          'Giáo dục đặc biệt',
+          'Thư viện và khoa học thông tin',
+          'Tuyển sinh và nhập học',
+          'Phát triển học trực tuyến',
+          'Đào tạo doanh nghiệp và L&D',
+          'Giáo dục mầm non',
+          'Giảng dạy ngôn ngữ (ESL)',
+          'Tư vấn học đường',
+        ],
       },
     },
   },
@@ -1758,66 +2431,117 @@ export default {
     ctaRefund: 'Chính sách hoàn tiền',
     ctaDemo: 'Xem demo 60 giây',
   },
-
-  // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
   residency: {
-    title: "Lưu trữ dữ liệu theo khu vực cho doanh nghiệp",
-    ent: "Chúng tôi nỗ lực hết sức hợp lý để lưu giữ dữ liệu của khách hàng doanh nghiệp và công ty trong khu vực của họ - dữ liệu châu Âu ở châu Âu, dữ liệu Ấn Độ ở Ấn Độ, dữ liệu Hoa Kỳ ở Hoa Kỳ - như một phần của quá trình onboarding doanh nghiệp. Chạy WorkCoPilot bằng khóa AI của riêng bạn, hoặc on-prem, để giữ dữ liệu được quản trị trong phạm vi ranh giới của riêng bạn.",
-    sec: "Chúng tôi nỗ lực hết sức hợp lý để lưu giữ dữ liệu của khách hàng doanh nghiệp và công ty trong khu vực của họ - dữ liệu châu Âu ở châu Âu, dữ liệu Ấn Độ ở Ấn Độ, dữ liệu Hoa Kỳ ở Hoa Kỳ - như một phần của quá trình onboarding doanh nghiệp. Các công ty cũng có thể chạy bằng khóa AI của riêng mình, hoặc on-prem, để giữ dữ liệu được quản trị trong phạm vi ranh giới của họ.",
+    title: 'Lưu trữ dữ liệu theo khu vực cho doanh nghiệp',
+    ent: 'Chúng tôi nỗ lực hết sức hợp lý để lưu giữ dữ liệu của khách hàng doanh nghiệp và công ty trong khu vực của họ - dữ liệu châu Âu ở châu Âu, dữ liệu Ấn Độ ở Ấn Độ, dữ liệu Hoa Kỳ ở Hoa Kỳ - như một phần của quá trình onboarding doanh nghiệp. Chạy WorkCoPilot bằng khóa AI của riêng bạn, hoặc on-prem, để giữ dữ liệu được quản trị trong phạm vi ranh giới của riêng bạn.',
+    sec: 'Chúng tôi nỗ lực hết sức hợp lý để lưu giữ dữ liệu của khách hàng doanh nghiệp và công ty trong khu vực của họ - dữ liệu châu Âu ở châu Âu, dữ liệu Ấn Độ ở Ấn Độ, dữ liệu Hoa Kỳ ở Hoa Kỳ - như một phần của quá trình onboarding doanh nghiệp. Các công ty cũng có thể chạy bằng khóa AI của riêng mình, hoặc on-prem, để giữ dữ liệu được quản trị trong phạm vi ranh giới của họ.',
   },
   seo: {
-    'how-it-works': { title: "Cách hoạt động - WorkCoPilot by AdmireVeda", description: "Mọi điều WorkCoPilot làm: hướng dẫn từng bước trên màn hình của bạn, lệnh hoặc cú nhấp chính xác, bắt đầu từ con số không, phát hiện và sửa lỗi, trong mọi ứng dụng, dựa trên tài liệu của chính bạn, một bản ghi bạn giữ lại, luôn cập nhật bằng cách học công cụ của bạn, một trợ lý trước nhiệm vụ, các kỹ năng của riêng bạn, che dữ liệu ngay trên thiết bị với SAST và kiểm tra phụ thuộc trực tiếp, các kiểm soát doanh nghiệp, và kế hoạch từ AI mạnh nhất mà bạn có thể dùng." },
-    'use-cases': { title: "Trường hợp sử dụng - WorkCoPilot by AdmireVeda", description: "Những gì WorkCoPilot hướng dẫn, chi tiết: thiết lập kỹ thuật, xây dựng và tích hợp, AI và tự động hóa, sản phẩm, tiếp thị, kế toán và công việc văn phòng, pháp lý và tuân thủ, cùng công việc hằng ngày trên mọi màn hình." },
-    fields: { title: "Các lĩnh vực chúng tôi hỗ trợ - {total} lĩnh vực chuyên môn - WorkCoPilot by AdmireVeda", description: "WorkCoPilot hướng dẫn công việc trên {total} lĩnh vực chuyên môn thuộc {families} nhóm, từ phần mềm và bảo mật đến tài chính, vận hành, tiếp thị, y tế và giáo dục. Một công cụ cho toàn bộ công ty của bạn." },
+    'how-it-works': {
+      title: 'Cách hoạt động - WorkCoPilot by AdmireVeda',
+      description: 'Mọi điều WorkCoPilot làm: hướng dẫn từng bước trên màn hình của bạn, lệnh hoặc cú nhấp chính xác, bắt đầu từ con số không, phát hiện và sửa lỗi, trong mọi ứng dụng, dựa trên tài liệu của chính bạn, một bản ghi bạn giữ lại, luôn cập nhật bằng cách học công cụ của bạn, một trợ lý trước nhiệm vụ, các kỹ năng của riêng bạn, che dữ liệu ngay trên thiết bị với SAST và kiểm tra phụ thuộc trực tiếp, các kiểm soát doanh nghiệp, và kế hoạch từ AI mạnh nhất mà bạn có thể dùng.',
+    },
+    'use-cases': {
+      title: 'Trường hợp sử dụng - WorkCoPilot by AdmireVeda',
+      description: 'Những gì WorkCoPilot hướng dẫn, chi tiết: thiết lập kỹ thuật, xây dựng và tích hợp, AI và tự động hóa, sản phẩm, tiếp thị, kế toán và công việc văn phòng, pháp lý và tuân thủ, cùng công việc hằng ngày trên mọi màn hình.',
+    },
+    fields: {
+      title: 'Các lĩnh vực chúng tôi hỗ trợ - {total} lĩnh vực chuyên môn - WorkCoPilot by AdmireVeda',
+      description: 'WorkCoPilot hướng dẫn công việc trên {total} lĩnh vực chuyên môn thuộc {families} nhóm, từ phần mềm và bảo mật đến tài chính, vận hành, tiếp thị, y tế và giáo dục. Một công cụ cho toàn bộ công ty của bạn.',
+    },
     pricing: {
       title: 'Giá - WorkCoPilot by AdmireVeda',
       description: 'Các gói WorkCoPilot đặt cạnh nhau: Lite, Basic, Advanced và Premium, với số giờ hướng dẫn trực tiếp mỗi tháng, tải tài liệu lên, hình ảnh tạo sẵn, bảo mật trong mọi gói, cùng điều khoản giờ mua thêm và hủy. Enterprise được tùy chỉnh.',
     },
-    faq: { title: "Câu hỏi thường gặp - WorkCoPilot by AdmireVeda", description: "Những câu trả lời thẳng thắn về WorkCoPilot: nó là gì, hướng dẫn từng bước hoạt động ra sao, nền tảng và cài đặt, điều gì rời khỏi thiết bị của bạn, giá và thanh toán, cách nó luôn cập nhật bằng việc học công cụ của bạn, dành cho ai, dữ liệu và tuân thủ, và cách bắt đầu." },
-    contact: { title: "Liên hệ - WorkCoPilot by AdmireVeda", description: "Liên hệ với nhóm WorkCoPilot về sản phẩm, một buổi demo cho nhóm của bạn, bảo mật hoặc tuân thủ, hay bất cứ điều gì khác. Gửi lời nhắn và chúng tôi sẽ phản hồi." },
-    enterprise: { title: "Tính năng doanh nghiệp - WorkCoPilot by AdmireVeda", description: "WorkCoPilot học doanh nghiệp của bạn: tải lên quy trình, hướng dẫn và dữ liệu của bạn, và nó đồng hành cùng nhân sự của bạn qua từng bước chính xác trên màn hình của họ, theo đúng cách công ty bạn làm việc. Riêng tư cho tổ chức của bạn. Kèm theo che dữ liệu trên thiết bị, nhật ký kiểm toán, quản trị DLP, cảnh báo SIEM, SSO, báo cáo bằng chứng tuân thủ, ROI cho ban lãnh đạo, white-label và lập hóa đơn theo từng công ty." },
-    demo: { title: "Demo 60 giây - WorkCoPilot by AdmireVeda", description: "Xem WorkCoPilot hướng dẫn một nhiệm vụ thực tế từ đầu đến cuối: nó đọc màn hình, đưa ra bước và lệnh tiếp theo chính xác, kiểm tra xem đã thành công chưa, phát hiện lỗi trước khi gây tốn kém, và trao cho bạn bản báo cáo." },
-    benchmark: { title: "Chuẩn đo độ chính xác - WorkCoPilot by AdmireVeda", description: "WorkCoPilot chính xác đến mức nào, được đo một cách trung thực: độ đúng của kết quả trên các nhiệm vụ có đáp án biết trước, theo lĩnh vực và theo cấp AI, với cỡ mẫu và khoảng tin cậy 95%, cùng phương pháp luận." },
+    faq: {
+      title: 'Câu hỏi thường gặp - WorkCoPilot by AdmireVeda',
+      description: 'Những câu trả lời thẳng thắn về WorkCoPilot: nó là gì, hướng dẫn từng bước hoạt động ra sao, nền tảng và cài đặt, điều gì rời khỏi thiết bị của bạn, giá và thanh toán, cách nó luôn cập nhật bằng việc học công cụ của bạn, dành cho ai, dữ liệu và tuân thủ, và cách bắt đầu.',
+    },
+    contact: {
+      title: 'Liên hệ - WorkCoPilot by AdmireVeda',
+      description: 'Liên hệ với nhóm WorkCoPilot về sản phẩm, một buổi demo cho nhóm của bạn, bảo mật hoặc tuân thủ, hay bất cứ điều gì khác. Gửi lời nhắn và chúng tôi sẽ phản hồi.',
+    },
+    enterprise: {
+      title: 'Tính năng doanh nghiệp - WorkCoPilot by AdmireVeda',
+      description: 'WorkCoPilot học doanh nghiệp của bạn: tải lên quy trình, hướng dẫn và dữ liệu của bạn, và nó đồng hành cùng nhân sự của bạn qua từng bước chính xác trên màn hình của họ, theo đúng cách công ty bạn làm việc. Riêng tư cho tổ chức của bạn. Kèm theo che dữ liệu trên thiết bị, nhật ký kiểm toán, quản trị DLP, cảnh báo SIEM, SSO, báo cáo bằng chứng tuân thủ, ROI cho ban lãnh đạo, white-label và lập hóa đơn theo từng công ty.',
+    },
+    demo: {
+      title: 'Demo 60 giây - WorkCoPilot by AdmireVeda',
+      description: 'Xem WorkCoPilot hướng dẫn một nhiệm vụ thực tế từ đầu đến cuối: nó đọc màn hình, đưa ra bước và lệnh tiếp theo chính xác, kiểm tra xem đã thành công chưa, phát hiện lỗi trước khi gây tốn kém, và trao cho bạn bản báo cáo.',
+    },
+    benchmark: {
+      title: 'Chuẩn đo độ chính xác - WorkCoPilot by AdmireVeda',
+      description: 'WorkCoPilot chính xác đến mức nào, được đo một cách trung thực: độ đúng của kết quả trên các nhiệm vụ có đáp án biết trước, theo lĩnh vực và theo cấp AI, với cỡ mẫu và khoảng tin cậy 95%, cùng phương pháp luận.',
+    },
   },
-
-  // Cookie / storage consent banner (see en.js consent).
   consent: {
-    aria: "Lựa chọn cookie và quyền riêng tư",
-    title: "Lựa chọn quyền riêng tư của bạn",
-    body: "Chúng tôi dùng một cookie thật sự cần thiết để giữ bạn đăng nhập. Khi bạn đồng ý, chúng tôi cũng bật lưu trữ chức năng và quy kết giới thiệu. Bạn có thể thay đổi bất cứ lúc nào.",
-    acceptAll: "Chấp nhận tất cả",
-    rejectAll: "Từ chối phần không thiết yếu",
-    manage: "Quản lý tùy chọn",
-    save: "Lưu lựa chọn",
-    back: "Quay lại",
-    close: "Đóng",
-    reopen: "Tùy chọn cookie",
-    manageTitle: "Quản lý tùy chọn của bạn",
-    manageBody: "Chọn những danh mục được phép. Lưu trữ thật sự cần thiết luôn bật để trang web và đăng nhập tiếp tục hoạt động.",
-    alwaysOn: "Luôn bật",
-    on: "Bật",
-    off: "Tắt",
-    necessaryT: "Thật sự cần thiết",
-    necessaryD: "Một cookie đăng nhập duy nhất giữ bạn luôn đăng nhập và giúp trang web hoạt động. Không thể tắt.",
-    functionalT: "Chức năng",
-    functionalD: "Ghi nhớ ngôn ngữ, giao diện và các tùy chọn khác trên thiết bị này. Không theo dõi xuyên trang.",
-    analyticsT: "Phân tích và quy kết",
-    analyticsD: "Cho phép chúng tôi ghi nhận đối tác đã giới thiệu bạn (cookie giới thiệu của bên thứ nhất). Tắt cho đến khi bạn cho phép, và không bao giờ dùng để lập hồ sơ về bạn.",
-    learn: "Đọc <a>Chính sách cookie</a> và <p>Chính sách quyền riêng tư</p> của chúng tôi.",
+    aria: 'Lựa chọn cookie và quyền riêng tư',
+    title: 'Lựa chọn quyền riêng tư của bạn',
+    body: 'Chúng tôi dùng một cookie thật sự cần thiết để giữ bạn đăng nhập. Khi bạn đồng ý, chúng tôi cũng bật lưu trữ chức năng và quy kết giới thiệu. Bạn có thể thay đổi bất cứ lúc nào.',
+    acceptAll: 'Chấp nhận tất cả',
+    rejectAll: 'Từ chối phần không thiết yếu',
+    manage: 'Quản lý tùy chọn',
+    save: 'Lưu lựa chọn',
+    back: 'Quay lại',
+    close: 'Đóng',
+    reopen: 'Tùy chọn cookie',
+    manageTitle: 'Quản lý tùy chọn của bạn',
+    manageBody: 'Chọn những danh mục được phép. Lưu trữ thật sự cần thiết luôn bật để trang web và đăng nhập tiếp tục hoạt động.',
+    alwaysOn: 'Luôn bật',
+    on: 'Bật',
+    off: 'Tắt',
+    necessaryT: 'Thật sự cần thiết',
+    necessaryD: 'Một cookie đăng nhập duy nhất giữ bạn luôn đăng nhập và giúp trang web hoạt động. Không thể tắt.',
+    functionalT: 'Chức năng',
+    functionalD: 'Ghi nhớ ngôn ngữ, giao diện và các tùy chọn khác trên thiết bị này. Không theo dõi xuyên trang.',
+    analyticsT: 'Phân tích và quy kết',
+    analyticsD: 'Cho phép chúng tôi ghi nhận đối tác đã giới thiệu bạn (cookie giới thiệu của bên thứ nhất). Tắt cho đến khi bạn cho phép, và không bao giờ dùng để lập hồ sơ về bạn.',
+    learn: 'Đọc <a>Chính sách cookie</a> và <p>Chính sách quyền riêng tư</p> của chúng tôi.',
   },
-
-  // "New in this release" highlights (see en.js rel).
   rel: {
-    title: "Mới trong bản phát hành này",
-    sub: "Có sẵn hôm nay, trên mọi gói.",
-    global: { eyebrow: "Toàn cầu theo mặc định", h: "Hoạt động bằng 16 ngôn ngữ, chọn theo khu vực của bạn", line: "Trang web và sản phẩm nói 16 ngôn ngữ, được chọn tự động theo khu vực của bạn.", points: ["Trang web và sản phẩm nói 16 ngôn ngữ.", "Ngôn ngữ phù hợp được chọn tự động theo khu vực của bạn: tiếng Anh ở nơi tiếng Anh là ngôn ngữ làm việc, như Ấn Độ, Hoa Kỳ và Anh, và ngôn ngữ chuyên môn địa phương ở nơi khác.", "Bạn có thể đổi ngôn ngữ bất cứ lúc nào, và lựa chọn của bạn được ghi nhớ."] },
-    privacy: { eyebrow: "Riêng tư và tuân thủ", h: "Xây dựng theo GDPR và CCPA, riêng tư theo thiết kế", points: ["Che dữ liệu trên thiết bị: dữ liệu cá nhân, dữ liệu sức khỏe, bí mật và khóa được loại bỏ hoặc mã hóa thành token ngay trên thiết bị của bạn trước khi bất cứ thứ gì được gửi đi.", "Chỉ đọc theo thiết kế: WorkCoPilot hướng dẫn và không bao giờ nhấp, gõ hay chạy bất cứ thứ gì thay bạn.", "Một kiểm soát đồng ý cookie thuộc về bạn: chấp nhận hoặc từ chối lưu trữ không thiết yếu chỉ bằng một cú nhấp, và thay đổi bất cứ lúc nào.", "Phù hợp với GDPR và CCPA. Có sẵn Phụ lục Xử lý Dữ liệu cho doanh nghiệp."] },
-    billing: { eyebrow: "Thanh toán tự phục vụ", h: "Tự đổi gói của bạn, bất cứ lúc nào", points: ["Nâng cấp bất cứ lúc nào và áp dụng ngay, với tín dụng theo tỷ lệ cho phần bạn đã trả.", "Hạ cấp bất cứ lúc nào và có hiệu lực vào kỳ gia hạn tiếp theo.", "Tự hủy bất cứ lúc nào, không hợp đồng.", "Xem hóa đơn hàng tháng trong bảng điều khiển của bạn, và số giờ mua thêm không bao giờ hết hạn."] },
-    enterprise: { eyebrow: "Kiểm soát của công ty", h: "Quản trị mà quản trị viên của bạn thiết lập một lần", points: ["Quản trị viên công ty thiết lập một chính sách chống thất thoát dữ liệu, một lần cho mọi người, quy định những gì được phép rời khỏi thiết bị.", "Kiểm soát theo từng công ty, và tri thức riêng của công ty không bao giờ dùng để huấn luyện nền tảng.", "Một vai trò kế toán với bảng điều khiển tài chính cho việc lập hóa đơn và chi tiêu.", "Đăng nhập một lần qua nhà cung cấp danh tính của bạn, và một DPA mà đội ngũ pháp lý của bạn có thể ký."] },
+    title: 'Mới trong bản phát hành này',
+    sub: 'Có sẵn hôm nay, trên mọi gói.',
+    global: {
+      eyebrow: 'Toàn cầu theo mặc định',
+      h: 'Hoạt động bằng 16 ngôn ngữ, chọn theo khu vực của bạn',
+      line: 'Trang web và sản phẩm nói 16 ngôn ngữ, được chọn tự động theo khu vực của bạn.',
+      points: [
+        'Trang web và sản phẩm nói 16 ngôn ngữ.',
+        'Ngôn ngữ phù hợp được chọn tự động theo khu vực của bạn: tiếng Anh ở nơi tiếng Anh là ngôn ngữ làm việc, như Ấn Độ, Hoa Kỳ và Anh, và ngôn ngữ chuyên môn địa phương ở nơi khác.',
+        'Bạn có thể đổi ngôn ngữ bất cứ lúc nào, và lựa chọn của bạn được ghi nhớ.',
+      ],
+    },
+    privacy: {
+      eyebrow: 'Riêng tư và tuân thủ',
+      h: 'Xây dựng theo GDPR và CCPA, riêng tư theo thiết kế',
+      points: [
+        'Che dữ liệu trên thiết bị: dữ liệu cá nhân, dữ liệu sức khỏe, bí mật và khóa được loại bỏ hoặc mã hóa thành token ngay trên thiết bị của bạn trước khi bất cứ thứ gì được gửi đi.',
+        'Chỉ đọc theo thiết kế: WorkCoPilot hướng dẫn và không bao giờ nhấp, gõ hay chạy bất cứ thứ gì thay bạn.',
+        'Một kiểm soát đồng ý cookie thuộc về bạn: chấp nhận hoặc từ chối lưu trữ không thiết yếu chỉ bằng một cú nhấp, và thay đổi bất cứ lúc nào.',
+        'Phù hợp với GDPR và CCPA. Có sẵn Phụ lục Xử lý Dữ liệu cho doanh nghiệp.',
+      ],
+    },
+    billing: {
+      eyebrow: 'Thanh toán tự phục vụ',
+      h: 'Tự đổi gói của bạn, bất cứ lúc nào',
+      points: [
+        'Nâng cấp bất cứ lúc nào và áp dụng ngay, với tín dụng theo tỷ lệ cho phần bạn đã trả.',
+        'Hạ cấp bất cứ lúc nào và có hiệu lực vào kỳ gia hạn tiếp theo.',
+        'Tự hủy bất cứ lúc nào, không hợp đồng.',
+        'Xem hóa đơn hàng tháng trong bảng điều khiển của bạn, và số giờ mua thêm không bao giờ hết hạn.',
+      ],
+    },
+    enterprise: {
+      eyebrow: 'Kiểm soát của công ty',
+      h: 'Quản trị mà quản trị viên của bạn thiết lập một lần',
+      points: [
+        'Quản trị viên công ty thiết lập một chính sách chống thất thoát dữ liệu, một lần cho mọi người, quy định những gì được phép rời khỏi thiết bị.',
+        'Kiểm soát theo từng công ty, và tri thức riêng của công ty không bao giờ dùng để huấn luyện nền tảng.',
+        'Một vai trò kế toán với bảng điều khiển tài chính cho việc lập hóa đơn và chi tiêu.',
+        'Đăng nhập một lần qua nhà cung cấp danh tính của bạn, và một DPA mà đội ngũ pháp lý của bạn có thể ký.',
+      ],
+    },
   },
-
-
-  // ---- Admin dashboards and consoles (companyAdmin + src/i18n/locales/en/*.js). ----
   companyAdmin: {
     flows: {
       independent: 'Độc lập',
@@ -1923,22 +2647,70 @@ export default {
       customers: 'Khách hàng',
     },
     sections: {
-      usage: { title: 'Sử dụng & giới hạn', sub: 'Quỹ giờ dùng chung, giới hạn theo người và theo nhóm, cùng yêu cầu thêm giờ.' },
-      overview: { title: 'Tổng quan', sub: 'Toàn cảnh công ty của bạn: con người, suất, mức dùng AI và gói.' },
-      team: { title: 'Đội ngũ', sub: 'Thêm người, đặt vai trò và gói, và xóa họ. Thay đổi có hiệu lực ngay lập tức.' },
-      sso: { title: 'Đăng nhập một lần (SSO)', sub: 'Cho phép người của bạn đăng nhập bằng nhà cung cấp danh tính của bạn (Google, Microsoft hoặc Okta).' },
-      ai: { title: 'Khóa AI', sub: 'Chạy WorkCoPilot trên khóa AI của công ty bạn để mức dùng được tính vào tài khoản nhà cung cấp của riêng bạn.' },
-      billing: { title: 'Thanh toán', sub: 'Các khoản phí theo gói và mọi mục phụ thu. Do đội ngũ WorkCoPilot thiết lập.' },
-      governance: { title: 'Quản trị dữ liệu (DLP)', sub: 'Quyết định dữ liệu nhạy cảm nào được phép rời khỏi thiết bị. Các biện pháp kiểm soát và bằng chứng hỗ trợ việc tuân thủ của bạn.' },
-      brain: { title: 'Company Brain', sub: 'Những gì đang có trong kho tri thức riêng của công ty bạn. Tài liệu được thêm vào từ ứng dụng máy tính, lọc sạch ngay trên thiết bị trước; tại đây bạn có thể xem và xóa bất kỳ tài liệu nào.' },
-      brainsecurity: { title: 'Mã hóa riêng tư và xuất dữ liệu', sub: 'Tự mình giữ khóa cho Company Brain của bạn (một cụm mật khẩu cùng một cụm từ khôi phục dùng một lần - không có cửa hậu), và lấy một bản sao hoàn chỉnh, được mã hóa bằng mật khẩu, cho dữ liệu công ty của bạn bất cứ khi nào bạn muốn.' },
-      alerts: { title: 'Cảnh báo bảo mật', sub: 'Khi một người của bạn nhập dữ liệu nhạy cảm (PII / PHI), nó được che ngay trên thiết bị của họ trước khi bất cứ thứ gì được gửi đi, và bạn được cho biết ai, ở đâu và thuộc loại nào - không bao giờ là chính các giá trị đó.' },
-      integrations: { title: 'Tích hợp SOC / SIEM', sub: 'Tự động chuyển tiếp cảnh báo bảo mật vào các công cụ SIEM, SOAR, chat và quan sát của bạn. Chỉ siêu dữ liệu của cảnh báo được gửi đi - loại và số lượng những gì đã bị che cùng ai và ở đâu - không bao giờ là các giá trị.' },
-      sessions: { title: 'Phiên của thành viên', sub: 'Mọi phiên mà người của bạn chạy - đã hoàn thành hoặc đang thực hiện. Lấy báo cáo hoặc nhật ký kiểm toán của bất kỳ phiên nào.' },
-      tickets: { title: 'Hỗ trợ', sub: 'Mở một phiếu yêu cầu và trao đổi với đội ngũ WorkCoPilot.' },
-      help: { title: 'Trợ giúp', sub: 'Cách vận hành bảng điều khiển công ty của bạn, theo từng màn hình.' },
-      activity: { title: 'Hoạt động', sub: 'Ghi nhận những gì đã diễn ra trong toàn công ty của bạn.' },
-      settings: { title: 'Cài đặt và hồ sơ', sub: 'Hồ sơ của bạn, mật khẩu của bạn, và thông tin công ty của bạn.' },
+      usage: {
+        title: 'Sử dụng & giới hạn',
+        sub: 'Quỹ giờ dùng chung, giới hạn theo người và theo nhóm, cùng yêu cầu thêm giờ.',
+      },
+      overview: {
+        title: 'Tổng quan',
+        sub: 'Toàn cảnh công ty của bạn: con người, suất, mức dùng AI và gói.',
+      },
+      team: {
+        title: 'Đội ngũ',
+        sub: 'Thêm người, đặt vai trò và gói, và xóa họ. Thay đổi có hiệu lực ngay lập tức.',
+      },
+      sso: {
+        title: 'Đăng nhập một lần (SSO)',
+        sub: 'Cho phép người của bạn đăng nhập bằng nhà cung cấp danh tính của bạn (Google, Microsoft hoặc Okta).',
+      },
+      ai: {
+        title: 'Khóa AI',
+        sub: 'Chạy WorkCoPilot trên khóa AI của công ty bạn để mức dùng được tính vào tài khoản nhà cung cấp của riêng bạn.',
+      },
+      billing: {
+        title: 'Thanh toán',
+        sub: 'Các khoản phí theo gói và mọi mục phụ thu. Do đội ngũ WorkCoPilot thiết lập.',
+      },
+      governance: {
+        title: 'Quản trị dữ liệu (DLP)',
+        sub: 'Quyết định dữ liệu nhạy cảm nào được phép rời khỏi thiết bị. Các biện pháp kiểm soát và bằng chứng hỗ trợ việc tuân thủ của bạn.',
+      },
+      brain: {
+        title: 'Company Brain',
+        sub: 'Những gì đang có trong kho tri thức riêng của công ty bạn. Tài liệu được thêm vào từ ứng dụng máy tính, lọc sạch ngay trên thiết bị trước; tại đây bạn có thể xem và xóa bất kỳ tài liệu nào.',
+      },
+      brainsecurity: {
+        title: 'Mã hóa riêng tư và xuất dữ liệu',
+        sub: 'Tự mình giữ khóa cho Company Brain của bạn (một cụm mật khẩu cùng một cụm từ khôi phục dùng một lần - không có cửa hậu), và lấy một bản sao hoàn chỉnh, được mã hóa bằng mật khẩu, cho dữ liệu công ty của bạn bất cứ khi nào bạn muốn.',
+      },
+      alerts: {
+        title: 'Cảnh báo bảo mật',
+        sub: 'Khi một người của bạn nhập dữ liệu nhạy cảm (PII / PHI), nó được che ngay trên thiết bị của họ trước khi bất cứ thứ gì được gửi đi, và bạn được cho biết ai, ở đâu và thuộc loại nào - không bao giờ là chính các giá trị đó.',
+      },
+      integrations: {
+        title: 'Tích hợp SOC / SIEM',
+        sub: 'Tự động chuyển tiếp cảnh báo bảo mật vào các công cụ SIEM, SOAR, chat và quan sát của bạn. Chỉ siêu dữ liệu của cảnh báo được gửi đi - loại và số lượng những gì đã bị che cùng ai và ở đâu - không bao giờ là các giá trị.',
+      },
+      sessions: {
+        title: 'Phiên của thành viên',
+        sub: 'Mọi phiên mà người của bạn chạy - đã hoàn thành hoặc đang thực hiện. Lấy báo cáo hoặc nhật ký kiểm toán của bất kỳ phiên nào.',
+      },
+      tickets: {
+        title: 'Hỗ trợ',
+        sub: 'Mở một phiếu yêu cầu và trao đổi với đội ngũ WorkCoPilot.',
+      },
+      help: {
+        title: 'Trợ giúp',
+        sub: 'Cách vận hành bảng điều khiển công ty của bạn, theo từng màn hình.',
+      },
+      activity: {
+        title: 'Hoạt động',
+        sub: 'Ghi nhận những gì đã diễn ra trong toàn công ty của bạn.',
+      },
+      settings: {
+        title: 'Cài đặt và hồ sơ',
+        sub: 'Hồ sơ của bạn, mật khẩu của bạn, và thông tin công ty của bạn.',
+      },
       depth: {
         title: 'Độ sâu hướng dẫn',
         sub: 'Độ sâu mà nhóm WorkCoPilot đã cấp cho công ty của bạn, và cách bạn gán độ sâu đó cho từng nhóm người.',
@@ -3923,7 +4695,6 @@ export default {
   },
   usersAdmin: {
     loading: 'Đang tải người dùng',
-
     columns: {
       user: 'Người dùng',
       tier: 'Bậc',
@@ -3935,14 +4706,12 @@ export default {
       sessions: 'Phiên',
       mfa: '2FA',
     },
-
     viewOnlyNote: 'Thay đổi bậc hoặc cấp thêm giờ cần quyền superadmin. Bạn có thể xem mọi thứ ở đây.',
     searchPlaceholder: 'Tìm theo tên đăng nhập',
     newUser: 'Người dùng mới',
     newUserTitle: 'Tạo người dùng WorkCoPilot mới',
     superadminOnly: 'Chỉ dành cho superadmin',
     countOf: '{shown} trên {total}',
-
     create: {
       flowInCompany: 'Luồng công việc',
       flowHint: '(người thực hiện: chỉ tác vụ được giao; kết hợp: cả hai)',
@@ -3964,7 +4733,6 @@ export default {
       submit: 'Tạo người dùng',
       cancel: 'Hủy',
     },
-
     createMsg: {
       usernameMin: 'Nhập tên đăng nhập (từ 2 ký tự).',
       passwordMin: 'Mật khẩu phải có ít nhất 6 ký tự.',
@@ -3974,13 +4742,11 @@ export default {
       setPasswordEmailed: 'Đã gửi liên kết đặt mật khẩu đến {email}.',
       couldNotCreate: 'Không thể tạo người dùng.',
     },
-
     empty: {
       title: 'Không có người dùng nào khớp',
       detailSearch: 'Thử một từ khóa khác.',
       detailNone: 'Chưa có người dùng WorkCoPilot nào được cấp.',
     },
-
     disabledBadge: 'Đã vô hiệu hóa',
     exhausted: 'đã dùng hết',
     planLeftTitle: 'Số giờ bao gồm trong gói còn lại tháng này. Làm mới vào ngày 1; giờ đã mua được tính riêng.',
@@ -3999,11 +4765,9 @@ export default {
     individual: 'Cá nhân',
     change: 'Thay đổi',
     changeCompanyTitle: 'Đặt công ty và vai trò',
-
     mfaOn: 'Bật',
     mfaResetTitle: 'Đặt lại trình xác thực (mất điện thoại / nghỉ việc)',
     mfaNotSet: 'Chưa thiết lập',
-
     actions: {
       hoursAriaLabel: 'Số giờ cần cấp',
       add: 'Thêm',
@@ -4031,7 +4795,6 @@ export default {
       deleteTitle: 'Xóa vĩnh viễn tài khoản này cùng các phiên của nó',
       delete: 'Xóa',
     },
-
     toasts: {
       movedTo: 'Đã chuyển sang {name}',
       companyFallback: 'công ty',
@@ -4053,7 +4816,6 @@ export default {
       granted: 'Đã cấp {hours}h',
       couldNotGrantHours: 'Không thể cấp giờ',
     },
-
     confirm: {
       nameFallback: 'tài khoản này',
       deleteTitle: 'Xóa {name}',
@@ -4086,7 +4848,6 @@ export default {
   },
   financeAdmin: {
     loading: 'Đang tải tài chính',
-
     kinds: {
       subscription: 'Đăng ký',
       hours: 'Giờ mua thêm',
@@ -4096,14 +4857,12 @@ export default {
       invoice: 'Hóa đơn',
       adjustment: 'Điều chỉnh',
     },
-
     granularity: {
       week: 'Theo tuần',
       month: 'Theo tháng',
       quarter: 'Theo quý',
       year: 'Theo năm',
     },
-
     glance: {
       title: 'Doanh thu tổng quan',
       refresh: 'Làm mới',
@@ -4118,7 +4877,6 @@ export default {
       refundsYtd: 'Đã hoàn {amount} tính từ đầu năm.',
       noRefundsYtd: 'Chưa có khoản hoàn tiền nào từ đầu năm.',
     },
-
     cards: {
       week: 'Tuần này',
       month: 'Tháng này',
@@ -4130,7 +4888,6 @@ export default {
       payments_one: 'khoản thanh toán',
       payments_other: 'khoản thanh toán',
     },
-
     timeseries: {
       title: 'Doanh thu và MRR theo thời gian',
       granularityAria: 'Độ chi tiết của biểu đồ',
@@ -4147,13 +4904,11 @@ export default {
       tipSubs: 'Đăng ký mới: {newSubs} · Hủy: {cancellations}',
       pointMrr: 'MRR {label}: {amount}',
     },
-
     mini: {
       title: 'Doanh thu ròng, 12 tháng gần nhất',
       aria: 'Doanh thu ròng theo tháng, 12 tháng gần nhất',
       barTitle: '{month}: {amount} ròng',
     },
-
     subs: {
       title: 'Người dùng trả phí và đăng ký',
       refresh: 'Làm mới',
@@ -4177,7 +4932,6 @@ export default {
       cancelSub: 'Hủy gói',
       showing: 'Đang hiển thị {count} đăng ký trực tiếp. Xem tab Người đăng ký để biết danh sách đầy đủ.',
     },
-
     txns: {
       title: 'Tất cả giao dịch',
       shown: 'hiển thị {count}',
@@ -4206,7 +4960,6 @@ export default {
       void: 'Hủy bỏ',
       refund: 'Hoàn tiền',
     },
-
     msg: {
       refunded: 'Đã hoàn {amount}.',
       amountInvalid: 'Nhập số tiền khác 0 (dùng số âm cho một khoản ghi nợ).',
@@ -4220,7 +4973,6 @@ export default {
       subCanceled: 'Đã hủy đăng ký cho {name}.',
       cancelFailed: 'Không thể hủy đăng ký.',
     },
-
     reason: {
       createTitle: 'Ghi một bút toán sổ cái thủ công',
       createDetail: 'Thêm một khoản điều chỉnh thủ công {amount} vào sổ cái. Thao tác này được ghi vào sổ sách và lưu nhật ký.',
@@ -4236,7 +4988,6 @@ export default {
       refundMessage: 'Hoàn {amount} cho {name}. Thao tác này chuyển tiền thật và không thể hoàn tác.',
       refundConfirm: 'Hoàn tiền',
     },
-
     fallback: {
       account: 'tài khoản',
       thisAccount: 'tài khoản này',
@@ -4246,20 +4997,17 @@ export default {
     loading: 'Đang tải cấu hình thanh toán',
     stepUpLabel: 'Đang lưu khóa thanh toán',
     readOnlyNote: 'Chỉ superadmin mới có thể thay đổi cấu hình thanh toán. Trạng thái hiện tại được hiển thị bên dưới.',
-
     plans: {
       lite: 'Lite',
       basic: 'Basic',
       advanced: 'Advanced',
       premium: 'Premium',
     },
-
     config: {
       title: 'Cấu hình Stripe',
       descEditing: 'Dán các khóa Stripe và ba mã gói của bạn vào đây. Mỗi gói nhận một mã giá (price_...) hoặc một mã sản phẩm (prod_...), tùy theo cái bạn sao chép từ Stripe. Khóa bí mật và khóa bí mật webhook là chỉ-ghi: sau khi lưu chúng không bao giờ hiển thị lại, và để trống sẽ giữ nguyên giá trị đã lưu. Giá trị đặt ở đây được ưu tiên hơn biến môi trường.',
       descSaved: 'Các khóa Stripe và mã gói của bạn đã được lưu. Khóa bí mật không bao giờ hiển thị lại. Dùng Kiểm tra kết nối để xác nhận chúng hoạt động, hoặc Sửa để thay đổi.',
     },
-
     mode: {
       heading: 'Chế độ thanh toán: {mode}',
       testLabel: 'TEST (không tính phí thật)',
@@ -4270,7 +5018,6 @@ export default {
       liveWord: 'live',
       switchNote: 'Chuyển đổi áp dụng ngay lập tức. Thanh toán, webhook và Kiểm tra kết nối đều dùng khóa <b>{mode}</b>. Mỗi chế độ giữ bộ khóa và mã giá riêng; điền riêng cho từng chế độ trong mục Sửa.',
     },
-
     summary: {
       secretKey: 'Khóa bí mật',
       webhookSecret: 'Khóa bí mật ký webhook',
@@ -4290,7 +5037,6 @@ export default {
       off: 'Tắt',
       testConnection: 'Kiểm tra kết nối',
     },
-
     test: {
       okTitle: 'Đã kết nối với Stripe. Thanh toán đã sẵn sàng.',
       incompleteTitle: 'Đã kết nối, nhưng còn thiếu một phần.',
@@ -4307,7 +5053,6 @@ export default {
       annualNotReady: 'chưa thiết lập đầy đủ, lựa chọn theo năm chuyển đến trang đăng ký',
       planAnnual: '{name} theo năm:',
     },
-
     form: {
       secretKey: 'Khóa bí mật',
       webhookSecret: 'Khóa bí mật ký webhook',
@@ -4338,14 +5083,12 @@ export default {
       save: 'Lưu cấu hình',
       cancel: 'Hủy',
     },
-
     webhook: {
       title: 'Endpoint webhook',
       desc: 'Trong bảng điều khiển Stripe, thêm một endpoint webhook trỏ đến URL bên dưới và đăng ký nó với checkout.session.completed, customer.subscription.updated, customer.subscription.deleted và invoice.payment_failed. Rồi dán khóa bí mật ký của nó vào bên trên.',
       copied: 'Đã sao chép',
       copy: 'Sao chép',
     },
-
     state: {
       title: 'Trạng thái trực tiếp',
       desc: 'WorkCoPilot có thể nhận thanh toán ngay bây giờ hay không.',
@@ -4370,14 +5113,12 @@ export default {
   pricingAdmin: {
     loading: 'Đang tải bảng giá',
     superadminNote: 'Chỉnh sửa bảng giá cần quyền superadmin. Các giá trị bên dưới là chỉ đọc đối với bạn.',
-
     tiers: {
       lite: 'Lite',
       basic: 'Basic',
       advanced: 'Advanced',
       premium: 'Premium',
     },
-
     record: {
       title: 'Bảng giá',
       desc: 'Mỗi bậc có giá bao nhiêu, số giờ hướng dẫn bao gồm mỗi tháng và mức trần việc mỗi ngày.',
@@ -4398,7 +5139,6 @@ export default {
       glanceLine: '{hours} giờ/tháng  ·  {tasks} việc/ngày',
       glanceFoot: 'Các thanh so sánh số giờ bao gồm mỗi tháng giữa các bậc.',
     },
-
     edit: {
       monthly: {
         title: 'Giá gói theo tháng',
@@ -4451,7 +5191,6 @@ export default {
   },
   cancelledAdmin: {
     loading: 'Đang tải người đăng ký đã hủy',
-
     columns: {
       user: 'Người dùng',
       email: 'Email',
@@ -4463,14 +5202,11 @@ export default {
       lifetimePaid: 'Tổng đã trả',
       company: 'Công ty',
     },
-
     cycle: {
       monthly: 'Theo tháng',
       annual: 'Theo năm',
     },
-
     viewOnlyNote: 'Người đăng ký đã hủy hiển thị với superadmin và vai trò kế toán. Bạn có thể xem mọi thứ ở đây.',
-
     tiles: {
       cancelledSubscribers: 'Người đăng ký đã hủy',
       awaitingData: 'Đang chờ dữ liệu',
@@ -4478,17 +5214,14 @@ export default {
       lifetimeRevenue: 'Doanh thu trọn đời (đã rời bỏ)',
       totalPaid: 'Tổng đã trả trước khi họ rời đi',
     },
-
     searchPlaceholder: 'Tìm người dùng, email, công ty, gói hoặc lý do',
     refresh: 'Làm mới',
     countOf: '{shown} trên {total}',
-
     unavailableTitle: 'Người đăng ký đã hủy chưa khả dụng',
     unavailableDetail: 'Endpoint người đăng ký đã hủy chưa được kết nối trên máy chủ này. Khi nó hoạt động, mọi người đăng ký đã rời bỏ và doanh thu họ mang lại sẽ xuất hiện ở đây. Dùng Làm mới để kiểm tra lại.',
     noMatchTitle: 'Không có người đăng ký đã hủy nào khớp',
     noMatchSearch: 'Thử một từ khóa khác.',
     noMatchEmpty: 'Chưa có đăng ký nào bị hủy. Người đăng ký đã rời bỏ xuất hiện ở đây khi một đăng ký kết thúc.',
-
     canceledBadge: 'Đã hủy',
     individual: 'Cá nhân',
   },
@@ -4499,7 +5232,6 @@ export default {
       withhold: 'Chặn lại',
       tokenize: 'Mã hóa thành token (trên thiết bị)',
     },
-
     retention: {
       title: 'Lưu giữ dữ liệu (tài khoản cá nhân)',
       desc: 'Tự động xóa các phiên (cùng ảnh chụp màn hình cột mốc và nhật ký kiểm toán) cũ hơn số ngày này, đối với <b>tài khoản cá nhân (không thuộc công ty)</b>. Tài khoản công ty do quản trị viên công ty của họ quản lý, không phải ở đây. <b>0 nghĩa là giữ mãi mãi</b>; người dùng vẫn có thể tự xóa phiên của mình bất cứ lúc nào. Áp dụng theo lượt quét mỗi giờ.',
@@ -4521,13 +5253,11 @@ export default {
       purgedNow_other: 'Đã xóa {n} phiên ngay bây giờ.',
       nothingToPurge: 'Không có gì để xóa.',
     },
-
     loadingCompanies: 'Đang tải danh sách công ty',
     loadingPolicy: 'Đang tải chính sách',
     createCompanyFirst: 'Hãy tạo một công ty trước ở tab Công ty, rồi thiết lập chính sách quản trị dữ liệu của công ty đó tại đây.',
     superadminOnlyPolicy: 'Chỉ quản trị viên cấp cao mới đổi được chính sách của công ty.',
     companyLabel: 'Công ty',
-
     record: {
       title: 'Chính sách quản trị dữ liệu',
       desc: 'Chính sách DLP đã lưu cho công ty này.',
@@ -4550,26 +5280,22 @@ export default {
       practiceRulesBreakdown: ' ({forbid} cấm, {require} bắt buộc)',
       version: 'Phiên bản',
     },
-
     frameworks: {
       title: 'Khung tuân thủ',
       desc: 'Nhấp vào một khung chuẩn để tạo sẵn các mặc định hợp lý, rồi tinh chỉnh bên dưới. (Là các biện pháp kiểm soát và bằng chứng kiểm toán để hỗ trợ việc tuân thủ, không phải một chứng nhận.)',
     },
-
     categories: {
       title: 'Những gì được rời khỏi thiết bị, theo danh mục',
       desc: 'Với mỗi loại dữ liệu nhạy cảm: gửi nguyên trạng, che, chặn lại, hoặc mã hóa thành token (giữ trên thiết bị và dựng lại trong phản hồi).',
       colCategory: 'Danh mục',
       colAction: 'Hành động',
     },
-
     blockWords: {
       title: 'Không bao giờ gửi những từ này',
       desc: 'Các từ hoặc cụm từ chính xác không bao giờ được rời khỏi thiết bị (mỗi dòng một từ).',
       placeholder: 'Project Atlas\nacme-prod-db\ninternal codename',
       warning: 'Chặn từ có thể khiến câu trả lời bị thiếu hoặc sai ở chỗ thực sự cần đến từ đó. WorkCoPilot không bao giờ đoán một giá trị đã bị chặn.',
     },
-
     customFields: {
       title: 'Trường tùy chỉnh',
       desc: 'Các loại dữ liệu nhạy cảm của riêng bạn, bổ sung cho các danh mục có sẵn. Đặt cho mỗi loại một tên, một quy tắc khớp (một từ/cụm từ, hoặc một <code>/regex/</code> như <code>/EMP-\\d{6}/</code>), và việc cần làm. Che thay thế bằng thẻ <code>[LABEL]</code>; Chặn thay thế bằng <code>[BLOCKED]</code>. Áp dụng trên thiết bị trước khi bất cứ thứ gì được gửi đi.',
@@ -4580,7 +5306,6 @@ export default {
       remove: 'Xóa',
       add: 'Thêm trường tùy chỉnh',
     },
-
     modeStatus: {
       title: 'Chế độ và trạng thái',
       howHandled: 'Cách xử lý dữ liệu nhạy cảm',
@@ -4643,36 +5368,100 @@ export default {
       claims: 'Tuyên bố',
       appearance: 'Giao diện',
     },
-
     sections: {
-      notifications: { title: 'Thông báo', sub: 'Cảnh báo doanh nghiệp: công ty sắp cạn quỹ và yêu cầu thêm giờ cần xem xét.' },
-      overview: { title: 'Tổng quan', sub: 'WorkCoPilot trong một cái nhìn.' },
-      companies: { title: 'Công ty', sub: 'Thuê bao: công ty, quản trị viên công ty, người dùng và chính sách che dữ liệu.' },
-      governance: { title: 'Quản trị dữ liệu', sub: 'Chính sách DLP theo từng công ty: những gì rời khỏi thiết bị, từ chặn, khung tuân thủ, kích hoạt và khóa.' },
-      users: { title: 'Người dùng', sub: 'Bậc, số dư và số giờ được cấp.' },
-      pricing: { title: 'Bảng giá', sub: 'Giá các gói, giờ bao gồm mỗi tháng, việc được hướng dẫn mỗi ngày, giá giờ thêm và ảnh.' },
-      billing: { title: 'Thanh toán', sub: 'Khóa Stripe, mã giá gói và điểm cuối webhook.' },
-      finance: { title: 'Tài chính', sub: 'Tất cả giao dịch, doanh thu theo tuần/tháng/quý/năm, MRR và hoàn tiền.' },
-      subscribers: { title: 'Người đăng ký', sub: 'Mọi người đăng ký có trả phí và hoạt động của họ: gói, trạng thái, chu kỳ, MRR, tổng đã trả và hoạt động hôm nay.' },
-      cancelled: { title: 'Người đăng ký đã hủy', sub: 'Các thuê bao đã rời bỏ: ai đã hủy, khi nào, vì sao, và tổng doanh thu họ mang lại trước khi rời đi.' },
-      email: { title: 'Cài đặt SMTP (Email / SES)', sub: 'Email gửi đi để chuyển các báo cáo. Có bảo vệ bằng MFA. Nhập thông tin đăng nhập SMTP của SES và gửi thử một email.' },
-      'email-templates': { title: 'Mẫu email', sub: 'Mọi email sản phẩm gửi đi - chỉnh sửa nội dung, trình giữ chỗ và xem trước. Không có gì cố định.' },
-      ai: { title: 'Cấu hình AI', sub: 'AI nền tảng cho người dùng WorkCoPilot.' },
+      notifications: {
+        title: 'Thông báo',
+        sub: 'Cảnh báo doanh nghiệp: công ty sắp cạn quỹ và yêu cầu thêm giờ cần xem xét.',
+      },
+      overview: {
+        title: 'Tổng quan',
+        sub: 'WorkCoPilot trong một cái nhìn.',
+      },
+      companies: {
+        title: 'Công ty',
+        sub: 'Thuê bao: công ty, quản trị viên công ty, người dùng và chính sách che dữ liệu.',
+      },
+      governance: {
+        title: 'Quản trị dữ liệu',
+        sub: 'Chính sách DLP theo từng công ty: những gì rời khỏi thiết bị, từ chặn, khung tuân thủ, kích hoạt và khóa.',
+      },
+      users: {
+        title: 'Người dùng',
+        sub: 'Bậc, số dư và số giờ được cấp.',
+      },
+      pricing: {
+        title: 'Bảng giá',
+        sub: 'Giá các gói, giờ bao gồm mỗi tháng, việc được hướng dẫn mỗi ngày, giá giờ thêm và ảnh.',
+      },
+      billing: {
+        title: 'Thanh toán',
+        sub: 'Khóa Stripe, mã giá gói và điểm cuối webhook.',
+      },
+      finance: {
+        title: 'Tài chính',
+        sub: 'Tất cả giao dịch, doanh thu theo tuần/tháng/quý/năm, MRR và hoàn tiền.',
+      },
+      subscribers: {
+        title: 'Người đăng ký',
+        sub: 'Mọi người đăng ký có trả phí và hoạt động của họ: gói, trạng thái, chu kỳ, MRR, tổng đã trả và hoạt động hôm nay.',
+      },
+      cancelled: {
+        title: 'Người đăng ký đã hủy',
+        sub: 'Các thuê bao đã rời bỏ: ai đã hủy, khi nào, vì sao, và tổng doanh thu họ mang lại trước khi rời đi.',
+      },
+      email: {
+        title: 'Cài đặt SMTP (Email / SES)',
+        sub: 'Email gửi đi để chuyển các báo cáo. Có bảo vệ bằng MFA. Nhập thông tin đăng nhập SMTP của SES và gửi thử một email.',
+      },
+      'email-templates': {
+        title: 'Mẫu email',
+        sub: 'Mọi email sản phẩm gửi đi - chỉnh sửa nội dung, trình giữ chỗ và xem trước. Không có gì cố định.',
+      },
+      ai: {
+        title: 'Cấu hình AI',
+        sub: 'AI nền tảng cho người dùng WorkCoPilot.',
+      },
       social: {
         title: 'Đăng nhập mạng xã hội',
         sub: 'Các ứng dụng Google, Microsoft và Facebook của nền tảng phía sau các nút đăng nhập công khai. Mỗi nhà cung cấp một ứng dụng, dùng cho mọi khách hàng.',
       },
-      sessions: { title: 'Phiên', sub: 'Các phiên có hướng dẫn gần đây trên toàn bộ người dùng.' },
-      leads: { title: 'Khách hàng tiềm năng', sub: 'Mọi người đã chạy kiểm tra trực tiếp trên trang demo hoặc trang đăng nhập - mới nhất trước.' },
-      hero: { title: 'Hero trang chủ', sub: 'Tiêu đề và phụ đề xoay vòng trên trang chủ công khai. Quản trị viên cấp cao chỉnh sửa; các quản trị viên khác chỉ xem.' },
-      tickets: { title: 'Phiếu hỗ trợ', sub: 'Yêu cầu tính năng, lỗi, thanh toán và vấn đề truy cập từ người dùng.' },
-      help: { title: 'Trợ giúp', sub: 'Cách vận hành bảng điều khiển quản trị, từng màn hình một.' },
-      incidents: { title: 'Sự cố hệ thống', sub: 'Nguyên nhân thực sự đằng sau thông báo "hệ thống đang bận" mà người dùng thấy - hạn mức AI, khóa, lỗi 5xx, hết thời gian chờ. Người dùng không bao giờ thấy những điều này.' },
-      affiliates: { title: 'Chương trình đối tác tiếp thị', sub: 'Duyệt đối tác, đặt mức hoa hồng, theo dõi giới thiệu và chạy thanh toán qua Stripe Connect.' },
-      claims: { title: 'Tuyên bố kinh doanh', sub: 'Mọi tuyên bố công khai được ánh xạ tới tệp và mã nguồn chứng minh nó, kèm trạng thái trung thực. Có bảo vệ bằng MFA; tải về một báo cáo đã ký.' },
-      appearance: { title: 'Giao diện', sub: 'Màu nhấn của bạn cho các bảng điều khiển và phần hướng dẫn. Riêng cho bạn; đi theo bạn trên mọi thiết bị.' },
+      sessions: {
+        title: 'Phiên',
+        sub: 'Các phiên có hướng dẫn gần đây trên toàn bộ người dùng.',
+      },
+      leads: {
+        title: 'Khách hàng tiềm năng',
+        sub: 'Mọi người đã chạy kiểm tra trực tiếp trên trang demo hoặc trang đăng nhập - mới nhất trước.',
+      },
+      hero: {
+        title: 'Hero trang chủ',
+        sub: 'Tiêu đề và phụ đề xoay vòng trên trang chủ công khai. Quản trị viên cấp cao chỉnh sửa; các quản trị viên khác chỉ xem.',
+      },
+      tickets: {
+        title: 'Phiếu hỗ trợ',
+        sub: 'Yêu cầu tính năng, lỗi, thanh toán và vấn đề truy cập từ người dùng.',
+      },
+      help: {
+        title: 'Trợ giúp',
+        sub: 'Cách vận hành bảng điều khiển quản trị, từng màn hình một.',
+      },
+      incidents: {
+        title: 'Sự cố hệ thống',
+        sub: 'Nguyên nhân thực sự đằng sau thông báo "hệ thống đang bận" mà người dùng thấy - hạn mức AI, khóa, lỗi 5xx, hết thời gian chờ. Người dùng không bao giờ thấy những điều này.',
+      },
+      affiliates: {
+        title: 'Chương trình đối tác tiếp thị',
+        sub: 'Duyệt đối tác, đặt mức hoa hồng, theo dõi giới thiệu và chạy thanh toán qua Stripe Connect.',
+      },
+      claims: {
+        title: 'Tuyên bố kinh doanh',
+        sub: 'Mọi tuyên bố công khai được ánh xạ tới tệp và mã nguồn chứng minh nó, kèm trạng thái trung thực. Có bảo vệ bằng MFA; tải về một báo cáo đã ký.',
+      },
+      appearance: {
+        title: 'Giao diện',
+        sub: 'Màu nhấn của bạn cho các bảng điều khiển và phần hướng dẫn. Riêng cho bạn; đi theo bạn trên mọi thiết bị.',
+      },
     },
-
     gate: {
       checkingTitle: 'Đang kiểm tra quyền truy cập',
       checkingBody: 'Chờ một chút.',
@@ -4682,19 +5471,15 @@ export default {
       errorBody: 'Vui lòng thử lại.',
       retry: 'Thử lại',
     },
-
     brandSub: 'Quản trị AdmireVeda',
     roleSuper: 'Quản trị viên cấp cao',
     roleAdmin: 'Quản trị viên',
     signOut: 'Đăng xuất',
-
     badge: {
       incidents_one: '{n} sự cố trong 24 giờ qua',
       incidents_other: '{n} sự cố trong 24 giờ qua',
     },
-
     navFoot: 'WorkCoPilot - một bề mặt sản phẩm riêng. Các thay đổi ở đây không ảnh hưởng đến phần quản trị phỏng vấn.',
-
     appearancePanel: {
       title: 'Màu nhấn',
       desc: 'Không phải ai cũng thích màu xanh lá. Hãy chọn màu nhấn cho các bảng điều khiển và phần hướng dẫn của bạn - nó áp dụng ngay lập tức và đi theo bạn trên mọi thiết bị. <b>Mặc định</b> giữ nguyên màu riêng của mỗi bảng điều khiển: xanh dương ở đây, xanh lá cho quản trị viên công ty và phần hướng dẫn.',
@@ -4717,9 +5502,18 @@ export default {
       title: 'Đăng nhập',
       lead: 'Tài khoản quản trị viên công ty của bạn mở bảng điều khiển này. Thành viên sẽ vào phần hướng dẫn.',
       steps: {
-        emailSso: { t: 'Tab Email & SSO', d: 'Trên trang đăng nhập, chọn tab Email & SSO.' },
-        account: { t: 'Tài khoản quản trị của bạn', d: 'Tên đăng nhập và mật khẩu, rồi mã nếu bật MFA.' },
-        console: { t: 'Bảng điều khiển công ty', d: 'Bạn vào đây. Thành viên thấy bảng điều khiển của riêng họ.' },
+        emailSso: {
+          t: 'Tab Email & SSO',
+          d: 'Trên trang đăng nhập, chọn tab Email & SSO.',
+        },
+        account: {
+          t: 'Tài khoản quản trị của bạn',
+          d: 'Tên đăng nhập và mật khẩu, rồi mã nếu bật MFA.',
+        },
+        console: {
+          t: 'Bảng điều khiển công ty',
+          d: 'Bạn vào đây. Thành viên thấy bảng điều khiển của riêng họ.',
+        },
       },
       shot: {
         alt: 'Trang đăng nhập WorkCoPilot với các tab Mạng xã hội và Email & SSO.',
@@ -4731,10 +5525,22 @@ export default {
       title: 'Tổng quan',
       lead: 'Công ty của bạn trong một cái nhìn, và hai việc cần làm một lần.',
       steps: {
-        cards: { t: 'Đọc các thẻ', d: 'Giấy phép và ghế quản trị kèm thanh đo, quỹ phút, các phiên hướng dẫn và quỹ giờ tháng này của bạn.' },
-        authorize: { t: 'Xác nhận ủy quyền', d: 'Một cú nhấp. Nó ghi lại ai đã xác nhận và khi nào.' },
-        retention: { t: 'Thiết lập lưu giữ dữ liệu', d: 'Chỉnh sửa, chọn số ngày, Lưu cấu hình lưu giữ. 0 giữ lại mọi thứ.' },
-        backup: { t: 'Sao lưu cơ sở tri thức', d: 'Tải về một bản chụp JSON bất cứ lúc nào. Khôi phục nó sau này.' },
+        cards: {
+          t: 'Đọc các thẻ',
+          d: 'Giấy phép và ghế quản trị kèm thanh đo, quỹ phút, các phiên hướng dẫn và quỹ giờ tháng này của bạn.',
+        },
+        authorize: {
+          t: 'Xác nhận ủy quyền',
+          d: 'Một cú nhấp. Nó ghi lại ai đã xác nhận và khi nào.',
+        },
+        retention: {
+          t: 'Thiết lập lưu giữ dữ liệu',
+          d: 'Chỉnh sửa, chọn số ngày, Lưu cấu hình lưu giữ. 0 giữ lại mọi thứ.',
+        },
+        backup: {
+          t: 'Sao lưu cơ sở tri thức',
+          d: 'Tải về một bản chụp JSON bất cứ lúc nào. Khôi phục nó sau này.',
+        },
       },
       shot: {
         alt: 'Tổng quan quản trị công ty: thẻ giấy phép kèm thanh đo ghế, quỹ giờ tháng này, xác nhận ủy quyền, lưu giữ dữ liệu và cơ sở kiến thức.',
@@ -4746,10 +5552,22 @@ export default {
       title: 'Nhóm',
       lead: 'Thêm người, đặt vai trò và gói của họ, và cấp phút cho họ.',
       steps: {
-        add: { t: 'Thêm người', d: 'Theo email công việc (SSO) hoặc tên đăng nhập và mật khẩu. Họ nhận được một liên kết đặt mật khẩu.' },
-        roleplan: { t: 'Vai trò và gói', d: 'Thành viên, Lãnh đạo hoặc Quản trị viên công ty. Đổi bất kỳ cái nào tại chỗ, bất cứ lúc nào.' },
-        minutes: { t: 'Cấp phút', d: 'Biểu tượng đồng hồ chuyển phút từ quỹ chung của công ty cho một người.' },
-        managed: { t: 'Danh sách được quản lý', d: 'Khi WorkCoPilot quản lý giấy phép của bạn, việc thêm hoặc xóa người thực hiện qua bộ phận Hỗ trợ.' },
+        add: {
+          t: 'Thêm người',
+          d: 'Theo email công việc (SSO) hoặc tên đăng nhập và mật khẩu. Họ nhận được một liên kết đặt mật khẩu.',
+        },
+        roleplan: {
+          t: 'Vai trò và gói',
+          d: 'Thành viên, Lãnh đạo hoặc Quản trị viên công ty. Đổi bất kỳ cái nào tại chỗ, bất cứ lúc nào.',
+        },
+        minutes: {
+          t: 'Cấp phút',
+          d: 'Biểu tượng đồng hồ chuyển phút từ quỹ chung của công ty cho một người.',
+        },
+        managed: {
+          t: 'Danh sách được quản lý',
+          d: 'Khi WorkCoPilot quản lý giấy phép của bạn, việc thêm hoặc xóa người thực hiện qua bộ phận Hỗ trợ.',
+        },
       },
       shot: {
         alt: 'Nhóm: bảng Người với bộ chọn vai trò và gói, mức dùng hôm nay, số phút thêm và trạng thái 2FA.',
@@ -4761,9 +5579,18 @@ export default {
       title: 'Khóa AI',
       lead: 'Chạy trên AI nền tảng, hoặc trên tài khoản nhà cung cấp của riêng bạn.',
       steps: {
-        current: { t: 'AI hiện tại', d: 'AI nền tảng theo mặc định. Không cần thiết lập gì.' },
-        ownKeys: { t: 'Dùng khóa của riêng bạn', d: 'Chọn nhà cung cấp, dán khóa API, Dùng khóa của tôi. Mức dùng tính phí vào tài khoản của bạn.' },
-        webLearning: { t: 'Học web trực tiếp', d: 'Khóa Tavily tùy chọn để nghiên cứu web chạy trên khóa của riêng bạn.' },
+        current: {
+          t: 'AI hiện tại',
+          d: 'AI nền tảng theo mặc định. Không cần thiết lập gì.',
+        },
+        ownKeys: {
+          t: 'Dùng khóa của riêng bạn',
+          d: 'Chọn nhà cung cấp, dán khóa API, Dùng khóa của tôi. Mức dùng tính phí vào tài khoản của bạn.',
+        },
+        webLearning: {
+          t: 'Học web trực tiếp',
+          d: 'Khóa Tavily tùy chọn để nghiên cứu web chạy trên khóa của riêng bạn.',
+        },
       },
       shot: {
         alt: 'Khóa AI: thẻ AI hiện tại, biểu mẫu Dùng khóa của riêng bạn và khóa Học web trực tiếp.',
@@ -4775,10 +5602,22 @@ export default {
       title: 'Quản trị dữ liệu',
       lead: 'Những gì được rời khỏi thiết bị, và các thực hành bảo mật mà mọi gói phải tuân theo.',
       steps: {
-        edit: { t: 'Chỉnh sửa', d: 'Mở chính sách đã lưu. Chọn khung chuẩn để tạo sẵn các mặc định.' },
-        categories: { t: 'Danh mục và từ', d: 'Theo từng danh mục: gửi, che, chặn lại hoặc mã hóa thành token. Thêm những từ không bao giờ được gửi đi.' },
-        rules: { t: 'Quy tắc thực hành bảo mật', d: 'Dán hoặc tải lên chính sách bằng văn bản của bạn, Trích xuất quy tắc, xem lại từng quy tắc. Thêm quy tắc bằng tay cũng được.' },
-        arm: { t: 'Kích hoạt và lưu', d: 'Tích Đã kích hoạt, Lưu chính sách. Quy tắc áp dụng trên mọi lệnh gọi và trích dẫn chính sách của bạn theo tên.' },
+        edit: {
+          t: 'Chỉnh sửa',
+          d: 'Mở chính sách đã lưu. Chọn khung chuẩn để tạo sẵn các mặc định.',
+        },
+        categories: {
+          t: 'Danh mục và từ',
+          d: 'Theo từng danh mục: gửi, che, chặn lại hoặc mã hóa thành token. Thêm những từ không bao giờ được gửi đi.',
+        },
+        rules: {
+          t: 'Quy tắc thực hành bảo mật',
+          d: 'Dán hoặc tải lên chính sách bằng văn bản của bạn, Trích xuất quy tắc, xem lại từng quy tắc. Thêm quy tắc bằng tay cũng được.',
+        },
+        arm: {
+          t: 'Kích hoạt và lưu',
+          d: 'Tích Đã kích hoạt, Lưu chính sách. Quy tắc áp dụng trên mọi lệnh gọi và trích dẫn chính sách của bạn theo tên.',
+        },
       },
       shots: {
         saved: {
@@ -4804,9 +5643,18 @@ export default {
       title: 'Thanh toán',
       lead: 'Bảng kê của bạn, từng dòng một.',
       steps: {
-        plan: { t: 'Phí gói', d: 'Được tính từ số giấy phép bạn đang có.' },
-        extras: { t: 'Khoản thêm', d: 'Các mục mà đội ngũ WorkCoPilot đã ghi vào tài khoản của bạn.' },
-        change: { t: 'Thay đổi bất cứ điều gì', d: 'Mở một phiếu Hỗ trợ để thêm giấy phép hoặc đổi gói.' },
+        plan: {
+          t: 'Phí gói',
+          d: 'Được tính từ số giấy phép bạn đang có.',
+        },
+        extras: {
+          t: 'Khoản thêm',
+          d: 'Các mục mà đội ngũ WorkCoPilot đã ghi vào tài khoản của bạn.',
+        },
+        change: {
+          t: 'Thay đổi bất cứ điều gì',
+          d: 'Mở một phiếu Hỗ trợ để thêm giấy phép hoặc đổi gói.',
+        },
       },
       shot: {
         alt: 'Thanh toán: bảng kê của công ty với các dòng phí.',
@@ -4818,8 +5666,14 @@ export default {
       title: 'Cảnh báo bảo mật',
       lead: 'Khi dữ liệu nhạy cảm bị che trên một thiết bị, bạn được biết về việc đó. Không bao giờ là các giá trị.',
       steps: {
-        see: { t: 'Những gì bạn thấy', d: 'Ai, ở đâu, và loại dữ liệu nào đã bị che.' },
-        relay: { t: 'Chuyển tiếp nó', d: 'SOC / SIEM gửi cùng dữ liệu mô tả đó tới các công cụ của riêng bạn.' },
+        see: {
+          t: 'Những gì bạn thấy',
+          d: 'Ai, ở đâu, và loại dữ liệu nào đã bị che.',
+        },
+        relay: {
+          t: 'Chuyển tiếp nó',
+          d: 'SOC / SIEM gửi cùng dữ liệu mô tả đó tới các công cụ của riêng bạn.',
+        },
       },
       shot: {
         alt: 'Danh sách cảnh báo bảo mật của công ty.',
@@ -4844,9 +5698,18 @@ export default {
       title: 'Đăng nhập',
       lead: 'Một tài khoản quản trị viên AdmireVeda mở bảng điều khiển này.',
       steps: {
-        emailSso: { t: 'Tab Email & SSO', d: 'Trên trang đăng nhập, chọn tab Email & SSO.' },
-        account: { t: 'Tài khoản quản trị của bạn', d: 'Tên đăng nhập và mật khẩu, rồi mã nếu bật MFA.' },
-        console: { t: 'Bảng điều khiển quản trị', d: 'Mở /work/admin. Quản trị viên công ty vào bảng điều khiển của riêng họ.' },
+        emailSso: {
+          t: 'Tab Email & SSO',
+          d: 'Trên trang đăng nhập, chọn tab Email & SSO.',
+        },
+        account: {
+          t: 'Tài khoản quản trị của bạn',
+          d: 'Tên đăng nhập và mật khẩu, rồi mã nếu bật MFA.',
+        },
+        console: {
+          t: 'Bảng điều khiển quản trị',
+          d: 'Mở /work/admin. Quản trị viên công ty vào bảng điều khiển của riêng họ.',
+        },
       },
       shot: {
         alt: 'Trang đăng nhập WorkCoPilot với các tab Mạng xã hội và Email & SSO.',
@@ -4858,10 +5721,22 @@ export default {
       title: 'Tổng quan',
       lead: 'Sản phẩm trong một cái nhìn.',
       steps: {
-        users: { t: 'Người dùng', d: 'Mọi người trên WorkCoPilot, chia theo bậc.' },
-        active: { t: 'Đang hoạt động', d: 'Ai đang được hướng dẫn trong năm phút qua.' },
-        sessions: { t: 'Phiên', d: 'Bắt đầu hôm nay, và toàn thời gian.' },
-        platformAi: { t: 'AI nền tảng', d: 'Bật hoặc tắt. Tắt nghĩa là người dùng chạy khóa của riêng họ.' },
+        users: {
+          t: 'Người dùng',
+          d: 'Mọi người trên WorkCoPilot, chia theo bậc.',
+        },
+        active: {
+          t: 'Đang hoạt động',
+          d: 'Ai đang được hướng dẫn trong năm phút qua.',
+        },
+        sessions: {
+          t: 'Phiên',
+          d: 'Bắt đầu hôm nay, và toàn thời gian.',
+        },
+        platformAi: {
+          t: 'AI nền tảng',
+          d: 'Bật hoặc tắt. Tắt nghĩa là người dùng chạy khóa của riêng họ.',
+        },
       },
       shot: {
         alt: 'Thẻ tổng quan quản trị: người dùng, đang hoạt động, phiên hôm nay, tổng số phiên, giờ đã mua và AI nền tảng, kèm thanh người dùng theo bậc.',
@@ -4873,9 +5748,18 @@ export default {
       title: 'Công ty',
       lead: 'Mỗi thuê bao, các quản trị viên, người của nó và chính sách của nó.',
       steps: {
-        new: { t: 'Công ty mới', d: 'Tên, gói và giấy phép. Mọi thứ sau đó đều thuộc phạm vi của nó.' },
-        expand: { t: 'Mở rộng một dòng', d: 'Quản trị viên, người dùng, SSO, nguồn AI, che dữ liệu, thanh đo ghế và quỹ Enterprise cùng ai đang dùng nó, tất cả ở một nơi.' },
-        admin: { t: 'Thêm quản trị viên của nó', d: 'Quản trị viên công ty đầu tiên vận hành phần còn lại từ bảng điều khiển của riêng họ.' },
+        new: {
+          t: 'Công ty mới',
+          d: 'Tên, gói và giấy phép. Mọi thứ sau đó đều thuộc phạm vi của nó.',
+        },
+        expand: {
+          t: 'Mở rộng một dòng',
+          d: 'Quản trị viên, người dùng, SSO, nguồn AI, che dữ liệu, thanh đo ghế và quỹ Enterprise cùng ai đang dùng nó, tất cả ở một nơi.',
+        },
+        admin: {
+          t: 'Thêm quản trị viên của nó',
+          d: 'Quản trị viên công ty đầu tiên vận hành phần còn lại từ bảng điều khiển của riêng họ.',
+        },
       },
       shot: {
         alt: 'Công ty: danh sách với nút Công ty mới và một dòng công ty hiển thị người dùng, quản trị viên, AI và trạng thái che dữ liệu.',
@@ -4887,10 +5771,22 @@ export default {
       title: 'Người dùng',
       lead: 'Bậc, số dư và số giờ được cấp cho mỗi người dùng.',
       steps: {
-        search: { t: 'Tìm kiếm', d: 'Theo tên đăng nhập.' },
-        tier: { t: 'Bậc', d: 'Đổi ngay tại chỗ.' },
-        companyRole: { t: 'Công ty và vai trò', d: 'Thay đổi sẽ chuyển người dùng vào một công ty hoặc đặt vai trò của họ.' },
-        hours: { t: 'Giờ và quyền truy cập', d: 'Cấp giờ đã mua hoặc tặng quyền Premium miễn phí cho một cá nhân. Giờ theo gói còn lại cho biết số giờ bao gồm vẫn còn trong tháng này.' },
+        search: {
+          t: 'Tìm kiếm',
+          d: 'Theo tên đăng nhập.',
+        },
+        tier: {
+          t: 'Bậc',
+          d: 'Đổi ngay tại chỗ.',
+        },
+        companyRole: {
+          t: 'Công ty và vai trò',
+          d: 'Thay đổi sẽ chuyển người dùng vào một công ty hoặc đặt vai trò của họ.',
+        },
+        hours: {
+          t: 'Giờ và quyền truy cập',
+          d: 'Cấp giờ đã mua hoặc tặng quyền Premium miễn phí cho một cá nhân. Giờ theo gói còn lại cho biết số giờ bao gồm vẫn còn trong tháng này.',
+        },
       },
       shot: {
         alt: 'Bảng người dùng: bộ chọn bậc, công ty và vai trò với nút Thay đổi, đã dùng hôm nay, giờ theo gói còn lại tháng này, số dư đã mua và các phiên.',
@@ -4902,9 +5798,18 @@ export default {
       title: 'Bảng giá',
       lead: 'Mỗi bậc có giá bao nhiêu và bao gồm những gì: giờ hướng dẫn mỗi tháng và việc được hướng dẫn mỗi ngày.',
       steps: {
-        edit: { t: 'Chỉnh sửa', d: 'Mở mọi giá trị để thay đổi.' },
-        perTier: { t: 'Theo từng bậc', d: 'Giá hằng tháng, giờ bao gồm mỗi tháng, việc mỗi ngày, số lần lập lại kế hoạch, giá giờ thêm và ảnh, cùng cách xử lý giờ chưa dùng vào cuối tháng.' },
-        save: { t: 'Lưu', d: 'Giá áp dụng ngay cho các giao dịch mua mới. Thay đổi số giờ bao gồm lập tức đến số dư tháng đang dùng của từng người.' },
+        edit: {
+          t: 'Chỉnh sửa',
+          d: 'Mở mọi giá trị để thay đổi.',
+        },
+        perTier: {
+          t: 'Theo từng bậc',
+          d: 'Giá hằng tháng, giờ bao gồm mỗi tháng, việc mỗi ngày, số lần lập lại kế hoạch, giá giờ thêm và ảnh, cùng cách xử lý giờ chưa dùng vào cuối tháng.',
+        },
+        save: {
+          t: 'Lưu',
+          d: 'Giá áp dụng ngay cho các giao dịch mua mới. Thay đổi số giờ bao gồm lập tức đến số dư tháng đang dùng của từng người.',
+        },
       },
       shot: {
         alt: 'Bảng giá: tiền tệ, giá theo bậc, giờ mỗi tháng, việc mỗi ngày, lập lại kế hoạch, giá giờ thêm và ảnh, quy tắc cuối tháng và các thanh gói trong nháy mắt.',
@@ -4916,9 +5821,18 @@ export default {
       title: 'Cấu hình AI',
       lead: 'AI nền tảng mà người dùng chạy khi họ không có khóa của riêng mình.',
       steps: {
-        providers: { t: 'Nhà cung cấp và khóa', d: 'Thêm khóa nhà cung cấp, kiểm tra nó, chọn mô hình trò chuyện và thị giác.' },
-        platformAi: { t: 'AI nền tảng', d: 'Bật nó lên để người dùng không có khóa vẫn được bao phủ.' },
-        webSearch: { t: 'Tìm kiếm web', d: 'Một khóa tìm kiếm cho việc học web trực tiếp.' },
+        providers: {
+          t: 'Nhà cung cấp và khóa',
+          d: 'Thêm khóa nhà cung cấp, kiểm tra nó, chọn mô hình trò chuyện và thị giác.',
+        },
+        platformAi: {
+          t: 'AI nền tảng',
+          d: 'Bật nó lên để người dùng không có khóa vẫn được bao phủ.',
+        },
+        webSearch: {
+          t: 'Tìm kiếm web',
+          d: 'Một khóa tìm kiếm cho việc học web trực tiếp.',
+        },
       },
       shot: {
         alt: 'Cấu hình AI: các mô hình tiết kiệm chi phí, nhà cung cấp AI và khóa, và tìm kiếm web.',
@@ -4929,7 +5843,6 @@ export default {
   policyRules: {
     heading: 'Quy tắc thực hành bảo mật',
     desc: 'Tải lên chính sách bảo mật bằng văn bản của bạn và WorkCoPilot biến nó thành các quy tắc được áp dụng <b>trong khi hướng dẫn</b>, gắn cờ bất kỳ bước nào dùng một thực hành <b>bị cấm</b> hoặc thiếu một thực hành <b>bắt buộc</b>, và trích dẫn chính sách của bạn theo tên. Phần này chi phối <i>cách viết hướng dẫn</i>, bổ sung cho các quy tắc xử lý dữ liệu ở trên.',
-
     docNameLabel: 'Tên tài liệu chính sách',
     docNamePlaceholder: 'VD: Chính sách An toàn thông tin Acme v3',
     uploadTitle: 'Tải lên một tệp chính sách .txt / .md / .json',
@@ -4938,7 +5851,6 @@ export default {
     extractRules: 'Trích xuất quy tắc',
     notStored: 'Nội dung tài liệu chỉ được dùng để trích xuất quy tắc. Nó không được lưu lại.',
     derivedWithoutAI: ' (suy ra không dùng AI, hãy xem lại kỹ.)',
-
     fileTooLarge: 'Tệp đó lớn hơn 5 MB. Hãy dán những phần liên quan thay vì tải lên.',
     couldNotRead: 'Không đọc được tệp đó.',
     pastePolicyFirst: 'Hãy dán hoặc tải lên nội dung chính sách trước (ít nhất một đoạn ngắn).',
@@ -4947,7 +5859,6 @@ export default {
     rulesAdded_other: 'đã thêm {n} quy tắc',
     duplicatesSkipped_one: ' (đã bỏ qua {n} quy tắc trùng)',
     duplicatesSkipped_other: ' (đã bỏ qua {n} quy tắc trùng)',
-
     ruleCount_one: '{n} quy tắc',
     ruleCount_other: '{n} quy tắc',
     forbidCount: '{n} cấm',
@@ -4957,7 +5868,6 @@ export default {
     expandAll: 'Mở rộng tất cả',
     noRulesReadOnly: 'Chưa có quy tắc nào. Hãy trích xuất chúng từ chính sách của bạn ở trên.',
     noRulesEditable: 'Chưa có quy tắc nào. Hãy trích xuất chúng từ chính sách của bạn ở trên, hoặc thêm một quy tắc bằng tay.',
-
     enforceThisRule: 'Áp dụng quy tắc này',
     kindForbid: 'Cấm',
     kindRequire: 'Bắt buộc',
@@ -4966,14 +5876,12 @@ export default {
     needsTrigger: 'Cần một điều kiện kích hoạt',
     perCite: 'theo {cite}',
     removeRule: 'Xóa quy tắc',
-
     sev: {
       critical: 'Nghiêm trọng',
       high: 'Cao',
       medium: 'Trung bình',
       low: 'Thấp',
     },
-
     requiredPractice: 'Thực hành bắt buộc (phải xuất hiện)',
     prohibitedPractice: 'Thực hành bị cấm (không được xuất hiện)',
     requiredPatternPlaceholder: 'mfa, multi-factor, 2fa',
@@ -4988,23 +5896,19 @@ export default {
     compliantAlternative: 'Phương án thay thế tuân thủ để khuyến nghị',
     guidancePlaceholder: 'Dùng kho lưu trữ đã phê duyệt thay vì các tệp cấu hình.',
     addTriggerHint: 'Thêm một điều kiện kích hoạt để yêu cầu này chỉ được kiểm tra ở các bước liên quan.',
-
     addRuleByHand: 'Thêm quy tắc bằng tay',
     fromLabel: 'Từ:',
   },
   sessionsAdmin: {
     loadingSession: 'Đang tải phiên',
     loadingSessions: 'Đang tải các phiên',
-
     noSteps: 'Chưa có bước nào',
     progressStep: 'Bước {current} trên {total} - đã xong {done}',
     noGoalSet: 'Chưa đặt mục tiêu',
-
     statusLive: 'Trực tiếp',
     statusEnded: 'Đã kết thúc',
     statusPaused: 'Tạm dừng',
     statusActive: 'Đang hoạt động',
-
     statCalls: 'Lệnh gọi',
     statCallsHint: 'tổng số lệnh gọi AI',
     statPremium: 'Cao cấp',
@@ -5016,7 +5920,6 @@ export default {
     statMinsLeft: 'Phút còn lại',
     statMinsLeftHint: 'hôm nay',
     estCost: 'Chi phí ước tính',
-
     currentlyOn: 'Hiện đang dùng:',
     callsByKind: 'Lệnh gọi theo loại',
     tierLabel: 'Bậc:',
@@ -5027,31 +5930,25 @@ export default {
     lastCallLabel: 'Lệnh gọi AI gần nhất:',
     endedLabel: 'Kết thúc:',
     close: 'Đóng',
-
     searchPlaceholder: 'Tìm trong trang này',
     refresh: 'Làm mới',
     liveCount: '{n} trực tiếp',
     windowSummary: '{total} trong {days} ngày qua (cũ hơn tự động xóa)',
-
     emptyTitle: 'Không có phiên',
     emptySearchDetail: 'Hãy thử tìm kiếm khác.',
     emptyDetail: 'Không có phiên nào trong 7 ngày qua.',
-
     colUser: 'Người dùng',
     colGoal: 'Mục tiêu',
     colProgress: 'Tiến độ',
     colStarted: 'Bắt đầu',
     colStatus: 'Trạng thái',
     estCostTitle: 'Chi phí AI ước tính (giá niêm yết, ước lượng số ký tự/4)',
-
     viewTitle: 'Xem chi tiết',
     view: 'Xem',
     deleteRecordTitle: 'Xóa bản ghi',
-
     previous: 'Trước',
     pageOf: 'Trang {page} trên {total}',
     next: 'Sau',
-
     deleteTitle: 'Xóa bản ghi phiên',
     deleteMessage: 'Xóa vĩnh viễn phiên "{title}" của {user} và bằng chứng của nó. Không thể hoàn tác.',
     deleteConfirm: 'Xóa phiên',
@@ -5059,7 +5956,6 @@ export default {
   },
   subscribersAdmin: {
     loading: 'Đang tải người đăng ký',
-
     columns: {
       user: 'Người dùng',
       email: 'Email',
@@ -5076,7 +5972,6 @@ export default {
       lastActive: 'Hoạt động gần nhất',
       company: 'Công ty',
     },
-
     status: {
       active: 'Đang hoạt động',
       trialing: 'Đang dùng thử',
@@ -5084,15 +5979,12 @@ export default {
       canceled: 'Đã hủy',
       comp: 'Tặng',
     },
-
     cycle: {
       monthly: 'Hàng tháng',
       annual: 'Hàng năm',
     },
-
     hoursZero: '0g',
     hours: '{v}g',
-
     plan: {
       lite: 'Lite',
       basic: 'Basic',
@@ -5101,9 +5993,7 @@ export default {
     },
     planFootItem: '{plan} {count}',
     noPlanBreakdown: 'Không có phân tích theo gói',
-
     viewOnlyNote: 'Người đăng ký hiển thị với quản trị viên cấp cao. Bạn có thể xem mọi thứ tại đây.',
-
     tiles: {
       payingSubscribers: 'Người đăng ký trả phí',
       awaitingData: 'Đang chờ dữ liệu',
@@ -5114,11 +6004,9 @@ export default {
       mrrFoot: 'Doanh thu định kỳ hàng tháng ước tính',
       byPlan: 'Theo gói',
     },
-
     searchPlaceholder: 'Tìm người dùng, email, công ty hoặc gói',
     refresh: 'Làm mới',
     countOf: '{shown} trên {total}',
-
     unavailable: {
       title: 'Người đăng ký chưa khả dụng',
       detail: 'Điểm cuối người đăng ký chưa được nối trên máy chủ này. Khi nó hoạt động, mọi người đăng ký trả phí và hoạt động của họ sẽ xuất hiện tại đây. Dùng Làm mới để kiểm tra lại.',
@@ -5128,7 +6016,6 @@ export default {
       detailSearch: 'Hãy thử tìm kiếm khác.',
       detailNone: 'Chưa có người đăng ký trả phí nào. Họ sẽ xuất hiện tại đây khi các thuê bao được tạo.',
     },
-
     individual: 'Cá nhân',
   },
   supportTickets: {
@@ -5196,23 +6083,19 @@ export default {
     checkingAccess: 'Đang kiểm tra quyền truy cập',
     stepUpLabel: 'Tuyên bố kinh doanh',
     desc: 'Mọi tuyên bố cụ thể mà trang web công khai đưa ra, được ánh xạ tới tệp và khối mã chứng minh nó. Trạng thái: đã chứng minh (mã chứng minh điều đó), một phần (đúng nhưng có điều kiện), hoặc chưa có cơ sở (không tìm thấy mã - một rủi ro về tính trung thực). Báo cáo tải về mang một dấu niêm phong xác thực SHA-256 + chữ ký.',
-
     status: {
       substantiated: 'Đã chứng minh',
       partial: 'Một phần',
       unbacked: 'Chưa có cơ sở',
     },
-
     searchPlaceholder: 'Tìm tuyên bố, trang hoặc danh mục',
     filterAll: 'Tất cả',
     refresh: 'Làm mới',
     downloadReport: 'Tải báo cáo đã ký',
-
     empty: {
       title: 'Không có tuyên bố',
       detail: 'Hãy thử tìm kiếm hoặc bộ lọc khác.',
     },
-
     columns: {
       claim: 'Tuyên bố',
       where: 'Ở đâu',
@@ -5221,31 +6104,25 @@ export default {
     },
     risk: 'Rủi ro: {risk}',
     noEvidence: 'không có bằng chứng mã',
-
     authenticity: 'Tính xác thực: dấu niêm phong {alg}, mã băm {hash}..., phát hành {issuedAt}. Báo cáo tải về được ký đầy đủ.',
   },
   incidentsAdmin: {
     loading: 'Đang tải các sự cố',
-
     kind: {
       ai_error: 'Nhà cung cấp AI',
       system_error: 'Hệ thống',
       ai_failover: 'AI đã chuyển',
       ai_exhausted: 'AI đã cạn',
     },
-
     note: 'Nguyên nhân thực sự đằng sau thông báo chung "hệ thống đang bận" mà người dùng thấy. Người dùng không bao giờ thấy chi tiết này. Các dòng "AI đã chuyển" là những lần tự động phục hồi (một mô hình đã ngừng hoặc bị giới hạn tần suất được thay bằng một mô hình đang hoạt động, nên người dùng vẫn tiếp tục được) - hãy để ý khi chúng dồn lại trên một nhà cung cấp. Các dòng "AI đã cạn" và "Nhà cung cấp AI" nghĩa là một yêu cầu đã thất bại; mã tham chiếu chỉ ra cách khắc phục (thanh toán, khóa hoặc mô hình).',
-
     searchPlaceholder: 'Tìm thông báo, người dùng, công ty hoặc tuyến',
     refresh: 'Làm mới',
     clearAll: 'Xóa tất cả',
     showing: 'Đang hiển thị {shown} trên {total}',
     latestSuffix: ' (mới nhất {n})',
-
     emptyTitle: 'Không có sự cố',
     emptyDetailSearch: 'Hãy thử tìm kiếm khác.',
     emptyDetail: 'Không có gì thất bại. Khi một nhà cung cấp AI hoặc hệ thống gặp lỗi, nguyên nhân thực sự xuất hiện tại đây trong khi người dùng chỉ thấy "hệ thống đang bận".',
-
     colWhen: 'Khi nào',
     colType: 'Loại',
     colStatus: 'Trạng thái',
@@ -5253,12 +6130,9 @@ export default {
     colCompany: 'Công ty',
     colWhere: 'Ở đâu',
     colCause: 'Nguyên nhân thực sự',
-
     providerLabel: 'nhà cung cấp: {provider}',
     modelLabel: 'mô hình: {model}',
-
     deleteTitle: 'Xóa sự cố',
-
     modal: {
       clearAllTitle: 'Xóa tất cả sự cố',
       deleteTitle: 'Xóa sự cố',
@@ -5275,7 +6149,6 @@ export default {
       poweredBy: 'vận hành bởi',
       exec: 'Bảng điều khiển điều hành',
     },
-
     hello: 'Xin chào {name}',
     plan: {
       admin: 'Quyền quản trị, hướng dẫn đang bật',
@@ -5406,8 +6279,6 @@ export default {
       note: 'Thời gian chỉ được tính khi WorkCoPilot đang hướng dẫn bạn.',
       cta: 'Bắt đầu tác vụ đầu tiên của bạn',
     },
-
-
     start: {
       eyebrow: 'Sẵn sàng khi bạn muốn',
       title: 'Bắt đầu một việc',
@@ -5415,10 +6286,8 @@ export default {
       cta: 'Bắt đầu một việc',
       locked: 'Hoàn tất thiết lập AI để bắt đầu hướng dẫn. Bước tiếp theo nằm trong ghi chú ở trên.',
     },
-
     adminNote: 'Bạn có quyền quản trị, nên hướng dẫn trực tiếp đang bật cho bạn.',
     adminNoteLink: 'Mở bảng quản trị',
-
     sub: {
       title: 'Chọn một gói để bắt đầu',
       leadMonth: 'Hãy chọn một gói để bật hướng dẫn trực tiếp. Mọi gói đều bao gồm giờ hướng dẫn mỗi tháng, làm mới vào ngày 1. Thay đổi hoặc hủy bất cứ lúc nào.',
@@ -5433,7 +6302,6 @@ export default {
       demoPre: 'Chưa sẵn sàng đăng ký?',
       demoLink: 'Xem bản demo để thấy chính xác cách hoạt động',
     },
-
     buy: {
       titleOut: 'Bạn đã hết thời gian cho hôm nay',
       title: 'Thêm thời gian hướng dẫn',
@@ -5441,7 +6309,6 @@ export default {
       buy: 'Mua giờ',
       dismiss: 'Bỏ qua',
     },
-
     ai: {
       checkFailPre: 'Chúng tôi chưa kiểm tra được trạng thái AI của bạn lúc này.',
       retry: 'Thử lại',
@@ -5452,7 +6319,6 @@ export default {
       member: 'Không gian làm việc của bạn đang được thiết lập. Quản trị viên cần hoàn tất thiết lập AI trước khi bạn có thể bắt đầu, vui lòng quay lại sau ít phút.',
       solo: 'WorkCoPilot đang được chuẩn bị cho tài khoản của bạn. Vui lòng quay lại sau ít phút, hoặc liên hệ hỗ trợ nếu tình trạng này kéo dài.',
     },
-
     sessions: {
       title: 'Tiếp tục từ chỗ bạn đã dừng',
       sub: 'Tiếp tục ngay từ chỗ bạn đã dừng. Lịch sử của bạn nằm ở trang riêng.',
@@ -5476,7 +6342,6 @@ export default {
       delete: 'Xóa phiên',
       viewAllLogs: 'Xem tất cả / Nhật ký phiên',
     },
-
     buddy: {
       title: 'Trợ thủ của bạn',
       caption: 'Hiển thị bước tiếp theo trên màn hình của bạn.',
@@ -5491,7 +6356,6 @@ export default {
       bodyCompanyAdminPost: ', mục Quản trị dữ liệu. Các lớp bảo vệ tích hợp luôn được áp dụng.',
       bodyCompany: 'Công ty bạn quản lý quy tắc bảo vệ dữ liệu cho mọi người trong nhóm. Các lớp bảo vệ tích hợp, gồm email, khóa, số thẻ, số định danh cá nhân, địa chỉ IP và nhiều hơn nữa, luôn được áp dụng trên thiết bị của bạn trước khi bất cứ thứ gì được gửi đi.',
     },
-
     del: {
       title: 'Xóa phiên này?',
       untitled: 'Phiên chưa đặt tên',
@@ -5720,7 +6584,6 @@ export default {
       dismiss: 'Bỏ qua',
     },
   },
-
   workStart: {
     docsCap: 'Đã dùng {used} trên {max}',
     docsCapUpgrade: 'Nâng cấp để có thêm',
@@ -5752,7 +6615,6 @@ export default {
     knowTask: 'Tôi đã rõ việc của mình',
     back: 'Quay lại',
     continue: 'Tiếp tục',
-
     notReadyTitle: 'Thiết lập AI chưa hoàn tất',
     notReady: 'Hãy điền ngay bây giờ. Bước cuối sẽ mở khi quản trị viên hoàn tất thiết lập AI.',
     parkedNote: 'Gói của bạn được giữ lại ở đây và mọi thông tin bạn đã nhập đều không bị mất.',
@@ -5768,7 +6630,6 @@ export default {
     openFull: 'Đang mở {max} trên {max} tác vụ. Hãy hoàn thành hoặc tiếp tục một tác vụ trước khi bắt đầu tác vụ khác.',
     capLeft: 'Còn {remaining} trong {cap} việc hôm nay. Đặt lại lúc {reset}.',
     capLeftOne: 'Còn {remaining} trong {cap} việc hôm nay. Đặt lại lúc {reset}.',
-
     placeQ: 'Bạn làm việc ở đâu?',
     placeSub: 'Không bắt buộc. Nó giúp điều chỉnh các bước cho phù hợp. Bạn có thể vào thẳng việc của mình bất cứ lúc nào.',
     placeSaasLabel: 'Trang web hoặc ứng dụng SaaS',
@@ -5793,7 +6654,6 @@ export default {
     noteDesk: 'Chúng tôi dùng điều này để làm rõ các bước.',
     placeHint: 'Chọn nơi bạn làm việc, hoặc bỏ qua bằng “Tôi đã rõ việc của mình”.',
     advancing: 'Đã rõ. Đang mở bước tiếp theo',
-
     docsQ: 'Có tài liệu hoặc dữ liệu nào không?',
     docsSub: 'Đính kèm một bản đặc tả, tệp xuất hoặc sơ đồ để kế hoạch có cơ sở, hoặc bỏ qua.',
     docsUse: 'Dùng những tài liệu này làm nền cho kế hoạch',
@@ -5812,7 +6672,6 @@ export default {
     docsErrRead: 'Không đọc được tài liệu',
     docsErrTooLarge: '{name}: quá lớn (tối đa 10 MB)',
     docsErrUpload: '{name}: tải lên thất bại',
-
     goalHeroK: 'Việc của bạn',
     goalQ: 'Viết việc của bạn',
     goalSub: 'Đặt tên cho nó, rồi mô tả thế nào là “xong”. Càng rõ ràng càng tốt.',
@@ -5823,7 +6682,6 @@ export default {
     goalReadyHint: 'WorkCoPilot lập kế hoạch, rồi hướng dẫn bạn từng bước.',
     continueHint: 'Hãy thêm tên gói và mục tiêu của bạn để tiếp tục.',
     addContext: 'Hãy thêm bối cảnh nơi làm việc trước',
-
     reflectQ: 'Đây là điều tôi đã hiểu',
     reflectSub: 'Trông đúng chứ? Hãy sửa bất cứ điều gì trước khi tôi lập kế hoạch.',
     reflectWorkplace: 'Nơi bạn làm việc',
@@ -5844,7 +6702,6 @@ export default {
     docsMany: 'Đã đính kèm {n} tài liệu',
     docsAttached: 'Đã đính kèm để làm nền cho kế hoạch',
     goalEmpty: 'Chưa viết',
-
     depthQ: 'Tôi nên hỏi bao nhiêu trước khi lập kế hoạch?',
     depthHelp: 'Vài câu hỏi bây giờ sẽ làm mỗi bước chính xác hơn. Bạn có thể bổ sung chi tiết sau.',
     depthQuickT: 'Nhanh',
@@ -5853,7 +6710,6 @@ export default {
     depthDetailedT: 'Chi tiết',
     depthDetailedD: 'Một cuộc trao đổi đầy đủ hơn về môi trường, ràng buộc và mục tiêu của bạn. Các bước chính xác và sát hơn.',
     depthDetailedM: 'Nhiều câu hỏi hơn',
-
     scopeStageReading: 'đang đọc mục tiêu của bạn',
     scopeStageResearch: 'đang tìm hiểu công việc',
     scopeStageDetailed: 'đang soạn một cuộc trao đổi chi tiết',
@@ -5861,7 +6717,6 @@ export default {
     scopeStageChecking: 'đang xem nên hỏi gì trước',
     scopeTermTitle: 'xác định phạm vi : workcopilot',
     scopeFoot: 'Đang viết vài câu hỏi giúp kế hoạch của bạn chính xác. Chờ một chút.',
-
     envQ: 'Công việc này diễn ra ở đâu?',
     envHelp: 'Bạn sẽ thực sự làm việc này ở đâu? Nếu chưa chắc, hãy chọn “Chưa chắc hoặc kết hợp”, tôi sẽ tự hiểu qua màn hình của bạn.',
     envWebsite: 'Một trang web hoặc ứng dụng web',
@@ -5904,7 +6759,6 @@ export default {
     scopeErrGeneric: 'Không xác định được phạm vi.',
     scopeErrTryAgain: 'Thử lại',
     scopeErrPlanAnyway: 'Vẫn tiếp tục',
-
     reviewQ: 'Sẵn sàng bắt đầu',
     reviewSub: 'Xem nhanh thiết lập kế hoạch của bạn. Hãy bắt đầu khi thấy đúng.',
     reviewPlan: 'Kế hoạch',
@@ -6099,5 +6953,4303 @@ export default {
       cta: 'Đồng ý và tiếp tục',
       signOut: 'Đăng xuất thay vì tiếp tục',
     },
+  },
+  acceptableUsePage: {
+    seo: {
+      title: 'Chính sách Sử dụng Hợp lý - WorkCoPilot của AdmireVeda',
+      description: 'Nơi được phép dùng WorkCoPilot, bạn chịu trách nhiệm những gì, và điều gì bị cấm: chỉ sử dụng hợp pháp và được ủy quyền, không truy cập trái phép, không gây hại, và cách báo cáo các mối lo ngại.',
+    },
+    hero: {
+      eyebrow: 'Chính sách Sử dụng Hợp lý',
+      title: 'Sử dụng WorkCoPilot đúng cách',
+      intro: 'WorkCoPilot hướng dẫn bạn ngay trên màn hình của chính bạn. Chính sách này nêu rõ nơi được phép dùng, bạn chịu trách nhiệm những gì, và điều gì bị cấm.',
+      tagline: 'Chính sách bằng ngôn ngữ dễ hiểu, bản nháp mẫu',
+    },
+    glance: [
+      {
+        eyebrow: 'Được ủy quyền',
+        title: 'Chỉ trên những gì bạn được phép dùng',
+        body: 'Chỉ dùng WorkCoPilot trên các hệ thống, tài khoản và dữ liệu mà bạn được ủy quyền sử dụng, và duy trì sự chấp thuận của tổ chức bạn.',
+      },
+      {
+        eyebrow: 'Có trách nhiệm',
+        title: 'Bạn chịu trách nhiệm cho những gì bạn chia sẻ',
+        body: 'Bạn chịu trách nhiệm về quyền sử dụng các màn hình và dữ liệu mà bạn đưa ra trước WorkCoPilot.',
+      },
+      {
+        eyebrow: 'Bị cấm',
+        title: 'Không làm việc trái pháp luật hoặc gây hại',
+        body: 'Không dùng nó để vi phạm pháp luật, gây hại cho người khác, hoặc vượt qua các biện pháp kiểm soát mà bạn không được phép vượt qua.',
+      },
+    ],
+    sections: {
+      purpose: 'Mục đích của chính sách này',
+      authorized: 'Chỉ sử dụng hợp pháp và được ủy quyền',
+      responsibility: 'Bạn chịu trách nhiệm về việc được ủy quyền',
+      prohibited: 'Các mục đích sử dụng bị cấm',
+      security: 'Kiểm thử bảo mật và công việc nhạy cảm',
+      enforcement: 'Thực thi',
+      report: 'Báo cáo một mối lo ngại',
+    },
+    purpose: {
+      p1: 'Chính sách này giải thích những gì bạn được và không được làm với WorkCoPilot. Nó là một phần của <a>Điều khoản Dịch vụ</a>. WorkCoPilot hướng dẫn bạn làm việc ngay trên màn hình của chính bạn, nên quy tắc quan trọng nhất rất đơn giản: sử dụng hợp pháp, và chỉ nơi bạn được ủy quyền.',
+    },
+    authorized: {
+      items: [
+        {
+          name: 'Hợp pháp',
+          how: 'Chỉ dùng WorkCoPilot cho các mục đích hợp pháp và phù hợp với luật pháp cùng quy định áp dụng cho bạn và tổ chức của bạn.',
+        },
+        {
+          name: 'Được ủy quyền',
+          how: 'Chỉ dùng nó trên các hệ thống, ứng dụng, tài khoản và dữ liệu mà bạn, hoặc tổ chức của bạn, được ủy quyền truy cập và sử dụng với một công cụ như thế này.',
+        },
+        {
+          name: 'Quy định của nhà tuyển dụng của bạn',
+          how: 'Tuân theo chính sách của nhà tuyển dụng và của khách hàng của bạn, cùng các điều khoản của những công cụ bạn đang làm việc. Nếu một chính sách cấm dùng trợ lý trên một hệ thống, đừng dùng nó ở đó.',
+        },
+        {
+          name: 'Ủy quyền của tổ chức',
+          how: 'Đối với tài khoản công ty, một quản trị viên công ty xác nhận trong sản phẩm rằng tổ chức ủy quyền việc dùng WorkCoPilot trên các hệ thống của mình. Chúng tôi ghi lại ai đã xác nhận và khi nào, làm bằng chứng. Xác nhận đó không thay thế trách nhiệm của từng người dùng được mô tả bên dưới.',
+        },
+      ],
+    },
+    responsibility: {
+      p1: 'Bạn có trách nhiệm đảm bảo rằng mình được phép chia sẻ những gì có trên màn hình, cùng những gì bạn gõ hoặc đính kèm, với dịch vụ. Việc truy cập một hệ thống qua trình duyệt hoặc thiết bị tự nó không có nghĩa là bạn được ủy quyền dùng hệ thống đó với một trợ lý.',
+      items: [
+        {
+          name: 'Các hệ thống bạn chia sẻ',
+          how: 'Trước khi chia sẻ một màn hình, hãy xác nhận bạn có quyền dùng hệ thống đó và hiển thị nội dung của nó cho dịch vụ.',
+        },
+        {
+          name: 'Dữ liệu của người khác',
+          how: 'Không gửi dữ liệu về người khác, hoặc dữ liệu thuộc về bên thứ ba, trừ khi bạn được ủy quyền xử lý nó. Chính sách Bảo mật mô tả các loại dữ liệu mà WorkCoPilot được thiết kế cho.',
+        },
+        {
+          name: 'Thành viên của bạn',
+          how: 'Quản trị viên công ty chịu trách nhiệm về những người họ thêm vào, và về chính sách dữ liệu mà họ thiết lập và khóa cho các thành viên của mình.',
+        },
+        {
+          name: 'Lựa chọn thời điểm chia sẻ',
+          how: 'Bạn chọn khi nào chia sẻ màn hình và màn hình nào. Đừng chia sẻ một màn hình chứa nội dung mà bạn không được ủy quyền xử lý.',
+        },
+      ],
+    },
+    prohibited: {
+      p1: 'Bạn không được dùng WorkCoPilot để:',
+      items: [
+        {
+          name: 'Vi phạm pháp luật',
+          how: 'Làm bất cứ điều gì trái pháp luật, hoặc giúp người khác làm vậy.',
+        },
+        {
+          name: 'Truy cập không được phép',
+          how: 'Đạt được, hoặc cố đạt được, quyền truy cập vào một hệ thống, tài khoản hoặc dữ liệu mà bạn không được ủy quyền truy cập, hoặc vượt qua một biện pháp kiểm soát bảo mật mà bạn không được phép vượt qua.',
+        },
+        {
+          name: 'Gây hại',
+          how: 'Tạo hoặc phát tán mã độc, tiến hành tấn công hoặc xâm nhập, gian lận, quấy rối, lừa đảo hoặc đánh lừa người khác, hoặc thực hiện các công việc gây hại hoặc lạm dụng khác.',
+        },
+        {
+          name: 'Xử lý những gì bạn không được phép',
+          how: 'Gửi dữ liệu mà bạn không được ủy quyền xử lý, hoặc dữ liệu mà luật pháp hay một hợp đồng cấm bạn chia sẻ.',
+        },
+        {
+          name: 'Lạm dụng dịch vụ',
+          how: 'Dò quét, làm quá tải hoặc gây gián đoạn dịch vụ; cố vượt qua các giới hạn, hạn mức theo gói hoặc các biện pháp bảo vệ; chia sẻ thông tin đăng nhập của bạn với người khác; hoặc bán lại dịch vụ.',
+        },
+        {
+          name: 'Trình bày sai sự thật',
+          how: 'Trình bày hướng dẫn như lời tư vấn chuyên môn từ chúng tôi, hoặc nói sai về bạn là ai hay những gì bạn được ủy quyền làm.',
+        },
+        {
+          name: 'Sao chép hoặc dịch ngược',
+          how: 'Sao chép dịch vụ, trích xuất phần bên trong của nó, hoặc xây dựng một dịch vụ cạnh tranh từ nó, trừ nơi luật pháp không cho phép chúng tôi hạn chế điều đó.',
+        },
+      ],
+    },
+    security: {
+      p1: 'Nếu công việc của bạn liên quan đến kiểm thử bảo mật, dữ liệu được quản lý theo quy định, các hệ thống trọng yếu về an toàn hoặc hoạt động nhạy cảm tương tự, bạn phải có ủy quyền bằng văn bản từ chủ sở hữu của các hệ thống liên quan và phải ở trong phạm vi đó. WorkCoPilot hướng dẫn bạn trên màn hình của bạn. Nó không hành động thay bạn, và nó không biến một hành động trái phép thành được phép.',
+      p2: 'Khi một bước được đề xuất có thể xóa, ghi đè, thanh toán, gửi đi hoặc khó hoàn tác theo cách khác, WorkCoPilot đánh dấu nó để bạn xác nhận một cách có chủ đích. Quyết định, và trách nhiệm cho nó, vẫn thuộc về bạn.',
+    },
+    enforcement: {
+      p1: 'Nếu việc sử dụng vi phạm chính sách này, gây rủi ro cho dịch vụ hoặc các khách hàng khác, hoặc khi luật pháp yêu cầu, chúng tôi có thể cảnh báo, giới hạn, tạm ngưng hoặc chấm dứt quyền truy cập. Khi hợp lý, chúng tôi sẽ thông báo cho bạn trước và nêu lý do. Chúng tôi cũng có thể lưu giữ và chia sẻ thông tin khi luật pháp yêu cầu.',
+      p2: 'Quản trị viên công ty có thể xem lại các phiên và báo cáo của chính các thành viên của mình, và có thể chấm dứt quyền truy cập của một thành viên, như được mô tả trong Chính sách Bảo mật.',
+    },
+    report: {
+      p1: 'Nếu bạn cho rằng dịch vụ đang bị lạm dụng, hoặc bạn phát hiện một vấn đề bảo mật, hãy gửi thư đến <contact>{contact}</contact>. Để được trợ giúp về sản phẩm, hãy gửi thư đến <support>{support}</support>.',
+      note: '<b>Trình bày trung thực.</b> Trang này là một bản mẫu. Nó nêu các quy tắc chúng tôi dự định áp dụng và không thay thế cho việc tự rà soát pháp lý của bạn.',
+    },
+    links: {
+      terms: 'Điều khoản Dịch vụ',
+      privacy: 'Chính sách Bảo mật',
+      disclaimer: 'Tuyên bố Miễn trừ Trách nhiệm',
+    },
+  },
+  accessibilityPage: {
+    seo: {
+      title: 'Tuyên bố Khả năng Tiếp cận - WorkCoPilot của AdmireVeda',
+      description: 'Cách WorkCoPilot tiếp cận khả năng tiếp cận: WCAG 2.1 AA là mục tiêu của chúng tôi, hỗ trợ bàn phím và trình đọc màn hình, tiêu điểm hiển thị rõ, độ tương phản AA, hỗ trợ giảm chuyển động và tự sắp xếp lại bố cục, các giới hạn đã biết được nêu trung thực, và cách báo cáo một rào cản.',
+    },
+    hero: {
+      eyebrow: 'Khả năng tiếp cận',
+      title: 'Tuyên bố khả năng tiếp cận',
+      intro: 'Cam kết của chúng tôi về phần mềm dễ tiếp cận, tiêu chuẩn chúng tôi hướng tới, những gì đã được tích hợp hôm nay, những gì chúng tôi vẫn đang làm, và cách liên hệ với chúng tôi.',
+      tagline: 'Tuyên bố bằng ngôn ngữ dễ hiểu về những gì sản phẩm làm được hôm nay',
+    },
+    glance: [
+      {
+        eyebrow: 'Mục tiêu của chúng tôi',
+        title: 'WCAG 2.1 mức AA',
+        body: 'Chúng tôi xây dựng trang công khai và sản phẩm theo các tiêu chí thành công WCAG 2.1 AA, và coi mỗi lỗi về khả năng tiếp cận là một lỗi cần sửa.',
+      },
+      {
+        eyebrow: 'Tích hợp sẵn',
+        title: 'Thân thiện với bàn phím và trình đọc màn hình',
+        body: 'Vòng lấy nét hiển thị rõ, một vùng nội dung chính và một thẻ H1 duy nhất trên mỗi trang, các điều khiển có nhãn, và hỗ trợ tùy chọn giảm chuyển động.',
+      },
+      {
+        eyebrow: 'Cho chúng tôi biết',
+        title: 'Báo cáo một rào cản',
+        body: 'Nếu có điều gì khó dùng với công nghệ hỗ trợ, hãy viết thư cho chúng tôi và chúng tôi sẽ giúp bạn cũng như khắc phục nó.',
+      },
+    ],
+    sections: {
+      commitment: 'Cam kết của chúng tôi',
+      standard: 'Tiêu chuẩn chúng tôi hướng tới',
+      measures: 'Những gì được tích hợp sẵn hôm nay',
+      limitations: 'Các hạn chế đã biết',
+      feedback: 'Phản hồi và trợ giúp',
+    },
+    commitment: {
+      p1: 'Chúng tôi muốn mọi người đều có thể dùng WorkCoPilot, bao gồm những người chỉ dùng bàn phím, dùng trình đọc màn hình, dùng công cụ phóng to, hoặc các công nghệ hỗ trợ khác. Khả năng tiếp cận là một phần trong cách chúng tôi thiết kế và rà soát sản phẩm, không phải chuyện làm thêm sau cùng, và chúng tôi coi một rào cản là lỗi cần sửa chứ không phải một hạn chế đã biết rồi để mặc đó.',
+    },
+    standard: {
+      p1: 'Chúng tôi xây dựng theo <b>Nguyên tắc về khả năng tiếp cận nội dung web (WCAG) 2.1, cấp độ AA</b>. Đó là mục tiêu của chúng tôi, định hướng thiết kế và các lần rà soát. Chúng tôi không tuyên bố có chứng nhận chính thức, và chưa công bố một cuộc kiểm toán của bên thứ ba; ở những nơi chúng tôi chưa tuân thủ đầy đủ, chúng tôi nói rõ bên dưới và đang nỗ lực thu hẹp khoảng cách.',
+    },
+    measures: {
+      items: [
+        {
+          name: 'Truy cập bằng bàn phím',
+          how: 'Các điều khiển tương tác đều có thể tới được và thao tác được bằng bàn phím, và chúng tôi không bỏ đường viền lấy nét. Mọi điều khiển có thể lấy nét đều hiển thị một vòng lấy nét rõ ràng.',
+        },
+        {
+          name: 'Cấu trúc cho trình đọc màn hình',
+          how: 'Mỗi trang có một vùng nội dung chính và một thẻ H1 duy nhất, với các tiêu đề theo thứ tự, để công nghệ hỗ trợ có thể điều hướng theo cấu trúc. Các biểu tượng trang trí được ẩn khỏi cây khả năng tiếp cận.',
+        },
+        {
+          name: 'Nhãn và tên',
+          how: 'Các nút, liên kết, trường biểu mẫu và công tắc đều có tên dễ tiếp cận, và trạng thái (chẳng hạn một công tắc đang bật hay tắt) được hiển thị cho công nghệ hỗ trợ.',
+        },
+        {
+          name: 'Độ tương phản',
+          how: 'Văn bản và các thành phần giao diện thiết yếu được thiết kế để đạt độ tương phản AA ở cả giao diện sáng và tối.',
+        },
+        {
+          name: 'Chuyển động',
+          how: 'Các hiệu ứng động và hiệu ứng parallax tôn trọng thiết lập "giảm chuyển động" trong hệ điều hành hoặc trình duyệt của bạn.',
+        },
+        {
+          name: 'Thay đổi kích thước và sắp xếp lại bố cục',
+          how: 'Bố cục tự sắp xếp lại cho khung nhìn hẹp và khi phóng to mà không có thanh cuộn ngang, nên bạn có thể phóng to văn bản mà vẫn đọc được trang.',
+        },
+      ],
+    },
+    limitations: {
+      p1: 'Chúng tôi trung thực về những nơi mình chưa tuân thủ đầy đủ. Vì sản phẩm hướng dẫn bạn qua các ứng dụng khác, một phần nội dung xuất hiện trên màn hình của bạn do phần mềm mà chúng tôi không kiểm soát tạo ra, và khả năng tiếp cận của nó nằm ngoài tầm với của chúng tôi.',
+      items: [
+        {
+          name: 'Nội dung của bên thứ ba và nội dung nhúng',
+          how: 'Các ứng dụng mà bạn được hướng dẫn qua, cùng mọi nội dung nhúng của bên thứ ba, đều theo khả năng tiếp cận riêng của họ, điều mà chúng tôi không thể bảo đảm.',
+        },
+        {
+          name: 'Công việc đang tiến hành',
+          how: 'Một số màn hình cũ hơn vẫn chưa hoàn tất rà soát khả năng tiếp cận. Ngày rà soát chính thức gần nhất của chúng tôi là <ph>to be confirmed</ph>; chúng tôi cập nhật tuyên bố này khi các phần được rà soát.',
+        },
+      ],
+    },
+    feedback: {
+      p1: 'Nếu bạn gặp một rào cản về khả năng tiếp cận, hoặc cần thông tin ở một định dạng khác, hãy cho chúng tôi biết. Vui lòng nêu rõ trang, việc bạn đang cố làm, cùng công nghệ hỗ trợ và trình duyệt bạn dùng, để chúng tôi có thể tái hiện và khắc phục.',
+      accessibility: 'Phản hồi về khả năng tiếp cận',
+      support: 'Hỗ trợ sản phẩm',
+      expect: {
+        name: 'Những gì bạn có thể trông đợi',
+        how: 'Chúng tôi xác nhận đã nhận báo cáo, cùng bạn tìm cách hoàn thành công việc trong lúc chờ, và ưu tiên khắc phục.',
+      },
+    },
+    links: {
+      privacy: 'Chính sách bảo mật',
+      terms: 'Điều khoản dịch vụ',
+      contact: 'Liên hệ',
+    },
+  },
+  affiliatePage: {
+    seo: {
+      title: 'Chương trình Affiliate của WorkCoPilot - Hợp tác cùng AdmireVeda',
+      description: 'Giới thiệu WorkCoPilot và nhận một phần từ khoản thanh toán đầu tiên của mỗi người bạn giới thiệu, chi trả qua Stripe. Các đơn đăng ký được đội ngũ của chúng tôi xét duyệt.',
+    },
+    errors: {
+      loadProgram: 'Không thể tải thông tin chương trình.',
+      loadDashboard: 'Không thể tải bảng điều khiển affiliate của bạn.',
+      refreshStripe: 'Không thể làm mới trạng thái Stripe của bạn: {reason}',
+      refreshStripeFallback: 'vui lòng thử lại.',
+    },
+    connect: {
+      complete: 'Thiết lập Stripe đã hoàn tất. Việc chi trả đang hoạt động trên tài khoản của bạn.',
+      expired: 'Liên kết thiết lập Stripe của bạn đã hết hạn hoặc bị gián đoạn. Bạn có thể tiếp tục bên dưới.',
+      pending: 'Stripe vẫn chưa xác minh xong thông tin của bạn. Bạn có thể tiếp tục thiết lập bên dưới.',
+    },
+    nav: {
+      homeAria: 'Trang chủ AdmireVeda',
+      back: 'Về lại WorkCoPilot',
+    },
+    loading: 'Đang tải chương trình affiliate',
+    footer: {
+      copyright: 'COE Security LLC · WorkCoPilot by AdmireVeda',
+      terms: 'Điều khoản',
+      privacy: 'Quyền riêng tư',
+      support: 'Hỗ trợ',
+    },
+    hero: {
+      eyebrow: 'Chương trình affiliate',
+      h1: 'Giới thiệu WorkCoPilot. <em>Nhận {rate} cho mỗi lượt giới thiệu.</em>',
+      lead: 'Bạn vốn đã giới thiệu cho mọi người những công cụ giúp họ làm việc tốt hơn. Hãy để điều đó sinh lời: nhận <b>{rate} từ khoản thanh toán đầu tiên của mỗi người bạn giới thiệu</b>, gửi tự động qua Stripe. Người bạn giới thiệu được <b>một tháng miễn phí</b> khi họ chọn thanh toán theo năm.',
+      apply: 'Đăng ký trở thành affiliate',
+      see: 'Xem thứ bạn sẽ giới thiệu',
+      trustAria: 'Cam kết của chương trình',
+      trust1: 'Khoảng 2 phút để đăng ký',
+      trust2: 'Được một người thật xét duyệt',
+      trust3: 'Chi trả tự động qua Stripe',
+      imgAlt: 'Nhiều nhà sáng tạo đa dạng đang chia sẻ WorkCoPilot, cùng một mũi tên tăng trưởng đi lên và các đồng xu',
+      chipEarn: '<b>Nhận {rate}</b> từ mỗi khoản thanh toán đầu tiên',
+      chipGift: '<b>Một tháng miễn phí</b> cho người theo dõi của bạn',
+    },
+    glance: {
+      aria: 'Tổng quan nhanh về chương trình',
+      rate: 'từ khoản thanh toán đầu tiên của mỗi người được giới thiệu',
+      stripe: 'chi trả tự động vào tài khoản của bạn',
+      month: '1 tháng',
+      monthSub: 'miễn phí cho mọi người bạn giới thiệu, khi thanh toán theo năm',
+      min: '2 phút',
+      minSub: 'để đăng ký; chỉ cần tên và email',
+    },
+    boosters: {
+      kicker: 'Vì sao affiliate tham gia',
+      title: 'Bạn có thu nhập. Người theo dõi của bạn tiết kiệm. Mọi người đều có lợi.',
+      sub: 'Một chương trình được thiết kế để lời giới thiệu có lợi cho những người bạn gửi tới, chứ không chỉ cho bạn.',
+      money: {
+        t: 'Tiền thật cho những lượt giới thiệu bạn vốn đã làm',
+        d: '{rate} từ khoản thanh toán đầu tiên của mỗi người được giới thiệu, ghi có cho bạn ngay khi thanh toán hoàn tất.',
+      },
+      gift: {
+        t: 'Một món quà cho người theo dõi của bạn, không phải lời chào mời',
+        d: 'Mọi người đăng ký qua liên kết của bạn đều được một tháng miễn phí khi thanh toán theo năm. Bạn đang trao cho họ một ưu đãi.',
+      },
+      stripe: {
+        t: 'Chi trả tự động qua Stripe',
+        d: 'Kết nối tài khoản Stripe một lần. Thu nhập được chi trả cho bạn; chúng tôi không bao giờ thấy thông tin ngân hàng của bạn.',
+      },
+      review: {
+        t: 'Ít rào cản, xét duyệt bởi người thật',
+        d: 'Khoảng hai phút để đăng ký. Một người thật đọc từng đơn và gửi email quyết định cho bạn.',
+      },
+    },
+    flow: {
+      kicker: 'Cách thức hoạt động',
+      title: 'Năm bước, từ đăng ký đến khi nhận tiền.',
+      apply: {
+        t: 'Đăng ký',
+        d: 'Điền vào biểu mẫu ngắn bên dưới. Một email xác nhận sẽ đến hộp thư của bạn ngay lập tức.',
+      },
+      review: {
+        t: 'Chúng tôi xét duyệt',
+        d: 'Một người thật đọc từng đơn, bao gồm cả người theo dõi và các kênh mạng xã hội của bạn.',
+      },
+      approved: {
+        t: 'Được duyệt',
+        d: 'Email phê duyệt của bạn có liên kết để đặt mật khẩu và mở bảng điều khiển.',
+      },
+      share: {
+        t: 'Chia sẻ liên kết của bạn',
+        d: 'Liên kết và mã giới thiệu riêng của bạn đã sẵn sàng. Hãy chia sẻ ở bất cứ nơi nào người theo dõi của bạn lắng nghe.',
+      },
+      earn: {
+        t: 'Nhận tiền',
+        d: 'Bạn nhận {rate} từ khoản thanh toán đầu tiên của mỗi người được giới thiệu. Họ được một tháng miễn phí khi thanh toán theo năm.',
+      },
+    },
+    audience: {
+      kicker: 'Dành cho ai',
+      title: 'Bất cứ ai làm việc trên màn hình.',
+      sub: 'WorkCoPilot hướng dẫn mọi người từng bước qua bất kỳ công cụ nào, bất kỳ quy trình nào. Nếu người theo dõi của bạn từng bí trước bàn phím, thì bạn đã có một thứ thực sự đáng để giới thiệu.',
+      teamsAlt: 'Hai đồng nghiệp cùng giải một bài toán khó bên chiếc laptop',
+      teamsT: 'Nhóm và công ty nhỏ',
+      teamsD: 'Công việc chuyên môn được làm nội bộ, được hướng dẫn đến đúng bước tiếp theo.',
+      soloAlt: 'Một chuyên viên đang hoàn thành một tác vụ phức tạp trên laptop',
+      soloT: 'Cá nhân và người học',
+      soloD: 'Gỡ bí trong vài giây, với đúng cú nhấp, câu lệnh hoặc thiết lập.',
+    },
+    applySec: {
+      kicker: 'Đăng ký',
+      title: 'Hai phút ngay bây giờ. Một liên kết giới thiệu dùng được bao lâu tùy bạn.',
+      sub: 'Chúng tôi chỉ cần tên và email. Phần còn lại giúp chúng tôi đồng ý nhanh hơn. Bạn nhận email xác nhận ngay lập tức, và chúng tôi gửi email ngay khi có quyết định.',
+      rulesK: 'Các điều khoản chi tiết, bằng lời dễ hiểu',
+      rule1: 'Hoa hồng là <b>{rate} từ khoản thanh toán đầu tiên của người được giới thiệu</b>. Các lần gia hạn và mua sau đó không được tính hoa hồng.',
+      rule2: 'Việc chi trả được gửi qua <b>Stripe</b> khi số dư chờ của bạn đạt mức tối thiểu của chương trình, hiển thị trong bảng điều khiển của bạn.',
+      rule3: 'Một lượt giới thiệu được tính khi người đó đăng ký qua liên kết của bạn rồi thanh toán.',
+      rule4: 'Chỉ quảng bá trung thực: không spam, không tuyên bố gây hiểu lầm, không đấu giá từ khóa WorkCoPilot hay AdmireVeda trong quảng cáo tìm kiếm.',
+      closedTitle: 'Hiện chúng tôi đang tạm dừng nhận đơn affiliate.',
+      closedBody: 'Hiện tại chúng tôi chưa nhận affiliate mới. Hãy quay lại sau, hoặc <a>liên hệ với chúng tôi</a> nếu bạn có ý tưởng hợp tác.',
+    },
+    perk: {
+      aria: 'Bạn nhận được gì và người bạn giới thiệu nhận được gì',
+      youEarn: 'Bạn nhận',
+      youEarnSub: 'từ khoản thanh toán đầu tiên của mỗi người được giới thiệu, chi trả qua Stripe.',
+      theyGet: 'Họ nhận',
+      freeMonth: 'Một tháng miễn phí',
+      theyGetSub: 'khi họ đăng ký qua liên kết của bạn và chọn thanh toán theo năm.',
+    },
+    form: {
+      errName: 'Vui lòng nhập tên của bạn.',
+      errEmail: 'Vui lòng nhập một địa chỉ email hợp lệ.',
+      errDuplicate: 'Đã có một đơn đăng ký với email này. Chúng tôi sẽ liên hệ với bạn.',
+      errSend: 'Không thể gửi đơn đăng ký của bạn. Vui lòng thử lại.',
+      doneTitle: 'Đã nhận được đơn đăng ký.',
+      thereFallback: 'bạn',
+      doneBody: 'Cảm ơn bạn, {name}. Chúng tôi đã gửi email xác nhận cho bạn tại <b>{email}</b>. Chúng tôi xét duyệt mọi đơn đăng ký, và bạn sẽ nhận được email ngay khi có quyết định. Nếu được duyệt, email đó sẽ có liên kết để đặt mật khẩu và mở bảng điều khiển của bạn.',
+      nextAria: 'Điều gì xảy ra tiếp theo',
+      nextNow: '<b>Bây giờ:</b> một email xác nhận đang ở trong hộp thư của bạn.',
+      nextReview: '<b>Tiếp theo:</b> một người thật xét duyệt đơn của bạn.',
+      nextApproved: '<b>Nếu được duyệt:</b> đặt mật khẩu từ email và mở bảng điều khiển của bạn.',
+      backHome: 'Về lại WorkCoPilot',
+      headTitle: 'Đơn đăng ký affiliate của bạn',
+      headSub: 'Khoảng hai phút. Chúng tôi chỉ cần tên và email; mọi thông tin khác giúp chúng tôi đồng ý nhanh hơn.',
+      signedInAs: 'Bạn đang đăng nhập bằng <b>{email}</b>. Bạn có thể đăng ký với tài khoản này, và bảng điều khiển affiliate của bạn sẽ nằm trong đó sau khi được duyệt.',
+      secContact: 'Liên hệ',
+      nameLabel: 'Tên của bạn',
+      namePlaceholder: 'Alex Morgan',
+      emailLabel: 'Email',
+      emailPlaceholder: 'you@yourdomain.com',
+      phoneLabel: 'Điện thoại',
+      phonePlaceholder: '+1 555 123 4567',
+      websiteLabel: 'Trang web',
+      websitePlaceholder: 'https://yoursite.com',
+      optional: '(không bắt buộc)',
+      secSocial: 'Mạng xã hội',
+      socialOptional: '(không bắt buộc, nhưng đây là cách chúng tôi thẩm định affiliate)',
+      socialAdded: ' - đã thêm {n}',
+      socials: {
+        tiktok: '@yourhandle',
+        instagram: '@yourhandle',
+        youtube: '@channel hoặc liên kết kênh',
+        twitter: '@yourhandle',
+        facebook: 'Tên trang hoặc liên kết',
+        linkedin: 'Liên kết hồ sơ hoặc trang công ty',
+        otherLabel: 'Khác',
+        other: 'Bản tin, podcast, Discord, blog...',
+      },
+      secAudience: 'Người theo dõi của bạn',
+      audienceLabel: 'Người theo dõi của bạn là ai?',
+      audiencePlaceholder: 'Ví dụ: quản trị viên IT ở các công ty nhỏ, học viên bootcamp, đội ngũ tài chính',
+      notesLabel: 'Điều gì khác nữa',
+      notesPlaceholder: 'Cách bạn dự định chia sẻ WorkCoPilot, hoặc bất cứ điều gì chúng tôi nên biết.',
+      send: 'Gửi đơn đăng ký của tôi',
+      fine: 'Khi đăng ký, bạn đồng ý quảng bá WorkCoPilot một cách trung thực. Chúng tôi chỉ dùng các thông tin này để xét duyệt đơn của bạn và vận hành chương trình. Bạn nhận email xác nhận ngay lập tức, và một email quyết định khi chúng tôi đã xét duyệt xong.',
+    },
+    dash: {
+      eyebrow: 'Bảng điều khiển affiliate',
+      welcome: 'Chào mừng trở lại, <em>{name}.</em>',
+      welcomeAnon: 'Bảng điều khiển <em>affiliate</em> của bạn.',
+      lead: 'Bạn nhận <b>{rate}</b> từ khoản thanh toán đầu tiên của mỗi người được giới thiệu. Hãy chia sẻ liên kết của bạn, và trang này sẽ ghi lại kết quả.',
+      onHold: 'Đang tạm giữ',
+      approved: 'Affiliate đã được duyệt',
+      holdNote: '<b>Tài khoản affiliate của bạn đang bị tạm giữ.</b> Các lượt giới thiệu mới sẽ không được ghi nhận trong lúc tạm giữ. Số dư đã kiếm được của bạn vẫn được lưu lại. Nếu có thắc mắc, hãy viết thư tới <a>support@admireveda.com</a>.',
+      linkK: 'Liên kết giới thiệu của bạn',
+      linkD: 'Bất cứ ai đăng ký qua liên kết này và thực hiện khoản thanh toán đầu tiên sẽ mang về cho bạn {rate} của khoản thanh toán đó.',
+      linkAria: 'Liên kết giới thiệu của bạn',
+      copied: 'Đã sao chép',
+      copy: 'Sao chép liên kết',
+      statsAria: 'Các con số của bạn',
+      clicks: 'Lượt nhấp',
+      clicksHint: 'lượt truy cập qua liên kết của bạn',
+      conversions: 'Lượt chuyển đổi',
+      conversionsHint: 'người được giới thiệu đã thanh toán',
+      earned: 'Đã kiếm được',
+      earnedHint: 'hoa hồng đã được ghi có',
+      pending: 'Đang chờ',
+      pendingHintMin: 'chi trả khi đạt {amount}',
+      pendingHint: 'đang chờ chi trả',
+      paid: 'Đã chi trả',
+      paidHint: 'đã gửi vào tài khoản Stripe của bạn',
+      payoutsK: 'Chi trả',
+      payoutsActive: 'Chi trả đang hoạt động (Stripe)',
+      payoutsConnectedMin: 'Tài khoản Stripe của bạn đã được kết nối. Đội ngũ WorkCoPilot thực hiện chi trả khi số dư chờ của bạn đạt {amount}; mỗi lần chi trả sẽ xuất hiện trong tổng Đã chi trả và trong bảng điều khiển Stripe của bạn.',
+      payoutsConnected: 'Tài khoản Stripe của bạn đã được kết nối. Đội ngũ WorkCoPilot thực hiện chi trả; mỗi lần chi trả sẽ xuất hiện trong tổng Đã chi trả và trong bảng điều khiển Stripe của bạn.',
+      payoutsReview: 'Stripe vẫn đang xem xét thông tin tài khoản của bạn, nên một khoản chi trả có thể bị giữ lại cho đến khi quá trình đó hoàn tất.',
+      finishPayouts: 'Hoàn tất thiết lập chi trả',
+      setupPayouts: 'Thiết lập chi trả',
+      resumeBody: 'Bạn đã bắt đầu thiết lập Stripe nhưng vẫn chưa hoàn tất. Hãy tiếp tục từ chỗ bạn dừng lại để thu nhập của bạn có thể được chi trả.',
+      connectBody: 'Kết nối một tài khoản Stripe để nhận hoa hồng của bạn. Stripe xử lý thông tin danh tính và ngân hàng; chúng tôi không bao giờ thấy chúng.',
+      errNoLink: 'Stripe không trả về liên kết thiết lập. Vui lòng thử lại sau giây lát.',
+      errStart: 'Không thể bắt đầu thiết lập Stripe. Vui lòng thử lại.',
+      errCheck: 'Không thể kiểm tra trạng thái Stripe của bạn.',
+      resumeStripe: 'Tiếp tục thiết lập Stripe',
+      setupStripe: 'Thiết lập với Stripe',
+      alreadyFinished: 'Tôi đã hoàn tất rồi',
+      rateK: 'Mức hoa hồng của bạn',
+      rateSub: 'từ khoản thanh toán đầu tiên của mỗi người được giới thiệu',
+      rateRule1: 'Được ghi có khi khoản thanh toán đầu tiên của người được giới thiệu hoàn tất.',
+      rateRule2: 'Các lần gia hạn và mua sau đó không được tính hoa hồng.',
+      rateRule3: 'Bị hủy nếu khoản thanh toán bị hoàn tiền hoặc đảo ngược.',
+      referrals: 'Lượt giới thiệu',
+      referralCount_one: '{n} lượt giới thiệu',
+      referralCount_other: '{n} lượt giới thiệu',
+      emptyTitle: 'Chưa có lượt giới thiệu nào.',
+      emptyBody: 'Hãy chia sẻ liên kết của bạn ở trên. Khi có người đăng ký qua liên kết đó và thực hiện khoản thanh toán đầu tiên, lượt giới thiệu sẽ xuất hiện ở đây cùng với hoa hồng của bạn.',
+      thUser: 'Người được giới thiệu',
+      thPayment: 'Khoản thanh toán đầu tiên của họ',
+      thRate: 'Mức',
+      thCommission: 'Hoa hồng của bạn',
+      thStatus: 'Trạng thái',
+      thDate: 'Ngày',
+      paidOnTitle: 'Đã chi trả {date}',
+      paidOn: 'đã chi trả {date}',
+      statusPaid: 'Đã chi trả',
+      statusVoid: 'Đã hủy',
+      statusEarned: 'Đã kiếm được',
+    },
+  },
+  answerBody: {
+    copyCodeTip: 'Sao chép phần văn bản được tô sáng, hoặc đoạn mã sạch nếu không có gì được chọn',
+    thinkAria: 'dừng lại và suy nghĩ',
+    thinkTip: 'Dừng lại và suy nghĩ một hai giây trước khi tiếp tục',
+    pauseAria: 'dừng ở đây',
+    pauseTip: 'Dừng lại / chậm lại ở đây',
+  },
+  askFocus: {
+    checkIn: 'Kiểm tra nhanh một chút',
+    stuckTitle: 'Bị bí? Có vấn đề gì không?',
+    inWayPlaceholder: 'Ví dụ: nút Xác minh đang bị xám',
+    inWayAria: 'Điều gì đang cản trở',
+    fine: 'Tôi ổn, cứ tiếp tục',
+    youAsked: 'Bạn đã hỏi:',
+    planUpdated: 'Kế hoạch của bạn đã được cập nhật.',
+    followUp: 'Hỏi thêm một câu',
+  },
+  benchmarkPage: {
+    eyebrow: 'Chuẩn đo độ chính xác',
+    h1: 'WorkCoPilot chính xác đến mức nào?',
+    lead: 'Một thước đo: cho một tác vụ có đáp án đúng đã biết, liệu WorkCoPilot có trả về đáp án đó không. Tỷ lệ vượt qua thực tế, kèm cỡ mẫu và khoảng tin cậy 95%. Không làm tròn lên.',
+    chipsAria: 'Cách những con số này giữ được sự trung thực',
+    chips: [
+      'Chấm điểm bằng máy nơi có thể',
+      'Một tập dữ liệu giữ riêng được bảo mật',
+      'Theo từng bậc, không bao giờ theo tên mô hình',
+    ],
+    pendingTitle: 'Đang chờ lần chạy công khai đầu tiên.',
+    pendingP: 'Chuẩn đo đã được xây dựng và kiểm thử. Các con số sẽ xuất hiện ở đây khi có một lần chạy công khai được ghi lại.',
+    resultsH2: 'Kết quả theo từng bậc AI',
+    tierStrong: 'Bậc năng lực cao hơn',
+    tierFast: 'Bậc tối ưu cho tốc độ',
+    lastRun: 'Lần chạy gần nhất {when}.',
+    sampleH2: 'Tác vụ mẫu',
+    sampleP: 'Một mẫu công khai. Các tác vụ giữ riêng vẫn được chấm điểm nhưng không bao giờ hiển thị.',
+    meta: '{pass}/{n} đúng · CI 95% {ci}',
+    aiGraded: ' · {n} do AI chấm',
+    ciRange: '{lo} đến {hi}',
+    tableCaption: '{title}: độ chính xác của kết quả theo lĩnh vực',
+    colDomain: 'Lĩnh vực',
+    colCorrect: 'Đúng',
+    colRate: 'Tỷ lệ',
+    colCi: 'CI 95%',
+    domains: {
+      dev: 'Dev / dữ liệu',
+      finance: 'Bảng tính / tài chính',
+      cross: 'Liên ngành nghề',
+      security: 'Bảo mật / rà soát mã',
+    },
+    methodH2: 'Cách chúng tôi đo lường',
+    method: [
+      {
+        t: 'Độ chính xác của kết quả',
+        d: 'Mỗi tác vụ được chạy qua sản phẩm, rồi được chấm điểm so với một đáp án đúng đã biết.',
+      },
+      {
+        t: 'Xác minh trước tiên',
+        d: 'Kiểm tra bằng máy nơi đáp án cho phép. Chỉ dùng một bộ chấm AI trong trường hợp khác, có đánh dấu, cùng với một lượt kiểm tra ngẫu nhiên bởi người thật mỗi lần chạy.',
+      },
+      {
+        t: 'Bốn lĩnh vực',
+        d: 'Dev và dữ liệu, bảng tính và tài chính, một tập liên ngành nghề, bảo mật và rà soát mã.',
+      },
+      {
+        t: 'Những con số trung thực',
+        d: 'Tỷ lệ vượt qua kèm cỡ mẫu và CI 95%. Một tập dữ liệu giữ riêng được bảo mật giúp chống việc học vẹt theo dữ liệu.',
+      },
+    ],
+    note: 'Chúng tôi thà công bố một con số thật, nhỏ hơn kèm khoảng tin cậy của nó còn hơn một con số tròn trịa mà không có. Các lĩnh vực ít dữ liệu được ghi chú rõ.',
+    ctaH2: 'Xem nó làm được gì, rồi chi phí ra sao',
+    ctaP: 'WorkCoPilot hướng dẫn mọi người qua công việc thực tế đến một kết quả hoàn chỉnh.',
+    seePricing: 'Xem bảng giá',
+    howItWorks: 'Cách thức hoạt động',
+    relatedAria: 'Các trang liên quan',
+    securityLink: 'Bảo mật & xử lý dữ liệu',
+    backHome: 'Về trang chủ',
+  },
+  billingWidget: {
+    aria: 'Thanh toán và gói đăng ký',
+    status: {
+      active: 'Đang hoạt động',
+      trialing: 'Dùng thử',
+      past_due: 'Quá hạn',
+      canceled: 'Đã hủy',
+      none: 'Không có gói nào đang hoạt động',
+    },
+    invStatus: {
+      paid: 'Đã thanh toán',
+      open: 'Chưa thanh toán',
+      draft: 'Bản nháp',
+      void: 'Đã hủy',
+      uncollectible: 'Không thu được',
+    },
+    errors: {
+      portalOpen: 'Không thể mở phần thanh toán. Vui lòng thử lại.',
+      portalUnavailable: 'Phần thanh toán hiện không khả dụng.',
+      change: 'Hiện không thể đổi gói của bạn. Vui lòng thử lại, hoặc dùng Quản lý thanh toán.',
+    },
+    head: {
+      title: 'Thanh toán và gói',
+      sub: 'Quản lý gói đăng ký, phương thức thanh toán và hóa đơn của bạn. Các thay đổi được xử lý an toàn qua Stripe.',
+      manage: 'Quản lý thanh toán',
+    },
+    settingUp: 'Phần thanh toán đang được thiết lập. Thông tin gói và hóa đơn của bạn sẽ xuất hiện ở đây khi nó hoạt động.',
+    pastDue: {
+      title: 'Khoản thanh toán gần nhất của bạn không thành công.',
+      body: 'Hãy cập nhật phương thức thanh toán để giữ quyền truy cập. Gói của bạn vẫn hoạt động trong khi bạn khắc phục việc này.',
+      fix: 'Khắc phục thanh toán',
+    },
+    canceledNote: {
+      canceled: 'Gói của bạn đã bị hủy.',
+      scheduled: 'Gói của bạn được đặt lịch để hủy.',
+      access: 'Bạn vẫn giữ toàn quyền truy cập cho đến <b>{date}</b>. Bạn có thể chọn lại một gói bất cứ lúc nào trước đó.',
+    },
+    current: {
+      noPlan: 'Không có gói',
+      perYear: 'năm',
+      perMonth: 'tháng',
+      hoursPerMonth_one: '{n} giờ / tháng',
+      hoursPerMonth_other: '{n} giờ / tháng',
+      accessUntil: 'Truy cập đến',
+      trialEnds: 'Dùng thử kết thúc',
+      renews: 'Gia hạn',
+    },
+    cycle: {
+      annual: 'Hàng năm',
+      monthly: 'Hàng tháng',
+      annualLower: 'hàng năm',
+      monthlyLower: 'hàng tháng',
+      perYr: 'năm',
+      perMo: 'tháng',
+    },
+    result: {
+      now: 'Bạn hiện đang dùng gói {plan} ({cycle}). Thay đổi có hiệu lực ngay lập tức.',
+      scheduledOn: 'Việc chuyển sang gói {plan} ({cycle}) được đặt lịch vào {date}. Bạn giữ gói hiện tại cho đến khi đó.',
+      scheduledPeriodEnd: 'Việc chuyển sang gói {plan} ({cycle}) được đặt lịch vào cuối kỳ hiện tại của bạn. Bạn giữ gói hiện tại cho đến khi đó.',
+    },
+    comingOnline: 'Tính năng đổi gói ngay trong ứng dụng sẽ sớm hoạt động. Trong lúc chờ, bạn có thể đổi gói qua <a>Quản lý thanh toán</a>.',
+    change: {
+      title: 'Đổi gói của bạn',
+      cycleAria: 'Chu kỳ thanh toán',
+      current: 'Hiện tại',
+      contactUs: 'Liên hệ với chúng tôi',
+      hoursGuided_one: '{n} giờ thời gian được hướng dẫn / tháng',
+      hoursGuided_other: '{n} giờ thời gian được hướng dẫn / tháng',
+      yourPlan: 'Gói của bạn',
+      upgrade: 'Nâng cấp',
+      downgrade: 'Hạ cấp',
+      switchAnnual: 'Chuyển sang hàng năm',
+      switchMonthly: 'Chuyển sang hàng tháng',
+      note: 'Việc hạ cấp có hiệu lực vào lần gia hạn tiếp theo; việc nâng cấp áp dụng ngay với khoản tín dụng tính theo tỷ lệ.',
+      cancel: 'Hủy gói',
+    },
+    noPlanYet: 'Bạn chưa có gói nào. Hãy bắt đầu một gói từ bộ chọn gói ở trên để mở khóa phần hướng dẫn, sau đó quản lý nó tại đây.',
+    invoices: {
+      title: 'Hóa đơn',
+      paymentMethod: 'Phương thức thanh toán',
+      loading: 'Đang tải hóa đơn...',
+      empty: 'Chưa có hóa đơn nào. Chúng sẽ xuất hiện ở đây sau khoản thanh toán đầu tiên của bạn.',
+      view: 'Xem',
+      pdf: 'PDF',
+    },
+    trust: {
+      badge: 'Được bảo mật bởi Stripe',
+      text: 'Thanh toán tuân thủ PCI · thông tin thẻ của bạn không bao giờ được lưu trên máy chủ của chúng tôi.',
+    },
+    confirm: {
+      aria: 'Xác nhận đổi gói',
+      upgradeTo: 'Nâng cấp lên {plan}',
+      changeTo: 'Đổi sang {plan}',
+      upNote: 'Việc nâng cấp này có hiệu lực ngay lập tức. Stripe tính theo tỷ lệ cho kỳ hiện tại của bạn, nên bạn chỉ bị tính phần chênh lệch bây giờ.',
+      downNote: 'Thay đổi này có hiệu lực vào cuối kỳ thanh toán hiện tại của bạn. Bạn giữ gói hiện tại cùng số giờ đi kèm cho đến khi đó, và không bị tính phí mới hôm nay.',
+      fine: 'Bạn sẽ thấy số tiền và thời điểm chính xác được xác nhận ở màn hình kế tiếp. Bạn có thể đổi hoặc hủy lại bất cứ lúc nào.',
+      notNow: 'Để sau',
+      confirmUpgrade: 'Xác nhận nâng cấp',
+      confirmChange: 'Xác nhận thay đổi',
+    },
+    cancelModal: {
+      aria: 'Hủy gói',
+      title: 'Hủy gói của bạn?',
+      noteDate: 'Gói của bạn vẫn hoạt động và bạn giữ toàn quyền truy cập cho đến cuối kỳ thanh toán hiện tại (<b>{date}</b>). Bạn sẽ không bị tính phí lần nữa. Bạn có thể chọn lại một gói bất cứ lúc nào.',
+      note: 'Gói của bạn vẫn hoạt động và bạn giữ toàn quyền truy cập cho đến cuối kỳ thanh toán hiện tại. Bạn sẽ không bị tính phí lần nữa. Bạn có thể chọn lại một gói bất cứ lúc nào.',
+      fine: 'Việc hủy được hoàn tất trên cổng Stripe an toàn, nơi bạn có thể xác nhận và xem ngày kết thúc chính xác của mình.',
+      keep: 'Giữ gói của tôi',
+      continue: 'Tiếp tục hủy',
+    },
+  },
+  buddyPage: {
+    allDone: 'Đã xong tất cả các bước',
+    gettingReady: 'Đang chuẩn bị',
+    allSet: 'Bạn đã sẵn sàng. Hãy mở cửa sổ đầy đủ để hoàn tất.',
+    watching: 'Đang theo dõi màn hình của bạn để tìm bước tiếp theo',
+    progressDone: '{total} trên {total}',
+    progressStep: 'Bước {n} trên {total}',
+    noTimeLeft: 'Hết thời gian',
+    calm: {
+      completed: 'Phiên đã hoàn tất. Bản tóm tắt của bạn đã sẵn sàng trong cửa sổ chính.',
+      loading: 'Đang khởi động và kết nối',
+      error: 'Không thể kết nối tới máy chủ. Đang thử lại.',
+      signin: 'Đăng nhập WorkCoPilot trong cửa sổ chính và các bước của bạn sẽ hiển thị ở đây.',
+      empty: 'Chưa có tác vụ nào đang chạy. Mở WorkCoPilot để bắt đầu một tác vụ.',
+    },
+    pickBuddy: 'Chọn người đồng hành của bạn',
+    stepConfirmed: 'Đã xác nhận bước',
+    openWorkCoPilot: 'Mở WorkCoPilot',
+    controls: {
+      closePicker: 'Đóng bộ chọn người đồng hành',
+      changeBuddy: 'Đổi người đồng hành',
+      showBuddy: 'Hiện người đồng hành',
+      textOnly: 'Chỉ văn bản',
+      resumeMotion: 'Tiếp tục chuyển động của người đồng hành',
+      freezeMotion: 'Dừng chuyển động của người đồng hành',
+      resumeGuidance: 'Tiếp tục hướng dẫn',
+      pauseGuidance: 'Tạm dừng hướng dẫn',
+      openGuide: 'Mở hướng dẫn đầy đủ',
+      openWindow: 'Mở cửa sổ đầy đủ',
+      hideTitle: 'Ẩn người đồng hành (tạm dừng và lưu tiến trình của bạn)',
+      hide: 'Ẩn người đồng hành',
+      close: 'Đóng người đồng hành',
+    },
+  },
+  buddyPicker: {
+    groupAria: 'Chọn người đồng hành của bạn',
+  },
+  composeCard: {
+    emptyBody: 'Không có tài liệu nào được trả về.',
+    basedOn: 'Căn cứ tôi dựa vào',
+  },
+  computeCard: {
+    cmp: {
+      eq: 'là',
+      ne: 'không phải là',
+      gt: 'lớn hơn',
+      gte: 'ít nhất là',
+      lt: 'nhỏ hơn',
+      lte: 'nhiều nhất là',
+      contains: 'chứa',
+      in: 'là một trong',
+    },
+    fn: {
+      sum: 'tổng',
+      avg: 'trung bình',
+      min: 'nhỏ nhất',
+      max: 'lớn nhất',
+      count: 'đếm',
+      countDistinct: 'đếm riêng biệt',
+    },
+    spec: {
+      and: 'và',
+      countRows: 'đếm số dòng',
+      countRowsAs: 'đếm số dòng thành "{as}"',
+      fnOfCol: '{fn} của {col}',
+      fnOfColAs: '{fn} của {col} thành "{as}"',
+      filter: 'Chỉ giữ các dòng mà {where}.',
+      derive: 'Thêm cột "{as}" được tính bằng {expr}.',
+      select: 'Giữ các cột: {cols}.',
+      group: 'Nhóm theo {by}, rồi lấy {aggs}.',
+      wholeTable: 'toàn bộ bảng',
+      sort: 'Sắp xếp theo {by} ({dir}).',
+      highToLow: 'từ cao xuống thấp',
+      lowToHigh: 'từ thấp lên cao',
+      limit_one: 'Lấy {n} dòng đầu tiên.',
+      limit_other: 'Lấy {n} dòng đầu tiên.',
+      returnCount: 'Trả về số dòng.',
+      returnFn: 'Trả về {fn} của {col}.',
+      returnTable: 'Trả về bảng kết quả.',
+    },
+    copy: 'Sao chép',
+    copied: 'Đã sao chép',
+    copyCsv: 'Sao chép dưới dạng CSV',
+    downloadCsv: 'Tải CSV',
+    eyebrow: 'Được tính trên thiết bị của bạn',
+    kindNumber: 'Số',
+    kindTable: 'Bảng',
+    titleNumber: 'Con số',
+    titleTable: 'Bảng',
+    emptyTable: 'Không có dòng nào khớp, nên bảng trống.',
+    truncated: 'Đang hiển thị {shown} dòng đầu trong tổng số {total} dòng kết quả. Tải CSV để xem toàn bộ.',
+    howK: 'Cách tính toán',
+    runAcross_one: 'Chạy trên {count} dòng trên thiết bị của bạn.',
+    runAcross_other: 'Chạy trên {count} dòng trên thiết bị của bạn.',
+    privacy: 'Chạy trên thiết bị của bạn. Dữ liệu của bạn không bao giờ rời khỏi thiết bị.',
+  },
+  contactPage: {
+    eyebrow: 'Liên hệ với chúng tôi',
+    h1: 'Trò chuyện với chúng tôi.',
+    lead: 'Câu hỏi về WorkCoPilot, một buổi demo cho nhóm của bạn, bảo mật hay tuân thủ, hoặc bất cứ điều gì khác. Gửi cho chúng tôi một lời nhắn và chúng tôi sẽ phản hồi bạn.',
+    errors: {
+      required: 'Vui lòng thêm tên, email và lời nhắn của bạn.',
+      sendFailed: 'Không thể gửi lời nhắn của bạn. Vui lòng thử lại.',
+    },
+    form: {
+      nameLabel: 'Tên của bạn',
+      namePlaceholder: 'Alex Morgan',
+      emailLabel: 'Email',
+      emailPlaceholder: 'you@company.com',
+      subjectLabel: 'Chủ đề',
+      optional: '(không bắt buộc)',
+      subjectPlaceholder: 'Chúng tôi có thể giúp gì cho bạn?',
+      messageLabel: 'Lời nhắn',
+      messagePlaceholder: 'Hãy cho chúng tôi biết đôi chút về điều bạn đang tìm kiếm.',
+      send: 'Gửi lời nhắn',
+      note: 'Với các câu hỏi về doanh nghiệp, bảo mật hay tuân thủ, hãy nêu rõ ở trên và đúng nhóm phụ trách sẽ phản hồi.',
+    },
+    done: {
+      thanks: 'Cảm ơn bạn, {name}.',
+      thereFallback: 'bạn',
+      body: 'Lời nhắn của bạn đang được gửi đến nhóm của chúng tôi, và một email xác nhận đang được gửi tới <b>{email}</b>. Chúng tôi sẽ liên hệ với bạn trong thời gian ngắn.',
+      backHome: 'Về trang chủ',
+    },
+  },
+  cookiePolicyPage: {
+    seo: {
+      title: 'Chính sách Cookie - WorkCoPilot by AdmireVeda',
+      description: 'Mọi cookie và khóa lưu trữ trình duyệt mà WorkCoPilot sử dụng: một cookie đăng nhập thực sự cần thiết, một bản ghi đồng ý, một cookie giới thiệu theo sự đồng ý, và bộ lưu trữ chức năng của bên thứ nhất. Không có quảng cáo hay theo dõi xuyên trang, và cách quản lý các lựa chọn của bạn.',
+    },
+    hero: {
+      eyebrow: 'Chính sách Cookie',
+      title: 'Cookie và bộ lưu trữ trình duyệt',
+      intro: 'Chính xác những cookie và bộ lưu trữ trình duyệt mà WorkCoPilot sử dụng, mỗi loại dùng để làm gì, tồn tại bao lâu, và cách bạn kiểm soát chúng.',
+      tagline: 'Công bố bằng ngôn ngữ dễ hiểu về những gì sản phẩm thực hiện hiện nay',
+    },
+    glance: [
+      {
+        eyebrow: 'Những gì chúng tôi thiết lập',
+        title: 'Một cookie cần thiết, theo mặc định',
+        body: 'Chỉ một cookie đăng nhập thực sự cần thiết được thiết lập mà không cần sự đồng ý của bạn. Cookie giới thiệu chỉ được thiết lập nếu bạn cho phép ghi nhận nguồn giới thiệu.',
+      },
+      {
+        eyebrow: 'Quyền kiểm soát của bạn',
+        title: 'Thay đổi lựa chọn của bạn bất cứ lúc nào',
+        body: 'Dùng "Tùy chọn Cookie" ở chân trang, hoặc trang này, để bật hoặc tắt bộ lưu trữ chức năng và ghi nhận nguồn bất cứ khi nào bạn muốn.',
+      },
+      {
+        eyebrow: 'Không theo dõi',
+        title: 'Không quảng cáo hay theo dõi xuyên trang',
+        body: 'Chúng tôi không sử dụng cookie quảng cáo, trình theo dõi của bên thứ ba hay lập hồ sơ xuyên trang. Bộ lưu trữ chức năng ở lại trên thiết bị của riêng bạn.',
+      },
+    ],
+    sections: {
+      about: 'Về cookie và bộ lưu trữ',
+      what: 'Những gì chúng tôi sử dụng',
+      categories: 'Ba nhóm',
+      manage: 'Quản lý các lựa chọn của bạn',
+      consent: 'Sự đồng ý và giới thiệu',
+      changes: 'Thay đổi đối với chính sách này',
+      contact: 'Liên hệ',
+    },
+    table: {
+      caption: 'Cookie và bộ lưu trữ trình duyệt mà WorkCoPilot sử dụng',
+      columns: ['Tên', 'Loại', 'Nhóm', 'Mục đích', 'Thời gian tồn tại'],
+      rows: [
+        {
+          kind: 'Cookie',
+          category: 'Thực sự cần thiết',
+          purpose: 'Giữ cho bạn luôn đăng nhập và phiên làm việc hoạt động.',
+          lifetime: 'Phiên',
+        },
+        {
+          kind: 'Cookie',
+          category: 'Thực sự cần thiết (bản ghi đồng ý)',
+          purpose: 'Ghi nhớ các lựa chọn cookie của bạn để chúng tôi tôn trọng chúng. Máy chủ cũng đọc để biết liệu việc ghi nhận nguồn có được phép hay không.',
+          lifetime: '~1 năm',
+        },
+        {
+          kind: 'Cookie',
+          category: 'Phân tích và ghi nhận nguồn',
+          purpose: 'Ghi công cho đối tác đã giới thiệu bạn. Chỉ được thiết lập sau khi bạn cho phép ghi nhận nguồn.',
+          lifetime: 'Tối đa 180 ngày',
+        },
+        {
+          kind: 'Bộ lưu trữ cục bộ',
+          category: 'Thực sự cần thiết (bản ghi đồng ý)',
+          purpose: 'Bản ghi đầy đủ các lựa chọn theo từng nhóm của bạn trên thiết bị này.',
+          lifetime: 'Cho đến khi được xóa',
+        },
+        {
+          kind: 'Bộ lưu trữ cục bộ',
+          category: 'Chức năng',
+          purpose: 'Ghi nhớ ngôn ngữ bạn đã chọn.',
+          lifetime: 'Cho đến khi được xóa',
+        },
+        {
+          kind: 'Bộ lưu trữ cục bộ',
+          category: 'Chức năng',
+          purpose: 'Ghi nhớ chế độ sáng hoặc tối.',
+          lifetime: 'Cho đến khi được xóa',
+        },
+        {
+          name: 'Khóa tùy chọn',
+          kind: 'Bộ lưu trữ cục bộ',
+          category: 'Chức năng',
+          purpose: 'Ghi nhớ các tùy chọn nhỏ như cỡ chữ của hướng dẫn, người đồng hành trên màn hình, trạng thái mở/đóng của tiện ích và những thông báo bạn đã xem.',
+          lifetime: 'Cho đến khi được xóa',
+        },
+        {
+          name: 'Khóa lead / coach',
+          kind: 'Bộ lưu trữ cục bộ',
+          category: 'Chức năng',
+          purpose: 'Ghi nhớ lead "Validate it live", id ẩn danh và các cờ coach để tiện ích không hỏi lại bạn.',
+          lifetime: 'Cho đến khi được xóa',
+        },
+        {
+          kind: 'Bộ lưu trữ phiên',
+          category: 'Giữ để ghi nhận nguồn',
+          purpose: 'Giữ mã giới thiệu cho tab này cho đến khi bạn quyết định về việc ghi nhận nguồn. Chỉ được chuyển thành cookie affref nếu bạn cho phép; nếu không sẽ bị loại bỏ.',
+          lifetime: 'Cho đến khi tab đóng',
+        },
+      ],
+    },
+    about: {
+      p1: 'Cookie là một tệp nhỏ mà một trang web lưu trong trình duyệt của bạn. "Bộ lưu trữ cục bộ" và "bộ lưu trữ phiên" là những cơ chế trình duyệt tương tự để lưu giữ các giá trị nhỏ trên thiết bị của riêng bạn. Trang này liệt kê mọi cookie và khóa lưu trữ mà WorkCoPilot sử dụng, mỗi loại dùng để làm gì, và tồn tại bao lâu.',
+      p2: 'Chúng tôi chia chúng thành ba nhóm: <b>thực sự cần thiết</b> (luôn bật, vì việc đăng nhập và trang web không thể hoạt động nếu thiếu chúng), <b>chức năng</b> (ghi nhớ các tùy chọn của bạn trên thiết bị này), và <b>phân tích và ghi nhận nguồn</b> (ghi công cho đối tác đã giới thiệu bạn). Bộ lưu trữ chức năng và ghi nhận nguồn luôn tắt cho đến khi bạn cho phép.',
+    },
+    what: {
+      p1: 'Đây là danh sách đầy đủ. Nếu nó thay đổi, ngày "Cập nhật lần cuối" ở trên cũng thay đổi theo.',
+    },
+    categories: {
+      items: [
+        {
+          name: 'Thực sự cần thiết',
+          how: 'Cookie đăng nhập và bản ghi các lựa chọn đồng ý của bạn. Những cái này luôn bật; nếu không có chúng bạn không thể đăng nhập hoặc chúng tôi không thể ghi nhớ các lựa chọn của bạn. Được miễn trừ khỏi yêu cầu đồng ý theo GDPR và các luật tương đương.',
+        },
+        {
+          name: 'Chức năng',
+          how: 'Bộ lưu trữ trình duyệt của bên thứ nhất, ghi nhớ các tùy chọn như ngôn ngữ, giao diện và trạng thái UI nhỏ. Nó ở lại trên thiết bị của bạn, không được chia sẻ, và không được dùng để lập hồ sơ về bạn.',
+        },
+        {
+          name: 'Phân tích và ghi nhận nguồn',
+          how: 'Một cookie giới thiệu duy nhất của bên thứ nhất (affref) ghi công cho đối tác đã đưa bạn đến đây. Nó tắt cho đến khi bạn cho phép, chỉ mang một mã giới thiệu ngắn, và không bao giờ được dùng cho quảng cáo hay theo dõi xuyên trang.',
+        },
+      ],
+    },
+    manage: {
+      items: [
+        {
+          name: 'Trên trang web này',
+          how: 'Dùng nút bên dưới hoặc liên kết "Tùy chọn Cookie" ở chân trang để bật hoặc tắt bộ lưu trữ chức năng và ghi nhận nguồn bất cứ lúc nào. Từ chối cũng dễ dàng như chấp nhận.',
+        },
+        {
+          name: 'Trong trình duyệt của bạn',
+          how: 'Bạn cũng có thể xóa hoặc chặn cookie và dữ liệu trang web trong cài đặt trình duyệt. Việc chặn cookie thực sự cần thiết sẽ khiến bạn không thể tiếp tục đăng nhập.',
+        },
+        {
+          name: 'Ảnh hưởng của việc từ chối',
+          how: 'Nếu bạn từ chối ghi nhận nguồn, không có cookie giới thiệu nào được thiết lập và cookie hiện có sẽ bị xóa. Nếu bạn từ chối bộ lưu trữ chức năng, chúng tôi không lưu giữ các tùy chọn đó trên thiết bị này.',
+        },
+      ],
+      button: 'Mở tùy chọn Cookie',
+    },
+    consent: {
+      p1: 'Khi bạn đến từ một liên kết giới thiệu của đối tác, mã giới thiệu đi theo địa chỉ trang và chỉ được giữ cho tab trình duyệt hiện tại cho đến khi bạn quyết định. Chúng tôi chỉ thiết lập cookie giới thiệu sau khi bạn cho phép ghi nhận nguồn. Điều này giúp việc giới thiệu hoạt động với những người chọn tham gia, trong khi không thiết lập cookie không thiết yếu nào cho bất kỳ ai chưa lựa chọn. Xem <a>Chính sách Quyền riêng tư</a> để biết cách xử lý dữ liệu giới thiệu.',
+    },
+    changes: {
+      p1: 'Nếu chúng tôi thêm, xóa hoặc thay đổi một cookie hay khóa lưu trữ, chúng tôi cập nhật trang này và ngày "Cập nhật lần cuối". Khi một thay đổi ảnh hưởng đến nhóm không thiết yếu, chúng tôi sẽ xin sự đồng ý của bạn lần nữa.',
+    },
+    contact: {
+      legal: 'Câu hỏi về quyền riêng tư và pháp lý',
+      support: 'Hỗ trợ sản phẩm',
+    },
+    links: {
+      privacy: 'Chính sách Quyền riêng tư',
+      subprocessors: 'Đơn vị xử lý phụ',
+      terms: 'Điều khoản Dịch vụ',
+      dpa: 'DPA',
+    },
+  },
+  dashboardsHelp: {
+    home: {
+      title: 'Bảng điều khiển của bạn',
+      lead: 'Bảng điều khiển là trang chủ của bạn: gói của bạn trong nháy mắt (số giờ tháng này, giờ nạp thêm hoặc quỹ giờ của công ty, các tác vụ đang mở), việc cần làm tiếp theo, và nơi bạn đã dừng lại.',
+      shot: {
+        alt: 'Bảng điều khiển: dải không gian làm việc, lời chào, phần Hàng chờ của tôi với các tác vụ được giao, thẻ Bắt đầu một tác vụ và các đồng hồ đo của gói.',
+        caption: 'Bảng điều khiển. Công việc được giao (Hàng chờ của tôi) hiển thị trước khi một người quản lý dự án có thể giao việc cho bạn; thẻ Bắt đầu một tác vụ màu cam là công việc của riêng bạn.',
+      },
+      howTo: 'Cách thực hiện',
+      steps: [
+        '<b>Đọc gói của bạn.</b> Ba ô hiển thị số giờ còn lại trong tháng này, giờ nạp thêm hoặc quỹ giờ của công ty, và số chỗ tác vụ đang mở của bạn. Chip thời gian ở trên cùng chuyển sang màu hổ phách trước khi bạn sắp hết giờ.',
+        '<b>Tiếp tục từ nơi bạn đã dừng.</b> Trong phần <b>Tiếp tục từ nơi bạn đã dừng</b>, nhấn <b>Tiếp tục</b> trên một tác vụ để mở lại chế độ hướng dẫn của nó ở bước bạn đang thực hiện.',
+        '<b>Thêm thời gian.</b> Nhấn <b>Thêm thời gian</b> ở trên cùng để mua giờ nạp thêm (người dùng cá nhân) hoặc hỏi quản trị viên của bạn (người dùng công ty).',
+      ],
+    },
+    start: {
+      title: 'Bắt đầu một tác vụ',
+      lead: 'Bắt đầu một tác vụ biến một mục tiêu bằng lời của chính bạn thành các bước có hướng dẫn trên màn hình. Một trình tự các bước: nơi bạn làm việc, tài liệu, mục tiêu của bạn, những gì nó hiểu được, độ sâu, vài câu hỏi, rồi Bắt đầu hướng dẫn.',
+      shot: {
+        alt: 'Hộp Bắt đầu một tác vụ: tên kế hoạch, mục tiêu, và nút Bắt đầu hướng dẫn tôi.',
+        caption: 'Mô tả kết quả bạn muốn. Dán một ticket, một yêu cầu hoặc một thông báo lỗi làm mục tiêu.',
+      },
+      howTo: 'Cách bắt đầu một tác vụ',
+      steps: [
+        'Nhấn <b>Bắt đầu một tác vụ</b> trên thanh điều hướng (hoặc thẻ màu cam trên bảng điều khiển).',
+        'Cho biết bạn đang làm việc ở đâu (một trang web, một ứng dụng máy tính, các tệp của riêng bạn), đính kèm tài liệu nếu có, và viết mục tiêu.',
+        'Kiểm tra <b>Những gì tôi hiểu</b>, chọn nhanh hoặc chi tiết, trả lời vài câu hỏi, rồi nhấn <b>Bắt đầu hướng dẫn</b>. Cho phép chia sẻ toàn bộ màn hình để nó có thể hướng dẫn bạn trong bất kỳ ứng dụng nào.',
+      ],
+    },
+    projects: {
+      title: 'Dự án',
+      lead: 'Một dự án là một mục tiêu lớn được thực hiện như một bản đồ các tác vụ với một vạch đích. WorkCoPilot lập bản đồ trước, hướng dẫn từng tác vụ trên màn hình của bạn theo thứ tự, và mang những gì bạn học được ở một tác vụ sang tác vụ tiếp theo.',
+      shot: {
+        alt: 'Trang Dự án: các thẻ dự án với trạng thái, tiến độ và việc sắp tới, cùng nút Dự án mới.',
+        caption: 'Các dự án của bạn. Mỗi thẻ hiển thị trạng thái, tiến độ và tác vụ sắp tới của nó.',
+      },
+      howTo: 'Cách tạo một dự án với trình lập kế hoạch',
+      steps: [
+        'Mở <b>Dự án</b> và nhấn <b>Dự án mới</b>.',
+        'Đặt tên cho nó (không bắt buộc) và mô tả kết quả, các hệ thống liên quan và hoàn thành trông như thế nào. Nhấn <b>Lập kế hoạch dự án</b>.',
+        'WorkCoPilot lập bản đồ các tác vụ theo thứ tự với một vạch đích và kiểm tra kế hoạch. Nếu mục tiêu thực ra chỉ là một quy trình, nó sẽ cho bạn biết và đề nghị bắt đầu như một tác vụ đơn lẻ.',
+        'Mở dự án, nhấn <b>Bắt đầu</b> trên tác vụ đầu tiên. Một tác vụ được mở khóa khi các tác vụ mà nó chờ đã hoàn thành; <b>Thêm vào dự án này</b> đặt công việc mới vào đúng vị trí của nó trên bản đồ.',
+      ],
+    },
+    guide: {
+      title: 'Chế độ hướng dẫn',
+      lead: 'Chế độ hướng dẫn là nơi một tác vụ chạy: mỗi lần một bước, được viết lại đúng với những gì đang hiển thị trên màn hình của bạn, kèm lệnh hoặc mã chính xác sẵn sàng để sao chép. Nó đọc, bạn hành động; nó không bao giờ nhấp chuột hay gõ thay bạn.',
+      shot: {
+        alt: 'Thẻ Bây giờ, làm điều này: bước hiện tại, lệnh terminal kèm nút Sao chép, và cách thực hiện.',
+        caption: 'Bây giờ, làm điều này: bước hiện tại kèm lệnh chính xác của nó. Các bước đã xong được đánh dấu khi nó thấy bạn hoàn thành.',
+      },
+      howTo: 'Cách thực hiện một tác vụ',
+      steps: [
+        'Làm theo <b>Bây giờ, làm điều này</b>. Khi màn hình của bạn thay đổi, bước tiếp theo tự xuất hiện; một thao tác sai sẽ được chỉ ra và sửa.',
+        'Bị kẹt? Nhấn <b>Hỏi</b> để có câu trả lời trực tiếp về những gì trên màn hình, <b>Rà soát sâu</b> để xem kỹ hơn một bước khó, hoặc <b>Lập lại kế hoạch</b> để dựng lại các bước từ những gì đang hiển thị trên màn hình lúc này.',
+        'Mở <b>Công cụ</b> để dùng Trả lời, Viết và Tính toán, xem toàn bộ kế hoạch, cỡ chữ và giao diện. <b>Nổi lên trên</b> giữ hướng dẫn luôn hiển thị phía trên công việc của bạn.',
+        'Nhấn <b>Tạm dừng</b> để dừng đồng hồ khi bạn rời đi; <b>Tiếp tục</b> khi bạn quay lại. Đánh dấu bước cuối cùng là đã xong để kết thúc.',
+      ],
+    },
+    reports: {
+      title: 'Báo cáo',
+      lead: 'Mỗi tác vụ hoàn thành trở thành một bản ghi gọn gàng: những gì đã đạt được, mọi bước đã xác nhận kèm lệnh chính xác, các cảnh báo, cùng các câu hỏi và trả lời của bạn, với ảnh chụp màn hình cột mốc đã được che thông tin nhạy cảm làm bằng chứng.',
+      shot: {
+        alt: 'Thẻ Trả lời: kết quả, đồng hồ đo độ tin cậy, cách nó đạt được kết quả, cách xác minh, và các cờ chính sách.',
+        caption: 'Thẻ Trả lời trong một tác vụ. Báo cáo tập hợp các bước đã xác nhận và kết quả của toàn bộ tác vụ.',
+      },
+      howTo: 'Cách lấy báo cáo',
+      steps: [
+        'Mở tác vụ từ <b>Tác vụ đã hoàn thành</b> hoặc <b>Nhật ký phiên</b>.',
+        'Nhấn <b>Tải xuống</b> và chọn <b>báo cáo PDF</b>, <b>báo cáo văn bản</b> thuần, hoặc <b>nhật ký kiểm toán</b> đầy đủ; <b>In</b> cho bạn một bản giấy.',
+        'Lệnh và mã chỉ xuất hiện cho các bước bạn thực sự hoàn thành, và mọi ảnh chụp màn hình đều đã được che thông tin nhạy cảm trên thiết bị của bạn trước khi chụp.',
+      ],
+    },
+    queue: {
+      title: 'Hàng chờ của tôi',
+      lead: 'Hàng chờ của tôi liệt kê các tác vụ mà một người quản lý dự án đã giao cho bạn, theo thứ tự: đang thực hiện trước, rồi đến việc cần làm.',
+      leadWorker: 'Tài khoản của bạn chỉ làm các tác vụ được giao, nên không có Bắt đầu một tác vụ; hàng chờ là trang chủ của bạn.',
+      leadMixed: 'Bạn cũng có thể bắt đầu các tác vụ của riêng mình; công việc được giao chỉ đơn giản là được ưu tiên trước.',
+      shot: {
+        alt: 'Hàng chờ của tôi: mỗi tác vụ được giao kèm dự án của nó, chip trạng thái, thời điểm được giao, và nút Bắt đầu hoặc Tiếp tục.',
+        caption: 'Hàng chờ của tôi. Mỗi dòng nêu tên dự án, trạng thái và thời điểm được giao. Một tác vụ chờ quá năm ngày sẽ hiển thị chip Đang chờ.',
+      },
+      howTo: 'Cách thực hiện một tác vụ được giao',
+      steps: [
+        'Mở <b>Hàng chờ của tôi</b> (hoặc phần hàng chờ ở trên cùng bảng điều khiển của bạn).',
+        'Nhấn <b>Bắt đầu</b> trên một tác vụ. WorkCoPilot lập các bước của nó đúng lúc, dựa trên những gì dự án đã học được, và mở chế độ hướng dẫn.',
+        'Làm theo các bước trên màn hình như với bất kỳ tác vụ nào. Người quản lý dự án thấy tác vụ chuyển sang <b>Đang thực hiện</b>, rồi <b>Đã hoàn thành</b> khi bạn làm xong.',
+        'Nhấn <b>Tiếp tục</b> để mở lại một tác vụ bạn đã bắt đầu. <b>Hiện đã hoàn thành</b> liệt kê những gì bạn đã làm xong.',
+      ],
+    },
+    pm: {
+      title: 'Dự án tôi quản lý',
+      lead: 'Dự án tôi quản lý là bảng điều khiển của người quản lý dự án: mọi dự án bạn quản lý kèm trạng thái của nó (đang diễn ra, tạm hoãn, hoàn thành), tiến độ, và bao nhiêu phần đã được giao.',
+      shot: {
+        alt: 'Dự án tôi quản lý: các bộ lọc trạng thái và các thẻ dự án kèm tiến độ, số lượng đã giao, đang thực hiện và chưa giao.',
+        caption: 'Dự án tôi quản lý. Lọc theo trạng thái; mỗi thẻ hiển thị tiến độ và bức tranh phân công.',
+      },
+      howTo: 'Cách tạo một dự án với trình lập kế hoạch',
+      steps: [
+        'Nhấn <b>Dự án mới</b>. Đặt tên cho nó (không bắt buộc) và mô tả kết quả, các hệ thống liên quan và hoàn thành trông như thế nào.',
+        'Nhấn <b>Lập kế hoạch dự án</b>. WorkCoPilot lập bản đồ các tác vụ theo thứ tự với một vạch đích và kiểm tra kế hoạch; một mục tiêu thực ra chỉ là một tác vụ sẽ được trả lại để bạn đặt mục tiêu rộng hơn.',
+        'Dự án mở ra với mọi tác vụ đều chưa được giao. Giao từng tác vụ cho một người (phần tiếp theo).',
+      ],
+      shotNew: {
+        alt: 'Hộp thoại Dự án mới: tên dự án, mục tiêu, và Lập kế hoạch dự án.',
+        caption: 'Dự án mới: mục tiêu là tất cả những gì trình lập kế hoạch cần.',
+      },
+    },
+    pmProject: {
+      title: 'Một dự án được quản lý',
+      lead: 'Một dự án được quản lý hiển thị bản đồ tác vụ kèm trạng thái và người được giao của từng tác vụ, các số lượng (chưa bắt đầu, đang thực hiện, đã hoàn thành), nhật ký hoạt động của dự án, và các hành động của người quản lý.',
+      shot: {
+        alt: 'Một dự án được quản lý: các chip trạng thái và người quản lý, Tạm hoãn dự án, bốn ô số lượng, các bộ lọc tác vụ, và các dòng tác vụ kèm người được giao và nút điều khiển giao việc.',
+        caption: 'Một dự án được quản lý. Mỗi dòng tác vụ hiển thị ai đang thực hiện và khi nào được giao; nút điều khiển bên phải giao hoặc chuyển nó.',
+      },
+      assign: {
+        h: 'Cách giao một tác vụ cho một người',
+        steps: [
+          'Tìm tác vụ trên bản đồ (lọc theo <b>Chưa bắt đầu</b> để xem công việc chưa giao; chip <b>2 chưa giao</b> trên ô số lượng cho bạn biết có bao nhiêu).',
+          'Chọn người trong danh sách <b>Chọn một người</b> của dòng đó. Chỉ những người thuộc luồng Thực thi hoặc Hỗn hợp mới được đưa ra.',
+          'Nhấn <b>Giao</b>. Tác vụ xuất hiện ngay trong hàng chờ của người đó, và việc giao việc được ghi vào nhật ký điều khiển kèm ai và khi nào.',
+        ],
+      },
+      move: {
+        h: 'Cách chuyển một tác vụ từ người này sang người khác',
+        steps: [
+          'Trên một tác vụ đã có người được giao, chọn người mới và nhấn <b>Chuyển</b>.',
+          'Tác vụ giữ nguyên tiến độ và phiên hướng dẫn của nó; nó rời khỏi hàng chờ của người cũ và chuyển sang hàng chờ của người mới. Nhật ký ghi lại từ ai sang ai.',
+        ],
+      },
+      hold: {
+        h: 'Cách tạm hoãn và tiếp tục một dự án',
+        steps: [
+          'Nhấn <b>Tạm hoãn dự án</b>, viết lý do (bắt buộc) và xác nhận. Dự án được gắn cờ Tạm hoãn trên mọi bảng điều khiển và trong sổ đăng ký rủi ro; mọi người vẫn giữ các tác vụ của mình.',
+          'Nhấn <b>Tiếp tục dự án</b> khi nó có thể tiếp tục. Cả hai hành động đều được ghi lại.',
+        ],
+      },
+      shotHold: {
+        alt: 'Hộp thoại Tạm hoãn dự án với lý do bắt buộc.',
+        caption: 'Tạm hoãn dự án: cần có lý do và được lưu trong nhật ký điều khiển.',
+      },
+      productivity: {
+        h: 'Cách đọc năng suất của một người',
+        steps: [
+          'Nhấp vào tên của người được giao trên bất kỳ dòng tác vụ nào.',
+          'Bảng này hiển thị số lượng của họ trên mọi tác vụ được giao cho họ (đã giao, chưa bắt đầu, đang thực hiện, đã hoàn thành), thời gian được hướng dẫn đã dùng, và việc họ đang thực hiện ngay lúc này.',
+        ],
+      },
+      shotPerson: {
+        alt: 'Bảng năng suất cho một người: bốn ô số lượng, thời gian được hướng dẫn, và tác vụ họ đang thực hiện.',
+        caption: 'Năng suất của một người, từ các tác vụ được giao cho họ.',
+      },
+    },
+    srpm: {
+      title: 'Người quản lý dự án',
+      lead: 'Người quản lý dự án là bản tổng hợp của người quản lý dự án cấp cao: mọi người quản lý dự án, các dự án họ quản lý và tình hình của từng dự án, khối lượng công việc của mỗi người quản lý, và những người có thể được giao việc.',
+      shot: {
+        alt: 'Người quản lý dự án: các ô trạng thái, các thanh khối lượng công việc theo từng người quản lý dự án, các dự án được nhóm theo người quản lý kèm hành động Chuyển, và danh sách người.',
+        caption: 'Người quản lý dự án. Các dự án được nhóm theo người quản lý sở hữu chúng; Chuyển giao một dự án cho người quản lý khác.',
+      },
+      move: {
+        h: 'Cách chuyển cả một dự án sang người quản lý dự án khác',
+        steps: [
+          'Nhấn <b>Chuyển</b> trên thẻ dự án (hoặc <b>Chuyển sang người quản lý khác</b> bên trong dự án).',
+          'Chọn người quản lý dự án mới, viết lý do (bắt buộc) và nhấn <b>Chuyển dự án</b>.',
+          'Chỉ người quản lý dự án phụ trách thay đổi. Mọi tác vụ giữ nguyên người được giao và tiến độ; việc bàn giao được ghi trong nhật ký điều khiển.',
+        ],
+      },
+      shotMove: {
+        alt: 'Hộp thoại Chuyển dự án: dự án, danh sách người quản lý dự án mới và một lý do bắt buộc.',
+        caption: 'Chuyển dự án: chọn người quản lý mới, nêu lý do.',
+      },
+      start: {
+        h: 'Cách bắt đầu một dự án và bàn giao nó cho một người quản lý',
+        steps: [
+          'Nhấn <b>Dự án mới</b>, mô tả mục tiêu, và chọn ai quản lý nó trong mục <b>Quản lý bởi</b>.',
+          'Nhấn <b>Lập kế hoạch dự án</b>. Dự án sẽ xuất hiện trong mục Dự án tôi quản lý của người quản lý đó, sẵn sàng để giao việc.',
+          'Mở <b>Năng suất</b> bên cạnh một người quản lý hoặc một người để xem số lượng và thời gian của họ.',
+        ],
+      },
+    },
+    grc: {
+      title: 'Giám sát',
+      lead: 'Giám sát là chế độ xem chỉ đọc của mọi dự án trong công ty: trạng thái, khối lượng công việc theo từng người quản lý dự án, sổ đăng ký rủi ro được tính toán, và nhật ký điều khiển đầy đủ.',
+      leadReadOnly: 'Vai trò của bạn thấy mọi thứ và không thay đổi điều gì; người quản lý dự án là người hành động.',
+      shot: {
+        alt: 'Giám sát: các ô trạng thái, thanh tỷ lệ trạng thái, khối lượng công việc theo từng người quản lý dự án, và sổ đăng ký rủi ro.',
+        caption: 'Giám sát. Các biểu đồ đọc từ cùng dữ liệu mà người quản lý dự án làm việc.',
+      },
+      risks: {
+        h: 'Cách đọc sổ đăng ký rủi ro',
+        lead: 'Rủi ro được tính toán từ dữ liệu, không bao giờ nhập bằng tay, và được sắp xếp sao cho các trường hợp chờ lâu nhất hiển thị trước. Mỗi dòng nêu tên dự án, tác vụ, người quản lý và hành động được đề xuất.',
+        items: [
+          '<b>Chờ quá lâu</b>: một tác vụ được giao hơn năm ngày trước mà vẫn chưa được bắt đầu. Đề nghị người quản lý trao đổi với người được giao hoặc chuyển tác vụ.',
+          '<b>Sẵn sàng, chưa giao cho ai</b>: một tác vụ có các phụ thuộc đã hoàn thành nhưng chưa có ai nhận. Đề nghị người quản lý giao nó.',
+          '<b>Dự án tạm hoãn</b>: một dự án mà người quản lý đã tạm hoãn, kèm lý do. Hỏi xem liệu nó có thể tiếp tục không.',
+        ],
+      },
+      shotRisks: {
+        alt: 'Sổ đăng ký rủi ro: các dòng Chờ quá lâu kèm số ngày chờ, một dòng Sẵn sàng chưa giao cho ai, và một dòng Dự án tạm hoãn, mỗi dòng kèm một hành động được đề xuất và một liên kết Mở.',
+        caption: 'Sổ đăng ký rủi ro. Mở sẽ dẫn tới dự án; người quản lý dự án thực hiện hành động.',
+      },
+      log: {
+        h: 'Cách đọc nhật ký điều khiển',
+        steps: [
+          'Cuộn đến <b>Nhật ký điều khiển</b>. Mỗi dự án được tạo, tác vụ được giao hoặc chuyển, dự án được bàn giao, tạm hoãn hoặc tiếp tục đều là một dòng kèm thời điểm, nội dung, do ai thực hiện và chi tiết (từ ai sang ai, lý do).',
+          'Lọc theo dự án bằng danh sách <b>Dự án</b>; <b>Hiện thêm</b> cho thấy các dòng cũ hơn. Nhật ký chỉ cho phép ghi thêm.',
+        ],
+      },
+    },
+    admin: {
+      title: 'Luồng và vai trò',
+      lead: 'Trong bảng điều khiển công ty, mục Nhóm, bạn thiết lập hai thứ cho mỗi người: <b>luồng làm việc</b> của họ (cách các tác vụ có hướng dẫn đến với họ) và <b>vai trò</b> của họ (họ quản lý những gì). Các thay đổi có hiệu lực ngay lập tức.',
+      shot: {
+        alt: 'Trang Nhóm của bảng điều khiển công ty: biểu mẫu Thêm một người với các ô chọn Vai trò và Luồng làm việc, và bảng người với một ô chọn Vai trò và một ô chọn Luồng cho mỗi dòng.',
+        caption: 'Nhóm. Vai trò và Luồng làm việc khi tạo, và chỉnh ngay trên từng người.',
+      },
+      howTo: 'Cách thiết lập luồng và vai trò của một người',
+      steps: [
+        'Mở bảng điều khiển công ty và nhấn <b>Nhóm</b>.',
+        'Với một người mới, nhấn <b>Thêm người</b> và chọn <b>Vai trò</b> cùng <b>Luồng làm việc</b> trước khi thêm họ. Với một người đã có, thay đổi ô chọn <b>Vai trò</b> hoặc <b>Luồng</b> trên dòng của họ.',
+        'Luồng: <b>Độc lập</b> tự bắt đầu các tác vụ của mình và không bao giờ được giao việc; <b>Thực thi</b> chỉ làm các tác vụ do người quản lý dự án giao (không có Bắt đầu một tác vụ); <b>Hỗn hợp</b> làm cả hai.',
+        'Vai trò: <b>Người quản lý dự án</b> tạo dự án và giao tác vụ; <b>Người quản lý dự án cấp cao</b> giám sát mọi người quản lý và có thể chuyển dự án giữa họ; <b>GRC</b> có quyền giám sát chỉ đọc đối với mọi dự án.',
+      ],
+    },
+  },
+  demoPage: {
+    heroBadge: 'Một phiên thực tế, từ đầu đến cuối',
+    h1: 'Xem nó hướng dẫn một tác vụ thực tế, từng bước một.',
+    lead: 'Nó đọc màn hình của bạn, chỉ ra bước tiếp theo, và phát hiện lỗi trước khi nó gây thiệt hại cho bạn.',
+    startFree: 'Bắt đầu miễn phí',
+    heroNote: 'Mất khoảng một phút để xem. Dùng thử miễn phí.',
+    loopBadge: 'Một trợ lý trực tiếp, không phải một trang hướng dẫn',
+    loopH2: 'Nó không chỉ nói cho bạn biết. Nó đi cùng bạn qua từng bước.',
+    caps: [
+      {
+        t: 'Quan sát',
+        d: 'Thấy những gì trên màn hình của bạn và theo kịp nhịp của bạn.',
+      },
+      {
+        t: 'Hướng dẫn',
+        d: 'Chỉ ra chính xác thao tác nhấp, lệnh hay giá trị, mỗi lần một bước.',
+      },
+      {
+        t: 'Sửa lỗi',
+        d: 'Phát hiện một thao tác sai ngay khi nó xảy ra và đưa bạn trở lại đúng hướng.',
+      },
+      {
+        t: 'Khắc phục',
+        d: 'Gỡ lỗi ngay trước mắt bạn và giúp bạn thoát khỏi bế tắc.',
+      },
+    ],
+    grounded: 'Dựa trên những gì thực sự có trên màn hình của bạn. Không phỏng đoán, không có bước bịa ra.',
+    finalH2: 'Giờ hãy mang đến tác vụ của riêng bạn.',
+    finalP: 'WorkCoPilot đưa nó từ bước đầu tiên đến khi hoàn thành, và trao cho bạn bản ghi lại.',
+    playerAria: 'Demo theo kịch bản của một phiên có hướng dẫn. Nó tự động phát và có thể phát lại ở phần cuối.',
+    watchingTitle: 'đang đọc màn hình của bạn',
+    watching: 'đang quan sát',
+    tag: 'Đám mây',
+    goalLabel: 'MỤC TIÊU',
+    goal: 'Thiết lập một mạng riêng (VPC) trên AWS',
+    planHead: 'Đang đọc màn hình của bạn, đây là kế hoạch',
+    sees: 'Tôi có thể thấy',
+    terminal: 'TERMINAL',
+    holdOn: 'KHOAN ĐÃ',
+    doThisNow: 'LÀM ĐIỀU NÀY NGAY',
+    exactlyHow: 'CHÍNH XÁC NHƯ THẾ NÀO',
+    stepOf: 'Bước {n} trong {total}',
+    howCount: '{n} bước',
+    doneWhen: 'hoàn thành khi {what}',
+    wrapupH: 'Bản ghi lại phiên',
+    wrapupSub: 'Một bản ghi gọn gàng về chính xác những gì bạn đã làm, sẵn sàng để lưu giữ, chia sẻ hoặc lặp lại.',
+    taskComplete: 'Tác vụ hoàn thành',
+    replay: 'Phát lại',
+    replayAria: 'Phát lại demo',
+    steps: [
+      {
+        sees: 'Bạn đang ở trong bảng điều khiển VPC',
+        step: 'Tạo VPC',
+        how: [
+          {
+            do: 'Nhấp **Create VPC**',
+            tip: 'Góc trên bên phải của bảng điều khiển VPC',
+          },
+          {
+            do: 'Chọn **VPC only** và đặt tên cho nó',
+            tip: 'ví dụ prod-vpc, một cái tên có ý nghĩa',
+          },
+          {
+            do: 'Đặt IPv4 CIDR thành **10.0.0.0/16**',
+            tip: 'Để IPv6 tắt trừ khi bạn cần nó',
+          },
+          {
+            do: 'Nhấp **Create VPC** để hoàn tất',
+            tip: 'Nó xuất hiện trong danh sách trong vòng một giây',
+          },
+        ],
+        done: 'VPC đã được liệt kê',
+      },
+      {
+        sees: 'Bạn đã gõ CIDR 10.0.0.0/24',
+        fix: {
+          say: 'Một /24 chỉ có 256 địa chỉ, quá nhỏ để mở rộng về sau.',
+          do: 'Đổi CIDR thành 10.0.0.0/16 trước khi bạn tạo nó.',
+        },
+        done: 'dải địa chỉ hiển thị 10.0.0.0/16',
+      },
+      {
+        sees: 'VPC không có đường kết nối tới internet',
+        step: 'Gắn một internet gateway',
+        how: [
+          {
+            do: 'Mở **Internet gateways** → **Create**',
+            tip: 'Thanh điều hướng bên trái, trong mục Virtual private cloud',
+          },
+          {
+            do: 'Đặt tên cho nó, rồi nhấp **Create**',
+            tip: 'ví dụ prod-igw',
+          },
+          {
+            do: 'Chọn nó → **Actions** → **Attach to VPC**',
+            tip: 'Nó phải ở trạng thái Detached thì mới gắn được',
+          },
+          {
+            do: 'Chọn VPC của bạn và nhấp **Attach**',
+            tip: 'Trạng thái chuyển sang Attached',
+          },
+        ],
+        done: 'cổng gateway hiển thị Attached',
+      },
+      {
+        sees: 'Lưu lượng vẫn chưa có lối ra',
+        step: 'Định tuyến lưu lượng đi ra tới gateway',
+        how: [
+          {
+            do: 'Mở **bảng định tuyến** của VPC',
+            tip: 'Route tables → bảng gắn với VPC của bạn',
+          },
+          {
+            do: 'Nhấp **Edit routes** → **Add route**',
+            tip: 'Mở danh sách tuyến có thể chỉnh sửa',
+          },
+          {
+            do: 'Đặt đích đến thành **0.0.0.0/0**',
+            tip: 'Tức là toàn bộ lưu lượng IPv4 đi ra',
+          },
+          {
+            do: 'Chọn mục tiêu là **internet gateway** của bạn, rồi **Save**',
+            tip: 'Chọn igw-… bạn vừa gắn vào',
+          },
+        ],
+        done: '0.0.0.0/0 trỏ tới igw',
+      },
+    ],
+    writeup: [
+      'Đã tạo một VPC với dải /16 (10.0.0.0/16) để có không gian mở rộng.',
+      'Đã phát hiện dải CIDR /24 quá nhỏ trước khi tạo và đã sửa lại.',
+      'Đã gắn một internet gateway và xác nhận nó hiển thị Attached.',
+      'Đã thêm tuyến 0.0.0.0/0 tới gateway để lưu lượng có thể đi ra.',
+    ],
+  },
+  destructiveGate: {
+    label: 'Bước có tính phá hủy.',
+    reveal: 'Tôi hiểu, hiển thị lệnh',
+  },
+  disclaimerPage: {
+    seo: {
+      title: 'Tuyên bố miễn trừ trách nhiệm - WorkCoPilot by AdmireVeda',
+      description: 'WorkCoPilot là gì và không phải là gì: hướng dẫn thực tế chứ không phải lời khuyên chuyên môn, chỉ đọc nên bạn tự quyết định chạy gì, độ chính xác ở mức tốt nhất có thể, các kiểm tra bảo mật như một lớp dự phòng, và giới hạn trách nhiệm pháp lý.',
+    },
+    hero: {
+      eyebrow: 'Tuyên bố miễn trừ · WorkCoPilot',
+      h1: 'WorkCoPilot là gì, và không phải là gì',
+      lead: 'WorkCoPilot cung cấp hướng dẫn thực tế, theo từng bước ngay trên màn hình của bạn để bạn hoàn thành công việc. Nó không hành động thay bạn, không phải lời khuyên chuyên môn, và có thể sai. Trang này nêu rõ những giới hạn đó bằng ngôn ngữ dễ hiểu để bạn biết mình đang ở đâu.',
+      lastUpdated: 'Cập nhật lần cuối',
+      tagline: 'Điều khoản bằng ngôn ngữ dễ hiểu, viết ra để được đọc',
+      templateLabel: 'Mẫu.',
+      templateNotice: 'Đây là một mẫu được cung cấp nhằm minh bạch và đang được hoàn thiện cùng cố vấn pháp lý; nó chưa phải là một thỏa thuận ràng buộc.',
+      ownership: 'WorkCoPilot, của AdmireVeda, một sản phẩm của COE Security LLC.',
+    },
+    glance: {
+      h2: 'Tổng quan nhanh',
+      cards: [
+        {
+          eyebrow: 'Hướng dẫn',
+          title: 'Trợ giúp thực tế, không phải lời khuyên chuyên môn',
+          body: 'WorkCoPilot chỉ cho bạn bước tiếp theo hợp lý ngay trên màn hình của bạn. Nó không phải là lời khuyên pháp lý, tài chính, y tế, thuế hay chuyên môn khác.',
+        },
+        {
+          eyebrow: 'Bạn thao tác',
+          title: 'Bạn quyết định chạy gì',
+          body: 'Nó chỉ đọc. Nó không bao giờ nhấp, gõ hay chạy bất cứ thứ gì thay bạn. Các bước có tính phá hủy được đánh dấu để bạn xác nhận trước khi hành động.',
+        },
+        {
+          eyebrow: 'Độ chính xác',
+          title: 'Hãy kiểm chứng trước khi dựa vào nó',
+          body: 'Hướng dẫn ở mức tốt nhất có thể. AI có thể sai hoặc lỗi thời, và các kiểm tra bảo mật tích hợp chỉ là lớp dự phòng, không phải một lời cam kết.',
+        },
+      ],
+    },
+    toc: {
+      title: 'Trên trang này',
+    },
+    sections: {
+      advice: 'Hướng dẫn, không phải lời khuyên chuyên môn',
+      control: 'Bạn là người kiểm soát, và chịu trách nhiệm',
+      accuracy: 'Độ chính xác và giới hạn của AI',
+      checks: 'Kiểm tra bảo mật là lớp dự phòng',
+      compliance: 'Tuân thủ',
+      warranty: 'Không bảo đảm và giới hạn trách nhiệm pháp lý',
+      contact: 'Liên hệ',
+    },
+    advice: {
+      p1: 'WorkCoPilot cung cấp hướng dẫn thực tế để giúp bạn hành động: nên xem gì tiếp theo, nên nhấp gì, một thiết lập có nghĩa là gì, một lệnh thường được viết ra sao. Đây là một công cụ hỗ trợ công việc.',
+      p2: 'Nó không phải là lời khuyên pháp lý, tài chính, y tế, thuế, kế toán, kỹ thuật hay chuyên môn khác, và việc sử dụng nó không tạo ra một mối quan hệ chuyên môn với chúng tôi. Khi một bước liên quan đến tiền bạc, sức khỏe, nghĩa vụ pháp lý, an toàn hay công việc được quản lý, hãy đối chiếu với yêu cầu của riêng bạn và với một chuyên gia đủ năng lực trước khi dựa vào nó.',
+      note: 'Trang này là một tuyên bố bằng ngôn ngữ dễ hiểu về các giới hạn của sản phẩm. Nó không thay thế cho việc bạn tự rà soát pháp lý về cách WorkCoPilot phù hợp với tình huống của bạn.',
+    },
+    control: {
+      lead: 'WorkCoPilot được thiết kế để chỉ đọc. Nó quan sát màn hình của bạn, với các giá trị nhạy cảm được che ngay trên thiết bị của bạn, và cho bạn biết nó sẽ làm gì tiếp theo. Nó không bao giờ nhấp, gõ, gửi hay chạy bất cứ thứ gì thay bạn.',
+      items: [
+        {
+          name: 'Bạn quyết định chạy gì',
+          how: 'Mọi hành động trong hệ thống của bạn đều là của bạn. Bạn chọn có làm theo một bước, thay đổi nó, hay dừng lại.',
+        },
+        {
+          name: 'Các bước có tính phá hủy được đánh dấu',
+          how: 'Khi một bước được đề xuất có thể xóa, ghi đè, thanh toán, gửi, hoặc khó hoàn tác theo cách khác, WorkCoPilot đánh dấu nó để bạn chủ ý xác nhận trước khi hành động.',
+        },
+        {
+          name: 'Hệ thống của bạn, quy tắc của bạn',
+          how: 'Bạn vẫn chịu trách nhiệm về việc có đúng quyền hạn, tuân theo chính sách của nhà tuyển dụng và của khách hàng của bạn, và giữ đúng điều khoản của các công cụ bạn dùng.',
+        },
+        {
+          name: 'Tài khoản của bạn',
+          how: 'Bạn chịu trách nhiệm giữ an toàn thông tin đăng nhập và cho những gì được thực hiện dưới tài khoản của bạn.',
+        },
+      ],
+    },
+    accuracy: {
+      lead: 'Hướng dẫn được tạo ra với sự trợ giúp của AI và ở mức tốt nhất có thể. AI có thể đọc sai một màn hình, bỏ lỡ ngữ cảnh, lỗi thời về một công cụ đã thay đổi, hoặc đơn giản là sai. Nó có thể nghe rất tự tin trong khi vẫn sai.',
+      items: [
+        {
+          name: 'Hãy kiểm chứng trước khi dựa vào nó',
+          how: 'Hãy đối chiếu bất cứ điều gì quan trọng với tài liệu của chính công cụ đó, hồ sơ của bạn, hoặc một người hiểu hệ thống.',
+        },
+        {
+          name: 'Màn hình được đọc, chứ không được hiểu một cách hoàn hảo',
+          how: 'WorkCoPilot đọc màn hình của bạn trên thiết bị của bạn, sau khi đã che thông tin. Chữ nhỏ, bố cục bất thường và các giá trị đã che có thể dẫn đến việc đọc sai.',
+        },
+        {
+          name: 'Công cụ thay đổi',
+          how: 'Menu, lệnh và giá trị mặc định thay đổi. Một bước đúng vào tháng trước có thể không còn đúng hôm nay.',
+        },
+        {
+          name: 'Hãy cho chúng tôi biết',
+          how: 'Nếu hướng dẫn sai hoặc không an toàn, hãy viết cho {support} để chúng tôi xem xét.',
+        },
+      ],
+    },
+    checks: {
+      p1: 'WorkCoPilot viết lệnh, mã và kịch bản theo cách an toàn theo mặc định và chạy các kiểm tra cho những vấn đề thường gặp như injection, lộ bí mật và quyền hạn quá rộng trước khi đưa chúng cho bạn. Nó cũng xem xét các dependency mà nó đề xuất.',
+      p2: 'Những kiểm tra đó là một lớp dự phòng hữu ích. Chúng không phải là một bảo đảm rằng một lệnh, kịch bản hay dependency là an toàn, đúng đắn, hay phù hợp với môi trường của bạn. Hãy rà soát những gì bạn chạy, thử nghiệm ở nơi an toàn để thử, và giữ nguyên các biện pháp bảo mật của riêng bạn.',
+    },
+    compliance: {
+      p1: 'WorkCoPilot cung cấp các biện pháp kiểm soát và bằng chứng kiểm toán hỗ trợ công việc tuân thủ của bạn: che và token hóa trên thiết bị, hoạt động chỉ đọc, chính sách dữ liệu theo từng công ty mà quản trị viên bật và khóa, cùng báo cáo và nhật ký kiểm toán theo từng phiên.',
+      p2: 'Những biện pháp kiểm soát đó không làm bạn tuân thủ, và chúng tôi không tuyên bố rằng sản phẩm được chứng nhận theo bất kỳ khuôn khổ nào. Việc tuân thủ do tổ chức của bạn đạt được và nắm giữ, phối hợp với các kiểm toán viên và cố vấn của riêng mình. Xem <security>trang Bảo mật</security> để biết các biện pháp kiểm soát ánh xạ đến các khuôn khổ phổ biến như thế nào, và <privacy>Chính sách Quyền riêng tư</privacy> để biết dữ liệu của bạn được xử lý ra sao.',
+    },
+    warranty: {
+      p1: 'WorkCoPilot được cung cấp bởi AdmireVeda, một sản phẩm của {entity}, là pháp nhân đứng sau dịch vụ. Trong phần này, “chúng tôi” có nghĩa là {entity}, AdmireVeda và WorkCoPilot cùng nhau.',
+      p2: 'WorkCoPilot được cung cấp nguyên trạng và theo mức khả dụng. Trong phạm vi pháp luật cho phép, chúng tôi không đưa ra bảo đảm nào, dù rõ ràng hay ngụ ý, về hướng dẫn, bao gồm việc nó chính xác, đầy đủ, cập nhật, phù hợp cho một mục đích cụ thể, hay không có lỗi.',
+      p3: 'Trong phạm vi pháp luật cho phép, chúng tôi không chịu trách nhiệm về tổn thất hay thiệt hại phát sinh từ những hành động bạn thực hiện, hoặc không thực hiện, dựa trên hướng dẫn, bao gồm mất dữ liệu, mất doanh thu, thời gian ngừng hoạt động, hay chi phí khôi phục. Bạn hành động theo hướng dẫn theo quyết định của riêng mình, và bạn vẫn chịu trách nhiệm về kết quả trong hệ thống của bạn.',
+      p4: 'Không điều gì trên trang này giới hạn các quyền không thể bị giới hạn theo pháp luật áp dụng cho bạn.',
+      note: '<b>Vì sao có mục này.</b> Viết ra một trang đầy thuật ngữ pháp lý rậm rạp thì dễ. Chúng tôi muốn nói rõ ràng hơn: WorkCoPilot là một hướng dẫn viên không bao giờ hành động thay bạn, và phán đoán cùng trách nhiệm vẫn thuộc về bạn.',
+    },
+    contact: {
+      inquiries: 'Câu hỏi pháp lý, quyền riêng tư và bảo mật:',
+      support: 'Hỗ trợ sản phẩm và thanh toán:',
+    },
+    cta: {
+      ariaLabel: 'Các trang liên quan',
+      privacy: 'Chính sách Quyền riêng tư',
+      terms: 'Điều khoản',
+      security: 'Bảo mật',
+      contact: 'Liên hệ',
+      back: 'Về WorkCoPilot',
+    },
+  },
+  downloadMenu: {
+    triggerTip: 'Tải phiên này xuống',
+    menuAria: 'Định dạng tải xuống',
+    heading: 'Tải xuống dạng',
+  },
+  dpaPage: {
+    seo: {
+      title: 'Phụ lục Xử lý Dữ liệu - WorkCoPilot by AdmireVeda',
+      description: 'Tóm tắt DPA của WorkCoPilot: vai trò bên kiểm soát và bên xử lý, các loại dữ liệu, toàn bộ vòng đời dữ liệu theo từng loại dữ liệu, biện pháp bảo vệ, bên xử lý phụ, lưu giữ và xóa, cùng cách yêu cầu một bản DPA đã ký.',
+    },
+    hero: {
+      eyebrow: 'Phụ lục Xử lý Dữ liệu',
+      title: 'WorkCoPilot xử lý dữ liệu thay bạn như thế nào',
+      intro: 'Tóm tắt về ai quyết định điều gì, những dữ liệu nào liên quan, các biện pháp bảo vệ đang áp dụng, và cách lấy một phụ lục đã ký cho tổ chức của bạn.',
+      tagline: 'Dạng tóm tắt, bản nháp mẫu',
+    },
+    glance: [
+      {
+        eyebrow: 'Vai trò',
+        title: 'Bạn kiểm soát, chúng tôi xử lý',
+        body: 'Đối với nội dung các phiên của bạn, bạn là bên kiểm soát và {entity} là bên xử lý, hành động theo chỉ dẫn của bạn.',
+      },
+      {
+        eyebrow: 'Ranh giới dữ liệu',
+        title: 'Khóa AI của riêng bạn vẫn ở lại với bạn',
+        body: 'Một công ty hoặc người dùng có thể chạy WorkCoPilot trên khóa AI của riêng mình, giúp giữ dữ liệu được quản lý nằm trong ranh giới nhà cung cấp của chính họ.',
+      },
+      {
+        eyebrow: 'Lưu giữ',
+        title: 'Bạn đặt thời gian lưu giữ',
+        body: 'Thời gian lưu giữ có thể cấu hình bởi quản trị viên nền tảng hoặc công ty của bạn, và các phiên có thể bị xóa bất cứ lúc nào.',
+      },
+    ],
+    sections: {
+      scope: 'Phạm vi và cách đọc tài liệu này',
+      roles: 'Vai trò bên kiểm soát và bên xử lý',
+      data: 'Các loại dữ liệu và mục đích',
+      boundary: 'Ranh giới dữ liệu và khóa AI của riêng bạn',
+      safeguards: 'Biện pháp bảo vệ và biện pháp bảo mật',
+      lifecycle: 'Vòng đời dữ liệu',
+      subprocessors: 'Bên xử lý phụ',
+      retention: 'Lưu giữ và xóa',
+      rights: 'Hỗ trợ, sự cố và kiểm toán',
+      transfers: 'Chuyển dữ liệu quốc tế',
+      request: 'Yêu cầu một bản DPA đã ký',
+    },
+    scope: {
+      p1: 'Đây là một Phụ lục Xử lý Dữ liệu dạng tóm tắt cho WorkCoPilot. Nó mô tả cách chúng tôi xử lý dữ liệu cá nhân thay mặt cho khách hàng sử dụng dịch vụ. Tài liệu này nên được đọc cùng với <terms>Điều khoản Dịch vụ</terms> và <privacy>Chính sách Quyền riêng tư</privacy>. Một bản đã ký cho tổ chức của bạn có sẵn khi có yêu cầu (xem phần cuối).',
+    },
+    roles: {
+      items: [
+        {
+          name: 'Khách hàng là bên kiểm soát',
+          how: 'Đối với nội dung của các phiên được hướng dẫn (nội dung màn hình, văn bản đã gõ, tài liệu đính kèm và các báo cáo tạo ra từ chúng), khách hàng quyết định mục đích và phương tiện xử lý và là bên kiểm soát.',
+        },
+        {
+          name: '{entity} là bên xử lý',
+          how: '{entity} chỉ xử lý nội dung đó để cung cấp dịch vụ, theo các chỉ dẫn được ghi thành văn bản của khách hàng, đó là Điều khoản, phụ lục này, và các thiết lập mà khách hàng cùng các quản trị viên của họ chọn.',
+        },
+        {
+          name: 'Vai trò của riêng chúng tôi',
+          how: 'Đối với thông tin tài khoản, đăng nhập và thanh toán mà chúng tôi cần để vận hành mối quan hệ với bạn, chúng tôi hành động với tư cách bên kiểm soát độc lập, như được mô tả trong Chính sách Quyền riêng tư.',
+        },
+      ],
+    },
+    data: {
+      items: [
+        {
+          name: 'Dữ liệu tài khoản',
+          how: 'Tên hoặc địa chỉ email và thông tin vai trò của người dùng và quản trị viên của khách hàng.',
+        },
+        {
+          name: 'Nội dung phiên',
+          how: 'Những gì có trên màn hình của người dùng và những gì họ gõ hoặc dán trong một phiên được hướng dẫn, cùng văn bản từ các tài liệu đính kèm. Các giá trị nhạy cảm được loại bỏ hoặc token hóa trên thiết bị của người dùng trước khi bất cứ thứ gì được gửi đi.',
+        },
+        {
+          name: 'Hồ sơ phiên',
+          how: 'Báo cáo và nhật ký kiểm toán theo từng phiên, cùng lịch sử phiên của người dùng.',
+        },
+        {
+          name: 'Dữ liệu sử dụng',
+          how: 'Số phút được hướng dẫn và số lượng phiên, để có thể áp dụng hạn mức của một gói.',
+        },
+        {
+          name: 'Bài học được khái quát hóa',
+          how: 'Để giữ cho hướng dẫn luôn cập nhật, các bài học được khái quát hóa, đã ẩn danh về cách một công cụ hay tác vụ hiện hoạt động (ví dụ, một thiết lập đã chuyển sang một menu mới) có thể được lưu giữ. Chúng không chứa dữ liệu cá nhân, bí mật, hình ảnh màn hình hay nội dung tài liệu. Đối với một công ty, chúng được lưu trong cơ sở tri thức của riêng công ty đó và chỉ dùng cho thành viên của công ty đó; đối với người dùng cá nhân, chúng được lưu trong cơ sở tri thức của nền tảng để cải thiện dịch vụ.',
+        },
+        {
+          name: 'Chủ thể dữ liệu',
+          how: 'Nhân viên, nhà thầu và những người dùng được ủy quyền khác của khách hàng, và bất kỳ cá nhân nào có dữ liệu xuất hiện trên các màn hình mà khách hàng chọn chia sẻ, trong giới hạn của Chính sách Sử dụng được Chấp nhận.',
+        },
+        {
+          name: 'Mục đích',
+          how: 'Để cung cấp, bảo mật và hỗ trợ dịch vụ làm việc có hướng dẫn cho khách hàng, và để áp dụng gói cùng thiết lập của khách hàng.',
+        },
+      ],
+      note: 'Khách hàng không nên gửi dữ liệu mà họ không được ủy quyền xử lý. Chính sách Quyền riêng tư liệt kê các loại dữ liệu mà dịch vụ được thiết kế để phục vụ.',
+    },
+    boundary: {
+      p1: 'Theo mặc định, hướng dẫn được tạo ra bởi một nhà cung cấp AI dùng các thỏa thuận của riêng nền tảng. Một công ty, hoặc một người dùng cá nhân, có thể thay vào đó chạy WorkCoPilot trên khóa AI của riêng mình. Trong trường hợp đó, dữ liệu được quản lý được xử lý bên trong mối quan hệ nhà cung cấp của chính khách hàng, chịu điều khoản của nhà cung cấp đó, và không bị âm thầm chuyển hướng đi nơi khác.',
+      p2: 'Khách hàng vẫn chịu trách nhiệm về các điều khoản và thiết lập của bất kỳ khóa nhà cung cấp nào mà họ mang theo.',
+    },
+    safeguards: {
+      items: [
+        {
+          name: 'Bảo vệ trước khi gửi',
+          how: 'Các giá trị nhạy cảm như dữ liệu cá nhân, dữ liệu sức khỏe, bí mật và khóa được loại bỏ hoặc token hóa trên thiết bị của người dùng trước khi bất cứ thứ gì được gửi đi, và khách hàng có thể thêm từ ngữ và mẫu của riêng họ. Đây là một biện pháp bảo vệ nhằm giảm những gì rời khỏi thiết bị; nó không thay thế cho nghĩa vụ ủy quyền và giảm thiểu dữ liệu của chính khách hàng.',
+        },
+        {
+          name: 'Chỉ đọc',
+          how: 'Dịch vụ không bao giờ nhấp, gõ hay chạy bất cứ thứ gì trong hệ thống của khách hàng.',
+        },
+        {
+          name: 'Mã hóa khi lưu trữ',
+          how: 'Các khóa, bí mật và tạo phẩm báo cáo được lưu trữ đều được mã hóa khi lưu trữ bằng AES-256-GCM.',
+        },
+        {
+          name: 'Mã hóa khi truyền',
+          how: 'Lưu lượng giữa các thiết bị và dịch vụ được bảo vệ bằng TLS.',
+        },
+        {
+          name: 'Kiểm soát truy cập',
+          how: 'Truy cập theo vai trò. Quản trị viên công ty đặt và khóa chính sách dữ liệu cho thành viên của họ và xem lại các phiên của chính thành viên của mình.',
+        },
+        {
+          name: 'Nhật ký kiểm toán',
+          how: 'Mỗi phiên có một nhật ký kiểm toán về những gì đã được truyền đi, có sẵn cho người dùng và, đối với tài khoản công ty, cho quản trị viên của họ.',
+        },
+        {
+          name: 'Bằng chứng, không phải chứng nhận',
+          how: 'Những biện pháp kiểm soát này cung cấp cho khách hàng bằng chứng hỗ trợ công việc tuân thủ của chính họ. Chúng không làm cho khách hàng tuân thủ, và chúng tôi không tuyên bố một chứng nhận ở đây.',
+        },
+      ],
+    },
+    lifecycle: {
+      p1: 'Bảng này theo dõi từng loại dữ liệu từ lúc nó xuất hiện đến lúc nó biến mất: nơi nó được lưu giữ, lưu trong bao lâu, và điều gì xóa nó đi.',
+      caption: 'Vòng đời dữ liệu theo từng loại dữ liệu: nơi lưu trữ, thời gian lưu giữ, và cách xóa',
+      columns: ['Loại dữ liệu', 'Nơi lưu trữ', 'Lưu giữ', 'Xóa'],
+      rows: [
+        [
+          'Khung hình màn hình',
+          'Được đọc trên thiết bị của người dùng. Bất kỳ dòng nào chứa giá trị nhạy cảm đều bị bôi đen trên thiết bị, sau đó một khung hình thu nhỏ được gửi đi để hướng dẫn bước hiện tại. Khung hình thô không được giữ làm tài liệu nguồn lưu trữ.',
+          'Không lưu giữ. Một khung hình được dùng cho bước mà nó thuộc về rồi bị loại bỏ. Ảnh chụp màn hình cột mốc đã che, nếu được bật, nằm trong báo cáo phiên và theo thời gian lưu giữ của báo cáo đó.',
+          'Không có gì để xóa đối với khung hình thô. Ảnh chụp màn hình cột mốc được xóa cùng với báo cáo phiên.',
+        ],
+        [
+          'Lời nhắc và văn bản đã gõ hoặc dán',
+          'Các giá trị nhạy cảm được thay bằng token trên thiết bị trước khi bất cứ thứ gì được gửi đi. Giá trị thật vẫn ở trên thiết bị, và câu trả lời được dựng lại tại đó. Văn bản được quản lý được ghi trong nhật ký kiểm toán của phiên như những gì đã được truyền đi.',
+          'Được giữ cùng phiên: cho đến khi người dùng hoặc quản trị viên xóa nó, hoặc cho đến khi cửa sổ lưu giữ tự động đã cấu hình dọn sạch nó.',
+          'Bị xóa khi phiên bị xóa.',
+        ],
+        [
+          'Báo cáo phiên',
+          'Được lưu trữ bởi dịch vụ, mỗi phiên một báo cáo. Các tạo phẩm báo cáo, bao gồm ảnh chụp màn hình cột mốc đã che, được mã hóa khi lưu trữ bằng AES-256-GCM.',
+          'Có thể cấu hình. Theo mặc định, một phiên được giữ cho đến khi người dùng hoặc quản trị viên xóa nó; một cửa sổ tự động có thể dọn sạch các phiên cũ hơn số ngày đã chọn.',
+          'Việc xóa một phiên sẽ xóa cùng lúc báo cáo, ảnh chụp màn hình cột mốc và nhật ký kiểm toán của nó, trong một thao tác.',
+        ],
+        [
+          'Khóa và bí mật',
+          'Các khóa AI mà khách hàng mang theo và các khóa cùng bí mật được lưu trữ của riêng dịch vụ đều được mã hóa khi lưu trữ bằng AES-256-GCM. Bí mật được phát hiện trên màn hình hoặc trong văn bản bị loại bỏ trên thiết bị và không bao giờ được chúng tôi gửi đi hay lưu trữ.',
+          'Một khóa đã cấu hình được giữ chừng nào nó còn được sử dụng.',
+          'Bị xóa khi khách hàng gỡ bỏ hoặc thay thế khóa, hoặc khi tài khoản bị xóa.',
+        ],
+        [
+          'Nhật ký kiểm toán',
+          'Được lưu cùng phiên của nó. Nó ghi lại những gì đã được truyền đi trong phiên, để người dùng và, đối với tài khoản công ty, quản trị viên của họ có thể thấy chính xác những gì đã rời khỏi thiết bị.',
+          'Giống như phiên mà nó thuộc về: cho đến khi bị xóa, hoặc cho đến khi cửa sổ tự động đã cấu hình dọn sạch phiên.',
+          'Bị xóa cùng phiên. Việc xóa một phiên sẽ xóa nhật ký kiểm toán của nó cùng với báo cáo và ảnh chụp màn hình.',
+        ],
+        [
+          'Bài học được khái quát hóa',
+          'Tài khoản công ty: trong cơ sở tri thức của riêng công ty đó, chỉ dùng cho thành viên của công ty. Tài khoản cá nhân: trong cơ sở tri thức của nền tảng. Chúng chứa các sự kiện được khái quát hóa, đã ẩn danh về cách các công cụ và tác vụ hiện hoạt động, và không có dữ liệu cá nhân, bí mật, hình ảnh màn hình hay nội dung tài liệu.',
+          'Được giữ chừng nào chúng còn hữu ích cho hướng dẫn, và được thay thế khi các công cụ thay đổi. Chúng không phải là nội dung phiên, nên việc xóa một phiên không ảnh hưởng đến chúng.',
+          'Cơ sở tri thức của một công ty bị xóa cùng tài khoản công ty. Để nó được xóa sớm hơn, hãy viết cho đầu mối liên hệ bên dưới.',
+        ],
+        [
+          'Thông tin tài khoản và thanh toán',
+          'Thông tin tài khoản được dịch vụ lưu giữ. Thông tin thanh toán được nhập vào và lưu giữ bởi Stripe, không phải bởi chúng tôi.',
+          'Trong suốt vòng đời của tài khoản, và sau đó chỉ trong thời gian mà một nghĩa vụ pháp lý về việc lưu giữ hồ sơ yêu cầu.',
+          'Bị xóa theo yêu cầu sau khi tài khoản kết thúc, tùy thuộc vào nghĩa vụ pháp lý đó.',
+        ],
+      ],
+      note: '<b>Đây là gì.</b> Một mô tả về cách sản phẩm xử lý dữ liệu hiện nay. Khi điều gì đó nằm trong quyền kiểm soát của khách hàng, chẳng hạn cửa sổ lưu giữ hoặc ảnh chụp màn hình cột mốc, thiết lập của chính khách hàng sẽ quyết định.',
+    },
+    subprocessors: {
+      p1: 'Khách hàng đưa ra ủy quyền chung cho các bên xử lý phụ cần thiết để cung cấp dịch vụ. Hiện nay bao gồm:',
+      items: [
+        {
+          name: 'Xử lý AI',
+          how: 'Hướng dẫn được tạo ra bởi một nhà cung cấp AI lớn theo điều khoản của riêng nhà cung cấp đó. Chỉ nội dung được quản lý, với các giá trị nhạy cảm đã được loại bỏ hoặc token hóa trên thiết bị, mới đến được đó. Khi khách hàng chạy trên khóa của riêng mình, mối quan hệ với nhà cung cấp đó là của khách hàng và nằm ngoài danh sách này.',
+        },
+        {
+          name: 'Thanh toán',
+          how: 'Stripe xử lý thanh toán và lưu giữ thông tin thanh toán. Chúng tôi không nhận số thẻ.',
+        },
+        {
+          name: 'Lưu trữ máy chủ',
+          how: 'Nhà cung cấp lưu trữ đám mây vận hành dịch vụ và lưu trữ hồ sơ phiên thay mặt chúng tôi.',
+        },
+      ],
+      p2: 'Danh sách hiện tại, cùng tên các pháp nhân và vai trò mà mỗi bên đảm nhận, có sẵn khi có yêu cầu. Chúng tôi thông báo cho khách hàng về những thay đổi trọng yếu đối với danh sách đó, để họ có thể nêu phản đối hợp lý, và chúng tôi vẫn chịu trách nhiệm về việc các bên xử lý phụ của mình xử lý dữ liệu khách hàng.',
+      note: '<b>Hãy yêu cầu danh sách.</b> Để nhận danh sách bên xử lý phụ hiện tại, hoặc một Phụ lục Xử lý Dữ liệu đã ký cho tổ chức của bạn, hãy viết cho <a>{contact}</a>.',
+    },
+    retention: {
+      items: [
+        {
+          name: 'Có thể cấu hình',
+          how: 'Thời gian lưu giữ do quản trị viên nền tảng và, đối với tài khoản công ty, do công ty đặt. Một cửa sổ tự động có thể dọn sạch các phiên cũ hơn số ngày đã chọn.',
+        },
+        {
+          name: 'Theo yêu cầu',
+          how: 'Người dùng hoặc quản trị viên công ty có thể xóa các phiên bất cứ lúc nào. Việc xóa một phiên sẽ xóa cùng lúc hồ sơ phiên, ảnh chụp màn hình cột mốc và nhật ký kiểm toán của nó.',
+        },
+        {
+          name: 'Không lưu giữ',
+          how: 'Tài liệu nguồn đã tải lên và khung hình màn hình thô không được giữ làm tài liệu nguồn lưu trữ.',
+        },
+        {
+          name: 'Bài học',
+          how: 'Các bài học được khái quát hóa, đã ẩn danh về cách các công cụ hoạt động không phải là nội dung phiên và không bị xóa khi xóa một phiên. Cơ sở tri thức của một công ty bị xóa cùng tài khoản công ty, hoặc sớm hơn khi có yêu cầu.',
+        },
+        {
+          name: 'Khi chấm dứt',
+          how: 'Theo yêu cầu sau khi thỏa thuận kết thúc, chúng tôi xóa hoặc trả lại nội dung của khách hàng, tùy thuộc vào bất kỳ nghĩa vụ pháp lý nào về việc lưu giữ hồ sơ.',
+        },
+      ],
+    },
+    rights: {
+      items: [
+        {
+          name: 'Yêu cầu của chủ thể dữ liệu',
+          how: 'Chúng tôi sẽ giúp khách hàng đáp ứng các yêu cầu truy cập, chỉnh sửa, xóa và xuất dữ liệu, và sẽ chuyển tiếp một yêu cầu mà chúng tôi nhận được liên quan đến nội dung của khách hàng.',
+        },
+        {
+          name: 'Thông báo sự cố',
+          how: 'Chúng tôi sẽ thông báo cho khách hàng không chậm trễ quá mức sau khi xác nhận một sự cố dữ liệu cá nhân ảnh hưởng đến nội dung của họ, trong vòng <ph>cửa sổ thông báo, sẽ được xác nhận cùng cố vấn pháp lý</ph>.',
+        },
+        {
+          name: 'Bằng chứng và kiểm toán',
+          how: 'Chúng tôi sẽ cung cấp thông tin hợp lý về các biện pháp kiểm soát của mình để khách hàng có thể kiểm tra rằng phụ lục này được tuân thủ, ưu tiên dùng tài liệu và nhật ký kiểm toán theo từng phiên trước.',
+        },
+        {
+          name: 'Chỉ dẫn',
+          how: 'Chúng tôi sẽ thông báo cho khách hàng nếu chúng tôi tin rằng một chỉ dẫn sẽ vi phạm pháp luật áp dụng cho chúng tôi.',
+        },
+      ],
+    },
+    transfers: {
+      p1: 'Khi dữ liệu cá nhân của khách hàng được chuyển qua biên giới, cơ chế chuyển dữ liệu sẽ là <ph>cơ chế chuyển dữ liệu và địa điểm xử lý, sẽ được xác nhận cùng cố vấn pháp lý</ph>. Chúng tôi sẽ không bịa ra hay ngụ ý một cơ chế chưa được thiết lập.',
+    },
+    request: {
+      p1: 'Để nhận một Phụ lục Xử lý Dữ liệu đã ký cho tổ chức của bạn, hoặc để đặt một câu hỏi về bảo mật, quyền riêng tư hay pháp lý, hãy viết cho <a>{contact}</a>. Vui lòng kèm theo tên công ty của bạn, người liên hệ sẽ ký, và bất kỳ điều khoản cụ thể nào mà đội ngũ pháp lý của bạn cần chúng tôi rà soát.',
+      note: '<b>Trình bày trung thực.</b> Trang này là một mẫu tóm tắt. Phụ lục đã ký, khi có sẵn, là tài liệu ràng buộc.',
+    },
+    links: {
+      privacy: 'Chính sách Quyền riêng tư',
+      terms: 'Điều khoản Dịch vụ',
+      security: 'Bảo mật',
+    },
+  },
+  enterprisePage: {
+    art: {
+      sop: 'SOP',
+      playbook: 'PLAYBOOK',
+      appGuide: 'HƯỚNG DẪN ỨNG DỤNG',
+      tenant: 'TENANT CỦA BẠN',
+      corrected: 'Sai trường. Đã sửa.',
+      sharper: 'NGÀY CÀNG SẮC BÉN',
+    },
+    hero: {
+      eyebrow: 'Dành cho doanh nghiệp & đội nhóm',
+      h1: 'Cầm tay chỉ việc cho từng bước. <hl>Được huấn luyện theo cách công ty bạn vận hành.</hl>',
+      sub: 'Nó quan sát màn hình của từng người và dẫn họ qua đúng bước tiếp theo trong chính các ứng dụng của bạn, sửa một bước đi sai ngay khi nó xảy ra. Tải lên các SOP và playbook của bạn, và mọi bước đều theo đúng cách công ty bạn thực sự làm việc. Được thiết kế để chỉ đọc: nó không bao giờ nhấp hay gõ thay người của bạn.',
+      ctaLearn: 'Xem cách nó học về công ty bạn',
+      proofAria: 'Tổng quan nhanh',
+      proof: [
+        'Quan sát màn hình và cầm tay chỉ việc qua từng bước chính xác',
+        'Phát hiện một bước đi sai và sửa nó theo thời gian thực',
+        'Dựa trên các playbook của bạn, riêng tư trong tenant của bạn',
+        'Kiểm tra từng bước theo chính sách bảo mật thành văn của bạn',
+      ],
+    },
+    cta: {
+      quote: 'Nhận báo giá doanh nghiệp',
+      dpa: 'Đọc DPA',
+    },
+    learn: {
+      eyebrow: 'Điểm khác biệt',
+      h2: 'Nó học về doanh nghiệp <hl>của bạn</hl>. Ứng dụng của bạn, dữ liệu của bạn, playbook của bạn.',
+      lead: 'Các trợ lý chung chung biết về thế giới. WorkCoPilot biết về công ty bạn: ứng dụng của bạn, các trường của bạn, các phê duyệt của bạn, các tên gọi của bạn. Tải lên một lần, và mọi bước trên màn hình đều nói ngôn ngữ của bạn, sắc bén hơn khi tri thức của bạn lớn lên.',
+      loopAria: 'Cách WorkCoPilot học về công ty bạn',
+      steps: [
+        {
+          t: 'Tải lên tri thức của bạn',
+          d: 'Quản trị viên của bạn tải các SOP, playbook, hướng dẫn ứng dụng và chính sách lên một lần. Mọi thành viên đều kế thừa chúng.',
+        },
+        {
+          t: 'Mọi bước đều dựa trên đó',
+          d: 'Các bước dùng tên ứng dụng của bạn, các trường của bạn, chuỗi phê duyệt của bạn. Không phải một hướng dẫn chung chung.',
+        },
+        {
+          t: 'Nó cầm tay chỉ việc, ngay trên màn hình thật',
+          d: 'Nó chỉ vào đúng bước tiếp theo trong các ứng dụng của bạn và sửa một bước đi sai ngay lập tức. Chỉ đọc: nó không bao giờ nhấp hay gõ thay bất kỳ ai.',
+        },
+        {
+          t: 'Nó càng sắc bén khi bạn bổ sung thêm',
+          d: 'Thêm một playbook hoặc sửa một SOP, và phiên tiếp theo sẽ phản ánh điều đó. Chỉ dành cho công ty bạn.',
+        },
+      ],
+    },
+    ba: {
+      aria: 'Cùng một bước, có và không có tri thức công ty của bạn',
+      q: '"Tạo yêu cầu thay đổi."',
+      without: {
+        tag: 'Không có tri thức của bạn',
+        a: 'Mở hệ thống ticketing của bạn, tạo một yêu cầu thay đổi mới, điền các trường bắt buộc, đính kèm phê duyệt, gửi đi.',
+        foot: 'Đúng, nhưng người của bạn vẫn phải biết hệ thống nào, trường nào, phê duyệt nào.',
+      },
+      with: {
+        tag: 'Dựa trên công ty bạn',
+        a: 'Trong ServiceNow: <b>Change > Create New > Standard</b>. Đặt <b>Assignment group</b> thành <b>Platform-Ops</b>, mẫu <b>CHG-STD-07</b>, đính kèm phê duyệt CAB, Submit. Từ <b>Change Playbook, mục 3.2</b> của bạn.',
+        foot: 'Nó cầm tay chỉ việc qua từng cú nhấp và cảnh báo mẫu sai trước khi nó được gửi đi.',
+      },
+      note: 'Ví dụ minh họa. Các bước của bạn đến từ tri thức và ứng dụng do chính bạn tải lên.',
+    },
+    trust: {
+      title: 'Riêng tư trong tenant của bạn. Do quản trị viên của bạn kiểm soát.',
+      sub: 'Tri thức của bạn làm cho chính người của bạn giỏi hơn, và không của ai khác.',
+      items: [
+        {
+          t: 'Ở lại bên trong công ty bạn',
+          d: 'Chỉ hướng dẫn cho chính thành viên của bạn. Không bao giờ huấn luyện một mô hình dùng chung hay vươn tới công ty khác.',
+        },
+        {
+          t: 'Bạn giữ bản sao',
+          d: 'Xem những gì đã được tải lên và tải tri thức của bạn xuống bất cứ lúc nào.',
+        },
+        {
+          t: 'Tải lên lại hoặc thay thế',
+          d: 'Gộp thêm tài liệu mới hoặc thay toàn bộ tập hợp.',
+        },
+        {
+          t: 'Xóa sạch khi bạn chọn',
+          d: 'Việc xóa sạch cần một lý do, được ghi lại cùng ai, cái gì, khi nào và tại sao.',
+        },
+      ],
+    },
+    kinds: {
+      aria: 'Những gì bạn có thể tải lên',
+      label: 'Mang theo',
+      items: [
+        'SOP',
+        'Runbook',
+        'Playbook',
+        'Hướng dẫn chi tiết ứng dụng',
+        'Chính sách',
+        'Từ điển dữ liệu',
+        'Sơ đồ quy trình',
+        'Danh sách kiểm tra',
+        'Mẫu',
+        'Kỹ năng xuất ra từ bất kỳ AI nào',
+      ],
+    },
+    groups: {
+      security: {
+        kicker: 'Bảo mật & quyền riêng tư',
+        title: 'Không gì nhạy cảm rời khỏi thiết bị mà chưa được bảo vệ.',
+        lead: 'Bảo vệ được bật ngay từ giây đầu tiên và áp dụng cho mọi người. Các giá trị nhạy cảm được che trước khi bất cứ thứ gì được gửi đi.',
+        features: [
+          {
+            t: 'Che dữ liệu trên thiết bị, bật theo mặc định',
+            d: 'Dữ liệu cá nhân, khóa, số thẻ và ID được che trên thiết bị và hiển thị dưới dạng <code>[REDACTED]</code>. Bật cho mọi người, khóa bởi chính sách.',
+          },
+          {
+            t: 'Nhật ký kiểm toán theo từng phiên',
+            d: 'Mỗi phiên ghi lại những gì đã được gửi, đọc, lọc và gắn cờ. Lấy nó bất cứ lúc nào.',
+          },
+          {
+            t: 'Kiểm tra SAST và dependency tích hợp sẵn',
+            d: 'Mã trong một phiên được quét tìm điểm yếu và các dependency của nó được đối chiếu với cơ sở dữ liệu OSV trước khi bạn chạy nó.',
+          },
+          {
+            t: 'Mã hóa khi lưu trữ',
+            d: 'Các tạo phẩm phiên và dữ liệu công ty được mã hóa khi lưu trữ, với các khóa bạn có thể xoay vòng.',
+          },
+          {
+            t: 'MFA bắt buộc (TOTP)',
+            d: 'Mọi tài khoản đều dùng một ứng dụng xác thực. Đăng nhập bằng mật khẩu, SSO và mạng xã hội đều phải qua cùng một yếu tố thứ hai.',
+          },
+          {
+            t: 'Ẩn khỏi chia sẻ màn hình',
+            d: 'Lớp phủ trên màn hình nền nằm ngoài các buổi chia sẻ màn hình và bản ghi theo mặc định.',
+          },
+        ],
+      },
+      governance: {
+        kicker: 'Quản trị / DLP',
+        title: 'Một chính sách công ty. Mọi thành viên đều kế thừa.',
+        lead: 'Chính sách bảo mật thành văn của bạn trở thành bộ quy tắc mà mọi bước được kiểm tra theo đó. Bạn quyết định những gì có thể rời khỏi thiết bị, hồ sơ được giữ trong bao lâu, và ai có thể xóa những gì.',
+        features: [
+          {
+            t: 'Chính sách bảo mật thành văn của bạn, được thực thi ngay khi nó hướng dẫn',
+            d: 'Dán chính sách bảo mật của riêng công ty bạn và quản trị viên của bạn kích hoạt các quy tắc của nó. Khi đó mọi bước, kết quả và tài liệu đều được kiểm tra theo đó trên máy chủ: một bước bị cấm hoặc một bước bắt buộc bị bỏ qua sẽ được gắn cờ ngay tại chỗ và trích dẫn tới chính sách của bạn theo tên và mục (ví dụ <code>Acceptable Use Policy §4.2</code>), với phương án tuân thủ đặt bên cạnh và một dòng trong nhật ký kiểm toán. Nó gắn cờ và trích dẫn, nó không bao giờ viết lại văn bản của bạn.',
+          },
+          {
+            t: 'Quy tắc xóa tùy chỉnh',
+            d: 'Thêm các mẫu và từ ngữ của riêng bạn để che hoặc chặn. Thành viên không thể làm chúng yếu đi.',
+          },
+          {
+            t: 'Cửa sổ lưu giữ',
+            d: 'Đặt thời gian lưu giữ hồ sơ phiên và tài liệu. Hết hạn là tự động.',
+          },
+          {
+            t: 'Giám sát thành viên',
+            d: 'Quản trị viên có thể lấy báo cáo và nhật ký kiểm toán của bất kỳ phiên nào của thành viên, đang diễn ra hay đã hoàn tất.',
+          },
+          {
+            t: 'Hành động phá hủy có truy trách nhiệm',
+            d: 'Việc xóa hoặc xóa sạch bất cứ thứ gì đều cần một lý do, được ghi lại cùng ai, cái gì, khi nào và tại sao.',
+          },
+          {
+            t: 'Khóa AI theo từng công ty, hoặc tự mang khóa của bạn',
+            d: 'Định tuyến qua các khóa của riêng công ty bạn hoặc tự mang khóa của bạn. Không gì được chia sẻ giữa các công ty.',
+          },
+        ],
+      },
+      alerts: {
+        kicker: 'Cảnh báo bảo mật & SOC',
+        title: 'Biết ngay khoảnh khắc dữ liệu nhạy cảm được nhập vào. Chuyển tiếp nó tới SOC của bạn.',
+        lead: 'Khi một thành viên nhập PII hoặc PHI, nó được che trên thiết bị của họ và quản trị viên của bạn được cho biết ai, ở đâu và loại gì, không bao giờ là các giá trị. Chuyển tiếp những cảnh báo đó vào các công cụ SIEM, SOAR và chat mà bạn đã dùng.',
+        destinationsAria: 'Các đích đến được hỗ trợ',
+        features: [
+          {
+            t: 'Ai, ở đâu, cái gì, khi nào',
+            d: 'Mỗi cảnh báo nêu tên thành viên, tác vụ, và loại cùng số lượng dữ liệu (ví dụ email x1, thẻ x1). Các giá trị không bao giờ được lưu trữ hay gửi đi.',
+          },
+          {
+            t: 'Được che trước khi gửi',
+            d: 'Bằng chứng rằng lớp bảo vệ đã hoạt động: các giá trị đã được che trên thiết bị trước khi bất cứ thứ gì đến được nền tảng.',
+          },
+          {
+            t: 'Chuyển tiếp tự động',
+            d: 'Các cảnh báo mới đến mọi connector được bật ngay khi chúng xảy ra, với trạng thái gửi theo từng connector.',
+          },
+          {
+            t: 'Bí mật chỉ ghi',
+            d: 'Token được lưu trữ ở chế độ chỉ ghi và có thể được xoay vòng. Bảng điều khiển không bao giờ hiển thị lại chúng.',
+          },
+          {
+            t: 'Webhook chung và Syslog / CEF',
+            d: 'Bất cứ thứ gì không có trong danh sách đều kết nối qua một webhook có chữ ký hoặc một luồng Syslog / CEF.',
+          },
+        ],
+      },
+      identity: {
+        kicker: 'Danh tính',
+        title: 'Đăng nhập theo đúng cách công ty bạn vẫn làm.',
+        lead: 'Cấp quyền chỉ theo lời mời, đăng nhập một lần của công ty với nhà cung cấp danh tính của bạn, và một ứng dụng xác thực trên mọi lối vào.',
+        features: [
+          {
+            t: 'SSO công ty (OIDC)',
+            d: 'Mười bốn nhà cung cấp danh tính bao gồm Google, Microsoft Entra, Okta, Auth0 và Ping. Thành viên được mời, không bao giờ tự đăng ký.',
+          },
+          {
+            t: 'Tự động nhận diện tên miền email',
+            d: 'Gõ một email công ty và WorkCoPilot định tuyến thẳng tới đăng nhập một lần của bạn.',
+          },
+          {
+            t: 'Đăng nhập bằng mạng xã hội',
+            d: 'Cá nhân tiếp tục với Google, Microsoft hoặc Facebook, rồi thiết lập ứng dụng xác thực của họ.',
+          },
+        ],
+      },
+      compliance: {
+        kicker: 'Bằng chứng tuân thủ & báo cáo',
+        title: 'Bằng chứng mà các kiểm toán viên của bạn có thể dùng được.',
+        lead: 'Các báo cáo hỗ trợ chương trình tuân thủ của bạn, ánh xạ tới các khuôn khổ mà bạn phải đáp ứng và được niêm phong để có thể kiểm chứng.',
+        features: [
+          {
+            t: 'Ánh xạ tới 18 khuôn khổ',
+            d: 'Các báo cáo bằng chứng theo từng tác vụ ánh xạ các biện pháp kiểm soát được thực hiện trong một phiên tới mười tám khuôn khổ. Bằng chứng hỗ trợ chương trình của bạn; không phải một chứng nhận.',
+          },
+          {
+            t: 'Dấu niêm phong xác thực',
+            d: 'Mỗi báo cáo đều mang một dấu niêm phong có thể kiểm chứng, để người nhận có thể xác nhận nó là thật và chưa bị thay đổi.',
+          },
+          {
+            t: 'Báo cáo phiên đẳng cấp Big 4',
+            d: 'Gồm trang bìa, mục lục, biểu đồ, các bước đã xác nhận và kết quả, với ảnh chụp màn hình cột mốc đã xóa thông tin làm bằng chứng.',
+          },
+        ],
+      },
+      exec: {
+        kicker: 'Điều hành & thương mại',
+        title: 'Vận hành nó như một sản phẩm của công ty.',
+        lead: 'Một góc nhìn điều hành về năng suất, thương hiệu của bạn trên sản phẩm, và việc lập hóa đơn khớp với cách các công ty mua hàng.',
+        features: [
+          {
+            t: 'Bảng điều khiển ROI cho điều hành',
+            d: 'Một bảng điều khiển năng suất về số tác vụ, thời gian, và một góc nhìn minh họa về thời gian và chi phí tiết kiệm được. Xuất ra PDF, hình ảnh hoặc CSV.',
+          },
+          {
+            t: 'Thương hiệu white-label',
+            d: 'Tên và logo công ty của bạn trên sản phẩm mà người của bạn sử dụng.',
+          },
+          {
+            t: 'Số ghế không giới hạn, một bảng điều khiển quản trị',
+            d: 'Số ghế và tác vụ không giới hạn, được quản lý từ một bảng điều khiển quản trị tập trung.',
+          },
+          {
+            t: 'Định giá và lập hóa đơn theo từng công ty',
+            d: 'Các bể ghế người dùng và quản trị riêng, một bể phút của công ty, mức giá của bạn, và các bảng kê có hóa đơn tải xuống được.',
+          },
+        ],
+      },
+      platform: {
+        kicker: 'Nền tảng',
+        title: 'Máy tính để bàn, web và di động. Cầm tay chỉ việc, không phải tự động hóa.',
+        lead: 'Người của bạn dùng nó ngay nơi họ làm việc. Nó hướng dẫn tay họ theo từng bước; nó không bao giờ hành động thay họ và không bao giờ tạo nội dung thay họ.',
+        features: [
+          {
+            t: 'Lớp phủ trên máy tính để bàn',
+            d: 'Một lớp phủ trong suốt luôn ở trên ứng dụng bạn đang dùng, ẩn khỏi chia sẻ màn hình.',
+          },
+          {
+            t: 'Web',
+            d: 'Không cần cài đặt gì. Đăng nhập, chia sẻ một màn hình, và một cửa sổ nổi giữ các bước phía trên công việc của bạn.',
+          },
+          {
+            t: 'Di động',
+            d: 'Hướng camera điện thoại của bạn vào một màn hình, một thiết bị hay tờ giấy và làm theo các bước.',
+          },
+          {
+            t: 'Không tạo nội dung',
+            d: 'Khi một tác vụ cần một tài liệu hay hình ảnh, nó trao cho bạn một lời nhắc sẵn sàng cho AI của riêng bạn. Nó không bao giờ tự tạo ra nội dung.',
+          },
+        ],
+      },
+    },
+    final: {
+      h2: 'Trao cho người của bạn một bàn tay hỗ trợ hiểu rõ công ty bạn.',
+      p: 'Một người phụ trách được chỉ định cho việc triển khai của bạn, một DPA, và các lựa chọn on-prem khi có yêu cầu.',
+    },
+  },
+  errorBoundary: {
+    title: 'Đã xảy ra sự cố',
+    body: 'Chúng tôi gặp một lỗi bất ngờ khi tải trang này. Vui lòng tải lại để thử lại.',
+    reload: 'Tải lại',
+  },
+  execPage: {
+    brand: {
+      executive: 'Điều hành',
+    },
+    fmt: {
+      hours: '{v} giờ',
+      minutes: '{v} phút',
+      rangeDays: '{n} ngày',
+    },
+    errors: {
+      load: 'Không thể tải năng suất.',
+    },
+    scope: {
+      title: 'Khung xem này dành cho tài khoản công ty',
+      body: 'Khung xem điều hành cho thấy những gì nhóm của một công ty đã hoàn thành, thời gian mà nó đại diện và công sức đã dồn vào đâu. Nó mở ra cho cấp điều hành và quản trị viên công ty của một tài khoản công ty.',
+    },
+    loading: 'Đang tải năng suất',
+    live: {
+      staleTitle: 'Đang hiển thị số liệu tốt gần nhất, đang thử lại',
+      liveTitle: 'Trực tiếp, làm mới mỗi 45 giây',
+      reconnecting: 'Đang kết nối lại',
+      live: 'Trực tiếp',
+      updated: 'Cập nhật {time}',
+    },
+    pdf: {
+      title: '{company} - Năng suất',
+      sub: '{days} ngày qua  |  Tạo ngày {date}',
+    },
+    head: {
+      title: 'Năng suất',
+      sub: 'Những gì nhóm của bạn đã hoàn thành, thời gian và giá trị mà nó đại diện, và công sức đã dồn vào đâu trong {days} ngày qua. Các con số đánh dấu <b>Ước tính</b> là ước tính năng suất giả định, không phải số liệu đo được thực tế.',
+      rangeAria: 'Khoảng thời gian',
+      pdf: 'PDF',
+      image: 'Hình ảnh',
+      csv: 'CSV',
+    },
+    assume: 'Ước tính dựa trên khoảng {min} phút/bước công sức thủ công ở mức {rate}/giờ. Giả định, không phải con số đo được thực tế.',
+    empty: {
+      title: 'Chưa có công việc nào hoàn thành',
+      detail_one: 'Năng suất sẽ hiện ở đây khi nhóm của bạn làm việc. Khung xem này bao quát {days} ngày qua trên {count} thành viên.',
+      detail_other: 'Năng suất sẽ hiện ở đây khi nhóm của bạn làm việc. Khung xem này bao quát {days} ngày qua trên {count} thành viên.',
+    },
+    est: 'Ước tính',
+    estTitle: 'Ước tính giả định, không phải con số thực tế',
+    kpi: {
+      tasksCompleted: 'Công việc đã hoàn thành',
+      inProgressNow: '{count} đang thực hiện',
+      timeSaved: 'Thời gian tiết kiệm',
+      vsByHand: 'so với tự làm thủ công',
+      valueDelivered: 'Giá trị mang lại',
+      notACost: 'giá trị năng suất, không phải chi phí',
+      effectiveness: 'Hiệu quả',
+      fullyCompleted: '{count}% hoàn thành trọn vẹn',
+      avgSteps: 'Số bước TB / công việc',
+      taskDepth: 'độ sâu công việc',
+      avgTime: 'Thời gian TB / công việc',
+      activeMinutes: 'phút hoạt động',
+      members: 'Thành viên nhóm',
+      inThisCompany: 'trong công ty này',
+      inProgress: 'Đang thực hiện',
+      activeNow: 'đang hoạt động ngay bây giờ',
+    },
+    charts: {
+      trendTitle: 'Xu hướng hoàn thành',
+      trendHint: 'Số công việc hoàn thành mỗi ngày trong {days} ngày qua.',
+      trendAria: 'Xu hướng hoàn thành',
+      trendEmpty: 'Chưa có công việc nào hoàn thành trong khoảng này.',
+      trendTip: '{count} đã hoàn thành',
+      typesTitle: 'Loại công việc đã hoàn thành',
+      typesHint: 'Những loại công việc nhóm của bạn đã hoàn thành, theo danh mục.',
+      typesEmpty: 'Chưa có loại công việc nào.',
+      depthTitle: 'Độ sâu công việc',
+      depthHint: 'Tỷ lệ công việc hoàn thành theo công sức, từ nhanh đến sâu.',
+      depthEmpty: 'Chưa có công việc hoàn thành nào để phân tích.',
+      depthQuick: 'Nhanh',
+      depthQuickSub: '1 đến 3 bước',
+      depthStandard: 'Tiêu chuẩn',
+      depthStandardSub: '4 đến 7 bước',
+      depthDeep: 'Sâu',
+      depthDeepSub: '8+ bước',
+      depthTipLabel: '{label} ({sub})',
+      depthTip: '{count} công việc, {pct}%',
+      contributorsTitle: 'Người đóng góp hàng đầu',
+      contributorsHint: 'Những người hoàn thành nhiều công việc nhất trong khoảng này.',
+      contributorsEmpty: 'Chưa có người đóng góp nào.',
+      barsEmpty: 'Chưa có gì để hiển thị.',
+      barsTip: '{count} {unit}',
+      tasksUnit: 'công việc',
+      impactTitle: 'Tác động ước tính',
+      impactHint: 'Giá trị năng suất giả định, không phải con số đo được hay một chi phí.',
+    },
+    table: {
+      summary: 'Xem các con số',
+      captionSummary: 'Tóm tắt, {days} ngày qua',
+      members: 'Thành viên',
+      tasksCompleted: 'Công việc đã hoàn thành',
+      tasksInProgress: 'Công việc đang thực hiện',
+      avgSteps: 'Số bước TB / công việc',
+      avgTime: 'Thời gian TB / công việc',
+      effectiveness: 'Hiệu quả',
+      fullyCompleted: 'Hoàn thành trọn vẹn',
+      timeSavedEst: 'Thời gian tiết kiệm (ước tính)',
+      valueDeliveredEst: 'Giá trị mang lại (ước tính)',
+      captionTypes: 'Loại công việc',
+      captionContributors: 'Người đóng góp hàng đầu',
+      noData: 'Không có dữ liệu',
+    },
+    foot: 'Thời gian tiết kiệm và giá trị mang lại là ước tính giả định cho năng suất của chính bạn, {assume}',
+  },
+  faqPage: {
+    eyebrow: 'Câu hỏi thường gặp · WorkCoPilot',
+    h1: 'Giải đáp thẳng thắn, trước khi bạn bắt đầu.',
+    lead: 'Nó là gì, dữ liệu nào rời khỏi thiết bị của bạn, nó tốn bao nhiêu. Chọn một câu hỏi, nắm ngay trọng tâm.',
+    searchLabel: 'Tìm trong các câu hỏi',
+    searchPlaceholder: 'Tìm: cài đặt, giá, HIPAA, khóa riêng',
+    glanceH2: 'Ba điều cần biết',
+    glance: [
+      {
+        eyebrow: 'Chỉ đọc',
+        title: 'Nó hướng dẫn. Bạn vẫn toàn quyền kiểm soát.',
+        body: 'Bước tiếp theo chính xác ngay trên màn hình của bạn. Nó không bao giờ nhấp, gõ hay chạy bất cứ thứ gì.',
+      },
+      {
+        eyebrow: 'Riêng tư theo thiết kế',
+        title: 'Dữ liệu nhạy cảm không bao giờ rời đi ở dạng rõ',
+        body: 'Dữ liệu cá nhân, bí mật và khóa được loại bỏ hoặc mã hóa thành token ngay trên thiết bị của bạn trước khi bất cứ thứ gì được gửi đi.',
+      },
+      {
+        eyebrow: 'Luôn cập nhật',
+        title: 'Học các công cụ của bạn khi chúng thay đổi',
+        body: 'Đọc màn hình bạn đang có hôm nay và tra cứu tài liệu mới nhất, chứ không phải một mốc huấn luyện đã cũ.',
+      },
+    ],
+    sections: 'Mục',
+    answersCount: '{n} giải đáp',
+    collapseAll: 'Thu gọn tất cả',
+    expandAll: 'Mở rộng tất cả',
+    emptyNoMatch: 'Chưa có giải đáp nào khớp với <b>{query}</b>.',
+    emptyTry: 'Thử một từ ngắn hơn, hoặc <a>hỏi chúng tôi trực tiếp</a>.',
+    qNum: 'Câu {num}',
+    linkToQuestion: 'Liên kết tới câu hỏi này: {q}',
+    ctaAria: 'Vẫn còn thắc mắc',
+    ctaEyebrow: 'Vẫn còn thắc mắc?',
+    ctaH2: 'Hỏi chúng tôi, hoặc bắt đầu và tự trải nghiệm.',
+    ctaP: 'Sản phẩm và thanh toán: {support}. Quyền riêng tư, pháp lý, bảo mật: {legal}.',
+    getStarted: 'Bắt đầu',
+    demoBtn: 'Bản demo 60 giây',
+    emailSupport: 'Email hỗ trợ',
+    groups: {
+      what: {
+        title: 'Nó là gì',
+        items: [
+          {
+            q: 'WorkCoPilot là gì?',
+            a: 'WorkCoPilot theo dõi màn hình của bạn và cho bạn biết cú nhấp, lệnh, thiết lập hay đoạn mã tiếp theo chính xác cho công việc trước mắt, phát hiện một bước đi sai, và giữ bạn ở đúng bước cho đến khi hoàn thành.',
+            d: 'Được tạo bởi AdmireVeda, một sản phẩm của COE Security LLC.',
+            links: ['Cách hoạt động', 'Bản demo 60 giây'],
+          },
+          {
+            q: 'Nó khác gì với một chatbot hay một trợ lý AI thông thường?',
+            a: 'Một chatbot trả lời từ trí nhớ và không thể thấy bạn đang ở đâu. WorkCoPilot đọc màn hình thật của bạn, đưa ra bước tiếp theo cho đúng công cụ bạn đang dùng, xác nhận từng bước đã thành công, và sửa cho bạn khi một công cụ đã thay đổi.',
+            d: 'Bạn vẫn có thể đặt câu hỏi cho nó trong suốt quá trình.',
+          },
+          {
+            q: 'Nó có làm việc thay tôi, hay thay đổi bất cứ thứ gì trong hệ thống của tôi không?',
+            a: 'Không. WorkCoPilot chỉ đọc theo thiết kế: nó theo dõi và hướng dẫn, và không bao giờ nhấp, gõ hay chạy bất cứ thứ gì. Bạn tự thực hiện mọi thay đổi.',
+            d: 'Đó là điều khiến nó an toàn trên các bảng điều khiển sản xuất, hệ thống tài chính và môi trường được quản lý chặt.',
+            links: ['Bảo mật'],
+          },
+          {
+            q: 'Nó không được tạo ra để làm gì?',
+            a: 'Đọc hay viết tài liệu dài thay bạn, hoặc phân tích chuyên sâu. WorkCoPilot được tạo ra để làm: khai báo, cấu hình, sửa lỗi, thiết lập, xây dựng, từng bước trên màn hình. Mã nguồn là ngoại lệ, nó viết và sửa mã như một phần của công việc.',
+            d: 'Nó cũng chỉ hỗ trợ công việc hợp pháp và từ chối bất cứ điều gì phi pháp hoặc gây hại.',
+            links: ['Chính sách Sử dụng Hợp lý'],
+          },
+        ],
+      },
+      how: {
+        title: 'Cách hoạt động',
+        items: [
+          {
+            q: 'Một công việc diễn ra như thế nào?',
+            a: 'Hãy nói điều bạn muốn hoàn thành. WorkCoPilot lập kế hoạch cho nó, rồi hướng dẫn bạn từng bước một trên màn hình của chính bạn, kèm văn bản sẵn sàng sao chép ở những chỗ cần, và kiểm tra từng bước đã thành công trước khi đi tiếp.',
+            d: 'Bạn kết thúc với một bản ghi lại chính xác những gì bạn đã làm.',
+          },
+          {
+            q: 'Điều gì xảy ra khi tôi phạm sai lầm?',
+            a: 'Nó phát hiện bước đi sai ngay khi nó xảy ra, nói lý do, và chỉ cách khắc phục. Các giá trị rủi ro như một dải mạng mở, một quyền quá rộng hoặc một bí mật ghi cứng trong mã được cảnh báo trước khi bạn lưu.',
+          },
+          {
+            q: 'Tôi có thể dán một lỗi hoặc đính kèm ảnh chụp màn hình hay tài liệu giữa chừng không?',
+            a: 'Có. Dán một lỗi, một phản hồi, một ảnh chụp màn hình hoặc một tài liệu và các bước tiếp theo sẽ điều chỉnh theo đó.',
+            d: 'Advanced và Premium cũng có thể tải lên tài liệu tham khảo để làm nền cho các bước, trên ứng dụng máy tính tệp không bao giờ rời khỏi thiết bị của bạn.',
+            links: ['So sánh các gói'],
+          },
+          {
+            q: 'Tôi có nhận được bản ghi lại những gì mình đã làm không?',
+            a: 'Có. Mỗi phiên kết thúc với một bản ghi gọn gàng những gì bạn đã làm, các ảnh chụp cột mốc đã che thông tin, và một nhật ký kiểm toán về những gì đã được gửi. Chia sẻ, lặp lại, hoặc lưu giữ.',
+            d: 'Ảnh chụp cột mốc có thể được tắt bởi bạn hoặc quản trị viên công ty của bạn.',
+          },
+        ],
+      },
+      platforms: {
+        title: 'Nền tảng và cài đặt',
+        items: [
+          {
+            q: 'Tôi có cần cài đặt gì không?',
+            a: 'Không. WorkCoPilot chạy trong trình duyệt của bạn và nổi trên công việc, nên nó hướng dẫn bạn ngay cả trên máy bị khóa chặt và máy tính ảo.',
+            d: 'Một ứng dụng máy tính Windows bổ sung một lớp phủ trong suốt, ẩn khỏi màn hình chia sẻ theo mặc định, và có thể chạy hướng dẫn toàn màn hình trên màn hình thứ hai. Trình duyệt, máy tính và di động đi cùng một gói đăng ký.',
+          },
+          {
+            q: 'Nó có hoạt động với ứng dụng máy tính, cửa sổ dòng lệnh và bảng điều khiển tại chỗ, không chỉ các trang web không?',
+            a: 'Có. Nếu nó ở trên màn hình của bạn, nó có thể hướng dẫn bạn qua đó: ứng dụng web, ứng dụng máy tính đã cài, cửa sổ dòng lệnh, bảng điều khiển tại chỗ ở địa chỉ nội bộ, và các công cụ tùy chỉnh của riêng bạn.',
+          },
+          {
+            q: 'Tôi có thể dùng nó từ điện thoại không?',
+            a: 'Phiên bản trình duyệt hoạt động trên mọi thiết bị ngay hôm nay. Ứng dụng Android, cho phép bạn hướng camera vào một màn hình hay một thiết bị và được hướng dẫn khi di chuyển, sắp ra mắt.',
+          },
+          {
+            q: 'Nó hỗ trợ những ngôn ngữ nào?',
+            a: 'Mười sáu ngôn ngữ, được chọn tự động theo khu vực của bạn. Chuyển đổi bất cứ lúc nào, lựa chọn của bạn được ghi nhớ.',
+          },
+        ],
+      },
+      security: {
+        title: 'Bảo mật và quyền riêng tư',
+        items: [
+          {
+            q: 'Thực sự thì dữ liệu nào rời khỏi thiết bị của tôi?',
+            a: 'Khi bật bảo vệ dữ liệu, dữ liệu cá nhân, dữ liệu sức khỏe, bí mật, khóa và số thẻ được loại bỏ hoặc mã hóa thành token ngay trên thiết bị của bạn trước khi bất cứ thứ gì được gửi đi. Chỉ những gì cần để hướng dẫn bước hiện tại mới rời đi.',
+            d: 'Thứ rời đi là một khung màn hình đã thu gọn với các dòng nhạy cảm bị bôi đen, và văn bản với các giá trị nhạy cảm được thay bằng token. Các giá trị thật ở lại với bạn.',
+            links: ['Xem tính năng bảo vệ hoạt động', 'Chính sách Quyền riêng tư'],
+          },
+          {
+            q: 'Tôi có thể kiểm soát những gì được coi là nhạy cảm không?',
+            a: 'Có. Thêm từ và mẫu của riêng bạn để che, mã hóa thành token hoặc chặn, bên cạnh các bộ phát hiện tích hợp sẵn. Quản trị viên công ty có thể khóa chính sách cho mọi thành viên, và các cài đặt sẵn tuân thủ chỉ cần một cú nhấp để kích hoạt.',
+            links: ['Bảo mật'],
+          },
+          {
+            q: 'Tôi có thể dùng khóa AI của riêng mình để dữ liệu ở trong phạm vi của tôi không?',
+            a: 'Có. Chạy WorkCoPilot trên khóa AI của riêng bạn hoặc của công ty bạn và mọi lệnh gọi đều ở trên khóa đó, trong mối quan hệ nhà cung cấp của riêng bạn, không có gì bị âm thầm chuyển hướng.',
+            d: 'Khóa được mã hóa khi lưu trữ. Về khóa riêng cho từng công ty và cấp phát cho nhóm, hãy hỏi về Enterprise.',
+            links: ['Enterprise', 'DPA'],
+          },
+          {
+            q: 'Các lệnh và mã nó đưa cho tôi có an toàn để chạy không?',
+            a: 'Có. Mọi lệnh, đoạn mã và cách khắc phục đều được viết theo cách an toàn và được kiểm tra chống tấn công tiêm nhiễm, bí mật ghi cứng, quyền truy cập quá rộng và thư viện có lỗ hổng đã biết trước khi đến với bạn.',
+          },
+          {
+            q: 'Có ai đó thao túng được nó qua màn hình hay một công việc của tôi không?',
+            a: 'Không. Bất cứ thứ gì trên màn hình của bạn hay được gõ vào một công việc đều được coi là thông tin về công việc, không bao giờ là chỉ thị. Các nỗ lực khiến nó phá vỡ quy tắc hoặc truy cập dữ liệu không phải của bạn đều bị từ chối và ghi lại cho quản trị viên của bạn.',
+          },
+          {
+            q: 'Các bạn có dùng cookie không?',
+            a: 'Một cookie đăng nhập thực sự cần thiết. Lưu trữ không thiết yếu vẫn tắt cho đến khi bạn cho phép, và từ chối cũng dễ như chấp nhận. Thay đổi lựa chọn của bạn bất cứ lúc nào từ chân trang.',
+            links: ['Chính sách Cookie'],
+          },
+        ],
+      },
+      pricing: {
+        title: 'Giá và thanh toán',
+        items: [
+          {
+            q: 'Chi phí là bao nhiêu?',
+            a: 'Bốn gói tự phục vụ, Lite, Basic, Advanced và Premium, mỗi gói đều có các công việc lớn được hướng dẫn và nhiều giờ hướng dẫn trực tiếp, cùng một gói Enterprise có giá tùy chỉnh. Giá hiện tại được đặt cạnh nhau trên trang giá.',
+            d: 'Thanh toán hàng tháng, thanh toán theo năm có giảm giá có thể được cung cấp khi thanh toán. Thanh toán qua Stripe, và chúng tôi không bao giờ thấy số thẻ của bạn.',
+            links: ['Xem giá'],
+          },
+          {
+            q: 'Điều gì được tính là một công việc?',
+            a: 'Một công việc là một công việc lớn: một mục tiêu, được hướng dẫn trọn vẹn qua từng bước phụ mà nó cần. Bảo mật và quyền riêng tư đi kèm mọi gói, không bao giờ là một khoản bán thêm.',
+            d: 'Basic thêm lộ trình, hướng dẫn nổi và bản ghi phiên làm việc, Advanced thêm tải tài liệu lên và nhiều giờ hơn, Premium thêm hình ảnh được tạo và ưu tiên trong hàng đợi hướng dẫn.',
+            links: ['So sánh các gói'],
+          },
+          {
+            q: 'Nếu tôi hết giờ thì sao?',
+            a: 'Nạp thêm một giờ bất cứ khi nào bạn cần. Một giờ thêm cho thêm một công việc nữa, và thời gian đã mua không bao giờ hết hạn.',
+            d: 'Số giờ hàng ngày của bạn được đặt lại mỗi tối, theo giờ Miền Đông Hoa Kỳ. Tạm dừng bất cứ lúc nào và quay lại chỗ bạn đã dừng.',
+            links: ['Giá nạp thêm'],
+          },
+          {
+            q: 'Tôi có thể hủy bất cứ lúc nào không?',
+            a: 'Có. Tự hủy từ cổng thanh toán, không hợp đồng và không cần gọi. Gói của bạn vẫn hoạt động đến hết kỳ bạn đã trả, và các phiên của bạn vẫn còn cho đến khi bạn xóa chúng.',
+            links: ['Chính sách hoàn tiền và hủy'],
+          },
+          {
+            q: 'Tôi có thể nâng cấp hay hạ cấp không?',
+            a: 'Có, bất cứ lúc nào. Một lần nâng cấp áp dụng ngay với khoản tín dụng theo tỷ lệ, một lần hạ cấp có hiệu lực ở kỳ gia hạn tiếp theo. Hóa đơn nằm trong bảng điều khiển của bạn.',
+          },
+          {
+            q: 'Có gói nào cho nhóm và công ty không?',
+            a: 'Có. Enterprise thêm bể ghế ngồi, SSO, một chính sách dữ liệu bị khóa trên toàn công ty, một bảng điều khiển tài chính cho thanh toán, một DPA đã ký và một SLA ưu tiên.',
+            d: 'Hãy viết tới {sales} và chúng tôi phản hồi trong vòng một ngày làm việc.',
+            links: ['Enterprise', 'Liên hệ bộ phận bán hàng'],
+          },
+        ],
+      },
+      current: {
+        title: 'Luôn cập nhật',
+        items: [
+          {
+            q: 'Nó có bị lỗi thời như các công cụ AI khác không?',
+            a: 'Không. WorkCoPilot đọc những gì đang có trên màn hình của bạn hôm nay, tra cứu trực tiếp tài liệu chính thức mới nhất, và học cách các công cụ của bạn hoạt động hiện tại cho lần sau. Khi một nút di chuyển hay một menu được đổi tên, nó tìm ra điều khiển mới thay vì trỏ vào thứ đã không còn.',
+          },
+          {
+            q: 'Nó có học từ công việc của nhóm tôi không, và nó không bao giờ giữ lại gì?',
+            a: 'Với một tài khoản công ty, những gì nó học được về cách các công cụ của bạn hoạt động hiện tại sẽ ở trong một kho tri thức riêng mà chỉ các thành viên của bạn được hưởng. Các điều học được là tổng quát hóa và ẩn danh: không bao giờ là dữ liệu cá nhân, bí mật, hình ảnh màn hình hay nội dung tài liệu.',
+            d: 'Các tài khoản cá nhân đóng góp những điều học được đã ẩn danh vào một kho tri thức nền tảng chung.',
+            links: ['Chính sách Quyền riêng tư', 'DPA'],
+          },
+          {
+            q: 'AI nào đứng sau nó?',
+            a: 'Mỗi công việc được lập kế hoạch bằng AI mạnh nhất có sẵn trên khóa đang dùng, không bao giờ là một AI đã ngừng hoạt động. Chúng tôi không công bố tên nhà cung cấp hay mô hình, và nếu có gì phải thay đổi giữa chừng để giúp bạn tiếp tục, nhật ký công việc sẽ ghi rõ.',
+            links: ['Kế hoạch của bạn được tạo ra như thế nào'],
+          },
+        ],
+      },
+      who: {
+        title: 'Dành cho ai',
+        items: [
+          {
+            q: 'WorkCoPilot dành cho ai?',
+            a: 'Bất kỳ ai phải hoàn thành công việc thực tế trên màn hình: kỹ sư, các nhóm IT và bảo mật, quản trị viên, nhà sáng lập, vận hành, nhân sự tài chính và tuân thủ, cùng người dùng hàng ngày. Nó mạnh nhất với công việc vận hành, kỹ thuật, hành chính và thực hành, và với mã nguồn.',
+            d: 'Nó hướng dẫn công việc trên nhiều lĩnh vực chuyên môn, và các bước đọc lên như thể một chuyên gia trong lĩnh vực đó đã viết.',
+            links: ['Lĩnh vực', 'Trường hợp sử dụng'],
+          },
+          {
+            q: 'Tôi có cần giỏi kỹ thuật không?',
+            a: 'Không. Nó bắt đầu từ con số không: mở đúng trang, dẫn bạn đến đúng chỗ và chỉ rõ từng cú nhấp, để một người không giỏi kỹ thuật vẫn hoàn thành được một công việc kỹ thuật.',
+            d: 'Hãy yêu cầu các bước đầy đủ hơn kèm giải thích lý do, và bạn học hỏi trong lúc làm.',
+          },
+          {
+            q: 'Nó làm được gì cho một công ty?',
+            a: 'Các nhóm tinh gọn tự đảm nhận công việc chuyên môn trong nội bộ, hoàn thành nhanh hơn, ghi lại mọi thay đổi, và chi ít hơn cho nhà thầu và đối tác triển khai.',
+            d: 'Quản trị viên đặt và khóa chính sách dữ liệu, xem lại các phiên và nhật ký kiểm toán của thành viên, và kho tri thức công ty lớn dần theo mỗi công việc hoàn thành.',
+            links: ['Enterprise'],
+          },
+        ],
+      },
+      compliance: {
+        title: 'Dữ liệu và tuân thủ',
+        items: [
+          {
+            q: 'Nó có tuân thủ GDPR, HIPAA, SOC 2 và các khung tương tự không?',
+            a: 'WorkCoPilot sẵn sàng cho tuân thủ: nó cung cấp các kiểm soát và bằng chứng kiểm toán hỗ trợ công việc tuân thủ của chính bạn, với các cài đặt sẵn một cú nhấp cho GDPR, HIPAA, PCI DSS, SOC 2 và ISO 27001. Chúng tôi không tuyên bố có chứng nhận.',
+            links: ['Mức độ sẵn sàng tuân thủ'],
+          },
+          {
+            q: 'Các bạn lưu trữ gì, và trong bao lâu?',
+            a: 'Một báo cáo cho mỗi phiên, một nhật ký kiểm toán và lịch sử phiên của bạn, được mã hóa khi lưu trữ, cho đến khi bạn hoặc quản trị viên của bạn xóa chúng hoặc một khung thời gian lưu giữ dọn sạch chúng. Khung màn hình thô, tài liệu nguồn tải lên và các giá trị nhạy cảm thật không được lưu trữ.',
+            links: ['Chính sách Quyền riêng tư'],
+          },
+          {
+            q: 'Tôi có thể xóa dữ liệu của mình không?',
+            a: 'Có. Xóa bất kỳ phiên nào bất cứ lúc nào, việc này xóa báo cáo, ảnh chụp màn hình và nhật ký kiểm toán của nó cùng lúc. Dữ liệu tài khoản được xóa theo yêu cầu, tùy theo bất kỳ nghĩa vụ pháp lý nào phải giữ hồ sơ.',
+          },
+          {
+            q: 'Có DPA không, và ai là các đơn vị xử lý phụ của các bạn?',
+            a: 'Một bản DPA tóm tắt được công khai và một bản DPA đã ký có sẵn theo yêu cầu. Hướng dẫn do một nhà cung cấp AI lớn tạo ra, thanh toán qua Stripe, lưu trữ bởi một nhà cung cấp đám mây, danh sách hiện tại kèm tên pháp nhân có sẵn theo yêu cầu.',
+            d: 'Hãy viết tới {legal} kèm tên công ty của bạn và người liên hệ sẽ ký.',
+            links: ['Đọc DPA', 'Đơn vị xử lý phụ'],
+          },
+          {
+            q: 'Quản trị viên công ty có thể thấy thành viên đã làm gì không?',
+            a: 'Có. Quản trị viên có thể xem lại báo cáo phiên và nhật ký kiểm toán của chính các thành viên của họ, đặt và khóa chính sách dữ liệu, và xóa phiên của thành viên. Thành viên không thể thay đổi một chính sách đã khóa.',
+          },
+        ],
+      },
+      start: {
+        title: 'Bắt đầu và hỗ trợ',
+        items: [
+          {
+            q: 'Tôi bắt đầu như thế nào?',
+            a: 'Đăng nhập tại admireveda.com, chọn một gói, nói điều bạn muốn hoàn thành, và nó bắt đầu hướng dẫn bạn trên màn hình. Không có gì để cài đặt.',
+            links: ['Bắt đầu', 'Xem giá'],
+          },
+          {
+            q: 'Có bản demo nào tôi xem được mà không cần đăng ký không?',
+            a: 'Có. Một bản demo theo kịch bản 60 giây cho thấy hướng dẫn trên một công việc trông như thật, không cần đăng nhập.',
+            links: ['Xem bản demo 60 giây'],
+          },
+          {
+            q: 'Tôi nhận hỗ trợ như thế nào?',
+            a: 'Email {support} để được trợ giúp sản phẩm và thanh toán, {legal} cho quyền riêng tư, pháp lý hay bảo mật, và {sales} cho Enterprise. Chúng tôi phản hồi trong vòng một ngày làm việc.',
+            links: ['Email hỗ trợ'],
+          },
+        ],
+      },
+    },
+  },
+  floatPanel: {
+    status: {
+      guiding: 'Đang hướng dẫn',
+      paused: 'Đã tạm dừng',
+    },
+    deepTip: 'Lượt phân tích sâu: xem kỹ hơn khung hình này và dệt nó trở lại vào các bước, rồi tiếp tục ở tốc độ bình thường.',
+    switchDark: 'Chuyển sang nền tối',
+    switchLight: 'Chuyển sang nền sáng',
+    dimTip: 'Làm mờ bảng để giảm chói (để thực sự trong suốt, hãy dùng ứng dụng máy tính)',
+    closeTip: 'Đóng cửa sổ nổi',
+    resume: 'Tiếp tục',
+    pause: 'Tạm dừng',
+    watchScreen: 'Xem màn hình của tôi',
+    end: 'Kết thúc',
+    endTip: 'Kết thúc công việc này và tạo một bản tóm tắt',
+    shareHint: 'Chia sẻ toàn bộ màn hình của bạn để các bước cập nhật trong lúc bạn làm việc.',
+    plan: 'Kế hoạch',
+    fullPlan: 'Kế hoạch đầy đủ',
+    viewFullPlan: 'Xem kế hoạch đầy đủ',
+    viewFullPlanTip: 'Xem kế hoạch đầy đủ',
+    hideFullPlanTip: 'Ẩn kế hoạch đầy đủ',
+    doneOf: 'Đã xong {done} trên {total}',
+    markDone: 'Đánh dấu đã xong',
+    markNotDone: 'Đánh dấu chưa xong',
+    jumpTip: 'Nhảy tới bước này',
+    complete: {
+      title: 'Công việc hoàn thành',
+      allDone_one: 'Đã xong cả {n} bước.',
+      allDone_other: 'Đã xong cả {n} bước.',
+      someDone: 'Đã xong {done} trên {total} bước.',
+      nicely: 'Làm tốt lắm.',
+      report: 'Báo cáo của bạn đã sẵn sàng trong cửa sổ chính.',
+      startAnother: 'Bắt đầu một công việc khác',
+      startAnotherTip: 'Bắt đầu một công việc mới',
+    },
+    hint: {
+      paused: 'Đã tạm dừng. Tiếp tục để giữ cho phần này trực tiếp.',
+      watch: 'Xem màn hình của tôi để giữ cho phần này trực tiếp',
+    },
+    nav: {
+      prev: 'Trước',
+      prevTip: 'Về bước trước',
+      next: 'Tiếp',
+      nextTip: 'Sang bước tiếp theo',
+      finishFirst: 'Hoàn thành bước này trước. Nó tự chuyển tiếp khi xong.',
+      count: 'Bước {n} trên {total}',
+    },
+    nextUp: 'Tiếp',
+    empty: 'Lập kế hoạch các bước của bạn trong cửa sổ chính, rồi chúng sẽ hiện ở đây.',
+    askPlaceholder: 'Hỏi, nói điều cần phân tích, hoặc đính kèm một ảnh chụp màn hình hay tài liệu',
+    ask: 'Hỏi',
+    attachTip: 'Đính kèm một ảnh chụp màn hình, ảnh chụp, hoặc tài liệu. Nó được cân nhắc và các bước của bạn cập nhật nếu cần.',
+    attachAria: 'Đính kèm một ảnh chụp màn hình hoặc tài liệu',
+    analyze: 'Phân tích',
+    analyzeTip: 'Chụp màn hình ngay và phân tích. Gõ một trọng tâm ở trên, hoặc để trống để đọc toàn bộ.',
+    research: 'Tra cứu',
+    researchTip: 'Tra cứu thông tin mới nhất trên web, rồi trả lời (chỉ khi bạn nhấn vào).',
+  },
+  fullGuide: {
+    copied: 'Đã sao chép',
+    subtitle: 'Hướng dẫn toàn màn hình',
+    paused: 'Đã tạm dừng',
+    live: 'Trực tiếp',
+    tasksTip: 'Số công việc đang mở ngay bây giờ, trên tối đa số bạn có thể mở cùng lúc',
+    themeTip: 'Sáng hoặc tối',
+    themeAria: 'Bật tắt nền sáng hoặc tối',
+    fullScreenAria: 'Bật tắt toàn màn hình',
+    allDone: 'Đã xong tất cả các bước',
+    allDoneBody: 'Mọi bước đã được xác nhận. Quay lại cửa sổ chính để hoàn tất và nhận bản tóm tắt của bạn.',
+    pausedHint: 'Đã tạm dừng trong cửa sổ chính.',
+    liveHint: 'Trực tiếp. Đánh dấu đã xong trong cửa sổ chính hoặc cửa sổ nổi.',
+    roadmap: 'Lộ trình',
+    viewFullPlan: 'Xem kế hoạch đầy đủ',
+    planDialogAria: 'Kế hoạch đầy đủ',
+    fullPlan: 'Kế hoạch đầy đủ',
+    closeTip: 'Đóng',
+    closeAria: 'Đóng kế hoạch đầy đủ',
+    yourGoal: 'Mục tiêu của bạn',
+    now: 'Bây giờ',
+  },
+  guideConsole: {
+    source: {
+      label: 'Dựa trên tài liệu của bạn',
+      tip: 'Dựa trên tài liệu của bạn: {label}',
+    },
+    how: {
+      open: 'Làm thế nào?',
+      hide: 'Ẩn cách làm',
+      tip: 'Chia hành động này thành các bước chi tiết, sẵn sàng sao chép',
+      loading: 'Đang tính toán các bước chi tiết...',
+      error: 'Không thể tải các bước chi tiết, hãy thử lại.',
+      retry: 'Thử lại',
+      none: 'Không cần thêm chi tiết nào cho bước này.',
+      heading: 'CÁCH THỰC HIỆN',
+      doneWhen: 'xong khi: {text}',
+    },
+    deliver: {
+      title: 'Lời nhắc rà soát & tạo',
+      close: 'Đóng',
+      lead: 'Đưa từng trang bạn muốn rà soát lên màn hình và nhấn <b>Chụp</b>. Thêm bao nhiêu tùy bạn, rồi <b>Hoàn tất</b>. Tôi sẽ tìm ra các vấn đề và tạo cho bạn hai lời nhắc để tạo bản thiết kế đã sửa trong công cụ của riêng bạn.',
+      auto: 'Tự động chụp: chụp mỗi trang khi tôi dừng lại ở đó',
+      watching: 'Đang xem màn hình được chia sẻ. Mở từng trang và giữ yên một chút, tôi chụp nó, rồi bạn chuyển sang trang tiếp theo.',
+      pageAlt: 'trang {n}',
+      remove: 'Gỡ bỏ',
+      empty: 'Chưa chụp trang nào',
+      snap: 'Chụp',
+      snapCount: 'Chụp ({n})',
+      finish: 'Hoàn tất & tạo',
+      archIssues: 'Vấn đề về kiến trúc',
+      secIssues: 'Vấn đề về bảo mật',
+      prompt1: 'Lời nhắc 1: thiết kế hiện tại, đã đánh dấu các vấn đề',
+      prompt2: 'Lời nhắc 2: thiết kế đã sửa được đề xuất',
+      copy: 'Sao chép',
+      copied: 'Đã sao chép',
+      captureMore: 'Chụp thêm',
+      downloadPdf: 'Tải PDF rà soát',
+      errNoPage: 'Hãy đưa trang lên màn hình trước, và bắt đầu chia sẻ màn hình của bạn.',
+      errCapture: 'Không thể chụp màn hình.',
+      errNoResult: 'Không có kết quả trả về. Hãy thử lại.',
+      errBuild: 'Không thể tạo phần này. Hãy thử lại.',
+      errPdf: 'Không thể tải PDF rà soát. Vui lòng thử lại.',
+    },
+    share: {
+      titleScreen: 'Chia sẻ màn hình của bạn để bắt đầu',
+      titleCamera: 'Cho phép camera để bắt đầu',
+      bodyScreen: 'Trong lời nhắc của trình duyệt, chọn <b>toàn bộ màn hình</b> của bạn (không chỉ một tab) để WorkCoPilot có thể hướng dẫn bạn qua mọi ứng dụng. Việc lập kế hoạch bắt đầu ngay khi bạn chia sẻ.',
+      bodyCamera: 'Chọn <b>Cho phép</b> trong lời nhắc của trình duyệt. Việc lập kế hoạch bắt đầu ngay khi camera bật.',
+      slowScreen: 'Vẫn đang chờ lời nhắc chia sẻ. Nếu bạn không thấy nó, hãy tìm một hộp thoại trình duyệt phía sau cửa sổ này. Hủy nó sẽ đưa bạn về đây, nơi <b>Lập kế hoạch các bước</b> hỏi lại.',
+      slowCamera: 'Vẫn đang chờ lời nhắc camera. Nếu bạn không thấy nó, hãy tìm một hộp thoại trình duyệt phía sau cửa sổ này. Hủy nó sẽ đưa bạn về đây, nơi <b>Lập kế hoạch các bước</b> hỏi lại.',
+    },
+    planning: {
+      phases: [
+        'Đang hiểu mục tiêu của bạn',
+        'Đang suy nghĩ',
+        'Đang chuẩn bị kế hoạch',
+        'Đang suy nghĩ sâu',
+        'Đang làm việc với thị giác đa phương thức',
+        'Đang viết các bước của bạn',
+      ],
+    },
+    load: {
+      gone: 'Phiên này không còn tồn tại. Có thể nó đã bị xóa, hoặc đã kết thúc trên một thiết bị khác.',
+      failed: 'Không thể tải phiên này. Hãy kiểm tra kết nối của bạn và thử lại.',
+      title: 'Không thể mở phiên này',
+      retry: 'Thử lại',
+      back: 'Về các kế hoạch',
+      opening: 'Đang mở phiên của bạn…',
+    },
+    err: {
+      capture: 'Không thể bắt đầu ghi. Hãy cho phép truy cập màn hình hoặc camera.',
+      photo: 'Không thể đọc ảnh đó. Hãy thử lại.',
+      planSlow: 'Việc lập kế hoạch đang mất nhiều thời gian hơn dự kiến. Hãy nhấn Lập kế hoạch các bước để thử lại.',
+      plan: 'Không thể lập kế hoạch',
+      clarifySave: 'Không thể lưu câu trả lời của bạn',
+      clarifyChange: 'Không thể thay đổi câu trả lời',
+      clarifySkip: 'Không thể bỏ qua câu hỏi',
+      watch: 'Theo dõi thất bại',
+      refresh: 'Không thể làm mới màn hình',
+      pause: 'Không thể tạm dừng. Vui lòng thử lại.',
+      resume: 'Không thể tiếp tục. Vui lòng thử lại.',
+      ask: 'Không thể trả lời',
+      addContext: 'Không thể thêm nội dung đó',
+      analyze: 'Không thể phân tích màn hình',
+      research: 'Không thể tra cứu',
+      step: 'Không thể cập nhật bước đó. Vui lòng thử lại.',
+      download: 'Không thể tải tệp đó xuống. Vui lòng thử lại.',
+      nav: 'Không thể chuyển tới bước đó. Vui lòng thử lại.',
+      finalize: 'Không thể hoàn tất',
+    },
+    policy: {
+      flag: 'Chính sách công ty, {kind}: {title}',
+      prohibited: 'cấm',
+      required: 'bắt buộc',
+      per: ' (theo {doc})',
+    },
+    float: {
+      floatOnTop: 'Nổi lên trên',
+      popOut: 'Tách ra',
+      floatTip: 'Cho các bước nổi trong một cửa sổ nhỏ luôn ở trên cùng để bạn có thể làm việc bên dưới',
+      popOutTip: 'Tách các bước ra cửa sổ riêng',
+      unfloat: 'Thôi nổi',
+      closePopOut: 'Đóng cửa sổ tách',
+      unfloatTip: 'Đưa các bước trở lại cửa sổ này',
+      closePopOutTip: 'Đóng cửa sổ tách',
+      errRefusedBoth: 'Cửa sổ nổi đã bị cài đặt trình duyệt của bạn từ chối, và cửa sổ tách cũng bị chặn. Hãy cho phép cửa sổ bật lên cho trang này, hoặc tiếp tục theo các bước ngay tại đây.',
+      errBlocked: 'Trình duyệt của bạn đã chặn cửa sổ nổi. Hãy cho phép cửa sổ bật lên cho trang này, hoặc dùng Chrome, Edge, Brave hoặc Opera để có lớp phủ luôn ở trên cùng thực sự. Các bước vẫn hoạt động ngay tại đây.',
+    },
+    fullGuide: {
+      errBlocked: 'Trình duyệt của bạn đã chặn cửa sổ hướng dẫn. Hãy cho phép cửa sổ bật lên cho trang này, rồi mở lại.',
+    },
+    chip: {
+      paused: 'Đã tạm dừng',
+      pausedTip: 'Đã tạm dừng. Tiếp tục để tiếp tục hướng dẫn.',
+      guiding: 'Đang hướng dẫn',
+      guidingTip: 'Đang hướng dẫn trực tiếp từ màn hình của bạn',
+      shareScreen: 'Chia sẻ màn hình',
+      shareScreenTip: 'Đang chờ bạn chia sẻ màn hình',
+      camera: 'Camera',
+      cameraTip: 'Đang chờ quyền truy cập camera',
+      planning: 'Đang lập kế hoạch',
+      planningTip: 'Đang lập kế hoạch từ mục tiêu và màn hình của bạn',
+      ready: 'Sẵn sàng',
+      readyTip: 'Sẵn sàng. Bắt đầu theo dõi để chạy trực tiếp.',
+    },
+    top: {
+      backPlans: 'Về các kế hoạch của bạn',
+      backPaused: 'Về lập kế hoạch. Phiên đã tạm dừng của bạn đang chờ trong mục Tiếp tục từ chỗ bạn dừng lại.',
+      backAria: 'Về kế hoạch',
+      switchDark: 'Chuyển sang chế độ tối',
+      switchLight: 'Chuyển sang chế độ sáng',
+      themeAria: 'Bật/tắt chế độ sáng hoặc tối',
+    },
+    tools: {
+      label: 'Công cụ',
+      tip: 'Công cụ: tạo sản phẩm bàn giao, đọc màn hình, lập lại kế hoạch, hướng dẫn đầy đủ, cỡ chữ, giao diện',
+      secMake: 'Tạo thứ gì đó',
+      secScreen: 'Màn hình',
+      secPlan: 'Kế hoạch',
+      secView: 'Hiển thị',
+      answer: 'Trả lời',
+      answerSub: 'Nhận câu trả lời thực sự, kèm cách tôi tìm ra nó',
+      write: 'Viết',
+      writeSub: 'Mã, hoặc một prompt sẵn dùng cho AI của riêng bạn',
+      compute: 'Tính toán',
+      computeSub: 'Xử lý tệp CSV hoặc Excel, ngay trên thiết bị của bạn',
+      readScreen: 'Đọc màn hình của tôi',
+      readScreenSub: 'Xác minh bước này ngay rồi tiếp tục',
+      deep: 'Rà soát kỹ',
+      deepSub: 'Xem xét kỹ hơn màn hình này, lồng vào các bước của bạn',
+      photoSub: 'Chụp màn hình, thiết bị hoặc giấy tờ',
+      viewFullPlan: 'Xem kế hoạch đầy đủ',
+      viewFullPlanSub: 'Mọi bước, đã xong và sắp tới',
+      replan: 'Lập lại kế hoạch',
+      replanSub: 'Nêu lý do, giữ hoặc đặt lại tiến độ',
+      fullGuide: 'Hướng dẫn đầy đủ',
+      fullGuideSub: 'Hướng dẫn gọn gàng, toàn màn hình trên màn hình còn lại của bạn',
+      textSize: 'Cỡ chữ',
+      guidance: 'Hướng dẫn',
+      darkMode: 'Chế độ tối',
+      lightMode: 'Chế độ sáng',
+      themeSub: 'Đổi giao diện bảng hướng dẫn',
+    },
+    end: {
+      label: 'Kết thúc',
+      tip: 'Kết thúc phiên và tạo bản tóm tắt',
+      session: 'Kết thúc phiên',
+      slow: 'Việc hoàn tất đang mất nhiều thời gian hơn dự kiến. Phiên của bạn đã được lưu; hãy nhấn Kết thúc lại sau giây lát.',
+      wrapping: 'Đang hoàn tất…',
+      finishing: 'Đang hoàn thành bước hiện tại và viết bản tóm tắt của bạn. Vui lòng chờ.',
+      complete: 'Phiên đã hoàn tất',
+      saved: 'Phiên của bạn đã được lưu.',
+      where: 'Báo cáo đầy đủ, các prompt và nhật ký kiểm toán nằm trong mục <b>Tiếp tục từ chỗ bạn dừng lại</b>.',
+      stay: 'Ở lại đây',
+      backToPlan: 'OK, về kế hoạch',
+    },
+    pause: {
+      pause: 'Tạm dừng',
+      pauseTip: 'Tạm dừng hướng dẫn, ngừng theo dõi và dừng đồng hồ',
+      resume: 'Tiếp tục',
+      resumeTip: 'Tiếp tục hướng dẫn, theo dõi được bật lại và đồng hồ chạy tiếp',
+    },
+    watch: {
+      screen: 'Theo dõi màn hình của tôi',
+      camera: 'Theo dõi camera',
+      screenTip: 'Chia sẻ toàn bộ màn hình để các bước tự cập nhật khi bạn làm việc',
+      cameraTip: 'Bật camera để các bước tự cập nhật khi bạn làm việc',
+    },
+    watchLight: {
+      pill: 'Chế độ thiên về kế hoạch',
+      pillTip: 'Chế độ thiên về kế hoạch. Các bước của bạn phong phú hơn và tự đầy đủ. Dùng Kiểm tra tiến độ của tôi để đọc theo yêu cầu.',
+      sub: 'Kế hoạch của bạn phong phú hơn và tự đầy đủ, và WorkCoPilot không theo dõi suốt thời gian. Hãy kiểm tra tiến độ bất cứ khi nào bạn muốn đọc lại.',
+      check: 'Kiểm tra tiến độ của tôi',
+      checkTip: 'Đọc màn hình một lần, ngay bây giờ, và cập nhật các bước của bạn',
+    },
+    usage: {
+      tip: 'Gói {tier}, số giờ làm mới {reset}',
+      deeperRead: 'đọc sâu hơn',
+    },
+    rail: {
+      plan: 'Kế hoạch',
+      controls: 'Điều khiển',
+      prevTip: 'Bước trước',
+      nextTip: 'Bước tiếp theo',
+    },
+    replan: {
+      title: 'Lập lại kế hoạch',
+      lead: 'Lập lại kế hoạch điều chỉnh các bước theo thông tin mới. <b>Yêu cầu ban đầu của bạn vẫn giữ nguyên như bạn đã đề ra</b>, nếu bản thân mục tiêu đã thay đổi, hãy bắt đầu một nhiệm vụ mới.',
+      noneLeft: 'Không còn lượt lập lại kế hoạch nào cho nhiệm vụ này (đã dùng hết {cap}). Hãy bắt đầu nhiệm vụ mới để lập kế hoạch lại từ đầu.',
+      left: 'Còn {remaining} trên {cap} lượt lập lại kế hoạch cho nhiệm vụ này.',
+      whatNew: 'Có gì mới?',
+      whatNewHint: '(điều gì đã thay đổi, cần thêm hoặc sửa gì, không phải một mục tiêu mới)',
+      placeholder: 'ví dụ: UI đã thay đổi, thêm bước tạo quy tắc tường lửa, bỏ qua phần VPN',
+      hereTitle: 'Tiếp tục từ đây',
+      hereSub: 'Giữ những gì đã xong, lập lại kế hoạch phần còn lại',
+      startTitle: 'Từ đầu',
+      startSub: 'Lập lại toàn bộ kế hoạch',
+      cancel: 'Hủy',
+    },
+    complete: {
+      title: 'Nhiệm vụ hoàn tất',
+      allDone_one: 'Đã xong cả {n} bước.',
+      allDone_other: 'Đã xong cả {n} bước.',
+      someDone: 'Đã xong {done} trên {total} bước.',
+      nicely: 'Làm tốt lắm.',
+      report: 'Báo cáo và nhật ký kiểm toán của bạn đã sẵn sàng bên dưới.',
+      startAnother: 'Bắt đầu nhiệm vụ khác',
+      startAnotherTip: 'Bắt đầu một nhiệm vụ mới',
+    },
+    done: {
+      completed: 'Đã hoàn tất',
+      count: 'Đã xong {done} trên {total} bước.',
+      downloadHint: 'Tải xuống những gì bạn cần.',
+      review: 'Xem lại & các prompt',
+      downloadLabel: 'Tải xuống',
+      print: 'In',
+    },
+    banner: {
+      dismiss: 'Bỏ qua',
+    },
+    photo: {
+      alt: 'Ảnh đã chụp',
+      removeTip: 'Xóa ảnh này',
+      clear: 'Xóa ảnh',
+    },
+    camera: {
+      live: 'Camera trực tiếp. Hãy hướng vào thứ bạn cần trợ giúp.',
+    },
+    record: {
+      kicker: 'Nhiệm vụ đã hoàn thành',
+      head: 'Những gì đã làm. {done} trên {total} bước',
+      doneAt: 'Xong lúc {time}',
+      notReached: 'Chưa tới',
+    },
+    clarify: {
+      title: 'Câu hỏi nhanh',
+      other: 'Khác',
+      phOther: 'Nhập câu trả lời của riêng bạn',
+      ph: 'Nhập câu trả lời của bạn',
+      otherAria: 'Câu trả lời khác cho: {q}',
+      send: 'Gửi',
+      hint: 'Điều này tinh chỉnh các bước tiếp theo của bạn.',
+      skip: 'Không chắc? Hãy bỏ qua và tôi sẽ tiếp tục dựa trên một giả định an toàn.',
+      skipTip: 'Bỏ qua câu hỏi này. Hướng dẫn sẽ tiếp tục dựa trên một giả định an toàn.',
+      skipped: 'Đã bỏ qua. Tôi sẽ tiếp tục dựa trên một giả định an toàn.',
+      chose: 'Bạn đã chọn: <b>{answer}</b>.',
+      answerIt: 'Trả lời',
+      answerTip: 'Trả lời câu hỏi này ngay',
+      change: 'Thay đổi',
+      changeTip: 'Thay đổi câu trả lời của bạn',
+    },
+    allDone: 'Mọi bước đã được xác nhận trên màn hình. Hãy kết thúc và tóm tắt khi bạn sẵn sàng.',
+    hint: {
+      paused: 'Đã tạm dừng. Tiếp tục để giữ phiên trực tiếp.',
+      watchLight: 'Chế độ thiên về kế hoạch. Nhấn Kiểm tra tiến độ của tôi để đọc lại.',
+      watchScreen: 'Theo dõi màn hình của tôi để giữ phiên trực tiếp',
+      watchCamera: 'Theo dõi camera để giữ phiên trực tiếp',
+    },
+    nav: {
+      prev: 'Trước',
+      prevTip: 'Tới bước trước',
+      next: 'Tiếp',
+      nextTip: 'Tới bước tiếp theo',
+      finishFirst: 'Hãy hoàn thành bước này trước. Nó sẽ tự chuyển tiếp khi xong.',
+      count: 'Bước {n} trên {total}',
+    },
+    nextUp: 'Tiếp theo',
+    plan: {
+      doneOf: 'Đã xong {done} trên {total}',
+      viewFull: 'Xem kế hoạch đầy đủ',
+      full: 'Kế hoạch đầy đủ',
+      close: 'Đóng',
+      closeAria: 'Đóng kế hoạch đầy đủ',
+      yourGoal: 'Mục tiêu của bạn',
+      now: 'Bây giờ',
+    },
+    make: {
+      aria: 'Tạo thứ gì đó từ nhiệm vụ này',
+      ready: 'Sẵn sàng',
+      answer: 'Trả lời',
+      write: 'Viết',
+      compute: 'Tính toán',
+      document: 'Tài liệu',
+      computed: 'Kết quả đã tính',
+      titleAnswer: 'Nhận câu trả lời',
+      titleWrite: 'Viết một sản phẩm bàn giao',
+      titleCompute: 'Tính toán từ một tệp',
+      tag: 'Công cụ sản phẩm bàn giao',
+      whatToMake: 'Tạo gì',
+      close: 'Đóng',
+      closeAria: 'Đóng công cụ sản phẩm bàn giao',
+    },
+    answer: {
+      scopeAria: 'Bạn muốn gì',
+      scopeSteps: 'Các bước',
+      scopeResult: 'Kết quả',
+      scopeBoth: 'Cả hai',
+      leadSteps: 'Hướng dẫn tôi từng bước',
+      pasteTip: 'Dán dữ liệu để tính toán: một bảng, các con số, một nhật ký, bất kỳ văn bản nào',
+      pasteAria: 'Dán dữ liệu',
+      fromCameraTip: 'Chụp ảnh và tính kết quả từ đó',
+      fromScreenTip: 'Đọc màn hình và tính kết quả từ đó',
+      fromScreenAria: 'Tính toán từ màn hình',
+      getTip: 'Tính kết quả cho mục tiêu của bạn, dùng mọi dữ liệu đã dán và màn hình nếu bạn đang chia sẻ',
+      get: 'Nhận kết quả',
+      pastePh: 'Dán dữ liệu cần xử lý vào đây: một bảng, các con số, một nhật ký, một tệp cấu hình, hoặc bất kỳ văn bản nào. Để trống để tính toán từ mục tiêu và màn hình của bạn.',
+      working: 'Đang tính kết quả…',
+      workingData: 'Đang tính kết quả từ dữ liệu của bạn…',
+      slow: 'Việc lấy kết quả đang mất nhiều thời gian hơn dự kiến. Hãy thử lại.',
+      none: 'Không có kết quả nào trả về. Hãy thử lại.',
+      failed: 'Không thể lấy kết quả',
+    },
+    write: {
+      label: 'Bạn cần gì? (Tôi cung cấp cho bạn mã, hoặc một prompt sẵn dùng cho AI của riêng bạn)',
+      ph: 'Ví dụ: một truy vấn SQL cho các khoản hoàn tiền tháng trước, hoặc một prompt để soạn email theo dõi nhà cung cấp trong AI của riêng bạn (đính kèm chuỗi email cũ của bạn vào đó).',
+      format: 'Định dạng',
+      fmtAuto: 'Tự động',
+      fmtPrompt: 'Prompt cho AI của bạn',
+      fmtCode: 'Mã',
+      fmtTable: 'Bảng',
+      fmtBullets: 'Gạch đầu dòng',
+      fmtOutline: 'Dàn ý',
+      pasteTip: 'Dán văn bản nguồn để viết: một email, một bảng, các con số, một nhật ký, bất kỳ văn bản nào',
+      pasteAria: 'Dán văn bản nguồn',
+      fromCameraTip: 'Chụp ảnh và viết từ nội dung nó hiển thị',
+      fromScreenTip: 'Đọc màn hình và viết từ nội dung nó hiển thị',
+      fromScreenAria: 'Viết từ màn hình',
+      composeTip: 'Viết tài liệu cho mục tiêu của bạn, dùng mọi nguồn đã dán và màn hình nếu bạn đang chia sẻ',
+      compose: 'Soạn',
+      srcPh: 'Dán nguồn cần viết vào đây: một chuỗi email, một bảng, ghi chú, một điều khoản, hoặc bất kỳ văn bản nào. Để trống để viết từ mục tiêu và màn hình của bạn.',
+      working: 'Đang viết…',
+      workingSrc: 'Đang viết từ nguồn của bạn…',
+      needWant: 'Hãy cho tôi biết cần viết gì trước.',
+      slow: 'Việc viết nội dung này đang mất nhiều thời gian hơn dự kiến. Hãy thử lại.',
+      none: 'Không có gì trả về. Hãy thử lại.',
+      failed: 'Không thể viết nội dung này',
+    },
+    compute: {
+      privacy: 'Tệp của bạn được đọc ngay trên thiết bị của bạn. Chỉ tên cột và kiểu dữ liệu được gửi đi, dữ liệu của bạn không bao giờ rời khỏi máy.',
+      choose: 'Chọn một tệp CSV hoặc Excel',
+      chooseSub: '.csv, .xlsx hoặc .xls, đọc ngay tại đây trên thiết bị của bạn',
+      reading: 'Đang đọc tệp của bạn trên thiết bị này…',
+      rows_one: '{count} hàng',
+      rows_other: '{count} hàng',
+      cols_one: '{count} cột',
+      cols_other: '{count} cột',
+      meta: '{rows} · {cols}',
+      change: 'Thay đổi',
+      changeTip: 'Chọn một tệp khác',
+      label: 'Tôi nên tính gì?',
+      ph: 'Ví dụ: tổng doanh thu theo khu vực, giá trị đơn hàng trung bình, có bao nhiêu đơn hàng trên $500, hoặc 10 khách hàng chi tiêu nhiều nhất.',
+      run: 'Tính toán',
+      need: '<b>Tôi cần:</b> {text}',
+      planning: 'Đang lập kế hoạch tính toán. Chỉ tên cột và kiểu dữ liệu được gửi đi…',
+      noRows: 'Tệp đó không có hàng nào để tính toán. Hãy kiểm tra xem nó có hàng tiêu đề và ít nhất một hàng giá trị không.',
+      unreadable: 'Không thể đọc tệp đó. Hãy đính kèm một tệp .csv, .xlsx hoặc .xls.',
+      needFile: 'Hãy đính kèm một tệp CSV hoặc Excel trước.',
+      needWant: 'Hãy cho tôi biết cần tính gì trước.',
+      slow: 'Việc lập kế hoạch tính toán đang mất nhiều thời gian hơn dự kiến. Hãy thử lại.',
+      needDefault: 'Tệp không có các cột cần thiết cho việc này. Hãy chọn một tệp có các cột đó, hoặc yêu cầu điều gì đó mà các cột có thể đáp ứng.',
+      unsafe: 'Kế hoạch trả về không qua được kiểm tra an toàn cục bộ ({reason}). Hãy thử diễn đạt lại nội dung cần tính.',
+      invalidPlan: 'kế hoạch không hợp lệ',
+      failed: 'Không thể tính toán nội dung này',
+    },
+    made: {
+      clearResult: 'Xóa kết quả',
+      clearResultTip: 'Xóa kết quả này',
+      clearDoc: 'Xóa tài liệu',
+      clearDocTip: 'Xóa tài liệu này',
+      clearComputeTip: 'Xóa kết quả và tệp này',
+    },
+    summary: {
+      title: 'Tóm tắt phiên',
+    },
+    ask: {
+      ph: 'Hỏi bất cứ điều gì, dán một lỗi, hoặc đính kèm ảnh chụp màn hình hay tài liệu để biết bước tiếp theo',
+      phStuck: 'Hãy cho tôi biết điều gì đang cản trở',
+      phFollowUp: 'Hỏi tiếp',
+      phCamera: 'Hỏi về những gì camera nhìn thấy',
+      attachTip: 'Đính kèm ảnh chụp màn hình, ảnh, hoặc tài liệu. Nó sẽ được xem xét và các bước của bạn sẽ cập nhật nếu cần.',
+      attachAria: 'Đính kèm ảnh chụp màn hình hoặc tài liệu',
+      readScreenTip: 'Đọc màn hình ngay bây giờ',
+      readCameraTip: 'Chụp ảnh và đọc ngay',
+      readAria: 'Đọc màn hình ngay',
+      researchTip: 'Tra cứu thông tin mới nhất trên web, rồi trả lời',
+      researchAria: 'Tra cứu trên web',
+      send: 'Hỏi',
+    },
+  },
+  guideFontScale: {
+    groupAria: 'Cỡ chữ',
+    smaller: 'Chữ nhỏ hơn',
+    reset: 'Đặt lại cỡ chữ',
+    larger: 'Chữ lớn hơn',
+  },
+  guideLevel: {
+    groupAria: 'Mức độ hướng dẫn',
+  },
+  helpPage: {
+    nav: {
+      aria: 'Các phần của hướng dẫn sử dụng',
+      label: 'Hướng dẫn sử dụng',
+      flow: 'Trên màn hình',
+      start: 'Bắt đầu',
+      how: 'Cách hướng dẫn hoạt động',
+      styles: 'Các kiểu hướng dẫn',
+      ask: 'Hỏi, Phân tích & Tra cứu',
+      deep: 'Rà soát kỹ',
+      float: 'Lớp phủ nổi',
+      where: 'Máy tính, di động & trình duyệt',
+      time: 'Thời gian của bạn & tạm dừng',
+      record: 'Lưu lại hồ sơ',
+      safe: 'An toàn & sử dụng chấp nhận được',
+      faq: 'Câu hỏi thường gặp',
+      desktop: 'Ứng dụng máy tính',
+      desktopsec: 'Bảo mật & an toàn (máy tính)',
+      desktopfaq: 'Câu hỏi thường gặp về ứng dụng máy tính',
+    },
+    startTask: 'Bắt đầu một nhiệm vụ',
+    title: 'Cách sử dụng WorkCoPilot',
+    titleDesktop: 'Cách sử dụng ứng dụng máy tính WorkCoPilot',
+    lead: 'Một chuyên gia theo dõi màn hình của bạn, chỉ cho bạn bước tiếp theo chính xác từng bước một, phát hiện thao tác sai và sửa lại, và giữ bạn ở đúng bước tiếp theo cho đến khi hoàn thành công việc. Dưới đây là mọi thứ nó làm được và cách tận dụng tối đa.',
+    flowAlt: 'Cách WorkCoPilot hoạt động, trong bốn bước: 1) Cho nó biết mục tiêu của bạn. 2) Làm theo bước tiếp theo chính xác mà nó hiển thị trên màn hình của bạn, cú nhấp, lệnh hoặc mã. 3) Nó phát hiện và sửa thao tác sai. 4) Tiếp tục cho đến khi xong, kèm một dấu vết kiểm toán và một báo cáo gọn gàng.',
+    guideShot: {
+      aria: 'Thẻ hướng dẫn hiển thị bước hiện tại kèm lệnh hoặc mã chính xác cần dùng, và một nút Đánh dấu hoàn thành.',
+      nowDoThis: 'GIỜ, HÃY LÀM ĐIỀU NÀY',
+      stepOf: 'Bước 2 trên 9',
+      stepTitle: 'Tạo lớp Apex trong Developer Console',
+      terminal: 'TERMINAL',
+      markDone: 'Đánh dấu hoàn thành',
+      hideHow: 'Ẩn cách làm',
+      caption: 'Thẻ hướng dẫn: mỗi lần một bước, kèm lệnh hoặc mã chính xác và một nút Đánh dấu hoàn thành.',
+    },
+    redactShot: {
+      aria: 'Các giá trị nhạy cảm trên màn hình được thay bằng REDACTED ngay trên thiết bị của bạn trước khi bất cứ thứ gì được gửi đi.',
+      account: 'Tài khoản: Acme Corp',
+      email: 'Email',
+      apiKey: 'Khóa API',
+      note: 'Được ẩn ngay trên thiết bị của bạn, chỉ văn bản đã làm sạch mới được gửi đi.',
+      caption: 'Bật quản trị: các giá trị nhạy cảm được loại bỏ ngay trên thiết bị của bạn trước khi bất cứ thứ gì rời khỏi nó.',
+    },
+    flow: {
+      h2: 'Trên màn hình: luồng chính',
+      lead: 'Bốn màn hình, từ mục tiêu của bạn đến câu trả lời. Mọi thứ khác trong hướng dẫn này đều dựa trên chúng.',
+      steps: {
+        start: {
+          t: 'Bắt đầu một nhiệm vụ',
+          d: 'Đặt tên kế hoạch, viết mục tiêu bằng lời của bạn, nhấn <b>Bắt đầu hướng dẫn tôi</b>.',
+          alt: 'Ô Bắt đầu một nhiệm vụ trên Bảng điều khiển: tên kế hoạch, mục tiêu, và nút Bắt đầu hướng dẫn tôi.',
+        },
+        follow: {
+          t: 'Làm theo Giờ, hãy làm điều này',
+          d: 'Mỗi lần một bước, kèm lệnh chính xác và một nút Sao chép. Kế hoạch nằm bên trái; các bước hoàn thành được đánh dấu khi nó thấy đã xong.',
+          alt: 'Thẻ Giờ, hãy làm điều này trong bảng điều khiển hướng dẫn: bước hiện tại, lệnh terminal kèm nút Sao chép, và cách thực hiện.',
+        },
+        tools: {
+          t: 'Mở Công cụ',
+          d: 'Tạo thứ gì đó (Trả lời, Viết, Tính toán), đọc màn hình, Rà soát kỹ, lập lại kế hoạch, hướng dẫn đầy đủ, cỡ chữ và giao diện.',
+          alt: 'Menu Công cụ: Trả lời, Viết, Tính toán, Đọc màn hình của tôi, Rà soát kỹ, Xem kế hoạch đầy đủ, Lập lại kế hoạch, Hướng dẫn đầy đủ, cỡ chữ, màu nhấn và chế độ tối.',
+        },
+        answer: {
+          t: 'Nhận câu trả lời',
+          d: 'Công cụ, rồi <b>Trả lời</b>, rồi <b>Nhận kết quả</b>. Thẻ cung cấp kết quả, mức độ tin cậy, cách nó tìm ra, cách xác minh, và mọi cảnh báo về chính sách công ty.',
+          alt: 'Thẻ Trả lời: kết quả, thanh đo độ tin cậy, cách tôi tìm ra nó, cách xác minh, kiểm tra bảo mật và các cảnh báo chính sách công ty.',
+        },
+      },
+    },
+    desktop: {
+      h2: 'Ứng dụng máy tính',
+      lead: 'Ứng dụng máy tính là một lớp phủ yên tĩnh nổi trên bất cứ thứ gì bạn đang làm việc. Nó chạy ở chế độ <b>chỉ đọc</b>, nó hiển thị bước tiếp theo, nó không bao giờ nhấp, gõ hay chạy bất cứ thứ gì thay bạn.',
+      modesH: 'Hai chế độ',
+      modes: [
+        '<b>Lập kế hoạch</b>, một cửa sổ bình thường, có thể đổi kích thước (mở rộng toàn màn hình) để đặt mục tiêu, trả lời các câu hỏi xác định phạm vi nhanh và thêm tài liệu. Ở đây nó không nằm trên các cửa sổ khác.',
+        '<b>Hướng dẫn</b>, khi một kế hoạch bắt đầu, nó trở thành một lớp phủ nhỏ gọn nổi trên công việc của bạn, với tính năng xuyên thấu và nhấp xuyên qua để bạn có thể làm việc bên dưới.',
+        '<b>Buddy</b>, thu nhỏ lại và nó co thành một thẻ nhỏ luôn hiển thị bước hiện tại. Mở lại bất cứ lúc nào.',
+      ],
+      titleBarH: 'Thanh tiêu đề (sau khi bạn đăng nhập)',
+      titleBar: [
+        '<b>Lên trên</b>, giữ cửa sổ ở trên mọi thứ khác.',
+        '<b>Ẩn / Khi chia sẻ</b>, ẩn cửa sổ khỏi các phiên chia sẻ màn hình và bản ghi (bật theo mặc định), hoặc hiện nó khi bạn muốn trình chiếu.',
+        '<b>Xuyên thấu</b>, thay đổi độ trong suốt của cửa sổ để công việc phía sau hiện xuyên qua.',
+        '<b>Nhấp xuyên qua</b> (khi đang hướng dẫn), để các cú nhấp của bạn đi thẳng tới ứng dụng bên dưới. Bản thân thanh tiêu đề vẫn nhận cú nhấp, nên bạn luôn có thể tắt nó ở đó (hoặc bằng Ctrl+Shift+Alt+W).',
+        '<b>Buddy</b>, thu nhỏ thành thẻ buddy.',
+      ],
+      shortcutsH: 'Phím tắt',
+      shortcuts: [
+        '<b>Ctrl+Shift+Alt+H</b> ẩn / hiện · <b>Ctrl+Shift+Alt+S</b> ẩn khỏi chia sẻ · <b>Ctrl+Shift+Alt+T</b> lên trên',
+        '<b>Ctrl+Shift+Alt+O</b> xuyên thấu · <b>Ctrl+Shift+Alt+W</b> nhấp xuyên qua · <b>Ctrl+Shift+Alt+B</b> buddy · <b>Ctrl+Shift+Alt+M</b> chọn màn hình',
+      ],
+      docsH: 'Tài liệu & sơ đồ của riêng bạn',
+      docs: 'Trên thẻ mục tiêu, dùng <b>Thêm tài liệu</b> để gắn kế hoạch vào tài liệu của riêng bạn, PDF, Word, văn bản, và <b>sơ đồ hoặc ảnh chụp màn hình</b> (đọc trên thiết bị của bạn). Tệp vẫn ở trên máy của bạn; chỉ phần văn bản đã trích xuất và được quản trị mới được dùng để lập kế hoạch.',
+    },
+    desktopsec: {
+      h2: 'Bảo mật & an toàn (máy tính)',
+      items: [
+        '<b>Chỉ đọc theo thiết kế.</b> Nó không bao giờ nhấp, gõ, chạy lệnh hay thay đổi bất cứ thứ gì. Bạn vẫn kiểm soát mọi thao tác.',
+        '<b>Ẩn khỏi các phiên chia sẻ màn hình.</b> Lớp phủ được bảo vệ nội dung theo mặc định, nên nó không xuất hiện trong các phiên chia sẻ và bản ghi của Zoom / Teams / Meet. Bật/tắt bằng <b>Khi chia sẻ</b> hoặc Ctrl+Shift+Alt+S khi bạn muốn nó hiển thị.',
+        '<b>Tài liệu của bạn ở lại trên máy tính của bạn.</b> Các tệp bạn thêm được đọc trên thiết bị của bạn. Tệp gốc không bao giờ được tải lên, và văn bản không được lưu trên máy chủ của chúng tôi, nó chỉ được dùng để lập kế hoạch cho phiên đó.',
+        '<b>Dữ liệu rời đi tối thiểu.</b> Để hướng dẫn bạn, các khung hình màn hình đã thu nhỏ và văn bản đã quản trị được gửi tới dịch vụ AI (của chúng tôi, hoặc khóa riêng của công ty bạn). Khi quản trị được bật, các giá trị nhạy cảm được loại bỏ hoặc mã hóa bằng token <b>trước khi</b> bất cứ thứ gì được gửi đi, và được dựng lại trên thiết bị của bạn.',
+        '<b>Được ký và cập nhật an toàn.</b> Ứng dụng được ký mã (COE Security) và các bản cập nhật được phân phối qua HTTPS.',
+      ],
+      tip: 'Đây là các biện pháp kiểm soát và bằng chứng kiểm toán hỗ trợ việc tuân thủ của bạn (GDPR, HIPAA, PCI-DSS, SOC 2, ISO 27001, CCPA). Tự chúng không làm bạn được chứng nhận.',
+    },
+    desktopfaq: {
+      h2: 'Câu hỏi thường gặp về ứng dụng máy tính',
+      items: [
+        {
+          q: 'Người trong cuộc gọi có thể nhìn thấy lớp phủ không?',
+          a: 'Không, không khi nó đang ẩn (mặc định). Nó được loại khỏi việc chụp và ghi màn hình. Nhấn Ctrl+Shift+Alt+S hoặc nút Khi chia sẻ nếu bạn cố ý muốn hiển thị nó.',
+        },
+        {
+          q: 'Sơ đồ hoặc tài liệu của tôi có được tải lên không?',
+          a: 'Không. Trên ứng dụng máy tính, tệp được đọc trên máy tính của bạn. Chỉ văn bản đã quản trị được gửi đi để lập kế hoạch, và nó không được lưu trên máy chủ của chúng tôi.',
+        },
+        {
+          q: 'Nó có tự làm gì trên máy của tôi không?',
+          a: 'Không bao giờ. Nó chỉ đọc. Nó đọc màn hình và cho bạn biết bước tiếp theo; bạn tự thực hiện mọi thao tác.',
+        },
+        {
+          q: 'Làm sao để nó không vướng víu?',
+          a: 'Dùng Xuyên thấu và Nhấp xuyên qua khi đang hướng dẫn, thu nhỏ về thẻ Buddy, hoặc Ctrl+Shift+Alt+H để ẩn hoàn toàn. Nó vẫn hoạt động khi đã thu nhỏ.',
+        },
+        {
+          q: 'Tôi đã bật Nhấp xuyên qua và giờ tôi không thể nhấp vào WorkCoPilot.',
+          a: 'Đó là tính năng Click-behind đang hoạt động: các cú nhấp của bạn đi đến ứng dụng bên dưới. Di chuột lên thanh tiêu đề WorkCoPilot, nơi luôn nhận cú nhấp, rồi nhấn Click-behind tại đó, hoặc nhấn Ctrl+Shift+Alt+W.',
+        },
+        {
+          q: 'Nó báo không thể kết nối tới WorkCoPilot.',
+          a: 'Ứng dụng cần kết nối tới máy chủ WorkCoPilot. Hãy kiểm tra internet, VPN hoặc proxy của bạn. Cửa sổ sẽ tự thử lại và mở bảng điều khiển ngay khi máy chủ phản hồi; nút Thử lại ngay và Đóng luôn có sẵn.',
+        },
+        {
+          q: 'Nó có tự cập nhật không?',
+          a: 'Có. Khi khởi động, nó kiểm tra bản cập nhật đã ký qua HTTPS và cài đặt vào lần khởi động lại tiếp theo.',
+        },
+      ],
+    },
+    start: {
+      h2: 'Bắt đầu',
+      steps: [
+        'Trên <b>Bảng điều khiển</b>, nhập điều bạn muốn hoàn thành vào ô <b>Mục tiêu của bạn</b>, hoặc chọn một không gian để bắt đầu. Bạn có thể dán cả một phiếu công việc, một yêu cầu, hoặc một thông báo lỗi.',
+        'Nhấn <b>Bắt đầu hướng dẫn tôi</b>. WorkCoPilot đọc mục tiêu, lập kế hoạch cho công việc, và xin phép đọc màn hình của bạn.',
+        'Cho phép chia sẻ màn hình. Hãy chọn <b>toàn bộ màn hình</b> để nó có thể hướng dẫn bạn qua các ứng dụng khác, không chỉ riêng tab này.',
+        'Làm theo bước <b>LÀM NGAY ĐIỀU NÀY</b>. Khi màn hình của bạn thay đổi, bước tiếp theo sẽ tự hiện ra.',
+      ],
+      tip: 'Chỉ lần đầu tiên: thiết lập AI của bạn trong ô trên Bảng điều khiển. Đó là thứ đọc màn hình của bạn. Sau đó, nó chạy trơn tru.',
+    },
+    how: {
+      h2: 'Cách hướng dẫn hoạt động',
+      lead: 'WorkCoPilot đọc màn hình của bạn và cho bạn biết bước tiếp theo chính xác cần làm. Nó không nhấp hay gõ thay bạn, nên bạn luôn làm chủ suốt quá trình. Nó bắt đầu từ bước đầu tiên, mở đúng trang và đăng nhập, và không giả định điều gì.',
+      seeH: 'Những gì bạn thấy',
+      see: [
+        '<b>LÀM NGAY ĐIỀU NÀY</b> hiển thị bước hiện tại, được viết lại đúng với những gì đang có trên màn hình của bạn ngay lúc này.',
+        'Các <b>lệnh, mã và liên kết</b> chính xác được cung cấp sẵn sàng để sao chép, mỗi thứ kèm nút Sao chép hoạt động cả trên trang và trong cửa sổ nổi.',
+        '<b>Danh sách kiểm tra</b> hiển thị toàn bộ kế hoạch. Các bước đã xong sẽ tự được đánh dấu khi nó thấy chúng hoàn tất.',
+      ],
+      keepH: 'Cách nó theo kịp',
+      keep: 'Nó theo dõi bằng các khung hình thu nhỏ và chỉ xem kỹ khi màn hình thực sự thay đổi, nên một màn hình đứng yên gần như không tốn gì. Khi thấy bạn đi sai hướng, nó sẽ báo và chỉnh lại bước. Bạn có thể nhấn <b>Lập lại kế hoạch</b> bất cứ lúc nào để xây dựng lại các bước từ những gì đang có trên màn hình.',
+    },
+    styles: {
+      h2: 'Phong cách hướng dẫn',
+      lead: 'Chọn độ chi tiết phù hợp với bạn từ menu <b>Phong cách hướng dẫn</b>. Bạn có thể đổi phong cách giữa chừng.',
+      items: [
+        '<b>Từng bước một</b> - mỗi lần một hành động với lệnh chính xác, mỗi bước được xác nhận trước khi sang bước kế tiếp.',
+        '<b>Người mới hoàn toàn</b> - mọi thứ được giải thích cặn kẽ, từng cú nhấp và từng phím gõ, với thuật ngữ được diễn giải bằng lời lẽ dễ hiểu.',
+        '<b>Cấp kiến trúc sư</b> - thiết kế, đánh đổi và các thông lệ tốt nhất, viết cho người đã có kinh nghiệm và muốn hiểu lý do.',
+        '<b>Giải quyết vấn đề</b> - cùng gỡ lỗi: đọc lỗi, thử từng ý tưởng một, và thu hẹp dần nguyên nhân.',
+      ],
+    },
+    ask: {
+      h2: 'Hỏi, Phân tích và Nghiên cứu',
+      lead: 'Ba việc bạn có thể làm ở bất cứ thời điểm nào trong công việc mà không mất chỗ đang dở:',
+      items: [
+        '<b>Hỏi</b> - gõ một câu hỏi về những gì đang có trên màn hình và nhận câu trả lời trực tiếp, dựa trên những gì nó thấy được.',
+        '<b>Phân tích</b> (gọi là <b>Chụp ảnh</b> trên di động) - chụp một ảnh màn hình ngay bây giờ và đọc nó theo mục tiêu của bạn. Thêm một ghi chú trọng tâm để chỉ nó đến phần bạn quan tâm.',
+        '<b>Nghiên cứu</b> - tra cứu thông tin mới nhất trên web, rồi trả lời. Nó chỉ chạy khi bạn chạm vào, nên không có gì diễn ra sau lưng bạn.',
+      ],
+    },
+    deep: {
+      h2: 'Lượt phân tích sâu',
+      body: 'Gặp chỗ khó? Chạm vào <b>Lượt phân tích sâu</b>. Nó chạy riêng ảnh màn hình đó với lập luận kỹ hơn, lồng kết quả trở lại các bước của bạn, rồi tiếp tục ở tốc độ bình thường. Đây là một cú tăng tốc một lần, không phải chế độ bạn phải tắt đi. WorkCoPilot cũng tự làm việc này khi một bước trở nên hóc búa, nên bạn hiếm khi cần yêu cầu.',
+      tip: 'Dùng Lượt phân tích sâu khi một bước mơ hồ, một lỗi lạ lẫm, hoặc màn hình không khớp với những gì bạn mong đợi.',
+    },
+    float: {
+      h2: 'Lớp phủ nổi',
+      p1: 'Chạm vào <b>Nổi lên trên</b> để đưa phần hướng dẫn vào một cửa sổ nhỏ luôn nằm trên cùng, để bạn không bao giờ phải chuyển tab khi làm việc. Di chuyển và đổi kích thước thoải mái. Dùng biểu tượng mặt trời và mặt trăng để chuyển sáng hay tối, và nút phần trăm để làm mờ nó đi cho khỏi vướng.',
+      p2: 'Trên Chrome, Edge, Brave và Opera, lớp nổi nằm trên mọi ứng dụng. Trên Firefox và Safari, nó mở ra như một cửa sổ bật riêng, mà bạn vẫn có thể di chuyển đến bất cứ đâu.',
+      tip: 'Giữ tab WorkCoPilot mở trong khi bạn dùng lớp nổi. Nó có thể nằm ở nền, điều đó không sao.',
+    },
+    where: {
+      h2: 'Máy tính, di động và trình duyệt',
+      lead: 'Mọi cách chạy WorkCoPilot đều nằm trong một gói đăng ký. Dùng cách nào hợp với từng lúc.',
+      items: [
+        '<b>Trình duyệt</b> - không cần cài đặt gì, hoạt động cả trên máy bị khóa chặt. Chia sẻ toàn bộ màn hình để được hướng dẫn qua bất kỳ ứng dụng nào. Bạn đang dùng cách này.',
+        '<b>Ứng dụng máy tính</b> - một lớp phủ thực thụ với tính năng xuyên thấu và click-behind, và nó tự ẩn khỏi các buổi chia sẻ màn hình, nên người trong cuộc gọi không nhìn thấy nó.',
+        '<b>Ứng dụng di động</b> - hướng camera điện thoại vào một màn hình, một thiết bị hay tờ giấy, và được hướng dẫn. Chạm <b>Chụp ảnh</b> để hỏi về những gì camera thấy, hoặc để nó theo dõi trực tiếp.',
+      ],
+    },
+    time: {
+      h2: 'Thời lượng và tạm dừng',
+      lead: 'Gói của bạn cho bạn nhiều giờ hướng dẫn trực tiếp mỗi ngày, chỉ tính khi đang hướng dẫn thực sự, không bao giờ tính lúc rảnh. Huy hiệu <b>phút còn lại</b> ở trên cùng cho thấy còn bao nhiêu thời gian hôm nay, và nó chuyển sang màu hổ phách để cảnh báo bạn trước khi sắp hết.',
+      items: [
+        'Chạm <b>Tạm dừng</b> để đóng băng đồng hồ và phiên của bạn khi bạn rời đi hoặc làm việc khác, rồi <b>Tiếp tục</b> khi bạn quay lại.',
+        'Số phút hằng ngày được đặt lại vào <b>11:59 PM ET</b>.',
+        'Thời gian nạp thêm đã mua không bao giờ hết hạn và chỉ được dùng sau khi số phút hằng ngày của bạn đã hết.',
+        'Cần thêm ngay bây giờ? Dùng <b>Thêm thời gian</b> ở trên cùng Bảng điều khiển.',
+      ],
+    },
+    record: {
+      h2: 'Lưu lại hồ sơ',
+      body: 'Mỗi phiên đều có thể được lưu thành một hồ sơ gọn gàng: công việc, những gì đã đạt được, từng bước đã xác nhận cùng các lệnh và mã chính xác, mọi cảnh báo, và các câu hỏi cùng câu trả lời của bạn. Dùng <b>Tải xuống</b> để chọn định dạng - một <b>báo cáo PDF</b>, một <b>báo cáo văn bản</b> thuần, hoặc toàn bộ <b>nhật ký kiểm toán</b> - hoặc <b>In</b> để lấy bản giấy. Các lệnh và mã chỉ xuất hiện với những bước bạn thực sự hoàn thành, và báo cáo bao gồm tối đa năm <b>ảnh màn hình cột mốc đã làm sạch</b> làm bằng chứng.',
+      tip: 'Báo cáo tiện dụng như một cẩm nang cho lần sau, hoặc để trao cho đồng nghiệp cần làm cùng công việc. Mỗi ảnh màn hình được che thông tin nhạy cảm ngay trên thiết bị của bạn trước khi chụp - chỉ ảnh đã làm sạch mới từng được lưu lại.',
+    },
+    safe: {
+      h2: 'An toàn và sử dụng hợp lệ',
+      p1: 'WorkCoPilot chỉ hỗ trợ công việc hợp pháp, chính đáng. Nó sẽ không giúp chế tạo vũ khí hay phương tiện gây hại hàng loạt, tạo mã độc hay mã khai thác, đột nhập vào hệ thống hoặc tài khoản mà bạn không sở hữu, hay làm bất cứ điều gì bất hợp pháp. Những yêu cầu đó bị từ chối khi bạn đặt mục tiêu.',
+      p2: 'Nó đọc màn hình của bạn để hướng dẫn và không bao giờ hành động thay bạn. Nó không nhấp, gõ, hay gửi bất cứ thứ gì thay bạn, nên bạn quyết định mọi hành động.',
+    },
+    faq: {
+      h2: 'Câu hỏi thường gặp',
+      items: [
+        {
+          q: 'Tôi có cần cài đặt gì không?',
+          a: 'Không. Nó chạy trong trình duyệt của bạn. Chỉ cài ứng dụng máy tính hoặc di động nếu bạn muốn thêm các tính năng lớp phủ hay camera.',
+        },
+        {
+          q: 'Người trong cuộc gọi có thấy lớp phủ không?',
+          a: 'Nếu bạn chia sẻ toàn bộ màn hình trong trình duyệt thì có. Ứng dụng máy tính tự ẩn khỏi các buổi chia sẻ màn hình.',
+        },
+        {
+          q: 'Nó có dùng được cho công việc phi kỹ thuật không?',
+          a: 'Có. Tài chính, tiếp thị, pháp lý, văn phòng, sản phẩm, bất cứ việc gì diễn ra trên màn hình.',
+        },
+        {
+          q: 'Nếu các bước không đúng với màn hình của tôi thì sao?',
+          a: 'Nó đọc lại màn hình của bạn và chỉnh sửa khi bạn làm. Nhấn <b>Đọc màn hình của tôi</b> bất cứ lúc nào để chụp một ảnh mới, xác minh bước hiện tại và tiếp tục, hoặc <b>Lập lại kế hoạch</b> để xây dựng lại các bước.',
+        },
+        {
+          q: 'Nó có gõ hay nhấp thay tôi không?',
+          a: 'Không. Nó chỉ đọc và hướng dẫn. Bạn vẫn làm chủ mọi hành động.',
+        },
+        {
+          q: 'Nó làm gì với màn hình của tôi?',
+          a: 'Các khung hình được thu nhỏ và chỉ được đọc để hướng dẫn công việc. Màn hình không thay đổi thì hoàn toàn không được gửi đi.',
+        },
+      ],
+    },
+  },
+  howItWorks: {
+    hero: {
+      h1a: 'Như có người giỏi nhất',
+      h1b: 'ở ngay trong phòng, mọi lúc.',
+      p: 'WorkCoPilot theo dõi màn hình của bạn, hiển thị bước tiếp theo chính xác ngay trong ứng dụng bạn đang dùng, kiểm tra xem nó đã hiệu quả chưa, và tiếp tục cho đến khi công việc hoàn tất.',
+    },
+    viz: {
+      steps: {
+        alt: 'Minh họa: một dòng tiến trình bốn bước với bước một đã xong, bước hai đang tiến hành và phần còn lại đang chờ',
+        caption: 'bước 2 trong 4',
+      },
+      command: {
+        alt: 'Minh họa: một cửa sổ dòng lệnh hiển thị một lệnh chính xác kèm xác nhận Đã sao chép',
+        copied: 'Đã sao chép',
+      },
+      zero: {
+        alt: 'Minh họa: ba bước liên tiếp, Mở, Đăng nhập, rồi Xong',
+        open: 'Mở',
+        signIn: 'Đăng nhập',
+        done: 'Xong',
+      },
+      fix: {
+        alt: 'Minh họa: một dải mạng mở đầy rủi ro bị gạch bỏ và thay bằng một dải đã sửa, hẹp hơn',
+      },
+      apps: {
+        alt: 'Minh họa: ba cửa sổ ứng dụng cạnh nhau, một trang web, một ứng dụng máy tính và một cửa sổ dòng lệnh',
+        caption: 'web  ·  máy tính  ·  dòng lệnh',
+      },
+      grounded: {
+        alt: 'Minh họa: một tài liệu được đọc ngay trên thiết bị, với mũi tên dẫn tới dấu kiểm Thông lệ tốt nhất',
+        read: 'đọc trên thiết bị',
+        best: 'Thông lệ tốt nhất',
+      },
+      record: {
+        alt: 'Minh họa: một báo cáo PDF đã hoàn thành với dấu kiểm hoàn tất',
+        pdf: 'PDF',
+      },
+      review: {
+        alt: 'Minh họa: một sơ đồ đang được xem xét, một ô được gắn cờ, với mũi tên dẫn tới bản sửa đã tạo',
+        fix: 'sửa',
+      },
+      learns: {
+        alt: 'Minh họa: hai cửa sổ ứng dụng, Lần trước với một nút ở một vị trí và Lần này với nút đã dời đi và đã được tìm thấy, bên trên dòng chữ đã học, mang theo',
+        lastTime: 'lần trước',
+        thisTime: 'lần này',
+        found: 'đã tìm thấy',
+        learned: 'đã học',
+        carried: 'mang theo',
+      },
+      coach: {
+        alt: 'Minh họa: một bước kiểm tra sẵn sàng ngắn gọn với ba dấu kiểm, rồi một lựa chọn giữa phỏng vấn nhanh và chi tiết',
+        kind: 'Thân thiện',
+        ready: 'Sẵn sàng?',
+        sample: 'Ví dụ',
+        quick: 'Nhanh',
+        detailed: 'Chi tiết',
+      },
+      shield: {
+        alt: 'Minh họa: một ô biểu mẫu hiển thị là ĐÃ CHE, một lần kiểm tra mã với dấu kiểm, và một ổ khóa trình xác thực',
+        codeChecked: 'mã đã kiểm tra',
+        authenticator: 'yêu cầu trình xác thực',
+      },
+      skills: {
+        alt: 'Minh họa: một tài liệu cẩm nang với mũi tên dẫn vào một kế hoạch nay làm theo nó',
+        playbook: 'cẩm nang của bạn',
+      },
+      enterprise: {
+        alt: 'Minh họa: một cảnh báo an ninh được chuyển tiếp tới bảng điều khiển SOC, một huy hiệu đăng nhập một lần và một báo cáo được niêm phong',
+        soc: 'SOC của bạn',
+        sso: 'SSO',
+        sealed: 'đã niêm phong',
+      },
+      anywhere: {
+        alt: 'Minh họa: một lớp phủ máy tính, một cửa sổ trình duyệt và một điện thoại cạnh nhau',
+        desktop: 'lớp phủ máy tính',
+        browser: 'trình duyệt',
+        phone: 'điện thoại',
+      },
+    },
+    gridH2: 'WorkCoPilot làm gì cho bạn',
+    cards: [
+      {
+        t: 'Hướng dẫn, từng bước một',
+        d: 'Bước tiếp theo chính xác trên màn hình của bạn, giải thích ở độ chi tiết bạn chọn, từ đơn giản nhất đến kỹ thuật, và được kiểm tra trước khi bạn tiếp tục.',
+      },
+      {
+        t: 'Chính xác cách làm, mọi lúc',
+        d: 'Cú nhấp, lệnh hay thiết lập chính xác, sẵn sàng để sao chép, luôn là cách tốt nhất đã được kiểm chứng.',
+      },
+      {
+        t: 'Bắt đầu từ con số không',
+        d: 'Mở đúng trang, đăng nhập giúp bạn và đưa bạn đến đúng chỗ.',
+      },
+      {
+        t: 'Phát hiện và sửa lỗi sai',
+        d: 'Nhận ra một bước đi sai ngay khi nó xảy ra và chỉ cách sửa, kể cả khi một nút đã dời đi.',
+      },
+      {
+        t: 'Bất kỳ ứng dụng nào, không chỉ trình duyệt',
+        d: 'Ứng dụng web, ứng dụng máy tính, bảng điều khiển nội bộ và công cụ riêng của bạn: nó đọc bất cứ thứ gì trên màn hình.',
+      },
+      {
+        t: 'Dựa trên điều tốt nhất, và trong thế giới của bạn',
+        d: 'Các bước tuân theo thông lệ tốt nhất hiện hành và, ở gói Advanced và Premium, theo chính các tài liệu của bạn, được đọc ngay trên máy tính của bạn.',
+      },
+      {
+        t: 'Một hồ sơ bạn giữ lại',
+        d: 'Kết thúc với một bản ghi gọn gàng, giàu hình ảnh về những gì bạn đã làm, sẵn sàng để chia sẻ hoặc làm lại.',
+      },
+      {
+        t: 'Xem xét và tạo',
+        d: 'Cho nó xem một sơ đồ hoặc thiết kế. Nó tìm ra các vấn đề thực sự và trao cho bạn một câu lệnh sẵn sàng để sửa.',
+      },
+      {
+        t: 'Luôn cập nhật, học công cụ của bạn',
+        d: 'Học cách công cụ của bạn hoạt động hôm nay, giữ riêng cho công ty của bạn, nên hướng dẫn không bao giờ lỗi thời.',
+      },
+      {
+        t: 'Một công việc tốt hơn trước khi bạn tốn một phút',
+        d: 'Một huấn luyện viên 30 giây kiểm tra bạn đã sẵn sàng chưa và định hình công việc, để kế hoạch khớp với những gì bạn biết.',
+      },
+      {
+        t: 'Dạy nó các kỹ năng của bạn',
+        d: 'Dán một cẩm nang hoặc SOP và hướng dẫn sẽ theo đúng công cụ, chuẩn mực và thuật ngữ của bạn, được giữ riêng tư.',
+      },
+      {
+        t: 'Được bảo vệ mặc định',
+        d: 'Dữ liệu được che ngay trên thiết bị của bạn, mã được kiểm tra trước khi chạy, một trình xác thực trên mọi tài khoản, một nhật ký kiểm toán đầy đủ.',
+      },
+      {
+        t: 'Xây dựng cho doanh nghiệp',
+        d: 'Cảnh báo an ninh tới SIEM của bạn, SSO công ty, các báo cáo tuân thủ được niêm phong trên 18 khung quy định và một bảng điều khiển ROI cho lãnh đạo.',
+      },
+      {
+        t: 'Máy tính, web và di động',
+        d: 'Một lớp phủ máy tính ẩn khỏi chia sẻ màn hình, trình duyệt không cần cài đặt gì, hoặc camera điện thoại của bạn. Nó hướng dẫn, không bao giờ hành động thay bạn.',
+      },
+    ],
+    feature: {
+      h2: 'Kế hoạch của bạn được lập ra như thế nào',
+      loop: {
+        aria: 'Cách mọi công việc chạy: lập kế hoạch, dò hỏi, hướng dẫn, theo dõi, chỉnh sửa, lặp lại cho đến khi công việc hoàn tất',
+        rows: [
+          {
+            k: 'Lập kế hoạch',
+            v: 'AI mạnh nhất mà bạn có lập kế hoạch cho toàn bộ công việc',
+          },
+          {
+            k: 'Dò hỏi',
+            v: 'hỏi một câu khi cần thêm thông tin, một lần chạm hoặc một câu trả lời nhanh',
+          },
+          {
+            k: 'Hướng dẫn',
+            v: 'bước tiếp theo chính xác, ngay trên màn hình của bạn',
+          },
+          {
+            k: 'Theo dõi',
+            v: 'kiểm tra rằng mỗi bước thực sự hiệu quả, và kiểm tra lại bất kỳ bước nào ngay khi bạn yêu cầu',
+          },
+          {
+            k: 'Chỉnh sửa',
+            v: 'sửa một bước đi sai ngay khi nó xảy ra',
+          },
+        ],
+        again: 'lặp lại cho đến khi công việc hoàn tất',
+        ok: 'Được lập bởi AI mạnh nhất dành cho bạn',
+      },
+      line: 'Nó giữ toàn bộ công việc của bạn trong ngữ cảnh và tiếp tục, cải thiện khi học hỏi, cho đến khi công việc hoàn tất.',
+      eyebrow: 'AI mạnh nhất mà bạn có',
+      title: 'Kế hoạch của bạn đến từ AI mạnh nhất mà bạn có.',
+      body: 'Đặt mục tiêu. AI mạnh nhất trên khóa của bạn lập kế hoạch, và hướng dẫn trực tiếp theo kịp màn hình của bạn, từng bước một.',
+      points: [
+        'Được chọn, không phải đoán: luôn là lựa chọn mạnh nhất thực sự có sẵn cho bạn ngay bây giờ.',
+        'Ranh giới dữ liệu của bạn được giữ vững: mọi lệnh gọi đều ở trên khóa của riêng bạn hoặc của công ty bạn.',
+        'Nhật ký trung thực: mỗi công việc ghi lại điều gì đã lập kế hoạch cho nó và bất kỳ thay đổi nào diễn ra giữa chừng.',
+      ],
+    },
+    cta: {
+      aria: 'Bước tiếp theo',
+      start: 'Bắt đầu',
+      enterprise: 'Tính năng doanh nghiệp',
+      demo: 'Xem bản demo 60 giây',
+    },
+  },
+  legalShared: {
+    lastUpdated: 'Cập nhật lần cuối',
+    templateLabel: 'Mẫu.',
+    templateNotice: 'Đây là một mẫu được cung cấp nhằm minh bạch và đang được hoàn thiện cùng cố vấn pháp lý; nó chưa phải là một thỏa thuận ràng buộc.',
+    ownership: 'WorkCoPilot, bởi AdmireVeda, một sản phẩm của {entity}.',
+    glanceH2: 'Nhìn tổng quan',
+    tocTitle: 'Trên trang này',
+    relatedPages: 'Trang liên quan',
+    contact: 'Liên hệ',
+    back: 'Về WorkCoPilot',
+  },
+  policyNote: {
+    cleanBody: 'Hướng dẫn này đã được đối chiếu với chính sách bảo mật của công ty bạn và không có gì bị gắn cờ.',
+  },
+  privacyPage: {
+    seo: {
+      title: 'Chính sách Bảo mật - WorkCoPilot bởi AdmireVeda',
+      description: 'Những gì WorkCoPilot thu thập, những gì rời khỏi thiết bị của bạn sau khi che thông tin nhạy cảm ngay trên thiết bị, những gì được lưu trữ và trong bao lâu (bao gồm cả các bài học đã khử danh tính giúp giữ hướng dẫn luôn cập nhật), cách nó được bảo vệ, các bên thứ ba liên quan, cùng các quyền và lựa chọn của bạn.',
+    },
+    hero: {
+      eyebrow: 'Chính sách Bảo mật · WorkCoPilot',
+      h1: 'WorkCoPilot xử lý dữ liệu của bạn như thế nào',
+      lead: 'WorkCoPilot hướng dẫn bạn làm việc ngay trên màn hình của chính bạn. Nó được thiết kế chỉ đọc, và dữ liệu nhạy cảm được loại bỏ hoặc mã hóa thành token ngay trên thiết bị của bạn trước khi bất cứ thứ gì được gửi đi. Trang này nói, bằng ngôn ngữ dễ hiểu, những gì chúng tôi thu thập, những gì rời khỏi thiết bị của bạn, những gì chúng tôi lưu trữ, và các lựa chọn bạn có.',
+      lastUpdated: 'Cập nhật lần cuối',
+      tagline: 'Công bố bằng ngôn ngữ dễ hiểu về những gì sản phẩm làm hôm nay',
+      templateLabel: 'Mẫu.',
+      templateNotice: 'Đây là một mẫu được cung cấp nhằm minh bạch và đang được hoàn thiện cùng cố vấn pháp lý; nó chưa phải là một thỏa thuận ràng buộc.',
+      ownership: 'WorkCoPilot, bởi AdmireVeda, một sản phẩm của COE Security LLC.',
+    },
+    glance: {
+      h2: 'Nhìn tổng quan',
+      cards: [
+        {
+          eyebrow: 'Trên thiết bị của bạn',
+          title: 'Các giá trị nhạy cảm không bao giờ rời đi ở dạng rõ',
+          body: 'PII, PHI và các bí mật được loại bỏ hoặc mã hóa thành token ngay trên thiết bị của bạn, trong văn bản trên màn hình và văn bản bạn gõ, trước khi bất kỳ yêu cầu nào được gửi đi. Câu trả lời được dựng lại trên thiết bị của bạn.',
+        },
+        {
+          eyebrow: 'Những gì rời đi',
+          title: 'Chỉ những gì cần để hướng dẫn bước đó',
+          body: 'Các khung hình màn hình đã thu nhỏ và văn bản đã được kiểm soát. Trên ứng dụng máy tính, tài liệu được đọc tại chỗ và chỉ văn bản đã kiểm soát được gửi đi.',
+        },
+        {
+          eyebrow: 'Những gì chúng tôi giữ',
+          title: 'Một bản ghi của phiên, cho đến khi bạn xóa nó',
+          body: 'Một báo cáo cho mỗi phiên, một nhật ký kiểm toán và lịch sử phiên của bạn. Các khóa, bí mật và tập tin báo cáo được lưu trữ đều được mã hóa khi lưu. Dữ liệu được giữ cho đến khi bạn hoặc quản trị viên của bạn xóa nó, hoặc một khung thời gian lưu giữ đã cấu hình xóa định kỳ các phiên cũ hơn.',
+        },
+      ],
+    },
+    toc: {
+      title: 'Trên trang này',
+    },
+    sections: {
+      about: 'Về chính sách này',
+      collect: 'Những gì chúng tôi thu thập',
+      categories: 'Các loại dữ liệu',
+      leaves: 'Những gì rời khỏi thiết bị của bạn',
+      store: 'Những gì chúng tôi lưu trữ và trong bao lâu',
+      protect: 'Cách nó được bảo vệ',
+      cookies: 'Cookie và bộ nhớ',
+      third: 'Bên thứ ba',
+      bases: 'Cơ sở pháp lý để xử lý',
+      transfers: 'Chuyển dữ liệu quốc tế',
+      choices: 'Lựa chọn và quyền của bạn',
+      california: 'Quyền riêng tư của cư dân California',
+      changes: 'Thay đổi đối với chính sách này',
+      contact: 'Liên hệ',
+    },
+    about: {
+      p1: 'Chính sách này bao trùm WorkCoPilot: ứng dụng web, ứng dụng máy tính và ứng dụng di động. Nó mô tả cách sản phẩm xử lý dữ liệu của bạn khi bạn đăng nhập, chạy một phiên có hướng dẫn, và xem lại các báo cáo của bạn.',
+      p2: '<b>Ai chịu trách nhiệm.</b> WorkCoPilot được cung cấp bởi AdmireVeda, một sản phẩm của {entity}. {entity} là pháp nhân và là đơn vị kiểm soát các thông tin về tài khoản, đăng nhập và thanh toán được mô tả bên dưới. Đối với nội dung các phiên có hướng dẫn của bạn, tổ chức của bạn quyết định những gì được chia sẻ và {entity} hành động thay mặt tổ chức như được mô tả trong <a>Phụ lục Xử lý Dữ liệu</a>.',
+      p3: 'Nó được viết để đọc, không phải để gây ấn tượng. Ở chỗ nào một hành vi nằm trong tầm kiểm soát của bạn, hoặc chỗ nào chúng tôi chưa hoàn thiện, chúng tôi nói rõ. <a>Trang Bảo mật</a> cho thấy toàn bộ luồng dữ liệu, từng bước một, với các ví dụ trước và sau của việc bảo vệ ngay trên thiết bị.',
+      note: 'Trang này là một công bố bằng ngôn ngữ dễ hiểu về cách sản phẩm hoạt động. Nó không phải là tư vấn pháp lý và không thay thế cho việc bạn tự rà soát pháp lý xem WorkCoPilot phù hợp với nghĩa vụ của bạn như thế nào.',
+    },
+    collect: {
+      lead: 'WorkCoPilot làm việc với một tập dữ liệu nhỏ, phần lớn trong đó ở lại trên thiết bị của bạn.',
+      items: [
+        {
+          name: 'Thông tin tài khoản',
+          how: 'Thông tin đăng nhập cho tài khoản của bạn, chẳng hạn địa chỉ email. Chúng do bạn, do quản trị viên công ty, hoặc do nhà cung cấp danh tính của bạn cung cấp khi công ty bạn dùng đăng nhập một lần cấp doanh nghiệp.',
+        },
+        {
+          name: 'Màn hình và văn bản của bạn trong một phiên',
+          how: 'Những gì có trên màn hình của bạn và những gì bạn gõ hoặc dán trong khi WorkCoPilot hướng dẫn bạn. Các khung hình màn hình được đọc ngay trên thiết bị của bạn, và các giá trị nhạy cảm được che hoặc mã hóa thành token tại đó trước khi bất cứ thứ gì được gửi đi.',
+        },
+        {
+          name: 'Tài liệu bạn đính kèm',
+          how: 'Trên ứng dụng máy tính, các tài liệu đính kèm được đọc tại chỗ trên máy của bạn. Chỉ văn bản đã kiểm soát (đã che hoặc mã hóa thành token) được gửi đi, không bao giờ gửi chính tập tin.',
+        },
+        {
+          name: 'Bản ghi phiên',
+          how: 'Một báo cáo cho mỗi phiên, một nhật ký kiểm toán cho mỗi phiên, và lịch sử phiên của bạn, để bạn có thể mở lại và xem lại công việc đã qua.',
+        },
+        {
+          name: 'Mức sử dụng',
+          how: 'Số phút hướng dẫn bạn dùng, để áp dụng hạn mức trong gói của bạn.',
+        },
+        {
+          name: 'Những gì nó học về công cụ',
+          how: 'Để giữ hướng dẫn luôn cập nhật, WorkCoPilot có thể giữ lại các bài học khái quát, đã khử danh tính về cách một công cụ hay công việc hiện hoạt động, chẳng hạn một thiết lập giờ nằm ở đâu. Chúng không chứa dữ liệu cá nhân, bí mật, hình ảnh màn hình hay nội dung tài liệu. Với tài khoản công ty, chúng được giữ trong kho tri thức của chính công ty đó và chỉ phục vụ các thành viên của công ty; với tài khoản cá nhân, chúng được giữ trong kho tri thức nền tảng của chúng tôi để cải thiện dịch vụ cho mọi người.',
+        },
+        {
+          name: 'Thanh toán',
+          how: 'Thông tin thanh toán được nhập vào và lưu giữ bởi Stripe, nhà cung cấp thanh toán của chúng tôi. Chúng tôi nhận những gì cần để vận hành gói đăng ký của bạn, chẳng hạn gói của bạn và trạng thái của nó.',
+        },
+      ],
+    },
+    categories: {
+      lead: 'WorkCoPilot được thiết kế cho màn hình và văn bản công việc hằng ngày. Hãy dùng nó cho các loại dữ liệu bên dưới, và tuân theo các giới hạn tiếp theo.',
+      designedH: 'Những gì nó được thiết kế cho',
+      designed: [
+        {
+          name: 'Màn hình và văn bản công việc',
+          how: 'Các ứng dụng nghiệp vụ, bảng điều khiển, phiếu công việc, bảng tổng quan, bảng tính, tài liệu, mã và lệnh mà bạn đang làm việc trong đó và được phép sử dụng.',
+        },
+        {
+          name: 'Dữ liệu cá nhân phát sinh ngẫu nhiên',
+          how: 'Tên, địa chỉ email công việc, định danh và các chi tiết tương tự xuất hiện trong quá trình làm việc đó.',
+        },
+        {
+          name: 'Thông tin tài khoản và thanh toán',
+          how: 'Thông tin đăng nhập, gói và mức sử dụng, như mô tả ở trên.',
+        },
+      ],
+      notSubmitH: 'Những gì không nên gửi',
+      notSubmit: 'Đừng gửi dữ liệu mà bạn không được phép xử lý, dữ liệu thuộc về người khác mà bạn không có quyền chia sẻ, hoặc dữ liệu mà tổ chức của bạn hay luật pháp cấm bạn chia sẻ với một dịch vụ như thế này. Nếu công việc của bạn liên quan đến dữ liệu được quản lý, hãy chắc chắn rằng tổ chức của bạn đã phê duyệt việc sử dụng đó trước. <a>Chính sách Sử dụng Hợp lệ</a> đặt ra đầy đủ các quy tắc.',
+      sensitiveH: 'Dữ liệu nhạy cảm luôn được bảo vệ',
+      sensitive: 'Dữ liệu nhạy cảm như dữ liệu cá nhân, dữ liệu sức khỏe, bí mật, khóa và số thẻ được loại bỏ hoặc mã hóa thành token ngay trên thiết bị của bạn trước khi bất cứ thứ gì được gửi đi, và bạn hoặc quản trị viên công ty có thể thêm từ ngữ và mẫu của riêng mình. Đây là một biện pháp bảo vệ, và nó không thay thế cho nghĩa vụ của chính bạn là chỉ chia sẻ những gì bạn được phép.',
+    },
+    leaves: {
+      lead: 'Trước khi bất cứ thứ gì được gửi đi, PII, PHI và các bí mật được loại bỏ hoặc mã hóa thành token ngay trên thiết bị của bạn, trong cả văn bản đọc từ màn hình và văn bản bạn gõ. Các giá trị thực ở lại trên thiết bị của bạn, và câu trả lời đầy đủ được dựng lại tại đó. AI không bao giờ thấy các giá trị nhạy cảm thực.',
+      items: [
+        {
+          name: 'Khung hình màn hình đã thu nhỏ',
+          how: 'Được thu nhỏ kích thước trước khi gửi. Bất kỳ dòng nào chứa giá trị nhạy cảm đều được bôi đen ngay trên thiết bị của bạn trước khi khung hình được gửi đi.',
+        },
+        {
+          name: 'Văn bản đã kiểm soát',
+          how: 'Những gì bạn gõ hoặc dán, với các giá trị nhạy cảm đã được thay bằng token ngay trên thiết bị của bạn.',
+        },
+        {
+          name: 'Văn bản đã kiểm soát từ tài liệu',
+          how: 'Trên ứng dụng máy tính, văn bản được trích xuất tại chỗ từ một tài liệu đính kèm, sau khi che và mã hóa thành token. Bản thân tập tin không được gửi đi.',
+        },
+        {
+          name: 'Không có gì được làm thay bạn',
+          how: 'WorkCoPilot chỉ đọc. Nó không bao giờ nhấp, gõ, hay thay đổi một hệ thống ghi nhận thay bạn, nên không có gì nó gửi đi có thể hành động trong các hệ thống của bạn.',
+        },
+      ],
+    },
+    store: {
+      lead: 'Chúng tôi lưu một bản ghi của mỗi phiên và không gì hơn. Tài liệu nguồn của bạn không được giữ lại.',
+      notStoredH: 'Không lưu trữ',
+      notStored: [
+        {
+          name: 'Tài liệu nguồn đã tải lên',
+          how: 'Các tập tin bạn đính kèm không được giữ lại dưới dạng tài liệu nguồn lưu trữ.',
+        },
+        {
+          name: 'Khung hình màn hình gốc',
+          how: 'Các khung hình được dùng để hướng dẫn bước hiện tại và không được giữ lại dưới dạng tài liệu nguồn lưu trữ.',
+        },
+        {
+          name: 'Các giá trị nhạy cảm thực',
+          how: 'Được loại bỏ hoặc mã hóa thành token ngay trên thiết bị của bạn trước khi bất cứ thứ gì được gửi đi, nên chúng không phải của chúng tôi để lưu trữ.',
+        },
+      ],
+      storedH: 'Được lưu trữ',
+      stored: [
+        {
+          name: 'Báo cáo phiên',
+          how: 'Một báo cáo cho mỗi phiên. Nó có thể bao gồm ảnh màn hình cột mốc, được che ngay trên thiết bị của bạn trước khi chụp. Ảnh màn hình cột mốc được bật mặc định, và bạn hoặc quản trị viên công ty có thể tắt chúng.',
+        },
+        {
+          name: 'Nhật ký kiểm toán',
+          how: 'Một nhật ký cho mỗi phiên, ghi lại những gì đã được truyền đi, để bạn thấy chính xác những gì đã rời khỏi thiết bị của bạn.',
+        },
+        {
+          name: 'Lịch sử phiên',
+          how: 'Danh sách các phiên đã qua của bạn.',
+        },
+        {
+          name: 'Phiên đăng nhập',
+          how: 'Một cookie phiên được dùng để giữ bạn đăng nhập.',
+        },
+        {
+          name: 'Các bài học khái quát',
+          how: 'Các sự kiện đã khử danh tính về cách các công cụ và công việc hiện hoạt động, được giữ lại để hướng dẫn tương lai luôn cập nhật. Chúng không chứa dữ liệu cá nhân, bí mật, màn hình hay nội dung tài liệu, và không gắn với bất kỳ phiên nào, nên việc xóa một phiên không làm thay đổi chúng. Các bài học của một công ty ở lại trong kho tri thức của công ty đó và được xóa cùng với tài khoản công ty, hoặc sớm hơn theo yêu cầu.',
+        },
+      ],
+      howLongH: 'Trong bao lâu',
+      howLong: 'Theo mặc định, dữ liệu được giữ cho đến khi bạn hoặc quản trị viên công ty xóa nó, không có việc xóa tự động. Có thể cấu hình một khung thời gian lưu giữ tự động để các phiên cũ hơn một số ngày đã định được xóa định kỳ. Dù thế nào, bạn và quản trị viên của bạn đều có thể xóa một phiên bất cứ lúc nào.',
+    },
+    protect: {
+      items: [
+        {
+          name: 'Che thông tin trên thiết bị trước tiên',
+          how: 'Biện pháp bảo vệ chính là các giá trị nhạy cảm được loại bỏ hoặc mã hóa thành token ngay trên thiết bị của bạn trước khi bất kỳ yêu cầu nào được gửi đi. Các bộ phát hiện tích hợp bao quát các giá trị như email, số điện thoại, số thẻ, SSN, khóa và các máy chủ riêng, và bạn hoặc quản trị viên của bạn có thể thêm từ ngữ và mẫu của riêng mình.',
+        },
+        {
+          name: 'Mã hóa khi lưu',
+          how: 'Các khóa, bí mật và tập tin báo cáo được lưu trữ, bao gồm ảnh màn hình cột mốc, đều được mã hóa khi lưu bằng AES-256-GCM.',
+        },
+        {
+          name: 'Chỉ đọc theo thiết kế',
+          how: 'WorkCoPilot hướng dẫn. Nó không bao giờ chạy bất cứ thứ gì trong các hệ thống của bạn, nên nó không thể thay đổi một hệ thống ghi nhận.',
+        },
+        {
+          name: 'Kiểm soát theo vai trò',
+          how: 'Quản trị viên công ty đặt và khóa chính sách dữ liệu cho các thành viên của mình, và xem lại các phiên của chính các thành viên đó.',
+        },
+      ],
+    },
+    cookies: {
+      p1: 'WorkCoPilot dùng một cookie đăng nhập thực sự cần thiết và, khi được bạn đồng ý, một cookie giới thiệu của bên thứ nhất cùng bộ nhớ trình duyệt chức năng (ví dụ ngôn ngữ và giao diện của bạn). Nó không đặt cookie quảng cáo và không theo dõi xuyên trang.',
+      p2: 'Danh sách đầy đủ, kèm mục đích và thời lượng của mỗi cookie và khóa bộ nhớ, nằm trong <a>Chính sách Cookie</a>. Bạn có thể bật hoặc tắt bộ nhớ chức năng và ghi nhận nguồn bất cứ lúc nào từ liên kết <b>Tùy chọn Cookie</b> ở chân trang, và từ chối bộ nhớ không thiết yếu cũng dễ như chấp nhận nó.',
+    },
+    third: {
+      lead: 'Đây là các bên thứ ba tham gia cung cấp dịch vụ. Trang <a>Đơn vị xử lý phụ</a> liệt kê vai trò của mỗi bên.',
+      items: [
+        {
+          name: 'Nhà cung cấp AI',
+          how: 'Hướng dẫn được tạo ra bởi một nhà cung cấp AI. Theo mặc định nó chạy trên các khóa của nền tảng. Công ty của bạn, hoặc bạn, có thể thay vào đó chạy WorkCoPilot trên các khóa AI của riêng mình, điều này giữ dữ liệu đã kiểm soát bên trong ranh giới nhà cung cấp của chính bạn. Mô hình cụ thể đang dùng không được hiển thị cho người dùng cuối.',
+        },
+        {
+          name: 'Stripe',
+          how: 'Thông tin thanh toán và chi trả được xử lý bởi Stripe.',
+        },
+        {
+          name: 'Nhà cung cấp danh tính của bạn',
+          how: 'Khi công ty của bạn dùng đăng nhập một lần cấp doanh nghiệp, nhà cung cấp danh tính của bạn xác thực bạn.',
+        },
+      ],
+    },
+    bases: {
+      lead: 'Ở nơi luật bảo vệ dữ liệu (như GDPR của EU/UK) được áp dụng, chúng tôi dựa vào các cơ sở pháp lý này để xử lý dữ liệu cá nhân của bạn.',
+      items: [
+        {
+          name: 'Thực hiện hợp đồng của chúng tôi',
+          how: 'Để cung cấp cho bạn dịch vụ bạn đã đăng ký - tài khoản, đăng nhập, chạy các phiên có hướng dẫn và thanh toán của bạn - chúng tôi xử lý dữ liệu cần thiết để làm điều đó.',
+        },
+        {
+          name: 'Lợi ích chính đáng',
+          how: 'Để giữ dịch vụ an toàn, ngăn chặn lạm dụng, và giữ hướng dẫn luôn cập nhật thông qua các bài học đã khử danh tính, được cân nhắc với các quyền và tự do của bạn.',
+        },
+        {
+          name: 'Sự đồng ý',
+          how: 'Đối với bộ nhớ không thiết yếu như cookie giới thiệu, chúng tôi dựa vào sự đồng ý của bạn, mà bạn có thể rút lại bất cứ lúc nào từ Tùy chọn Cookie.',
+        },
+        {
+          name: 'Nghĩa vụ pháp lý',
+          how: 'Ở nơi luật yêu cầu chúng tôi giữ một số hồ sơ nhất định (ví dụ cho thuế hoặc kế toán), chúng tôi xử lý dữ liệu để đáp ứng nghĩa vụ đó.',
+        },
+      ],
+    },
+    transfers: {
+      p1: 'Chúng tôi và các đơn vị xử lý phụ của chúng tôi có thể xử lý dữ liệu ở các quốc gia khác với quốc gia bạn đang ở. Khi dữ liệu cá nhân được chuyển qua biên giới, chúng tôi dựa vào một biện pháp bảo vệ phù hợp cho việc chuyển đó - chẳng hạn các điều khoản hợp đồng tiêu chuẩn liên quan hoặc việc chuyển tới một quốc gia có quyết định đầy đủ - tùy theo các bên liên quan.',
+      p2: 'Trang <subs>Đơn vị xử lý phụ</subs> và <dpa>Phụ lục Xử lý Dữ liệu</dpa> mô tả ai tham gia và cách các việc chuyển được xử lý cho tài khoản công ty.',
+    },
+    choices: {
+      lead: 'Ở bất cứ nơi nào luật cho bạn, bạn có những quyền này đối với dữ liệu cá nhân của mình. Bạn có thể dùng các công cụ trong sản phẩm, hoặc viết cho chúng tôi và chúng tôi sẽ hỗ trợ.',
+      rights: [
+        {
+          name: 'Truy cập',
+          how: 'Hỏi chúng tôi đang giữ dữ liệu cá nhân nào về bạn và nhận một bản sao. Các báo cáo và lịch sử phiên của bạn đều có sẵn cho bạn trong sản phẩm.',
+        },
+        {
+          name: 'Sửa đổi',
+          how: 'Yêu cầu chúng tôi sửa dữ liệu cá nhân sai hoặc không đầy đủ. Bạn có thể tự cập nhật thông tin tài khoản của mình, hoặc yêu cầu chúng tôi làm.',
+        },
+        {
+          name: 'Xóa',
+          how: 'Yêu cầu chúng tôi xóa dữ liệu cá nhân của bạn. Bạn có thể xóa các phiên của mình bất cứ lúc nào, và chúng tôi sẽ xóa dữ liệu tài khoản của bạn theo yêu cầu, tùy thuộc vào bất kỳ nghĩa vụ giữ hồ sơ nào mà luật yêu cầu.',
+        },
+        {
+          name: 'Xuất',
+          how: 'Yêu cầu dữ liệu của bạn ở một định dạng có thể mang đi nơi khác.',
+        },
+        {
+          name: 'Phản đối và giới hạn',
+          how: 'Yêu cầu chúng tôi giới hạn hoặc ngừng xử lý ở nơi luật cho bạn quyền đó.',
+        },
+        {
+          name: 'Tài khoản công ty',
+          how: 'Nếu tài khoản của bạn được công ty của bạn quản lý, một số yêu cầu sẽ đi qua quản trị viên công ty, người kiểm soát dữ liệu công ty và các thiết lập của nó.',
+        },
+      ],
+      yourChoicesH: 'Lựa chọn của bạn',
+      yourChoices: [
+        {
+          name: 'Xóa phiên',
+          how: 'Bạn có thể xóa bất kỳ phiên nào của mình bất cứ lúc nào. Xóa một phiên sẽ loại bỏ nó.',
+        },
+        {
+          name: 'Dữ liệu công ty',
+          how: 'Quản trị viên công ty quản lý dữ liệu của công ty mình, bao gồm xóa các phiên của thành viên và xem lại các báo cáo và nhật ký kiểm toán của thành viên.',
+        },
+        {
+          name: 'Ảnh màn hình cột mốc',
+          how: 'Được bật mặc định. Bạn hoặc quản trị viên công ty có thể tắt chúng.',
+        },
+        {
+          name: 'Khóa AI của riêng bạn',
+          how: 'Bạn hoặc công ty của bạn có thể chạy WorkCoPilot trên các khóa AI của riêng mình để dữ liệu đã kiểm soát ở lại bên trong ranh giới của bạn.',
+        },
+        {
+          name: 'Những gì được tính là nhạy cảm',
+          how: 'Ngoài các bộ phát hiện tích hợp, bạn hoặc quản trị viên công ty có thể thêm từ ngữ và mẫu tùy chỉnh để che, mã hóa thành token hoặc chặn.',
+        },
+        {
+          name: 'Câu hỏi hoặc yêu cầu',
+          how: 'Đối với các yêu cầu về quyền riêng tư, hãy viết tới {contact}. Đối với hỗ trợ sản phẩm hoặc thanh toán, hãy viết tới {support}.',
+        },
+      ],
+    },
+    california: {
+      lead: 'Nếu bạn là cư dân California, Đạo luật Quyền riêng tư Người tiêu dùng California được sửa đổi bởi CPRA cho bạn những quyền cụ thể. Chúng tôi tôn trọng các quyền này đối với cư dân California.',
+      items: [
+        {
+          name: 'Quyền được biết và truy cập',
+          how: 'Yêu cầu các loại và các mẩu thông tin cá nhân cụ thể mà chúng tôi đã thu thập về bạn, cùng một bản sao của chúng.',
+        },
+        {
+          name: 'Quyền xóa',
+          how: 'Yêu cầu xóa thông tin cá nhân của bạn, tùy thuộc vào bất kỳ hồ sơ nào mà luật yêu cầu chúng tôi giữ.',
+        },
+        {
+          name: 'Quyền sửa',
+          how: 'Yêu cầu sửa thông tin cá nhân không chính xác.',
+        },
+        {
+          name: 'Bán và chia sẻ',
+          how: 'Chúng tôi không bán thông tin cá nhân của bạn, và chúng tôi không chia sẻ nó cho quảng cáo hành vi xuyên ngữ cảnh. Không có gì để từ chối ở khía cạnh đó; bạn vẫn có thể từ chối cookie giới thiệu từ Tùy chọn Cookie.',
+        },
+        {
+          name: 'Thông tin nhạy cảm',
+          how: 'Chúng tôi không dùng thông tin cá nhân nhạy cảm để suy ra các đặc điểm về bạn. Việc che thông tin ngay trên thiết bị giữ cho các giá trị nhạy cảm không rời khỏi thiết bị của bạn ngay từ đầu.',
+        },
+        {
+          name: 'Không phân biệt đối xử',
+          how: 'Chúng tôi sẽ không phân biệt đối xử với bạn vì bạn thực hiện bất kỳ quyền nào trong số này.',
+        },
+        {
+          name: 'Cách thực hiện',
+          how: 'Hãy viết tới {contact}. Chúng tôi sẽ xác minh yêu cầu của bạn và phản hồi trong thời gian luật cho phép. Một đại diện được ủy quyền có thể hành động thay bạn ở nơi luật cho phép.',
+        },
+      ],
+    },
+    changes: {
+      p1: 'Khi trang này thay đổi, ngày "Cập nhật lần cuối" ở trên cùng cũng thay đổi theo. Ở nơi một thay đổi có ý nghĩa đối với cách dữ liệu của bạn được xử lý, chúng tôi sẽ nói rõ điều gì đã thay đổi bằng ngôn ngữ dễ hiểu.',
+    },
+    contact: {
+      inquiries: 'Các yêu cầu về quyền riêng tư, pháp lý và an ninh:',
+      support: 'Hỗ trợ sản phẩm và thanh toán:',
+      note: '<b>Cách diễn đạt trung thực.</b> WorkCoPilot cung cấp các kiểm soát và bằng chứng kiểm toán hỗ trợ công việc bảo mật và tuân thủ của bạn. Nó không tự biến một tổ chức thành tuân thủ, và chúng tôi không tuyên bố một chứng nhận nào ở đây. Tổ chức của bạn, cùng với các cố vấn của chính mình, quyết định sản phẩm phù hợp với nghĩa vụ của bạn như thế nào.',
+    },
+    cta: {
+      ariaLabel: 'Trang liên quan',
+      flow: 'Xem toàn bộ luồng dữ liệu',
+      terms: 'Điều khoản',
+      dpa: 'DPA',
+      cookie: 'Chính sách Cookie',
+      disclaimer: 'Tuyên bố miễn trừ trách nhiệm',
+      contact: 'Liên hệ',
+      back: 'Về WorkCoPilot',
+    },
+  },
+  readingStrip: {
+    notRightPlace: 'Chưa phải đúng chỗ.',
+  },
+  refundPage: {
+    seo: {
+      title: 'Chính sách Hoàn tiền và Hủy - WorkCoPilot bởi AdmireVeda',
+      description: 'Cách các gói đăng ký WorkCoPilot được tính phí qua Stripe, cách bạn tự hủy từ cổng thanh toán, khi nào một gói kết thúc, và cách các yêu cầu hoàn tiền được xử lý.',
+    },
+    hero: {
+      eyebrow: 'Hoàn tiền và Hủy',
+      title: 'Thanh toán, hủy và hoàn tiền',
+      intro: 'Cách các gói đăng ký được tính phí, cách bạn tự hủy, và cách các yêu cầu hoàn tiền được xử lý.',
+      tagline: 'Chính sách bằng ngôn ngữ dễ hiểu, bản mẫu nháp',
+    },
+    glance: [
+      {
+        eyebrow: 'Trước khi bạn trả tiền',
+        title: 'Điều khoản hiển thị ngay từ đầu',
+        body: 'Gói, giá, kỳ thanh toán và hạn mức được hiển thị trước khi thanh toán, để bạn biết mình đang đồng ý với điều gì.',
+      },
+      {
+        eyebrow: 'Tự hủy',
+        title: 'Tự phục vụ trong cổng thanh toán',
+        body: 'Hủy bất cứ lúc nào từ cổng thanh toán, không cần liên hệ với ai.',
+      },
+      {
+        eyebrow: 'Thanh toán',
+        title: 'Thanh toán được xử lý qua Stripe',
+        body: 'Stripe xử lý thanh toán và hóa đơn. Nếu có thắc mắc về thanh toán, hãy gửi email cho đội hỗ trợ sản phẩm của chúng tôi.',
+      },
+    ],
+    sections: {
+      terms: 'Điều khoản đăng ký được hiển thị trước khi thanh toán',
+      billing: 'Cách thức thanh toán',
+      cancel: 'Hủy đăng ký của bạn',
+      refunds: 'Chính sách hoàn tiền',
+      contact: 'Liên hệ',
+    },
+    terms: {
+      p1: 'Trước khi thanh toán, trang thanh toán sẽ hiển thị gói bạn đã chọn, mức giá, việc tính phí theo tháng hay theo năm, và hạn mức sử dụng đi kèm. Hãy xem lại các chi tiết này trước khi xác nhận. Thuế được cộng thêm khi cần và được hiển thị tại trang thanh toán.',
+      p2: 'Đăng ký tự động gia hạn vào cuối mỗi kỳ thanh toán cho đến khi bạn hủy. Các điều khoản này áp dụng cùng với <a>Điều khoản Dịch vụ</a>.',
+    },
+    billing: {
+      items: [
+        {
+          name: 'Nhà cung cấp dịch vụ thanh toán',
+          how: 'Thanh toán được xử lý bởi Stripe. Thông tin thẻ và thanh toán được nhập vào và lưu giữ bởi Stripe, không phải bởi chúng tôi.',
+        },
+        {
+          name: 'Hóa đơn',
+          how: 'Bạn có thể xem hóa đơn từ tài khoản của mình và cổng thanh toán.',
+        },
+        {
+          name: 'Thay đổi gói',
+          how: 'Bạn có thể chuyển đổi giữa các gói. Các thay đổi về giá hoặc hạn mức sẽ có hiệu lực như được hiển thị cho bạn khi bạn thực hiện thay đổi.',
+        },
+        {
+          name: 'Thanh toán thất bại',
+          how: 'Nếu một khoản thanh toán thất bại, chúng tôi có thể giới hạn các tính năng trả phí cho đến khi vấn đề được giải quyết. Hãy cập nhật phương thức thanh toán của bạn trong cổng thanh toán.',
+        },
+        {
+          name: 'Tài khoản công ty',
+          how: 'Khi một tổ chức có thỏa thuận hoặc bảng giá riêng, thỏa thuận đó quyết định cách tính phí.',
+        },
+      ],
+    },
+    cancel: {
+      items: [
+        {
+          name: 'Tự phục vụ',
+          how: 'Mở cổng thanh toán từ tài khoản của bạn và tự hủy đăng ký bất cứ lúc nào.',
+        },
+        {
+          name: 'Khi nào kết thúc',
+          how: 'Sau khi bạn hủy, gói của bạn vẫn hoạt động cho đến hết kỳ bạn đã thanh toán. Sau đó, gói sẽ ngừng gia hạn.',
+        },
+        {
+          name: 'Dữ liệu của bạn',
+          how: 'Việc hủy không tự động xóa các phiên làm việc của bạn. Bạn có thể xóa chúng bất cứ lúc nào, và các thiết lập lưu giữ cho tài khoản của bạn vẫn áp dụng. Xem Chính sách Quyền riêng tư và Phụ lục Xử lý Dữ liệu.',
+        },
+      ],
+    },
+    refunds: {
+      items: [
+        {
+          name: 'Thời hạn yêu cầu',
+          how: 'Yêu cầu hoàn tiền trong vòng <ph>thời hạn hoàn tiền, sẽ được xác nhận với bộ phận pháp lý</ph> kể từ khi bị tính phí bằng cách gửi email đến địa chỉ thanh toán bên dưới.',
+        },
+        {
+          name: 'Những gì chúng tôi xem xét',
+          how: 'Chúng tôi xem xét mỗi yêu cầu một cách thiện chí, bao gồm các khoản phí trùng lặp hoặc tính nhầm, một gói không hoạt động như mô tả, và bao nhiêu phần của kỳ đã được sử dụng.',
+        },
+        {
+          name: 'Phần đã sử dụng',
+          how: 'Số phút hướng dẫn đã sử dụng trong một kỳ thường không được hoàn lại.',
+        },
+        {
+          name: 'Gói theo năm',
+          how: 'Gói theo năm được xử lý theo cùng thời hạn. Mọi cách xử lý cho phần kỳ chưa dùng sẽ <ph>được xác nhận với bộ phận pháp lý</ph>.',
+        },
+        {
+          name: 'Cách thức hoàn tiền',
+          how: 'Các khoản hoàn tiền được chấp thuận sẽ trả về phương thức thanh toán ban đầu qua Stripe. Thời gian phụ thuộc vào ngân hàng hoặc đơn vị phát hành thẻ của bạn.',
+        },
+        {
+          name: 'Quyền của bạn',
+          how: 'Không điều gì ở đây giới hạn các quyền bạn có theo luật áp dụng cho bạn.',
+        },
+      ],
+    },
+    contact: {
+      billing: 'Thanh toán và hoàn tiền',
+      legal: 'Câu hỏi về pháp lý và quyền riêng tư',
+      note: '<b>Trình bày trung thực.</b> Trang này là một mẫu. Các thời hạn và số tiền cụ thể được đánh dấu và sẽ được xác nhận trước khi chính sách này có hiệu lực.',
+    },
+    links: {
+      terms: 'Điều khoản Dịch vụ',
+      privacy: 'Chính sách Quyền riêng tư',
+      aup: 'Sử dụng Hợp lý',
+    },
+  },
+  resultCard: {
+    emptyBody: 'Không có văn bản kết quả trả về.',
+    need: 'Tôi cần:',
+    howIGotIt: 'Cách tôi có được',
+    verifyBy: 'Xác minh bằng',
+  },
+  scrubRules: {
+    builtin: [
+      'Email',
+      'Số điện thoại',
+      'Số thẻ',
+      'Số SSN',
+      'Số IBAN',
+      'Khóa API và token',
+      'Địa chỉ IP',
+      'Máy chủ nội bộ',
+    ],
+    errors: {
+      load: 'Không thể tải quy tắc của bạn',
+      save: 'Không thể lưu',
+      unavailable: 'Không khả dụng',
+    },
+    loading: 'Đang tải quy tắc bảo vệ dữ liệu của bạn…',
+    retry: 'Thử lại',
+    title: 'Quy tắc bảo vệ dữ liệu của bạn',
+    lead: 'Các quy tắc này chạy <b>trên thiết bị của bạn</b>, trước khi bất cứ thứ gì được gửi đi. Hãy thêm các thuật ngữ hoặc mẫu nhạy cảm của riêng bạn bên cạnh những gì luôn được bảo vệ.',
+    alwaysProtected: 'Luôn được bảo vệ',
+    custom: {
+      title: 'Quy tắc tùy chỉnh của bạn',
+      empty: 'Chưa có. Hãy thêm một thuật ngữ (như tên mã dự án) hoặc một /regex/.',
+      labelPlaceholder: 'Nhãn (ví dụ: Project Orion)',
+      patternPlaceholder: 'Khớp: một từ/cụm từ hoặc /regex/',
+      redact: 'Che đi',
+      tokenize: 'Token hóa',
+      block: 'Chặn',
+      remove: 'Xóa',
+      add: 'Thêm quy tắc',
+    },
+    blockWords: {
+      title: 'Từ bị chặn',
+      hint: '(mỗi dòng một từ, luôn bị xóa, không bao giờ được gửi đi)',
+      placeholder: 'Acme Confidential\nProject Orion',
+    },
+    saving: 'Đang lưu',
+    save: 'Lưu quy tắc của tôi',
+    saved: 'Đã lưu, áp dụng cho mọi phiên của bạn',
+  },
+  securityNote: {
+    cleanBody: 'Không tìm thấy lệnh nguy hiểm nào và không có thư viện nào có lỗ hổng đã biết trong đoạn mã này.',
+    dbUnreachable: 'Không thể kết nối tới cơ sở dữ liệu lỗ hổng, vì vậy lần này các phiên bản thư viện chưa được kiểm tra.',
+  },
+  setPasswordPage: {
+    byBrand: 'bởi AdmireVeda',
+    errors: {
+      missingToken: 'Liên kết này thiếu token.',
+      invalid: 'Liên kết này không hợp lệ hoặc đã hết hạn.',
+      tooShort: 'Hãy chọn mật khẩu có ít nhất 6 ký tự.',
+      mismatch: 'Hai mật khẩu không khớp.',
+      setFailed: 'Không thể đặt mật khẩu của bạn. Liên kết có thể đã hết hạn.',
+    },
+    checking: 'Đang kiểm tra liên kết của bạn...',
+    done: {
+      title: 'Đã đặt mật khẩu',
+      body: 'Mật khẩu của bạn đã sẵn sàng. Đăng nhập để bắt đầu.',
+      signIn: 'Đăng nhập',
+    },
+    expired: {
+      title: 'Liên kết đã hết hạn',
+      goToSignIn: 'Đến trang đăng nhập',
+    },
+    form: {
+      title: 'Đặt mật khẩu của bạn',
+      forUser: 'cho <b>{name}</b>',
+      chooseBody: 'Chọn mật khẩu để hoàn tất thiết lập tài khoản của bạn.',
+      newLabel: 'Mật khẩu mới',
+      newPlaceholder: 'Ít nhất 6 ký tự',
+      hide: 'Ẩn',
+      show: 'Hiện',
+      confirmLabel: 'Xác nhận mật khẩu',
+      confirmPlaceholder: 'Nhập lại mật khẩu',
+      submit: 'Đặt mật khẩu',
+      secure: 'Mật khẩu của bạn được mã hóa và lưu trữ an toàn. Chúng tôi không bao giờ thấy nó ở dạng văn bản thuần.',
+    },
+    foot: 'Bảo mật cấp doanh nghiệp · AdmireVeda WorkCoPilot',
+  },
+  shellBar: {
+    toolbarAria: 'Điều khiển lớp phủ',
+    onTop: 'Luôn trên cùng',
+    onTopTip: 'Giữ WorkCoPilot trên các cửa sổ khác (Ctrl+Shift+Alt+T)',
+    seeThroughTip: 'Xuyên thấu: để công việc phía sau hiện ra (Ctrl+Shift+Alt+O)',
+    clickBehind: 'Nhấp xuyên qua',
+    buddy: 'Buddy',
+    buddyTip: 'Thu nhỏ về thẻ Buddy (Ctrl+Shift+Alt+B)',
+    minimize: 'Thu nhỏ',
+    close: 'Đóng',
+  },
+  skillsPage: {
+    sectionAria: 'Kỹ năng',
+    title: 'Kỹ năng',
+    toggleAria: 'Kỹ năng. {subtitle}',
+    subtitle: {
+      notLoaded: 'Hướng dẫn cách bạn muốn công việc được thực hiện',
+      empty: 'Thêm một playbook, SOP hoặc kỹ năng từ bất kỳ AI nào',
+      count_one: '{n} kỹ năng đang định hướng kế hoạch của bạn',
+      count_other: '{n} kỹ năng đang định hướng kế hoạch của bạn',
+    },
+    lead: 'Kỹ năng dạy cho WorkCoPilot cách bạn (hoặc tổ chức của bạn) muốn công việc được thực hiện, để hướng dẫn phù hợp với công cụ, tiêu chuẩn và thuật ngữ của bạn. Hãy dán một playbook, một SOP, hoặc một kỹ năng được xuất ra từ bất kỳ AI nào.',
+    note: {
+      company: '<b>Riêng tư với công ty của bạn.</b> Các kỹ năng này chỉ định hướng cho nhân viên trong công ty bạn. Chúng không bao giờ được dùng để huấn luyện nền tảng, và quản trị viên của bạn có thể tải xuống hoặc tải lên lại bất cứ lúc nào.',
+      global: '<b>Giúp ích cho mọi người.</b> Các kỹ năng bạn thêm vào có thể được dùng ở dạng đã ẩn danh để cải thiện WorkCoPilot cho tất cả người dùng; dữ liệu cá nhân được loại bỏ trước khi lưu trữ. Bạn đã đồng ý điều này khi đăng ký. Tài khoản công ty được miễn trừ.',
+    },
+    form: {
+      titlePlaceholder: 'Tiêu đề, ví dụ: Cách chúng tôi đánh giá pull request',
+      titleAria: 'Tiêu đề kỹ năng',
+      contentPlaceholder: 'Dán một playbook, SOP, hoặc một kỹ năng từ bất kỳ AI nào. Các bước, quy tắc, công cụ, cách đặt tên, nên và không nên làm. Càng cụ thể, hướng dẫn càng tốt.',
+      contentAria: 'Nội dung kỹ năng',
+      tagsPlaceholder: 'Thẻ, phân tách bằng dấu phẩy (tùy chọn)',
+      tagsAria: 'Thẻ',
+      add: 'Thêm kỹ năng',
+    },
+    errors: {
+      load: 'Không thể tải các kỹ năng của bạn.',
+      needTitle: 'Hãy đặt tiêu đề cho kỹ năng.',
+      needContent: 'Dán chính playbook, SOP hoặc kỹ năng đó (ít nhất vài câu).',
+      add: 'Không thể thêm kỹ năng đó.',
+      remove: 'Không thể xóa kỹ năng đó.',
+    },
+    loading: 'Đang tải các kỹ năng của bạn…',
+    emptyList: 'Chưa có kỹ năng nào. Kỹ năng đầu tiên bạn thêm vào sẽ bắt đầu định hình kế hoạch của bạn ngay lập tức.',
+    item: {
+      chars: '{n} ký tự',
+      removeTitle: 'Xóa kỹ năng này',
+      removeAria: 'Xóa {title}',
+    },
+  },
+  stepCard: {
+    plan: 'Kế hoạch',
+    doneWhen: 'Hoàn thành khi',
+    markDoneTip: 'Đánh dấu bước này đã hoàn thành và chuyển sang bước tiếp theo',
+  },
+  subprocessorsPage: {
+    seo: {
+      title: 'Đơn vị xử lý phụ - WorkCoPilot by AdmireVeda',
+      description: 'Các đơn vị xử lý phụ giúp cung cấp WorkCoPilot và vai trò của từng đơn vị: Stripe cho thanh toán, một nhà cung cấp mô hình AI cho hướng dẫn (hoặc khóa của riêng bạn), dịch vụ lưu trữ đám mây, gửi email, và nhà cung cấp danh tính của riêng bạn cho đăng nhập công ty. Các đơn vị xử lý phụ chỉ thấy dữ liệu đã được kiểm soát.',
+    },
+    hero: {
+      eyebrow: 'Đơn vị xử lý phụ',
+      title: 'Ai xử lý dữ liệu cho WorkCoPilot',
+      intro: 'Các bên thứ ba giúp cung cấp WorkCoPilot, vai trò của từng bên, và dữ liệu mà từng bên liên quan đến.',
+      tagline: 'Công bố bằng ngôn ngữ dễ hiểu, đọc cùng với DPA',
+    },
+    glance: [
+      {
+        eyebrow: 'Trên thiết bị của bạn trước tiên',
+        title: 'Các đơn vị xử lý phụ chỉ thấy dữ liệu đã được kiểm soát',
+        body: 'Các giá trị nhạy cảm được che hoặc token hóa trên thiết bị của bạn trước khi bất cứ thứ gì được gửi đi, vì vậy đơn vị xử lý phụ không bao giờ nhận được bí mật thực hoặc PII.',
+      },
+      {
+        eyebrow: 'Thanh toán',
+        title: 'Stripe xử lý việc thanh toán',
+        body: 'Thông tin thẻ và thanh toán được nhập vào và lưu giữ bởi Stripe. Chúng tôi chỉ nhận những gì cần thiết để vận hành đăng ký của bạn.',
+      },
+      {
+        eyebrow: 'Lựa chọn của bạn',
+        title: 'Dùng khóa AI của riêng bạn',
+        body: 'Bạn hoặc công ty của bạn có thể chạy WorkCoPilot bằng khóa AI của riêng mình, nhờ đó dữ liệu được kiểm soát vẫn nằm trong ranh giới nhà cung cấp của bạn.',
+      },
+    ],
+    sections: {
+      about: 'Về danh sách này',
+      list: 'Các đơn vị xử lý phụ hiện tại',
+      keys: 'Chạy bằng khóa của riêng bạn',
+      changes: 'Thay đổi và thông báo',
+      contact: 'Liên hệ',
+    },
+    table: {
+      caption: 'Các đơn vị xử lý phụ và vai trò của từng đơn vị',
+      columns: ['Vai trò', 'Nhà cung cấp', 'Mục đích', 'Dữ liệu liên quan'],
+      rows: [
+        {
+          role: 'Thanh toán',
+          purpose: 'Thanh toán đăng ký, hóa đơn và chi trả cho đối tác liên kết.',
+          data: 'Thông tin liên hệ thanh toán và trạng thái gói. Thông tin thẻ và thanh toán được lưu giữ bởi Stripe, không phải bởi chúng tôi.',
+        },
+        {
+          role: 'Hướng dẫn bằng AI',
+          provider: 'Nhà cung cấp mô hình AI - có thể cấu hình, hoặc khóa của riêng bạn',
+          purpose: 'Chuyển văn bản đã được kiểm soát của một bước thành hướng dẫn.',
+          data: 'Văn bản đã được kiểm soát (đã che hoặc token hóa) và các khung hình màn hình đã thu nhỏ kích thước. Không bao giờ là bí mật thực, PII hoặc tệp nguồn của bạn.',
+        },
+        {
+          role: 'Lưu trữ đám mây',
+          provider: 'nhà cung cấp dịch vụ lưu trữ và hạ tầng đám mây',
+          purpose: 'Vận hành dịch vụ và lưu trữ hồ sơ phiên làm việc của bạn, được mã hóa khi lưu trữ.',
+          data: 'Thông tin tài khoản và báo cáo theo từng phiên, nhật ký kiểm toán và lịch sử (được mã hóa khi lưu trữ).',
+        },
+        {
+          role: 'Gửi email',
+          provider: 'nhà cung cấp dịch vụ email giao dịch',
+          purpose: 'Gửi email về tài khoản, bảo mật và thanh toán.',
+          data: 'Địa chỉ email của bạn và nội dung của tin nhắn.',
+        },
+        {
+          role: 'Đăng nhập công ty',
+          provider: 'Nhà cung cấp danh tính bạn chọn',
+          purpose: 'Xác thực các thành viên công ty qua đăng nhập một lần (SSO) cấp doanh nghiệp.',
+          data: 'Chỉ dùng để xác thực. Được chọn và kiểm soát bởi công ty của bạn, không phải do chúng tôi lựa chọn.',
+        },
+      ],
+    },
+    about: {
+      p1: 'Đơn vị xử lý phụ là một bên thứ ba xử lý dữ liệu thay mặt chúng tôi để cung cấp WorkCoPilot. Trang này liệt kê vai trò của các đơn vị xử lý phụ đó và dữ liệu mà từng đơn vị liên quan đến, để bạn có thể thấy ai nằm trong chuỗi này trước khi tin dùng sản phẩm.',
+      p2: 'Nó bổ sung cho <dpa>Phụ lục Xử lý Dữ liệu</dpa> và <privacy>Chính sách Quyền riêng tư</privacy>. Khi chúng tôi không công khai nêu tên một nhà cung cấp cụ thể, vai trò đó được liệt kê bằng một chỗ giữ chỗ được đánh dấu rõ ràng thay vì một cái tên bịa ra; DPA của bạn nêu tên các nhà cung cấp cụ thể khi điều đó áp dụng cho tài khoản của bạn.',
+    },
+    list: {
+      note: 'Bởi vì các giá trị nhạy cảm được che hoặc token hóa trên thiết bị của bạn trước khi bất cứ thứ gì rời đi, các đơn vị xử lý phụ xử lý hướng dẫn chỉ nhận văn bản đã được kiểm soát, không bao giờ là các giá trị thực.',
+    },
+    keys: {
+      p1: 'Bạn hoặc công ty của bạn có thể chạy WorkCoPilot bằng khóa AI của riêng mình. Ở chế độ đó, dữ liệu được kiểm soát dùng cho hướng dẫn vẫn nằm trong ranh giới nhà cung cấp của bạn, và vai trò nhà cung cấp AI nêu trên do chính tài khoản của bạn đảm nhận thay vì của chúng tôi. Các triển khai cho công ty cũng có thể chạy tại chỗ (on-prem) theo yêu cầu.',
+    },
+    changes: {
+      items: [
+        {
+          name: 'Cập nhật',
+          how: 'Khi chúng tôi thêm, xóa hoặc thay thế một đơn vị xử lý phụ, chúng tôi cập nhật trang này và ngày "Cập nhật lần cuối" ở trên.',
+        },
+        {
+          name: 'Thông báo trước',
+          how: 'Khi một thỏa thuận đã ký có quy định, khách hàng doanh nghiệp có thể yêu cầu được thông báo trước về các đơn vị xử lý phụ mới để có thể phản đối. Khoảng thời gian thông báo cụ thể cho tài khoản của bạn được quy định trong thỏa thuận của bạn <ph>sẽ được xác nhận với bộ phận pháp lý</ph>.',
+        },
+        {
+          name: 'Phản đối',
+          how: 'Nếu bạn có một thỏa thuận đã ký và phản đối một đơn vị xử lý phụ mới trên cơ sở hợp lý về bảo vệ dữ liệu, hãy liên hệ với chúng tôi qua địa chỉ bên dưới và chúng tôi sẽ làm việc với bạn một cách thiện chí.',
+        },
+      ],
+    },
+    contact: {
+      legal: 'Câu hỏi về quyền riêng tư, pháp lý và đơn vị xử lý phụ',
+      support: 'Hỗ trợ sản phẩm',
+    },
+    links: {
+      dpa: 'Phụ lục Xử lý Dữ liệu',
+      privacy: 'Chính sách Quyền riêng tư',
+      terms: 'Điều khoản Dịch vụ',
+    },
+  },
+  teamPage: {
+    roles: {
+      companyAdmin: 'Quản trị công ty',
+      member: 'Thành viên',
+    },
+    errors: {
+      saveKeys: 'Không thể lưu khóa.',
+      clearKeys: 'Không thể xóa khóa.',
+      saveWebSearch: 'Không thể lưu khóa tìm kiếm web.',
+      loadTeam: 'Không thể tải nhóm của bạn.',
+      needUserPass: 'Nhập tên người dùng và mật khẩu.',
+      addUser: 'Không thể thêm người dùng đó.',
+    },
+    ok: {
+      keysSaved: 'Khóa AI của bạn đã được lưu. WorkCoPilot giờ chạy bằng các khóa đó.',
+      webSearchRemoved: 'Đã xóa khóa tìm kiếm web.',
+      webSearchSaved: 'Đã lưu khóa tìm kiếm web.',
+      added: 'Đã thêm {name}.',
+    },
+    list: {
+      title: 'Nhóm của bạn',
+      sub: 'Thêm người vào công ty của bạn và thiết lập những gì họ có thể làm. Người dùng mới đăng nhập bằng tên người dùng và mật khẩu bạn đặt tại đây.',
+      aiKeys: 'Khóa AI',
+      activity: 'Hoạt động người dùng',
+      addUser: 'Thêm người dùng',
+      loading: 'Đang tải nhóm của bạn...',
+      empty: 'Chưa có người dùng nào. Thêm đồng đội đầu tiên của bạn để bắt đầu.',
+      addedOn: 'Đã thêm {date}',
+    },
+    activity: {
+      title: 'Hoạt động người dùng',
+      sub: 'Việc xóa phiên trên toàn công ty của bạn: ai đã xóa, khi nào, tại sao, và nó liên quan đến điều gì.',
+      back: 'Quay lại nhóm',
+      loading: 'Đang tải hoạt động…',
+      empty: 'Chưa có hoạt động nào. Việc xóa phiên sẽ xuất hiện ở đây.',
+      deleted: '<b>{name}</b> đã xóa một phiên',
+      someone: 'Một người dùng',
+      untitled: 'Phiên không có tiêu đề',
+      steps: '{done}/{total} bước',
+    },
+    ai: {
+      title: 'Khóa AI',
+      sub: 'Theo mặc định, WorkCoPilot chạy bằng các khóa mà chúng tôi thiết lập cho công ty của bạn. Bạn có thể chuyển sang khóa nhà cung cấp của <b>riêng bạn</b> tại đây, và khi đó mức sử dụng của bạn được tính phí trên tài khoản của bạn, không phải của chúng tôi.',
+      back: 'Quay lại nhóm',
+      current: 'Hiện tại: khóa {key} · {owner}',
+      ownerCompany: 'khóa của riêng bạn',
+      ownerPlatform: 'được WorkCoPilot thiết lập cho bạn',
+      none: 'Chưa thiết lập khóa nào. Công ty của bạn đang dùng AI của nền tảng.',
+      providerLabel: 'Nhà cung cấp',
+      providerPlaceholder: 'Nhà cung cấp của bạn',
+      keyLabel: 'Khóa API',
+      keyPlaceholder: 'Dán khóa API nhà cung cấp của bạn',
+      remove: 'Xóa khóa của tôi',
+      use: 'Dùng khóa của tôi',
+      webTitle: 'Học từ web trực tiếp',
+      webSub: 'Khi được thiết lập, việc học từ web trực tiếp của công ty bạn chạy bằng khóa Tavily của riêng bạn (ranh giới dữ liệu và thanh toán của bạn). Hướng dẫn được dựa trên các nguồn web mới nhất.',
+      webCurrent: 'Hiện tại: <b>{provider}</b> · khóa {key}',
+      webNone: 'Chưa thiết lập khóa tìm kiếm web. Học từ web trực tiếp đang tắt cho công ty của bạn.',
+      webKeyLabel: 'Khóa API Tavily',
+      webKeyPlaceholder: 'Dán khóa Tavily của bạn',
+      webRemove: 'Xóa khóa',
+      webSave: 'Lưu khóa',
+    },
+    add: {
+      title: 'Thêm người dùng',
+      sub: 'Họ gia nhập {company} ngay lập tức.',
+      yourCompany: 'công ty của bạn',
+      usernameLabel: 'Tên người dùng',
+      usernamePlaceholder: 'ví dụ: alex',
+      passwordLabel: 'Mật khẩu tạm thời',
+      passwordPlaceholder: 'Đặt một mật khẩu để chia sẻ cho họ',
+      roleLabel: 'Vai trò',
+      planLabel: 'Gói',
+      cancel: 'Hủy',
+      submit: 'Thêm người dùng',
+    },
+  },
+  termsPage: {
+    seo: {
+      title: 'Điều khoản Dịch vụ - WorkCoPilot by AdmireVeda',
+      description: 'Các điều khoản bằng ngôn ngữ dễ hiểu để sử dụng WorkCoPilot: dịch vụ chỉ đọc, sử dụng hợp lý, tài khoản, đăng ký và thanh toán, quyền sở hữu, bảo đảm, trách nhiệm pháp lý và chấm dứt.',
+    },
+    hero: {
+      eyebrow: 'Điều khoản Dịch vụ',
+      title: 'Các điều khoản sử dụng WorkCoPilot',
+      intro: 'Các điều khoản này quy định cách bạn có thể sử dụng WorkCoPilot, những gì bạn có thể mong đợi từ chúng tôi, và trách nhiệm thuộc về đâu. Chúng được viết để dễ đọc, và chỉ dẫn đến các chính sách đi kèm.',
+      tagline: 'Điều khoản bằng ngôn ngữ dễ hiểu, bản thảo mẫu',
+    },
+    glance: [
+      {
+        eyebrow: 'Dịch vụ',
+        title: 'Một hướng dẫn chỉ đọc trên màn hình của bạn',
+        body: 'WorkCoPilot đưa ra hướng dẫn thực tế, theo từng bước. Nó không bao giờ nhấp chuột, gõ phím hay chạy bất cứ thứ gì thay cho bạn.',
+      },
+      {
+        eyebrow: 'Về phía bạn',
+        title: 'Chỉ sử dụng hợp pháp và được phép',
+        body: 'Bạn có trách nhiệm phải có quyền sử dụng các hệ thống và dữ liệu mà bạn chia sẻ, và tuân thủ Chính sách Sử dụng Hợp lý.',
+      },
+      {
+        eyebrow: 'Giới hạn',
+        title: 'Hướng dẫn, không phải tư vấn chuyên môn',
+        body: 'Hãy xác minh những điều quan trọng trước khi tin dùng. Trách nhiệm pháp lý được giới hạn như nêu dưới đây.',
+      },
+    ],
+    sections: {
+      parties: 'Các bên và sự chấp thuận',
+      service: 'Dịch vụ',
+      aup: 'Sử dụng hợp lý',
+      accounts: 'Tài khoản',
+      billing: 'Đăng ký và thanh toán',
+      ip: 'Quyền sở hữu và nội dung của bạn',
+      improvement: 'Cải thiện dịch vụ bằng các kỹ năng và nội dung bạn thêm vào',
+      warranty: 'Hướng dẫn, bảo đảm và tuyên bố miễn trừ',
+      liability: 'Giới hạn trách nhiệm pháp lý',
+      termination: 'Chấm dứt',
+      law: 'Luật điều chỉnh',
+      changes: 'Thay đổi các điều khoản này',
+      contact: 'Liên hệ',
+    },
+    parties: {
+      p1: 'Các điều khoản này là một thỏa thuận giữa bạn (hoặc tổ chức bạn đại diện) và {entity} (“chúng tôi”). WorkCoPilot do AdmireVeda cung cấp, một sản phẩm của {entity}, là pháp nhân đứng sau dịch vụ.',
+      p2: 'Bằng việc tạo tài khoản hoặc sử dụng WorkCoPilot, bạn chấp thuận các điều khoản này. Nếu bạn sử dụng thay mặt cho một công ty, bạn xác nhận rằng bạn được phép ràng buộc công ty đó. Nếu bạn không đồng ý, vui lòng không sử dụng dịch vụ.',
+    },
+    service: {
+      p1: 'WorkCoPilot là một hướng dẫn nhận biết màn hình dành cho công việc. Nó giúp bạn thấy việc cần làm tiếp theo ngay trên màn hình của mình. Nó có sẵn dưới dạng ứng dụng web, ứng dụng máy tính và ứng dụng di động, và các tính năng phụ thuộc vào gói của bạn.',
+      items: [
+        {
+          name: 'Chỉ đọc',
+          how: 'WorkCoPilot không bao giờ nhấp chuột, gõ phím, gửi hay thay đổi bất cứ thứ gì trong hệ thống của bạn. Mọi hành động đều là của bạn.',
+        },
+        {
+          name: 'Bảo vệ trước khi gửi',
+          how: 'Các giá trị nhạy cảm được loại bỏ hoặc token hóa ngay trên thiết bị của bạn trước khi bất cứ thứ gì được gửi đi. Chính sách Quyền riêng tư mô tả những gì được thu thập và những gì được lưu giữ.',
+        },
+        {
+          name: 'Thay đổi đối với dịch vụ',
+          how: 'Chúng tôi có thể cải thiện, thay đổi hoặc ngừng các tính năng. Khi một thay đổi làm giảm đáng kể một gói trả phí, chúng tôi sẽ thông báo cho bạn trước.',
+        },
+      ],
+      p2: 'Xem <privacy>Chính sách Quyền riêng tư</privacy>, <dpa>Phụ lục Xử lý Dữ liệu</dpa> và <disclaimer>Tuyên bố Miễn trừ</disclaimer>, những tài liệu tạo nên một phần cách dịch vụ xử lý dữ liệu của bạn.',
+    },
+    aup: {
+      p1: 'Bạn phải sử dụng WorkCoPilot một cách hợp pháp và chỉ trên các hệ thống và dữ liệu mà bạn được phép sử dụng. <a>Chính sách Sử dụng Hợp lý</a> quy định những gì được phép và không được phép, và là một phần của các điều khoản này.',
+      p2: 'Chúng tôi có thể tạm ngừng hoặc giới hạn quyền truy cập nếu việc sử dụng vi phạm chính sách đó, gây rủi ro cho dịch vụ hoặc các khách hàng khác, hoặc khi luật pháp yêu cầu.',
+    },
+    accounts: {
+      items: [
+        {
+          name: 'Thông tin chính xác',
+          how: 'Cung cấp thông tin tài khoản chính xác và luôn cập nhật.',
+        },
+        {
+          name: 'Giữ an toàn thông tin đăng nhập',
+          how: 'Bạn chịu trách nhiệm về thông tin đăng nhập của mình và về những gì được thực hiện dưới tài khoản của bạn. Hãy báo cho chúng tôi kịp thời qua địa chỉ hỗ trợ bên dưới nếu bạn nghi ngờ có hành vi lạm dụng.',
+        },
+        {
+          name: 'Tài khoản công ty',
+          how: 'Khi một quản trị viên tạo hoặc quản lý tài khoản cho một công ty, công ty đó chịu trách nhiệm về các thành viên của mình, về danh sách thành viên, và về chính sách dữ liệu mà công ty đặt ra.',
+        },
+        {
+          name: 'Đăng nhập một lần (SSO)',
+          how: 'Khi công ty của bạn dùng đăng nhập một lần (SSO) cấp doanh nghiệp, quyền truy cập tuân theo nhà cung cấp danh tính của công ty bạn và các quy tắc của họ.',
+        },
+      ],
+    },
+    billing: {
+      p1: 'Các gói trả phí là các gói đăng ký. Gói, giá, kỳ thanh toán và hạn mức được hiển thị trước khi bạn thanh toán. Thanh toán được xử lý bởi nhà cung cấp dịch vụ thanh toán của chúng tôi, Stripe. Việc hủy và hoàn tiền được quy định trong trang <a>Hoàn tiền và Hủy</a>, là một phần của các điều khoản này.',
+      p2: 'Thuế có thể được áp dụng và được hiển thị tại trang thanh toán khi cần. Nếu một khoản thanh toán thất bại, chúng tôi có thể giới hạn quyền truy cập các tính năng trả phí cho đến khi vấn đề được giải quyết.',
+      p3: 'Câu hỏi về thanh toán: <a>{support}</a>',
+    },
+    ip: {
+      items: [
+        {
+          name: 'Dịch vụ của chúng tôi',
+          how: 'WorkCoPilot, bao gồm phần mềm, thiết kế, tài liệu và thương hiệu, thuộc về {entity} và các bên cấp phép của họ. Bạn được cấp quyền sử dụng có giới hạn, không độc quyền, không thể chuyển nhượng trong suốt thời gian đăng ký, theo các điều khoản này.',
+        },
+        {
+          name: 'Nội dung của bạn',
+          how: 'Bạn giữ các quyền của mình đối với những gì bạn chia sẻ với dịch vụ, chẳng hạn như nội dung màn hình, văn bản đã gõ và tài liệu đính kèm, cũng như đối với các báo cáo phiên được tạo cho bạn.',
+        },
+        {
+          name: 'Những gì chúng tôi có thể làm với nội dung đó',
+          how: 'Chúng tôi chỉ sử dụng nội dung của bạn để cung cấp dịch vụ cho bạn và để giữ cho dịch vụ an toàn và hoạt động, như được mô tả trong Chính sách Quyền riêng tư và Phụ lục Xử lý Dữ liệu.',
+        },
+        {
+          name: 'Khóa AI của riêng bạn',
+          how: 'Khi bạn hoặc công ty của bạn chạy WorkCoPilot bằng khóa AI của riêng mình, dữ liệu đó vẫn nằm trong mối quan hệ với nhà cung cấp của riêng bạn và tuân theo các điều khoản của nhà cung cấp đó.',
+        },
+        {
+          name: 'Phản hồi',
+          how: 'Nếu bạn gửi cho chúng tôi ý tưởng hoặc góp ý, chúng tôi có thể sử dụng chúng để cải thiện dịch vụ mà không có nghĩa vụ nào với bạn.',
+        },
+      ],
+      p1: 'Bạn không được sao chép, bán lại, dịch ngược hoặc xây dựng một dịch vụ cạnh tranh từ WorkCoPilot, trừ khi luật pháp không cho phép chúng tôi hạn chế điều đó.',
+    },
+    improvement: {
+      p1: 'Bạn có thể thêm các kỹ năng - playbook, SOP và hướng dẫn, bao gồm cả những thứ được xuất ra từ các công cụ AI khác - để hướng dẫn của WorkCoPilot phù hợp với cách bạn làm việc. Phần này giải thích cách nội dung đó có thể được sử dụng, và được hiển thị cho bạn khi bạn tạo một tài khoản cá nhân.',
+      items: [
+        {
+          name: 'Tài khoản cá nhân',
+          how: 'Để cải thiện WorkCoPilot, các kỹ năng và nội dung bạn thêm vào có thể được sử dụng ở dạng đã ẩn danh nhằm nâng cao dịch vụ cho mọi người. Dữ liệu cá nhân được loại bỏ trên thiết bị của bạn trước khi bất cứ thứ gì được gửi đi, và nội dung đã ẩn danh không bao giờ được gán cho bạn.',
+        },
+        {
+          name: 'Tài khoản công ty được miễn trừ',
+          how: 'Các kỹ năng và kiến thức được thêm vào dưới một tài khoản công ty vẫn riêng tư với công ty đó. Chúng chỉ định hướng cho các thành viên của công ty đó và không bao giờ được dùng để huấn luyện hoặc cải thiện nền tảng cho bất kỳ ai khác. Quản trị viên công ty có thể tải xuống, tải lên lại hoặc xóa chúng bất cứ lúc nào.',
+        },
+        {
+          name: 'Quyền kiểm soát của bạn',
+          how: 'Bạn có thể xóa một kỹ năng bạn đã thêm bất cứ lúc nào từ bảng điều khiển của mình. Việc xóa sẽ dừng việc sử dụng nó kể từ thời điểm đó; các cải tiến đã ẩn danh được tạo ra từ nó không thể truy ngược về bạn hoặc hoàn tác.',
+        },
+        {
+          name: 'Không huấn luyện trên công việc của bạn',
+          how: 'Điều này chỉ áp dụng cho các kỹ năng và nội dung bạn chủ động thêm vào. Màn hình, các tác vụ bạn gõ, câu hỏi và báo cáo phiên của bạn chỉ được dùng để cung cấp dịch vụ cho bạn, như được mô tả trong Chính sách Quyền riêng tư.',
+        },
+      ],
+    },
+    warranty: {
+      p1: 'WorkCoPilot đưa ra hướng dẫn thực tế. Nó không phải là tư vấn pháp lý, tài chính, y tế, thuế, kế toán, kỹ thuật hay tư vấn chuyên môn khác, và việc sử dụng nó không tạo ra một mối quan hệ chuyên môn với chúng tôi. Hướng dẫn được đưa ra với nỗ lực tốt nhất và có thể sai hoặc lỗi thời. Hãy xác minh bất cứ điều gì quan trọng trước khi tin dùng. <a>Tuyên bố Miễn trừ</a> giải thích điều này bằng ngôn ngữ dễ hiểu.',
+      p2: 'Trong phạm vi luật pháp cho phép, dịch vụ được cung cấp “nguyên trạng” và “theo mức độ sẵn có”, và chúng tôi không đưa ra bảo đảm nào, dù rõ ràng hay ngụ ý, bao gồm về tính chính xác, tính đầy đủ, sự phù hợp cho một mục đích cụ thể, hoặc hoạt động không bị gián đoạn hay không có lỗi.',
+      p3: 'WorkCoPilot cung cấp các biện pháp kiểm soát và bằng chứng hỗ trợ công việc tuân thủ của riêng bạn. Nó không làm cho bạn tuân thủ, và chúng tôi không tuyên bố rằng nó được chứng nhận theo bất kỳ khung tiêu chuẩn nào.',
+    },
+    liability: {
+      p1: 'Trong phạm vi luật pháp cho phép, chúng tôi không chịu trách nhiệm đối với tổn thất gián tiếp, ngẫu nhiên, đặc biệt, hệ quả hoặc mang tính trừng phạt, hoặc đối với mất mát dữ liệu, doanh thu, lợi nhuận hay uy tín, phát sinh từ việc bạn sử dụng dịch vụ hoặc từ những hành động bạn thực hiện hoặc không thực hiện dựa trên hướng dẫn của dịch vụ.',
+      p2: 'Trong phạm vi luật pháp cho phép, tổng trách nhiệm của chúng tôi đối với mọi khiếu nại liên quan đến dịch vụ được giới hạn ở số tiền bạn đã trả cho chúng tôi trong <ph>12 tháng, sẽ được xác nhận bởi bộ phận pháp lý</ph> trước sự kiện làm phát sinh khiếu nại.',
+      p3: 'Không điều gì trong các điều khoản này giới hạn trách nhiệm pháp lý không thể giới hạn theo luật, hoặc các quyền bạn có mà không thể từ bỏ.',
+    },
+    termination: {
+      items: [
+        {
+          name: 'Bởi bạn',
+          how: 'Bạn có thể ngừng sử dụng WorkCoPilot hoặc hủy đăng ký bất cứ lúc nào. Việc hủy tuân theo trang Hoàn tiền và Hủy.',
+        },
+        {
+          name: 'Bởi chúng tôi',
+          how: 'Chúng tôi có thể tạm ngừng hoặc chấm dứt quyền truy cập khi có vi phạm nghiêm trọng các điều khoản này hoặc Chính sách Sử dụng Hợp lý, khi không thanh toán, hoặc khi luật pháp yêu cầu. Khi hợp lý để làm vậy, chúng tôi sẽ thông báo trước.',
+        },
+        {
+          name: 'Điều gì xảy ra tiếp theo',
+          how: 'Dữ liệu của bạn được xử lý như quy định trong Chính sách Quyền riêng tư và Phụ lục Xử lý Dữ liệu, bao gồm việc xóa theo yêu cầu và theo các thiết lập lưu giữ cho tài khoản của bạn.',
+        },
+        {
+          name: 'Những điều khoản còn hiệu lực',
+          how: 'Các mục mà về bản chất cần tiếp tục, chẳng hạn như quyền sở hữu, tuyên bố miễn trừ, giới hạn trách nhiệm pháp lý và luật điều chỉnh, vẫn tiếp tục có hiệu lực sau khi chấm dứt.',
+        },
+      ],
+    },
+    law: {
+      p1: 'Các điều khoản này được điều chỉnh bởi luật pháp của <ph>tiểu bang có luật điều chỉnh, sẽ được xác nhận với bộ phận pháp lý</ph>, không tính đến các quy tắc xung đột pháp luật của nó. Các tranh chấp sẽ được đưa ra tòa án tại <ph>địa điểm xét xử, sẽ được xác nhận với bộ phận pháp lý</ph>, trừ khi luật áp dụng cho bạn yêu cầu khác.',
+    },
+    changes: {
+      p1: 'Khi các điều khoản này thay đổi, ngày “Cập nhật lần cuối” ở trên đầu cũng thay đổi theo. Khi một thay đổi ảnh hưởng đến quyền hoặc nghĩa vụ của bạn, chúng tôi sẽ nêu rõ những gì đã thay đổi bằng ngôn ngữ dễ hiểu và, đối với khách hàng trả phí, thông báo trước khi nó có hiệu lực. Việc tiếp tục sử dụng dịch vụ sau đó có nghĩa là bạn chấp thuận các điều khoản đã cập nhật.',
+    },
+    contact: {
+      legal: 'Pháp lý, quyền riêng tư và bảo mật',
+      support: 'Hỗ trợ sản phẩm và thanh toán',
+      note: '<b>Trình bày trung thực.</b> Trang này là một mẫu. Nó mô tả các điều khoản dự kiến và không thay thế cho việc rà soát pháp lý của riêng bạn.',
+    },
+    links: {
+      aup: 'Sử dụng Hợp lý',
+      privacy: 'Chính sách Quyền riêng tư',
+      refund: 'Hoàn tiền và Hủy',
+      dpa: 'Phụ lục Xử lý Dữ liệu',
+    },
+  },
+  usage: {
+    noTime: 'Hết thời gian',
+    timeLeft: 'Còn {time}',
+    tasksOpen: '{used} trên {max} tác vụ đang mở',
+    tasks: '{used} trên {max} tác vụ',
+    outCompany: 'Bạn đã dùng hết số giờ của gói trong tháng này. Chúng sẽ được làm mới vào {when}. Hãy hỏi quản trị viên của bạn nếu bạn cần thêm trước thời điểm đó.',
+    outIndividual: 'Bạn đã dùng hết số giờ của gói trong tháng này. Hãy mua thêm giờ để tiếp tục, hoặc chúng sẽ được làm mới vào {when}.',
+    lowNote: 'Còn khoảng {time} thời gian hướng dẫn trong tháng này. Bạn có thể tạm dừng bất cứ lúc nào, hoặc thêm giờ để tiếp tục.',
+    allStepsDone: 'Đã hoàn thành tất cả {total} bước',
+    stepProgress: 'Bước {current} trên {total} · {done} đã hoàn thành',
   },
 }
