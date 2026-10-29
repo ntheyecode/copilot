@@ -432,6 +432,17 @@ function requireCompanyAdmin(req, res, next) {
   if (!wu || wu.companyRole !== 'company_admin' || !wu.companyId) return res.status(403).json({ error: 'Company admin access required.' })
   next()
 }
+// The Company Brain DOWNLOAD is executive-ONLY: an executive (or a superadmin for
+// support), NOT a company admin. Deliberately stricter than requireExecutive,
+// which also admits company admins.
+function requireExecutiveOnly(req, res, next) {
+  if (req.user && req.user.role === 'superadmin') return next()
+  const wu = req.workUser
+  if (!wu || !wu.companyId || wu.companyRole !== 'executive') {
+    return res.status(403).json({ error: 'Only an executive can download the Company Brain.' })
+  }
+  next()
+}
 // Executive (or company admin / superadmin) may view the company productivity
 // dashboard. Its payload carries NO AI model and NO AI cost (business rules);
 // the "savings" there are the customer's hypothetical ROI, not our cost.
@@ -2112,6 +2123,40 @@ app.get('/api/work/exec/productivity', requireWorkAuth, requireExecutive, wrap((
 }))
 // Executive CSV export of the productivity data (PDF + image are exported client
 // side from the live dashboard).
+// Executive OVERVIEW: productivity + the project dimension (both performer axes,
+// projects by task load, status rollup, per-project detail). Same business rule
+// as productivity: no AI model, no AI cost in the payload.
+app.get('/api/work/exec/overview', requireWorkAuth, requireExecutive, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30))
+  res.json(store.companyExecOverview(req.workUser.id, { days }))
+}))
+// ---- Executive-only Company Brain download ----
+// The archive is encrypted with the executive's own export passphrase (stored at
+// rest under the platform KEK; on hosted, viewing/replacing it needs a fresh MFA
+// code). The download returns needKey:true until the passphrase is set.
+app.get('/api/work/brain/export/status', requireWorkAuth, requireExecutiveOnly, wrap((req, res) => {
+  res.json({ keySet: store.hasExportKey(req.workUser.id), hosted: store.isHostedService() })
+}))
+app.post('/api/work/brain/export/key', requireWorkAuth, requireExecutiveOnly, wrap((req, res) => {
+  const b = req.body || {}
+  res.json(store.setExportKey(req.workUser.id, b.passphrase, { mfaToken: b.mfaToken }))
+}))
+app.post('/api/work/brain/export/key/reveal', requireWorkAuth, requireExecutiveOnly, wrap((req, res) => {
+  const b = req.body || {}
+  res.json(store.revealExportKey(req.workUser.id, { mfaToken: b.mfaToken }))
+}))
+app.post('/api/work/brain/export', requireWorkAuth, requireExecutiveOnly, wrap((req, res) => {
+  const cid = req.workUser.companyId
+  if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const password = store.exportKeyFor(req.workUser.id)
+  if (!password) return res.status(409).json({ needKey: true, error: 'Set your export passphrase in your profile first.' })
+  const out = buildCompanyArchive({ companyId: cid, password })
+  res.setHeader('Content-Type', 'application/octet-stream')
+  res.setHeader('Content-Disposition', `attachment; filename="${out.filename}"`)
+  res.setHeader('X-Brain-Included', out.brainIncluded ? '1' : '0')
+  res.send(out.buffer)
+}))
 app.get('/api/work/exec/productivity.csv', requireWorkAuth, requireExecutive, wrap((req, res) => {
   if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
   const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30))
@@ -3363,11 +3408,11 @@ app.post('/api/work/company/users/:id/minutes', requireWorkAuth, requireCompanyA
 app.patch('/api/work/company/users/:id', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   const cid = req.workUser.companyId
   if (!cid) return res.status(403).json({ error: 'No company in scope.' })
-  const { companyRole, tier, workFlow } = req.body || {}
+  const { companyRole, tier, workFlow, grants } = req.body || {}
   if (companyRole !== undefined && String(req.params.id) === String(req.workUser.id)) {
     return res.status(400).json({ error: 'You cannot change your own role. Ask another company admin or support.' })
   }
-  res.json({ user: store.updateCompanyMember(cid, req.params.id, { companyRole, tier, workFlow }) })
+  res.json({ user: store.updateCompanyMember(cid, req.params.id, { companyRole, tier, workFlow, grants }) })
 }))
 // Company admin: remove a member from their OWN company (detach, reversible).
 // Cannot remove yourself.

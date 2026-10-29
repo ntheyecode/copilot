@@ -61,6 +61,9 @@ import * as eq from './enterprise_quota.js'
 import { createEnterpriseBilling } from './enterprise_billing.js'
 import { createPlanAllowance } from './plan_allowance.js'
 import { createOnboarding } from './onboarding_store.js'
+import { createWorkflows } from './workflows_store.js'
+import { execOverview } from './exec_overview.js'
+import { makeExportKey } from './export_key.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // WORK_DATA_DIR lets the owner point the DB + on-disk docs/shots anywhere (the
@@ -431,6 +434,16 @@ export const {
   getOnboarding, setOnboardingIntent, setOnboardingCheckout, completeOnboarding,
   changeOnboardingEmail, issueEmailOtp, verifyEmailOtp, emailOtpStatus,
 } = onb
+// ---- Teach workflows (module: workflows_store.js) ----
+// Company-scoped guided workflows a trainer authors and users are guided
+// through. RBAC (company + trainer grant + ownership) lives in the module; the
+// store just owns db + persistence. Public API re-exported so the routes keep
+// their store.* names.
+const wfs = createWorkflows({ db: () => db, persist, id, now, httpErr, getUser, emit: emitStoreEvent })
+export const {
+  listWorkflowsForUser, getWorkflowForUser, createWorkflow, updateWorkflow,
+  publishWorkflow, reviseWorkflow, retireWorkflow, deleteWorkflow,
+} = wfs
 
 // ---- AI seed (one-time, at deploy) ---------------------------------------
 // If an ai-seed.json exists and the platform AI is not already configured, load
@@ -571,6 +584,7 @@ export function publicWorkUser(u) {
     watchLight: effectiveWatchMode(u.id) === 'light',
     companyId: u.companyId || null,
     companyRole: u.companyRole || null,          // member | company_admin | executive | project_manager | senior_project_manager | grc
+    grants: (u.companyId ? roles.sanitizeGrants(u.companyRole, u.grants) : []),  // additive grants (trainer); only those the primary role may hold
     workFlow: (u.companyId ? (['worker', 'independent', 'mixed'].includes(u.workFlow) ? u.workFlow : 'independent') : null),  // how tasks reach a company user: worker | independent | mixed (null for individuals)
     companyName: co ? co.name : null,
     // Enterprise allocation GROUP (admin / supervisor / member) the company admin
@@ -701,6 +715,30 @@ export function verifyUserMfa(userId, token) {
   if (idx >= 0) { m.backupHashes.splice(idx, 1); persist(); return true }
   return false
 }
+
+// ---- Executive export passphrase (encrypts the Company Brain download) ------
+// Policy lives in export_key.js (unit-tested); here we wire the real platform
+// KEK (encSecret/decSecret) + MFA + the HOSTED flag, and own persistence. The
+// passphrase is sealed at rest on the account and only ever leaves through the
+// MFA-gated reveal or, server-side, to build the archive at download time.
+export function isHostedService() { return HOSTED }
+const _exportKey = makeExportKey({
+  seal: encSecret, open: decSecret,
+  verifyMfa: (user, token) => verifyUserMfa(user.id, token),
+  hosted: HOSTED, mfaGloballyEnabled,
+})
+export function hasExportKey(userId) { return _exportKey.has(getUser(userId)) }
+export function setExportKey(userId, passphrase, opts = {}) {
+  const u = getUser(userId); if (!u) throw httpErr(404, 'Account not found')
+  u.exportKeyEnc = _exportKey.set(u, passphrase, opts); persist()
+  return { ok: true, set: true }
+}
+export function revealExportKey(userId, opts = {}) {
+  const u = getUser(userId); if (!u) throw httpErr(404, 'Account not found')
+  return _exportKey.reveal(u, opts)
+}
+// Server-side only: the plaintext passphrase to build the archive at download.
+export function exportKeyFor(userId) { return _exportKey.plain(getUser(userId)) }
 
 // Reset (clear) an account's MFA so the next login forces a fresh setup. Used by
 // admins (lost device) and by the owner (new phone). The CALLER is responsible
@@ -1418,8 +1456,9 @@ export function companyProductivity(companyId, { days = 30 } = {}) {
   }
   const perUser = {}
   for (const s of completed) perUser[s.workUserId] = (perUser[s.workUserId] || 0) + 1
-  const topMembers = members.map((u) => ({ name: u.displayName || u.username, tasks: perUser[u.id] || 0 }))
-    .filter((x) => x.tasks > 0).sort((a, b) => b.tasks - a.tasks).slice(0, 8)
+  const membersRanked = members.map((u) => ({ id: u.id, name: u.displayName || u.username, tasks: perUser[u.id] || 0 }))
+    .filter((x) => x.tasks > 0).sort((a, b) => b.tasks - a.tasks)
+  const topMembers = membersRanked.slice(0, 8)
   const savedHours = savedMin / 60
   return {
     companyId, generatedAt: new Date().toISOString(), windowDays: days,
@@ -1433,6 +1472,7 @@ export function companyProductivity(companyId, { days = 30 } = {}) {
     depth,
     trend: Object.keys(trend).sort().map((d) => ({ date: d, count: trend[d] })),
     topMembers,
+    membersRanked,   // full ranked task-axis performers (the exec overview uses the complete list)
     estimated: {   // HYPOTHETICAL customer ROI, never AI cost - label it as an estimate in the UI
       basis: 'hypothetical',
       assumptions: EXEC_ASSUMPTIONS,
@@ -1440,6 +1480,19 @@ export function companyProductivity(companyId, { days = 30 } = {}) {
       dollarsSaved: Math.round(savedHours * EXEC_ASSUMPTIONS.laborUsdPerHour),
     },
   }
+}
+// Executive OVERVIEW: the company productivity above, plus the PROJECT dimension
+// (performers on both the task AND project axes, projects by task load, status
+// rollup, per-project detail). A company-wide read for an executive; the route
+// gates with requireExecutive. No AI model or cost (business rule).
+export function companyExecOverview(userId, { days = 30 } = {}) {
+  const u = getUser(userId)
+  if (!u || !u.companyId) throw httpErr(403, 'No company in scope.')
+  const cid = u.companyId
+  const productivity = companyProductivity(cid, { days })
+  const projects = _companyProjects(cid)
+  const members = (db.users || []).filter((x) => x && String(x.companyId) === String(cid)).map((x) => ({ id: x.id, name: x.displayName || x.username }))
+  return execOverview({ productivity, projects, members })
 }
 // White-label branding a company USER (any role) may see: logo + public contact.
 // No seats, pricing, AI config or cost - only what belongs on their dashboard.
@@ -2130,10 +2183,11 @@ export function workImageGenAllowed(userId) {
 //   `adminSeats` = company-admin licenses, each counted separately. 0 = unlimited.
 export const LICENSE_MODES = ['locked', 'flexible']
 export const SSO_PROVISIONING = ['explicit', 'auto']
-// member / company_admin / executive (original) + the enterprise project-management
-// roles. PM / Sr PM / GRC consume a member-type seat (like executive) and are
-// validated here as the single source; capabilities live in server/work_roles.js.
-export const COMPANY_ROLES = ['member', 'company_admin', 'executive', 'project_manager', 'senior_project_manager', 'grc']
+// member / company_admin / executive + the enterprise PM roles + trainer. The
+// list lives once in server/work_roles.js (SUPREME RULE II); store imports it as
+// its validation enum. PM / Sr PM / GRC / trainer consume a member-type seat
+// (like executive); capabilities live in server/work_roles.js.
+export const COMPANY_ROLES = roles.COMPANY_ROLES
 // Seat / license counts are whole, non-negative, finite numbers. Anything else
 // (negative, NaN, Infinity, "abc", 1.5) used to slip through as 0 = unlimited or
 // as a fractional / infinite cap; now it is clamped to a sane integer. SEAT_MAX
@@ -5108,7 +5162,7 @@ export function setWorkUserPassword(workUserId, currentPassword, newPassword) {
 // OWN company. The route guards companyId; this enforces it again (defense in
 // depth) and refuses to touch an account in another company. Returns the public
 // user shape so the console can refresh the row.
-export function updateCompanyMember(adminCompanyId, targetUserId, { companyRole, tier, workFlow } = {}) {
+export function updateCompanyMember(adminCompanyId, targetUserId, { companyRole, tier, workFlow, grants } = {}) {
   if (!adminCompanyId) throw httpErr(403, 'No company in scope.')
   const u = getUser(targetUserId)
   if (!u || String(u.companyId) !== String(adminCompanyId)) throw httpErr(404, 'That user is not in your company.')
@@ -5129,11 +5183,17 @@ export function updateCompanyMember(adminCompanyId, targetUserId, { companyRole,
   }
   u.companyRole = finalRole
   if (tier !== undefined) u.tier = finalTier
+  // Additive grants (currently: trainer), sanitized against the FINAL role, so a
+  // role change into something ineligible (e.g. promoting to executive) drops the
+  // grant automatically. One rule, in server/work_roles.js.
+  const _prevGrants = (u.grants || []).join(',')
+  u.grants = roles.sanitizeGrants(finalRole, grants !== undefined ? grants : (u.grants || []))
   persist()
-  // Tell the member when their role or work flow actually changed (what they can
-  // do is different now - e.g. made a project manager, or switched to worker flow).
-  if (finalRole !== _prevRole || (workFlow !== undefined && (u.workFlow || null) !== _prevFlow)) {
-    emitStoreEvent('work_access_changed', { userId: u.id, role: u.companyRole || 'member', flow: u.workFlow || 'independent', companyId: adminCompanyId })
+  // Tell the member when their role, work flow, or grants actually changed (what
+  // they can do is different now - e.g. made a project manager, given the trainer
+  // grant, or switched to worker flow).
+  if (finalRole !== _prevRole || (workFlow !== undefined && (u.workFlow || null) !== _prevFlow) || u.grants.join(',') !== _prevGrants) {
+    emitStoreEvent('work_access_changed', { userId: u.id, role: u.companyRole || 'member', flow: u.workFlow || 'independent', grants: u.grants, companyId: adminCompanyId })
   }
   return publicWorkUser(u)
 }
@@ -6105,6 +6165,7 @@ export function listCompanyDirectory(companyId) {
     displayName: u.displayName || u.username || null,
     workFlow: (['worker', 'independent', 'mixed'].includes(u.workFlow) ? u.workFlow : 'independent'),
     companyRole: u.companyRole || 'member',
+    grants: roles.sanitizeGrants(u.companyRole, u.grants),
     tier: u.tier || null,
   }))
 }

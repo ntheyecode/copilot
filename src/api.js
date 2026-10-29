@@ -143,6 +143,12 @@ export const api = {
   workMyCompany: () => req('GET', '/api/work/my-company'),
   // Executive productivity dashboard (company-scoped; no AI model or cost in it).
   workExecProductivity: (days) => req('GET', `/api/work/exec/productivity?days=${days || 30}`),
+  workExecOverview: (days) => req('GET', `/api/work/exec/overview?days=${days || 30}`),
+  // Executive-only Company Brain download (encrypted with the executive's export passphrase).
+  brainExportStatus: () => req('GET', '/api/work/brain/export/status'),
+  brainExportSetKey: (passphrase, mfaToken) => req('POST', '/api/work/brain/export/key', { passphrase, mfaToken }),
+  brainExportRevealKey: (mfaToken) => req('POST', '/api/work/brain/export/key/reveal', { mfaToken }),
+  brainExportPath: () => '/api/work/brain/export',   // POST; the UI fetches this as a binary blob (the .wcpx archive)
   // CSV export is a direct browser download (cookie-authed): link to this URL.
   workExecCsvUrl: (days) => `/api/work/exec/productivity.csv?days=${days || 30}`,
   // Billing (Stripe Checkout). workCheckout returns { url } to redirect to.
@@ -211,6 +217,15 @@ export const api = {
   // GRC / Sr PM / admin oversight (read-only data).
   workGrcRisks: () => req('GET', '/api/work/grc/risks'),
   workGrcStats: () => req('GET', '/api/work/grc/stats'),
+  // Teach workflows (trainer / company admin author; everyone sees published).
+  workflowsList: (state) => req('GET', `/api/work/workflows${state ? `?state=${encodeURIComponent(state)}` : ''}`),
+  workflowGet: (id) => req('GET', `/api/work/workflows/${id}`),
+  workflowCreate: (body) => req('POST', '/api/work/workflows', body),
+  workflowUpdate: (id, body) => req('PATCH', `/api/work/workflows/${id}`, body),
+  workflowPublish: (id) => req('POST', `/api/work/workflows/${id}/publish`),
+  workflowRevise: (id) => req('POST', `/api/work/workflows/${id}/revise`),
+  workflowRetire: (id) => req('POST', `/api/work/workflows/${id}/retire`),
+  workflowDelete: (id) => req('DELETE', `/api/work/workflows/${id}`),
   workGrcLog: (projectId, limit) => req('GET', `/api/work/grc/log${projectId || limit ? `?${[projectId ? `project=${encodeURIComponent(projectId)}` : '', limit ? `limit=${Number(limit)}` : ''].filter(Boolean).join('&')}` : ''}`),
   // Project templates (team projects, Model B): a template is a planned task map
   // a PM / Sr PM / company admin assigns to many people, each getting their own

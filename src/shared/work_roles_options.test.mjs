@@ -38,6 +38,29 @@ test('the option registries cover every role and flow exactly once', () => {
   assert.equal(client.flowLabelKey(undefined), 'companyAdmin.flows.independent')
 })
 
+test('grants mirror the server, and trainer only coexists with member or PM', () => {
+  assert.deepEqual([...client.GRANTS].sort(), [...server.GRANTS].sort())
+  assert.deepEqual(client.GRANT_OPTIONS.map((o) => o.id).sort(), [...client.GRANTS].sort())
+  for (const r of ROLES) {
+    assert.equal(client.canGrantTrainer(r), server.canGrantTrainer(r), `canGrantTrainer(${r})`)
+    for (const g of [[], ['trainer'], ['trainer', 'bogus']]) {
+      assert.deepEqual(client.sanitizeGrants(r, g), server.sanitizeGrants(r, g), `sanitizeGrants(${r}, ${g})`)
+      assert.equal(client.canAuthorWorkflow(r, g), server.canAuthorWorkflow(r, g), `canAuthorWorkflow(${r}, ${g})`)
+    }
+  }
+})
+
+test('roleViewOf: the trainer grant opens the Teach studio, the primary role is unchanged', () => {
+  const t = client.roleViewOf({ companyId: 'c', companyRole: 'member', workFlow: 'mixed', grants: ['trainer'] })
+  assert.equal(t.isTrainer, true); assert.equal(t.showTeach, true); assert.equal(t.showPm, false)
+  const pmT = client.roleViewOf({ companyId: 'c', companyRole: 'project_manager', workFlow: 'mixed', grants: ['trainer'] })
+  assert.equal(pmT.isTrainer, true); assert.equal(pmT.showTeach, true); assert.equal(pmT.showPm, true)
+  const adm = client.roleViewOf({ companyId: 'c', companyRole: 'company_admin', workFlow: 'independent', grants: [] })
+  assert.equal(adm.showTeach, true)
+  const mem = client.roleViewOf({ companyId: 'c', companyRole: 'member', workFlow: 'mixed', grants: [] })
+  assert.equal(mem.isTrainer, false); assert.equal(mem.showTeach, false)
+})
+
 test('roleViewOf: a worker has the queue and no Start; an independent has Start and no queue; mixed has both', () => {
   const w = client.roleViewOf({ companyId: 'c', companyRole: 'member', workFlow: 'worker' })
   assert.equal(w.isWorker, true); assert.equal(w.canStart, false); assert.equal(w.showQueue, true)

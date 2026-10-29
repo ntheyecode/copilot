@@ -118,6 +118,38 @@ export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth,
   app.get('/api/work/grc/log', requireWorkAuth, wrap((req, res) => {
     res.json({ log: store.listProjectLog(req.workUser.id, { projectId: req.query.project || null, limit: Number(req.query.limit) || 500 }) })
   }))
+
+  // ---- Teach workflows ----
+  // Authoring (create / edit / publish / revise / retire / delete) needs the
+  // trainer grant or company admin, and edit/delete also ownership; the store
+  // enforces all of it. Reads return what the acting user may see (everyone in
+  // the company sees published; authors + admins also see drafts).
+  app.get('/api/work/workflows', requireWorkAuth, wrap((req, res) => {
+    res.json({ workflows: store.listWorkflowsForUser(req.workUser.id, { state: req.query.state || null }) })
+  }))
+  app.get('/api/work/workflows/:id', requireWorkAuth, wrap((req, res) => {
+    res.json({ workflow: store.getWorkflowForUser(req.workUser.id, req.params.id) })
+  }))
+  app.post('/api/work/workflows', requireWorkAuth, wrap((req, res) => {
+    const b = req.body || {}
+    res.json({ workflow: store.createWorkflow(req.workUser.id, { meta: b.meta, steps: b.steps }) })
+  }))
+  app.patch('/api/work/workflows/:id', requireWorkAuth, wrap((req, res) => {
+    const b = req.body || {}
+    res.json({ workflow: store.updateWorkflow(req.workUser.id, req.params.id, { meta: b.meta, steps: b.steps }) })
+  }))
+  app.post('/api/work/workflows/:id/publish', requireWorkAuth, wrap((req, res) => {
+    res.json({ workflow: store.publishWorkflow(req.workUser.id, req.params.id) })
+  }))
+  app.post('/api/work/workflows/:id/revise', requireWorkAuth, wrap((req, res) => {
+    res.json({ workflow: store.reviseWorkflow(req.workUser.id, req.params.id) })
+  }))
+  app.post('/api/work/workflows/:id/retire', requireWorkAuth, wrap((req, res) => {
+    res.json({ workflow: store.retireWorkflow(req.workUser.id, req.params.id) })
+  }))
+  app.delete('/api/work/workflows/:id', requireWorkAuth, wrap((req, res) => {
+    res.json(store.deleteWorkflow(req.workUser.id, req.params.id))
+  }))
 }
 
 export default { registerWorkRolesRoutes }

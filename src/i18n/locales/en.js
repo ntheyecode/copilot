@@ -25,6 +25,10 @@ export default {
       seniorProjectManager: 'Senior project manager',
       grc: 'GRC (oversight, read-only)',
     },
+    grants: {
+      trainer: 'Trainer',
+      trainerHelp: 'Can record and author guided workflows. Available with a member or project manager role.',
+    },
     flows: {
       independent: 'Independent',
       independentHelp: 'Starts their own tasks. Not assigned to.',
