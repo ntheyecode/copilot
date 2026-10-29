@@ -24,10 +24,18 @@ const translated = JSON.parse(readFileSync(resolve(jsonPath), 'utf8'))
 // deep-merge: translated values win where present, everything else is kept.
 const merged = deepMergeEn({ ...current }, translated)
 
-// Preserve the file's leading comment block (everything before `export default`).
+// Preserve ONLY the file's leading comment block, then emit a single clean
+// `export default {...}`. Taking "everything before export default" would keep
+// any wrapper code (e.g. a `const __base = {...}` + `__wavePatch` layer some
+// locale files used) as dead code; stopping at the first non-comment line drops
+// that and normalizes every locale to the same plain-dictionary shape.
 const srcText = readFileSync(file, 'utf8')
-const idx = srcText.indexOf('export default')
-const header = idx > 0 ? srcText.slice(0, idx) : ''
+const hdr = []
+for (const ln of srcText.split('\n')) {
+  if (ln.trim() === '' || ln.trimStart().startsWith('//')) hdr.push(ln)
+  else break
+}
+const header = hdr.length ? hdr.join('\n').replace(/\s+$/, '') + '\n' : ''
 
 const ID = /^[A-Za-z_$][\w$]*$/
 function str(s) {
