@@ -329,7 +329,8 @@ export default function WorkCapabilities() {
       <SiteHeader current="how" />
       <main id="main">
       <section className="wcap-hero">
-        <h1>{t('howItWorks.hero.h1a')}<br />{t('howItWorks.hero.h1b')}</h1>
+        {/* space before <br/> so the two lines stay separated when the mobile rule hides the break (.wcap-hero br{display:none}) */}
+        <h1>{t('howItWorks.hero.h1a')}{' '}<br />{t('howItWorks.hero.h1b')}</h1>
         {/* AEO: a direct, quotable one-sentence answer to "what does WorkCoPilot do?" */}
         <p>{t('howItWorks.hero.p')}</p>
       </section>

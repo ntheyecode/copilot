@@ -77,7 +77,7 @@ export default function WorkUseCases() {
       <section className="uc-hero">
         <div className="uc-wrap">
           <div className="uc-badge" data-reveal>{t('useCases.hero.badge')}</div>
-          <h1 data-reveal>{t('useCases.hero.h1a')}<br />{t.rich('useCases.hero.h1b')}</h1>
+          <h1 data-reveal>{t('useCases.hero.h1a')}{' '}<br />{t.rich('useCases.hero.h1b')}</h1>
           <p data-reveal>{t('useCases.hero.p')}</p>
           <nav className="uc-chips" data-reveal aria-label={t('useCases.hero.chipsAria')}>
             {cases.map((c) => <a key={c.id} href={`#${c.id}`} className="uc-chip"><c.icon size={14} aria-hidden="true" /> {c.tag}</a>)}
