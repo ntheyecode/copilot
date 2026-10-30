@@ -7,8 +7,9 @@ import { planProjectMap } from './work_project_plan.js'
 import { validateBreakdown, shouldBeProject } from './work_project_validate.js'
 import { parseAudioPayload, pickTranscribeRuntime, transcribeAudio, AI_NO_TRANSCRIBE } from './ai_transcribe.js'
 import { readWorkflowStep, isWeakReading, isBetterReading, STEP_READ_CODES } from './workflow_step_reader.js'
+import { workflowToSessionSteps, workflowSessionGoal, workflowOverview, workflowRefOf } from './workflow_playback.js'
 
-export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale }) {
+export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale, beginWorkTask, runPolicyGate }) {
   // ---- PM / Sr PM / admin: projects ----
 
   // List the projects this user may see (PM: own; Sr PM / GRC / admin: all).
@@ -182,6 +183,34 @@ export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth,
       }
       const out = await transcribeAudio(pick.rt, { audio: v.buffer, mime: v.mime, language: v.language })
       res.json({ text: out.text, segments: out.segments || null })
+    } catch (e) { sendWorkError(res, e, req) }
+  })
+  // Wave 3 part B: run a PUBLISHED workflow. Any company member who can see it
+  // (everyone, once it is published) starts a guided session whose steps are the
+  // workflow's own steps: no planning call, the trainer's control labels and done
+  // checks as written. The same usage gates as every other task start apply. A
+  // worker-flow member may run one too: a published workflow is company-approved
+  // work, not a self-invented task (owner: "immediately available for users").
+  // The title is company-authored content, so it is not run through the abuse
+  // guard (that would record the trainer's words against the employee). The steps
+  // DO go through the company-policy gate, exactly like every planned step, so an
+  // armed policy flags a published workflow that conflicts with it.
+  app.post('/api/work/workflows/:id/start', requireWorkAuth, requireWorkSubscription, async (req, res) => {
+    try {
+      const w = store.getWorkflowForUser(req.workUser.id, req.params.id)
+      if (w.state !== 'published') return res.status(409).json({ error: 'Only a published workflow can be run.', code: 'WORKFLOW_NOT_PUBLISHED' })
+      const steps = workflowToSessionSteps(w)
+      if (!steps.length) return res.status(409).json({ error: 'This workflow has no steps to follow yet.', code: 'WORKFLOW_EMPTY' })
+      if (!beginWorkTask(req, res)) return
+      const goal = workflowSessionGoal(w)
+      const session = store.createWorkSession(req.workUser.id, { title: goal, goal })
+      store.setWorkSessionSteps(req.workUser.id, session.id, steps)
+      store.setWorkSessionOverview(req.workUser.id, session.id, workflowOverview(w))
+      store.setWorkSessionWorkflowRef(req.workUser.id, session.id, workflowRefOf(w))
+      store.appendWorkEvent(req.workUser.id, session.id, { kind: 'ai', text: `Following the "${workflowRefOf(w).title}" workflow your company published.` })
+      const out = store.getWorkSession(req.workUser.id, session.id)
+      const policy = runPolicyGate ? await runPolicyGate(req.workUser.id, session.id, (out.steps || []).map((x) => `${x.text}\n${x.validate || ''}`).join('\n')) : null
+      res.json({ sessionId: session.id, steps: out.steps, taskUsage: store.getWorkTaskUsage(req.workUser.id), policy })
     } catch (e) { sendWorkError(res, e, req) }
   })
   // Wave 3: read ONE step of a draft with the company's own vision model: the

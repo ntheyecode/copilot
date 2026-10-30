@@ -16,8 +16,9 @@ import * as roles from './work_roles.js'
 import * as wf from './workflows_rules.js'
 import { parseImageDataUrl } from './image_data_url.js'
 
-// ctx: { db: () => object, persist, id, now, httpErr, getUser, emit, frames? }
+// ctx: { db: () => object, persist, id, now, httpErr, getUser, emit, frames?, framesInUse? }
 //   frames (optional): workflow_frames.js { save, read, remove } for Wave 2 capture.
+//   framesInUse (optional): (companyId) -> Set of frame refs running sessions show.
 export function createWorkflows(ctx) {
   const { persist, id, now, httpErr, getUser } = ctx
   const emit = ctx.emit || (() => {})
@@ -48,6 +49,10 @@ export function createWorkflows(ctx) {
     for (const o of all()) {
       if (String(o.companyId) !== String(companyId)) continue
       for (const s of (o.steps || [])) if (s && s.shot) candidates.delete(s.shot)
+    }
+    // Frames an employee's running session still shows are kept too (Wave 3 part B).
+    if (typeof ctx.framesInUse === 'function') {
+      for (const ref of ctx.framesInUse(companyId)) candidates.delete(ref)
     }
     return candidates.size ? frames.remove(companyId, [...candidates]) : 0
   }
