@@ -23,3 +23,6 @@ server/models/
 .claude/
 HANDOFF-CONTINUE.md
 SESSION-HANDOFF.md
+
+# Playwright E2E output
+.e2e-results/
