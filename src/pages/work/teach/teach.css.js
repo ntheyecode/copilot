@@ -151,7 +151,16 @@ export const TEACH_CSS = `
 .wka .tch-rec-live { display:grid; grid-template-columns:minmax(0, 1fr); gap:12px; }
 .wka .tch-rec-notes { display:flex; flex-direction:column; gap:7px; }
 .wka .tch-rec-notes .tch-rec-actions { margin:2px 0 0; }
-.wka .tch-hearing { font-style:italic; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+/* live captions (who said what), the consent check, an imported file's name */
+.wka .tch-captions { display:flex; flex-direction:column; gap:4px; padding:8px 12px; border-radius:8px; background:var(--wka-panel-2);
+  border:1px solid var(--wka-line); font-size:13px; line-height:1.45; }
+.wka .tch-caption { min-width:0; overflow-wrap:anywhere; color:var(--wka-text); }
+.wka .tch-caption b { color:var(--wka-accent-dark); font-weight:700; }
+.wka .tch-caption:not(:last-child) { color:var(--wka-muted); }
+.wka .tch-rec-consent { margin-top:10px; align-items:flex-start; }
+.wka .tch-rec-consent input { margin-top:2px; }
+.wka .tch-rec-opt .wka-check svg { flex:0 0 auto; color:var(--wka-faint); }
+.wka .tch-filename { overflow-wrap:anywhere; }
 .wka .tch-recpreview { display:block; width:168px; max-width:40%; aspect-ratio:16 / 10; object-fit:contain; border-radius:8px;
   background:#0b0d12; border:1px solid var(--wka-line); float:right; margin:0 0 8px 12px; }
 .wka .tch-progress { height:6px; border-radius:999px; background:var(--wka-panel-2); border:1px solid var(--wka-line); margin-top:10px; overflow:hidden; max-width:420px; }

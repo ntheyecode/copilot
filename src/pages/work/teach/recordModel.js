@@ -27,6 +27,10 @@ export const CAPTURE_ERROR_KEYS = {
   CAPTURE_UPLOAD_REQUIRED: 'teach.capture.err.uploadRequired',
   CAPTURE_REDACT_FAILED: 'teach.capture.err.redactFailed',
   CAPTURE_SAVE_FAILED: 'teach.capture.err.saveFailed',
+  // Import a recording (videoScan.js / videoSource.js)
+  SCAN_ABORTED: 'teach.capture.err.scanAborted',
+  SCAN_NO_VIDEO: 'teach.capture.err.scanNoVideo',
+  IMPORT_UNREADABLE: 'teach.capture.err.importUnreadable',
 }
 export const CAPTURE_ERROR_FALLBACK = 'teach.capture.err.generic'
 export function captureErrorKey(code) {
@@ -142,42 +146,6 @@ export function mergeRecordedSteps(existing, recorded) {
   return { steps: have.concat(add), mode: 'append' }
 }
 
-// Narration stamping for a continuous speech recognizer. A transcript arrives
-// AFTER the words were spoken, so each result is stamped with the clock reading
-// taken when its FIRST (interim) piece came in, i.e. when speech started.
-// nowMs: the capture session's clock. Feed every recognizer result event:
-//   onResult(results, resultIndex) -> [{ text, at, endAt }] finals ready to add.
-// results: array-like of { isFinal, 0: { transcript } } (the Web Speech shape).
-export function createVoiceStamper(nowMs) {
-  const startOf = new Map()   // result index -> clock when it was first heard
-  const done = new Set()      // result indexes already emitted
-  function onResult(results, resultIndex = 0) {
-    const out = []
-    const n = results ? results.length : 0
-    for (let i = Math.max(0, resultIndex | 0); i < n; i++) {
-      const r = results[i]
-      if (!r || done.has(i)) continue
-      if (!startOf.has(i)) startOf.set(i, nowMs())
-      if (r.isFinal) {
-        done.add(i)
-        const text = String((r[0] && r[0].transcript) || '').trim()
-        if (text) out.push({ text, at: startOf.get(i), endAt: nowMs() })
-      }
-    }
-    return out
-  }
-  // A recognizer restart (it ends on silence) starts its result list over.
-  function reset() { startOf.clear(); done.clear() }
-  // The words heard but not final yet (shown live as "hearing ...").
-  function pending(results) {
-    const n = results ? results.length : 0
-    let s = ''
-    for (let i = 0; i < n; i++) { const r = results[i]; if (r && !r.isFinal && r[0]) s += r[0].transcript }
-    return s.trim()
-  }
-  return { onResult, reset, pending }
-}
-
 // Overall finalize progress, 0..100. With masking on, masking and saving each
 // make up half; with it off, saving is the whole bar.
 // p: { stage: 'mask' | 'save', done, total, masking }
@@ -206,5 +174,5 @@ export function captureSummary(aligned, voiceLines = 0) {
 export default {
   TICK_MS, formatClock, CAPTURE_ERROR_KEYS, CAPTURE_ERROR_FALLBACK, captureErrorKey, CAPTURE_WARNING_KEYS,
   warningKey, warningLines, recordSupport, shareErrorKind, keepFrameAsIs, chooseScrub, maskingOn,
-  pruneToStepFrames, frameRefMap, bindStepRefs, distinctFrameCount, mergeRecordedSteps, createVoiceStamper, progressPct, captureSummary,
+  pruneToStepFrames, frameRefMap, bindStepRefs, distinctFrameCount, mergeRecordedSteps, progressPct, captureSummary,
 }

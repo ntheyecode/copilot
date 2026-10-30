@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import {
   formatClock, captureErrorKey, CAPTURE_ERROR_KEYS, CAPTURE_ERROR_FALLBACK, warningKey, warningLines,
   recordSupport, shareErrorKind, keepFrameAsIs, chooseScrub, maskingOn, pruneToStepFrames, frameRefMap,
-  bindStepRefs, distinctFrameCount, mergeRecordedSteps, createVoiceStamper, captureSummary, progressPct,
+  bindStepRefs, distinctFrameCount, mergeRecordedSteps, captureSummary, progressPct,
 } from './recordModel.js'
 import { createCaptureSession, finalizeCapture, SETTLE_TICKS } from './captureSession.js'
 import { alignCapture, toWorkflowSteps, STEP_TEXT } from './captureTimeline.js'
@@ -20,8 +20,8 @@ test('formatClock reads m:ss, then h:mm:ss, and never goes negative', () => {
   assert.equal(formatClock(NaN), '0:00')
 })
 
-test('every CAPTURE_* error code maps to a translated key that exists in English', () => {
-  const codes = ['CAPTURE_ALREADY_STARTED', 'CAPTURE_NOT_STARTED', 'CAPTURE_SCRUB_REQUIRED', 'CAPTURE_UPLOAD_REQUIRED', 'CAPTURE_REDACT_FAILED', 'CAPTURE_SAVE_FAILED']
+test('every CAPTURE_* / SCAN_* / import error code maps to a translated key that exists in English', () => {
+  const codes = ['CAPTURE_ALREADY_STARTED', 'CAPTURE_NOT_STARTED', 'CAPTURE_SCRUB_REQUIRED', 'CAPTURE_UPLOAD_REQUIRED', 'CAPTURE_REDACT_FAILED', 'CAPTURE_SAVE_FAILED', 'SCAN_ABORTED', 'SCAN_NO_VIDEO', 'IMPORT_UNREADABLE']
   assert.deepEqual(Object.keys(CAPTURE_ERROR_KEYS).sort(), codes.slice().sort())
   for (const c of codes) assert.equal(typeof dig(en, captureErrorKey(c)), 'string', c)
   assert.equal(captureErrorKey('NOPE'), CAPTURE_ERROR_FALLBACK)
@@ -139,25 +139,6 @@ test('mergeRecordedSteps replaces a blank editor and appends after real steps', 
   const mine = [{ instruction: 'Mine' }]
   assert.deepEqual(mergeRecordedSteps(mine, rec), { steps: [...mine, ...rec], mode: 'append' })
   assert.deepEqual(mergeRecordedSteps([], []), { steps: [], mode: 'replace' })
-})
-
-test('voice stamper stamps each line when speech STARTED, emits finals once', () => {
-  let T = 100
-  const v = createVoiceStamper(() => T)
-  const r = (text, isFinal) => ({ isFinal, 0: { transcript: text } })
-  assert.deepEqual(v.onResult([r('open the', false)], 0), [])
-  assert.equal(v.pending([r('open the', false)]), 'open the')
-  T = 900
-  assert.deepEqual(v.onResult([r('open the billing tab', true)], 0), [{ text: 'open the billing tab', at: 100, endAt: 900 }])
-  T = 1200
-  assert.deepEqual(v.onResult([r('open the billing tab', true), r('then', false)], 1), [])
-  T = 2000
-  assert.deepEqual(v.onResult([r('open the billing tab', true), r('then click new', true)], 1), [{ text: 'then click new', at: 1200, endAt: 2000 }])
-  // a re-delivered final is not emitted twice
-  assert.deepEqual(v.onResult([r('open the billing tab', true), r('then click new', true)], 0), [])
-  v.reset(); T = 3000
-  assert.deepEqual(v.onResult([r('after restart', true)], 0), [{ text: 'after restart', at: 3000, endAt: 3000 }])
-  assert.deepEqual(v.onResult([r('   ', true)], 0), [])
 })
 
 test('progressPct splits masking and saving, or is all saving when masking is off', () => {

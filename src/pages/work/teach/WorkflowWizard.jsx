@@ -2,8 +2,8 @@
 // (Basics, Details, Scope & privacy, Steps, Review) with a stepper, inline
 // reflections of what the author has entered, required-field validation that
 // mirrors the server, and a Save draft / Publish footer. In Steps the author
-// writes steps by hand or records a demonstration (RecordPanel) that drafts them
-// into the same editor (StepEditor) for review. Presentational + its own save
+// writes steps by hand, records a demonstration, or imports a recording
+// (CaptureCard), which drafts them into the same editor (StepEditor) for review. Presentational + its own save
 // round-trips; it never changes backend logic.
 import React, { useMemo, useState } from 'react'
 import {
@@ -11,7 +11,7 @@ import {
   Info, AlertTriangle, ShieldCheck, X, ListChecks,
 } from 'lucide-react'
 import { api, friendlyError } from '../../../api.js'
-import { useT } from '../../../i18n/index.jsx'
+import { useLocale } from '../../../i18n/index.jsx'
 import { Spinning, ErrorBox } from '../../workadmin/sections/_shared.jsx'
 import { isDlpActive } from '../../../scrub.js'
 import {
@@ -21,7 +21,8 @@ import {
 import { withRowKeys, newRowKey, initialOpenKeys } from './stepRows.js'
 import { mergeRecordedSteps } from './recordModel.js'
 import StepEditor from './StepEditor.jsx'
-import RecordPanel from './RecordPanel.jsx'
+import CaptureCard from './CaptureCard.jsx'
+import { transcribeLanguage } from './voiceModel.js'
 
 // One text field in the wizard (label + optional required marker + input).
 function Field({ label, required, hint, full, children }) {
@@ -34,7 +35,7 @@ function Field({ label, required, hint, full, children }) {
 }
 
 export default function WorkflowWizard({ initial, onCancel, onSaved }) {
-  const t = useT()
+  const { t, locale } = useLocale()
   const editing = !!(initial && initial.id)
   const [meta, setMeta] = useState(() => (editing ? metaToForm(initial.meta) : emptyMeta()))
   const [steps, setSteps] = useState(() => withRowKeys(editing && Array.isArray(initial.steps) && initial.steps.length ? stepsToForm(initial.steps) : [emptyStep()]))
@@ -240,7 +241,7 @@ export default function WorkflowWizard({ initial, onCancel, onSaved }) {
       {cur === 'steps' && (
         <div>
           <p className="tch-phase-lead">{t('teach.wizard.steps.lead')}</p>
-          <RecordPanel mask={maskFrames} onSteps={loadRecorded} onBusyChange={setRecBusy} />
+          <CaptureCard mask={maskFrames} language={transcribeLanguage(meta.language, locale)} onSteps={loadRecorded} onBusyChange={setRecBusy} />
           <StepEditor steps={steps} open={open} onToggle={toggleRow} onSetAll={setAllRows}
             onChange={setStep} onMove={moveStep} onRemove={removeStep} />
           <button type="button" className="wka-btn sm" style={{ marginTop: 12 }} onClick={addStep}><Plus size={14} /> {t('teach.wizard.steps.addStep')}</button>
