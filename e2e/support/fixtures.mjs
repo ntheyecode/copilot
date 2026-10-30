@@ -13,6 +13,7 @@ import { test as base, expect } from '@playwright/test'
 import { bootServer } from './server.mjs'
 import { apiClient, wrap } from './api.mjs'
 import { prepContext } from '../pages/browser-prep.mjs'
+import { guardBrowserEgress } from '../pages/browser-egress.mjs'
 
 export const test = base.extend({
   edition: ['all', { option: true, scope: 'worker' }],
@@ -38,6 +39,7 @@ export const test = base.extend({
 
   as: async ({ server, browser }, use) => {
     const opened = []
+    const externalCalls = []
     const helper = {
       // A signed-in API client for a seeded persona ({ username }, password shared).
       async api(user, password = user.password || 'E2e-User-Pass-123!') {
@@ -65,12 +67,14 @@ export const test = base.extend({
       async context({ contextOptions = {}, locale = 'en', theme = 'light', syntheticScreen = false } = {}) {
         const context = await browser.newContext({ baseURL: server.baseURL, viewport: { width: 1280, height: 800 }, locale: 'en-US', ...contextOptions })
         opened.push({ dispose: () => context.close() })
+        externalCalls.push(await guardBrowserEgress(context))
         await prepContext(context, { locale, theme, syntheticScreen })
         return { context, page: null }
       },
     }
     await use(helper)
     for (const o of opened.reverse()) { try { await o.dispose() } catch { /* already closed */ } }
+    expect(externalCalls.flat(), 'the web app must not call third-party hosts during E2E').toEqual([])
   },
 
   // Hermetic network: fail the test if the server tried to reach anything real.

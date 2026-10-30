@@ -12,3 +12,12 @@ cannot come back unnoticed even when the E2E suite is not run.
 - **Fix:** the store keeps and returns snapshots (a JSON copy) of a session record, like every serializing session store, so nothing a request does to its session object reaches the stored record unless express-session saves it.
 - **Regression gate:** `server/session_store_snapshot.test.mjs` (red before the fix, green after): the stored expiry does not move with activity, a record read from the store cannot change the stored one, and a past expiry signs the session out.
 - **Commit:** 07eb80b.
+
+## 2. Raw `**bold**` markup in the Workflow issues inbox and the integration API
+
+- **Scenario:** `specs/run-workflow.spec.mjs` › an employee runs a published workflow, a deviation alerts the right people, the trainer adopts the step.
+- **Symptom:** the incident row read "Step 1 · Step 1: Open the Credit notes tab and choose \*\*New\*\*." The same text was returned by `GET /api/v1/incidents`.
+- **Root cause:** when a published workflow runs, each session step's text marks the control to use in `**bold**` (Guide's convention, `workflow_playback.stepText`). The watch route recorded that session text as the incident's `stepText` verbatim, and both output shapes passed it through. Four other server modules each kept their own copy of the "strip the markers" regex, so there was no shared rule to reach for.
+- **Fix:** one module, `server/guide_markup.js` (`stripGuideMarkup`). The incident is stored with plain step text, and both output shapes (the console list and the v1 `incidents` shape) clean it too, so records saved before the fix read clean. The four hand-rolled copies (`workflow_deviation`, `workflow_playback`, `workflow_step_reader`, `workflows_rules`) now call the shared rule.
+- **Regression gate:** `server/workflow_incidents.test.mjs` (stored and listed plain, including a legacy record), `server/guide_markup.test.mjs` (the rule, the v1 shape, and a gate that no other server module hand-rolls the regex).
+- **Commit:** c3e2149.
