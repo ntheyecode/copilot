@@ -117,6 +117,7 @@ function sessionRow(s, nameById) {
 
 import { buildCompanyInvoice } from './company_invoice.js'
 import { sendAccountWelcomeAsync } from './emails.js'
+import { companyCreationRefusal } from './edition.js'
 
 // A strong throwaway password for accounts created without one (the person sets
 // their own via the emailed set-password link).
@@ -318,6 +319,10 @@ export function registerWorkAdminRoutes(app, deps = {}) {
     res.json({ companies: store.listCompanies() })
   }))
   app.post('/api/work/admin/companies', requireAuth, superGate, w((req, res) => {
+    // Edition rule: many tenants (saas_companies), exactly one (single_company,
+    // on-prem and managed), or none (individual-only editions).
+    const refused = companyCreationRefusal(() => store.listCompanies().length)
+    if (refused) return res.status(refused.status).json(refused.body)
     const b = req.body || {}
     const c = store.createCompany({
       name: b.name, plan: b.plan, seats: b.seats, seatsByTier: b.seatsByTier,

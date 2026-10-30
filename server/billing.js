@@ -23,6 +23,7 @@ import { sendTemplateAsync, sendOwnerSubscriptionAlertAsync } from './emails.js'
 // Shared with the onboarding confirm path (billing_checkout.js): one param
 // builder + one activation function, so webhook and confirm never drift.
 import { PLANS, mapStatus, planFromSub, periodEndIso, cycleFromSub, subscriptionCheckoutParams, applyCheckoutSession } from './billing_checkout.js'
+import { caps, stripeOffReason } from './edition.js'
 // Where Stripe sends the customer back. Fixed to the public site by default; an
 // operator can override it for a staging host via WORK_PUBLIC_URL.
 const SITE = (process.env.WORK_PUBLIC_URL || 'https://admireveda.com').replace(/\/+$/, '')
@@ -60,6 +61,13 @@ const looksLikeEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || '').
 // precedence, env vars fall back. Price ids fall back per plan, so a half-filled
 // store config still picks up any env price ids that are set.
 function cfg(store) {
+  // Editions without Stripe (on-prem, managed) resolve to an empty config, so
+  // every Stripe path takes its existing "not configured" branch and no Stripe
+  // call is ever made, even if a key sits in the env or the store.
+  if (!caps.has('stripe_billing')) {
+    const none = { lite: '', basic: '', advanced: '', premium: '' }
+    return { secret: '', webhookSecret: '', price: { ...none }, priceAnnual: { ...none } }
+  }
   const c = (store && typeof store.getBillingConfig === 'function') ? (store.getBillingConfig() || {}) : {}
   const storeOn = c.enabled !== false   // default on when a store secret key is present
   const secret = (c.secretKey && storeOn) ? c.secretKey : (process.env.STRIPE_SECRET_KEY || '')
@@ -710,7 +718,7 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
       res.json({ billing: store.getBillingPublic(), webhookUrl: `${SITE}/api/work/stripe/webhook`, envFallback: {
         secretKey: !!process.env.STRIPE_SECRET_KEY,
         webhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET,
-      } })
+      }, ...(stripeOffReason() ? { offByEdition: true, offReason: stripeOffReason() } : {}) })
     }))
     app.post('/api/work/admin/billing', requireAuth, requireSuperAdmin, stepUp, wrap((req, res) => {
       res.json({ billing: store.setBillingConfig(req.body || {}) })

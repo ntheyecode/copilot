@@ -4,7 +4,7 @@
   "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "test": "node --test server/*.test.mjs server/eval/*.test.mjs src/pages/work/projects/*.test.mjs src/pages/work/pm/*.test.mjs src/pages/work/teach/*.test.mjs src/pages/work/workflows/*.test.mjs src/pages/work/incidents/*.test.mjs src/shared/*.test.mjs src/theme/*.test.mjs",
+    "test": "node --test server/*.test.mjs server/storage/*.test.mjs server/eval/*.test.mjs editions/*.test.mjs build/*.test.mjs src/pages/work/projects/*.test.mjs src/pages/work/pm/*.test.mjs src/pages/work/teach/*.test.mjs src/pages/work/workflows/*.test.mjs src/pages/work/incidents/*.test.mjs src/shared/*.test.mjs src/theme/*.test.mjs",
     "dev:web": "vite",
     "dev:api": "node --watch server/index.js",
     "check:jsx-imports": "node scripts/check-jsx-imports.mjs",
@@ -15,6 +15,11 @@
     "build:harden:max": "vite build --mode hardenmax",
     "check:public-assets": "node scripts/check-public-assets.mjs",
     "server": "node server/index.js",
+    "db:migrate": "node server/storage/cli.js migrate",
+    "db:status": "node server/storage/cli.js status",
+    "db:import": "node server/storage/cli.js import",
+    "db:export": "node server/storage/cli.js export",
+    "compose": "node build/compose.mjs",
     "start": "npm run build && node server/index.js"
   },
   "dependencies": {
@@ -31,6 +36,7 @@
     "mammoth": "^1.12.1",
     "pdf-parse": "^2.4.5",
     "pdfkit": "^0.19.1",
+    "pg": "^8.23.1",
     "qrcode-generator": "^1.4.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -38,6 +44,8 @@
     "stripe": "^17.7.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.13",
+    "@electric-sql/pglite-socket": "^0.2.16",
     "@vitejs/plugin-react": "^6.1.2",
     "javascript-obfuscator": "^5.2.1",
     "vite": "^8.3.5"
