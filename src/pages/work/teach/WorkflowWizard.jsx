@@ -3,9 +3,12 @@
 // reflections of what the author has entered, required-field validation that
 // mirrors the server, and a Save draft / Publish footer. In Steps the author
 // writes steps by hand, records a demonstration, or imports a recording
-// (CaptureCard), which drafts them into the same editor (StepEditor) for review. Presentational + its own save
-// round-trips; it never changes backend logic.
-import React, { useMemo, useState } from 'react'
+// (CaptureCard), which drafts them into the same editor (StepEditor) for review.
+// Recorded steps can then be read against their screenshots (StepReadCard +
+// useStepReader), which suggests each control and done check for the trainer to
+// accept per step. Presentational + its own save round-trips; it never changes
+// backend logic.
+import React, { useMemo, useRef, useState } from 'react'
 import {
   GraduationCap, ChevronLeft, ChevronRight, Check, Plus,
   Info, AlertTriangle, ShieldCheck, X, ListChecks,
@@ -23,6 +26,9 @@ import { mergeRecordedSteps } from './recordModel.js'
 import StepEditor from './StepEditor.jsx'
 import CaptureCard from './CaptureCard.jsx'
 import { transcribeLanguage } from './voiceModel.js'
+import { hydrateStepIds, hydrateByKey, acceptReading } from './stepReadingModel.js'
+import { useStepReader } from './useStepReader.js'
+import StepReadCard from './StepReadCard.jsx'
 
 // One text field in the wizard (label + optional required marker + input).
 function Field({ label, required, hint, full, children }) {
@@ -39,10 +45,11 @@ export default function WorkflowWizard({ initial, onCancel, onSaved }) {
   const editing = !!(initial && initial.id)
   const [meta, setMeta] = useState(() => (editing ? metaToForm(initial.meta) : emptyMeta()))
   const [steps, setSteps] = useState(() => withRowKeys(editing && Array.isArray(initial.steps) && initial.steps.length ? stepsToForm(initial.steps) : [emptyStep()]))
+  const stepsRef = useRef(steps)                                    // the latest rows, for saves started mid-render
+  stepsRef.current = steps
   const [open, setOpen] = useState(() => initialOpenKeys(steps))   // which step rows are expanded
   const [maskFrames, setMaskFrames] = useState(true)                // mask sensitive text in recorded screenshots
   const [recBusy, setRecBusy] = useState(false)                     // a recording is live or saving: hold navigation
-  const holdTitle = recBusy ? t('teach.capture.busyHint') : ''
   const dlp = isDlpActive()
   const [phase, setPhase] = useState(0)
   const [ack, setAck] = useState(editing)                 // privacy/scope acknowledgement
@@ -71,8 +78,8 @@ export default function WorkflowWizard({ initial, onCancel, onSaved }) {
   // so the recorder can say which one happened.
   const loadRecorded = (recorded) => {
     const rows = withRowKeys(recorded)
-    const { steps: next, mode } = mergeRecordedSteps(steps, rows)
-    setSteps(next)
+    const { mode } = mergeRecordedSteps(stepsRef.current, rows)
+    setSteps((list) => mergeRecordedSteps(list, rows).steps)   // functional: never drops a reading that just landed
     setOpen(rows.length ? new Set([rows[0]._k]) : new Set())
     return mode
   }
@@ -82,21 +89,42 @@ export default function WorkflowWizard({ initial, onCancel, onSaved }) {
     const copy = list.slice();[copy[i], copy[j]] = [copy[j], copy[i]]; return copy
   })
 
-  // Persist the current form. Creates on first save, patches afterwards. Returns
-  // the saved workflow id, or null on failure (error already surfaced).
+  // Persist the current form. Creates on first save, patches afterwards, and
+  // gives the rows the step ids (and stored readings) the server answered with,
+  // so a later read or save addresses the same steps. Returns the saved
+  // workflow id, or null on failure (error already surfaced).
   const persist = async () => {
-    const body = { meta: metaToPayload(meta), steps: stepsToPayload(steps) }
+    const sent = stepsRef.current                                   // the rows this save sends
+    const body = { meta: metaToPayload(meta), steps: stepsToPayload(sent) }
     try {
-      if (id) { await api.workflowUpdate(id, body); return id }
-      const r = await api.workflowCreate(body)
-      const newId = r && r.workflow && r.workflow.id
-      setId(newId || null)
-      return newId || null
+      const r = id ? await api.workflowUpdate(id, body) : await api.workflowCreate(body)
+      const w = r && r.workflow
+      const savedId = (w && w.id) || id || null
+      if (!id) setId(savedId)
+      if (w && Array.isArray(w.steps)) {
+        // Ids line up with the rows SENT; carry them to the latest rows by key,
+        // so edits made while the save was in flight cannot shift them.
+        const sentHydrated = hydrateStepIds(sent, w.steps)
+        stepsRef.current = hydrateByKey(stepsRef.current, sentHydrated)
+        setSteps((rows) => hydrateByKey(rows, sentHydrated))
+      }
+      return savedId
     } catch (e) {
       setErr(friendlyError(e, t('teach.wizard.errSave')))
       return null
     }
   }
+
+  // Read steps: save first (only a saved draft has step ids to read), then the
+  // reader works through the hydrated rows one step at a time.
+  const reader = useStepReader({
+    save: async () => { setErr(''); const savedId = await persist(); return savedId ? { id: savedId, rows: stepsRef.current } : null },
+    setRows: setSteps,
+  })
+  const acceptStep = (i) => setSteps((list) => list.map((s, j) => (j === i ? acceptReading(s) : s)))
+  // A recording or a read pass holds navigation and saving until it finishes.
+  const hold = recBusy || reader.active
+  const holdTitle = recBusy ? t('teach.capture.busyHint') : reader.active ? t('teach.read.busyHint') : ''
 
   const saveDraft = async () => {
     if (!canSaveDraft) { setPhase(0); setTriedNext(true); return }
@@ -143,14 +171,14 @@ export default function WorkflowWizard({ initial, onCancel, onSaved }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
         <h2 style={{ margin: 0 }}><GraduationCap size={16} style={{ verticalAlign: -3, marginRight: 6, color: 'var(--wka-accent)' }} />{editing ? t('teach.wizard.editTitle', { v: initial.version }) : t('teach.wizard.newTitle')}</h2>
         <span className="wka-spacer" style={{ flex: 1 }} />
-        <button type="button" className="wka-btn sm ghost" disabled={recBusy} title={holdTitle} onClick={onCancel}><X size={14} /> {t('teach.wizard.cancel')}</button>
+        <button type="button" className="wka-btn sm ghost" disabled={hold} title={holdTitle} onClick={onCancel}><X size={14} /> {t('teach.wizard.cancel')}</button>
       </div>
 
       {/* stepper */}
       <div className="tch-stepper" role="tablist" aria-label={t('teach.wizard.stepsAria')}>
         {PHASES.map((k, i) => (
           <button key={k} type="button" role="tab" aria-selected={i === phase}
-            className={`tch-step${i === phase ? ' on' : ''}${i < phase ? ' done' : ''}`} disabled={recBusy && i !== phase} title={i !== phase ? holdTitle : ''} onClick={() => jump(i)}>
+            className={`tch-step${i === phase ? ' on' : ''}${i < phase ? ' done' : ''}`} disabled={hold && i !== phase} title={i !== phase ? holdTitle : ''} onClick={() => jump(i)}>
             <span className="n">{i < phase ? <Check size={12} /> : i + 1}</span>{stepLabel(k)}
           </button>
         ))}
@@ -241,9 +269,14 @@ export default function WorkflowWizard({ initial, onCancel, onSaved }) {
       {cur === 'steps' && (
         <div>
           <p className="tch-phase-lead">{t('teach.wizard.steps.lead')}</p>
-          <CaptureCard mask={maskFrames} language={transcribeLanguage(meta.language, locale)} onSteps={loadRecorded} onBusyChange={setRecBusy} />
+          {/* a read pass holds the recorder (its new steps would change what is being read) */}
+          <fieldset className="tch-hold" disabled={reader.active} title={reader.active ? holdTitle : undefined}>
+            <CaptureCard mask={maskFrames} language={transcribeLanguage(meta.language, locale)} onSteps={loadRecorded} onBusyChange={setRecBusy} />
+          </fieldset>
+          <StepReadCard rows={steps} reader={reader} disabled={recBusy || !!busy || missing.length > 0} holdTitle={recBusy ? holdTitle : ''} />
           <StepEditor steps={steps} open={open} onToggle={toggleRow} onSetAll={setAllRows}
-            onChange={setStep} onMove={moveStep} onRemove={removeStep} />
+            onChange={setStep} onMove={moveStep} onRemove={removeStep}
+            reader={reader} readDisabled={hold || !!busy || missing.length > 0} onAccept={acceptStep} onReadAgain={reader.readOne} />
           <button type="button" className="wka-btn sm" style={{ marginTop: 12 }} onClick={addStep}><Plus size={14} /> {t('teach.wizard.steps.addStep')}</button>
           {!okSteps && <div className="tch-missing" style={{ marginTop: 14 }}><AlertTriangle size={15} /><span>{t('teach.wizard.steps.needOne')}</span></div>}
         </div>
@@ -282,13 +315,13 @@ export default function WorkflowWizard({ initial, onCancel, onSaved }) {
 
       {/* footer actions */}
       <div className="tch-wizfoot">
-        <button type="button" className="wka-btn ghost" disabled={phase === 0 || !!busy || recBusy} title={holdTitle} onClick={goBack}><ChevronLeft size={14} /> {t('teach.wizard.back')}</button>
+        <button type="button" className="wka-btn ghost" disabled={phase === 0 || !!busy || hold} title={holdTitle} onClick={goBack}><ChevronLeft size={14} /> {t('teach.wizard.back')}</button>
         {phase < PHASES.length - 1
-          ? <button type="button" className="wka-btn primary" disabled={recBusy} title={holdTitle} onClick={goNext}>{t('teach.wizard.next')} <ChevronRight size={14} /></button>
+          ? <button type="button" className="wka-btn primary" disabled={hold} title={holdTitle} onClick={goNext}>{t('teach.wizard.next')} <ChevronRight size={14} /></button>
           : <span />}
         <span className="wka-spacer" />
-        <button type="button" className="wka-btn" disabled={!canSaveDraft || recBusy} title={recBusy ? holdTitle : missing.length ? t('teach.wizard.needBasicsFirst') : ''} onClick={saveDraft}>{busy === 'draft' ? <Spinning /> : <Check size={14} />} {t('teach.wizard.saveDraft')}</button>
-        <button type="button" className="wka-btn primary" disabled={!canPublishNow || recBusy} title={recBusy ? holdTitle : !ack ? t('teach.wizard.ackFirst') : (missing.length || !okSteps) ? t('teach.wizard.completeFirst') : ''} onClick={publish}>{busy === 'publish' ? <Spinning /> : <GraduationCap size={14} />} {t('teach.wizard.publish')}</button>
+        <button type="button" className="wka-btn" disabled={!canSaveDraft || hold} title={hold ? holdTitle : missing.length ? t('teach.wizard.needBasicsFirst') : ''} onClick={saveDraft}>{busy === 'draft' ? <Spinning /> : <Check size={14} />} {t('teach.wizard.saveDraft')}</button>
+        <button type="button" className="wka-btn primary" disabled={!canPublishNow || hold} title={hold ? holdTitle : !ack ? t('teach.wizard.ackFirst') : (missing.length || !okSteps) ? t('teach.wizard.completeFirst') : ''} onClick={publish}>{busy === 'publish' ? <Spinning /> : <GraduationCap size={14} />} {t('teach.wizard.publish')}</button>
       </div>
     </section>
   )

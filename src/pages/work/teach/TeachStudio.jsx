@@ -20,6 +20,7 @@ import { roleViewOf } from '../../../shared/work_roles_options.js'
 import { WORKADMIN_CSS, ensureWorkAdminFonts } from '../../workadmin/workadmin.css.js'
 import { Loading, ErrorBox, EmptyState } from '../../workadmin/sections/_shared.jsx'
 import { TEACH_CSS } from './teach.css.js'
+import { STEP_READING_CSS } from './stepReading.css.js'
 import WorkflowList from './WorkflowList.jsx'
 import WorkflowWizard from './WorkflowWizard.jsx'
 
@@ -29,7 +30,7 @@ function Shell({ company, children }) {
   const companyName = (company && company.name) || 'WorkCoPilot'
   return (
     <div className="wka wd-tokens">
-      <style>{WORKADMIN_CSS}{TEACH_CSS}</style>
+      <style>{WORKADMIN_CSS}{TEACH_CSS}{STEP_READING_CSS}</style>
       <header className="wka-top">
         <span className="wka-dot" aria-hidden="true" />
         <div className="wka-brand"><b>WorkCoPilot</b><span>{t('teach.brand.studio')}</span></div>

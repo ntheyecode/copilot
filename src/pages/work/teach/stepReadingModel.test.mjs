@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { hydrateStepIds, applyStepReading, acceptReading, rowsToRead, confidenceBand, readingDiffers } from './stepReadingModel.js'
+import { hydrateStepIds, hydrateByKey, readingHolds, applyStepReading, acceptReading, rowsToRead, confidenceBand, readingDiffers } from './stepReadingModel.js'
 import { stepsToForm, stepsToPayload } from './workflowModel.js'
 
 const A = 'a'.repeat(32) + '.jpg'
@@ -16,6 +16,12 @@ test('hydrate: server ids line up with the rows that have an instruction', () =>
 test('hydrate: a row whose screenshot changed meanwhile keeps its own id', () => {
   const out = hydrateStepIds([{ id: '', instruction: 'Open', shot: B }], [{ id: 's1', shot: A }])
   assert.equal(out[0].id, '')
+})
+
+test('hydrate: the saved reading wins, so one the server dropped on save leaves the row too', () => {
+  const rows = [{ id: 's1', instruction: 'Open', shot: A, reading: R }]
+  assert.equal(hydrateStepIds(rows, [{ id: 's1', shot: A, reading: null }])[0].reading, null)
+  assert.deepEqual(hydrateStepIds(rows, [{ id: 's1', shot: A, reading: R }])[0].reading, R)
 })
 
 test('apply: a reading lands only on its row, and only while the screenshot matches', () => {
@@ -60,4 +66,26 @@ test('a stored reading hydrates into the row for display but is never sent back 
   assert.deepEqual(rows[0].reading, R)
   assert.equal(stepsToPayload(rows)[0].reading, undefined)
   assert.equal(stepsToForm([{ id: 's1', instruction: 'Open' }])[0].reading, null)
+})
+
+test('hydrateByKey: ids follow the rows that were sent, even if rows moved while saving', () => {
+  const sent = [{ _k: 'a', instruction: 'Open', shot: A }, { _k: 'b', instruction: 'Save', shot: '' }]
+  const sentHydrated = hydrateStepIds(sent, [{ id: 's1', shot: A }, { id: 's2', shot: '' }])
+  // meanwhile: a new row was typed in first, and row b moved to the top
+  const latest = [{ _k: 'b', instruction: 'Save', shot: '' }, { _k: 'n', instruction: 'New', shot: '' }, { _k: 'a', instruction: 'Open', shot: A }]
+  const out = hydrateByKey(latest, sentHydrated)
+  assert.deepEqual(out.map((r) => r.id), ['s2', undefined, 's1'])
+  // a row whose screenshot changed meanwhile keeps its own id
+  assert.equal(hydrateByKey([{ _k: 'a', instruction: 'Open', shot: B }], sentHydrated)[0].id, undefined)
+})
+
+test('readingHolds: mirrors the server, a reading read with the next screen needs that screen next', () => {
+  const r = { ...R, afterShot: B }
+  assert.equal(readingHolds({ shot: A, reading: r }, { shot: B }), true)
+  assert.equal(readingHolds({ shot: A, reading: r }, { shot: '' }), false)        // reordered / removed
+  assert.equal(readingHolds({ shot: A, reading: r }, null), false)                // now the last row
+  assert.equal(readingHolds({ shot: A, reading: R }, null), true)                 // read without a next screen
+  assert.equal(readingHolds({ shot: B, reading: R }, null), false)                // screenshot replaced
+  const rows = [{ id: 's1', instruction: 'a', shot: A, reading: r }, { id: 's2', instruction: 'b', shot: '' }]
+  assert.deepEqual(rowsToRead(rows).map((x) => x.id), ['s1'])
 })

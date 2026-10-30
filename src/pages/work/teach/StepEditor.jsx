@@ -1,13 +1,15 @@
 // The Teach wizard's step editor: one compact, expandable row per step (number,
 // screenshot thumbnail, instruction preview, move / remove tools), opening to
 // the full fields and the step's screenshot. Used for hand-written steps and for
-// steps drafted from a recording alike. Screenshots are stored frame refs shown
+// steps drafted from a recording alike. When the wizard passes a step reader
+// (Wave 3), each row also carries its reading (StepReadingPanel.jsx). Screenshots are stored frame refs shown
 // through api.workflowFramePath (same-origin, session cookie). Presentational:
 // the wizard owns the rows and which ones are open.
 import React, { useState } from 'react'
 import { ArrowUp, ArrowDown, Trash2, ChevronRight, ImageOff, X } from 'lucide-react'
 import { api } from '../../../api.js'
 import { useT } from '../../../i18n/index.jsx'
+import StepReadingPanel, { ReadingMark } from './StepReadingPanel.jsx'
 
 function Field({ label, hint, full, children }) {
   return (
@@ -18,7 +20,7 @@ function Field({ label, hint, full, children }) {
   )
 }
 
-export default function StepEditor({ steps, open, onToggle, onSetAll, onChange, onMove, onRemove }) {
+export default function StepEditor({ steps, open, onToggle, onSetAll, onChange, onMove, onRemove, reader, readDisabled, onAccept, onReadAgain }) {
   const t = useT()
   const [broken, setBroken] = useState(() => new Set())
   const markBroken = (ref) => setBroken((b) => (b.has(ref) ? b : new Set(b).add(ref)))
@@ -49,6 +51,7 @@ export default function StepEditor({ steps, open, onToggle, onSetAll, onChange, 
                       : <span className="tch-thumb tch-thumb-missing" aria-hidden="true"><ImageOff size={14} /></span>
                   )}
                   <span className={`tch-editstep-ttl${preview ? '' : ' empty'}`}>{preview || t('teach.wizard.steps.emptyStep')}</span>
+                  {reader && <ReadingMark row={s} next={steps[i + 1]} reader={reader} />}
                 </button>
                 <span className="tch-editstep-tools">
                   <button type="button" className="wka-btn sm ghost" disabled={i === 0} title={t('teach.wizard.steps.moveUp')} aria-label={t('teach.wizard.steps.moveUp')} onClick={() => onMove(i, -1)}><ArrowUp size={13} /></button>
@@ -73,6 +76,7 @@ export default function StepEditor({ steps, open, onToggle, onSetAll, onChange, 
                     <label>{t('teach.wizard.steps.instruction')}<span className="tch-req"> *</span></label>
                     <textarea className="wka-input" rows={2} value={s.instruction} maxLength={600} placeholder={t('teach.wizard.steps.instructionPh')} onChange={(e) => onChange(i, 'instruction', e.target.value)} style={{ resize: 'vertical' }} />
                   </div>
+                  {reader && <StepReadingPanel row={s} next={steps[i + 1]} reader={reader} disabled={readDisabled} onAccept={() => onAccept(i)} onReadAgain={() => onReadAgain(s._k)} />}
                   <div className="tch-editstep-grid">
                     <Field label={t('teach.wizard.steps.target')} hint={t('teach.wizard.optional')}>
                       <input className="wka-input" value={s.target} maxLength={200} placeholder={t('teach.wizard.steps.targetPh')} onChange={(e) => onChange(i, 'target', e.target.value)} />
