@@ -8,5 +8,14 @@ export default {
     plan: 'Plan',
     doneWhen: 'Done when',
     markDoneTip: 'Mark this step done and move to the next',
+    // The step's screenshot from the company workflow it came from (StepShot.jsx).
+    shot: {
+      label: 'What the screen should look like',
+      larger: 'Show larger',
+      smaller: 'Show smaller',
+      alt: "The trainer's screenshot for this step",
+      caption: 'Your screen may look a little different, for example with your own data in it.',
+      missing: 'The screenshot for this step could not be loaded.',
+    },
   },
 }

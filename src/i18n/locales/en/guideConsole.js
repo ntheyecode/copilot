@@ -18,6 +18,8 @@ export default {
     source: {
       label: 'Grounded in your documents',
       tip: 'Grounded in your material: {label}',
+      workflow: 'Company workflow',
+      workflowTip: 'A step from the workflow your company published: {label}',
     },
     // "How?" drill-down of one action into detailed sub-steps
     how: {

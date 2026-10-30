@@ -12,7 +12,9 @@ const hasText = (r) => String((r && r.instruction) || '').trim() !== ''
 // After a save, give each saved row the id the server assigned. The payload
 // skipped rows with no instruction, so the server's steps line up with the rows
 // that have one, in order. A row whose screenshot no longer matches keeps its own
-// id (it was edited meanwhile and is matched on the next save).
+// id (it was edited meanwhile and is matched on the next save). The saved
+// step's reading is authoritative: a save drops a reading whose next screen
+// changed, and the row must drop it too instead of keeping its stale copy.
 export function hydrateStepIds(rows, savedSteps) {
   const saved = Array.isArray(savedSteps) ? savedSteps : []
   let k = 0
@@ -20,8 +22,33 @@ export function hydrateStepIds(rows, savedSteps) {
     if (!hasText(row)) return row
     const s = saved[k++]
     if (!s || String(s.shot || '') !== String(row.shot || '')) return row
-    return { ...row, id: String(s.id || row.id || ''), reading: s.reading || row.reading || null }
+    return { ...row, id: String(s.id || row.id || ''), reading: s.reading && typeof s.reading === 'object' ? s.reading : null }
   })
+}
+
+// A save while the trainer keeps typing: the server's steps line up with the rows
+// that were SENT (snapshot, hydrated with hydrateStepIds), not with the rows as
+// they are when the answer arrives. Carry each sent row's id and reading onto the
+// latest row with the same client key, still only while its screenshot matches.
+export function hydrateByKey(latestRows, sentHydrated) {
+  const byKey = new Map()
+  for (const r of (Array.isArray(sentHydrated) ? sentHydrated : [])) if (r && r._k && r.id) byKey.set(r._k, r)
+  return (Array.isArray(latestRows) ? latestRows : []).map((row) => {
+    const s = row && byKey.get(row._k)
+    if (!s || String(s.shot || '') !== String(row.shot || '')) return row
+    return { ...row, id: s.id, reading: s.reading || null }
+  })
+}
+
+// Does a row's reading still describe it? The same rule the server's
+// carryReadings applies on save: read from the screenshot the row shows, and,
+// when it was read with the next screen, that next screen is still the next
+// row's. A reorder or removal otherwise offers a "done when" for a screen that
+// no longer follows.
+export function readingHolds(row, next) {
+  const r = row && row.reading
+  if (!r || !row.shot || r.shot !== row.shot) return false
+  return !r.afterShot || r.afterShot === ((next && next.shot) || null)
 }
 
 // Put one fresh reading on the row with that id, only while it shows the same
@@ -45,10 +72,11 @@ export function acceptReading(row) {
 }
 
 // Rows the reader can work on: saved (have an id), have a screenshot, and have
-// no reading for that screenshot yet (or force = read again).
+// no reading that still holds (or force = read again).
 export function rowsToRead(rows, { force = false } = {}) {
-  return (Array.isArray(rows) ? rows : []).filter((row) =>
-    row.id && row.shot && hasText(row) && (force || !(row.reading && row.reading.shot === row.shot)))
+  const list = Array.isArray(rows) ? rows : []
+  return list.filter((row, i) =>
+    row.id && row.shot && hasText(row) && (force || !readingHolds(row, list[i + 1])))
 }
 
 // How sure the reader was, as a band the UI words and colors: high >= 0.8,

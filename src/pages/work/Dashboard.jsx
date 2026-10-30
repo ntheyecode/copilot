@@ -42,6 +42,7 @@ import { DASH_CSS } from './dash.css.js'
 import { PJ_CSS } from './projects/projects.css.js'
 import { EP_CSS } from './pm/ep.css.js'
 import WorkerQueue from './pm/WorkerQueue.jsx'
+import CompanyWorkflows from './workflows/CompanyWorkflows.jsx'
 
 // Plans offered in the chooser, in tier order; only tiers live pricing carries.
 const PLAN_TIER_ORDER = ['lite', 'basic', 'advanced', 'premium']
@@ -208,6 +209,10 @@ export default function Dashboard() {
           )}
         </section>
       )}
+
+      {/* 3b. Company workflows: the guides trainers published, runnable by every
+          company role (worker-flow members too); renders nothing outside a company */}
+      <CompanyWorkflows />
 
       {/* 4. Plan meters: hours this month, top-ups / allowance, open tasks, the one state */}
       {!needsSub && (

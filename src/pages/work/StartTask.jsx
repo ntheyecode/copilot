@@ -190,6 +190,7 @@ import { Loader2, Check, X, Plus, HelpCircle, ChevronLeft, Play, AlertTriangle, 
 import { api } from '../../api.js'
 import { clean } from '../../scrub.js'
 import { useWorkApp } from './WorkAppContext.jsx'
+import { startGateOutcome } from '../../shared/start_gate.js'
 import { useT } from '../../i18n/index.jsx'
 import { WIZ_CSS } from './wizard.css.js'
 import KbSpacePicker, { spaceSummary, cachedSpaces } from './KbSpacePicker.jsx'
@@ -481,36 +482,20 @@ export default function StartTask() {
         : { href: '/work', label: t('workStart.setupAiLink', 'Set up AI on the dashboard') }
   const goalComplete = !!(goal.trim() && planTitle.trim())
 
-  // A gated action failed. The server's coded flags (server/index.js POST
-  // /api/work/sessions) pick the message and the action:
-  //   409 tooManyOpen  every at-once task slot is in use: finish or pick one up
-  //   402 outOfHours   no guided hours left: renewal date + Add hours (individuals)
-  //                    or ask your administrator (company members)
-  //   402 taskLimit    a company member hit the admin-set task ceiling
-  //   402 (no flag)    company member without a license / individual without a
-  //                    plan (routes to the dashboard plan chooser)
+  // A gated action failed. What each of the server's coded flags means (and
+  // whether to offer Add hours / re-read usage / open the plan chooser) lives in
+  // src/shared/start_gate.js, shared with running a company workflow.
   const handleGate = (e) => {
-    const status = e && e.status
-    const d = (e && e.data) || {}
-    setGateAct('')
-    if (d.tooManyOpen) {
-      const max = d.maxOpen != null ? d.maxOpen : (plan && plan.tasks && plan.tasks.max != null ? plan.tasks.max : null)
-      setGateMsg(max != null ? t('workStart.gateTooManyOpen', { max }) : (e.message || ''))
-      refreshUsage && refreshUsage()
-      return
-    }
-    if (d.outOfHours) {
-      const reset = d.resetLabel || renewLabel || ''
-      setGateMsg(isCompanyMember ? t('workStart.gateOutOfHoursCompany', { reset }) : t('workStart.gateOutOfHours', { reset }))
-      if (!isCompanyMember && canBuyHours) setGateAct('hours')
-      refreshUsage && refreshUsage()
-      return
-    }
-    if (d.taskLimit) { setGateMsg(t('workStart.gateCompanyTaskLimit', { reset: d.resetLabel || renewLabel || '' })); return }
-    if (status === 402) {
-      if (isCompanyMember) setGateMsg(t('workStart.gateCompanyNoLicense'))
-      else { setNeedsSub(true); navigate('/work') }
-    } else if (e && e.message) { setGateMsg(e.message) }
+    const g = startGateOutcome(e, {
+      isCompanyMember, canBuyHours, renewLabel,
+      planMaxOpen: plan && plan.tasks && plan.tasks.max != null ? plan.tasks.max : null,
+    })
+    setGateAct(g.act || '')
+    if (g.refresh && refreshUsage) refreshUsage()
+    if (g.needsSub) { setNeedsSub(true); navigate('/work'); return }
+    if (g.key) setGateMsg(t(g.key, g.vars))
+    else if (g.message != null) setGateMsg(g.message)
+    else if (e && e.message) setGateMsg(e.message)
   }
 
   // Fold the interview context into the goal text the planner sees (prepended).
