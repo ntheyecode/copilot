@@ -4,7 +4,12 @@
 // fake in-memory store, and SYNTHETIC ids only.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 
+// billing.js loads store.js: never let it open the real server/data.
+process.env.WORK_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'wc-billing-idem-'))
 process.env.STRIPE_SECRET_KEY = 'sk_test_synthetic_not_a_real_key_0000'
 process.env.STRIPE_WEBHOOK_SECRET = 'whsec_synthetic_test_secret_0000'
 const { workStripeWebhook, createEventDeduper } = await import('./billing.js')

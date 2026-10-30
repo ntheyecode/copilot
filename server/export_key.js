@@ -11,6 +11,8 @@
 // the whole policy is unit-tested; store.js wires the real KEK + MFA.
 // ===========================================================================
 
+import { makeMfaStepUp } from './mfa_step_up.js'
+
 export const MIN_EXPORT_PASSPHRASE = 10
 
 function err(status, message) { const e = new Error(message); e.status = status; return e }
@@ -22,15 +24,11 @@ export function makeExportKey(deps) {
 
   // A fresh MFA code is required to view/replace an existing key only on the
   // hosted service, only when MFA is globally on, and only for an enrolled user.
-  function stepUpNeeded(user) {
-    if (!hosted) return false
-    if (!mfaGloballyEnabled()) return false
-    return !!(user && user.mfa && user.mfa.enabled)
-  }
+  // The rule itself is the shared one in mfa_step_up.js (company API keys use it too).
+  const policy = makeMfaStepUp({ verifyMfa, hosted, mfaGloballyEnabled })
+  const stepUpNeeded = policy.stepUpNeeded
   function assertStepUp(user, token) {
-    if (stepUpNeeded(user) && !(token && verifyMfa(user, String(token)))) {
-      throw err(401, 'Enter a current authenticator code to view or replace your export passphrase.')
-    }
+    policy.assertStepUp(user, token, { message: 'Enter a current authenticator code to view or replace your export passphrase.' })
   }
   function has(user) { return !!(user && user.exportKeyEnc) }
 

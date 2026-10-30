@@ -25,9 +25,10 @@ import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { fileURLToPath } from 'node:url'
+import { resolveDataDir } from './data_dir.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const DATA_DIR = process.env.WORK_DATA_DIR || path.join(__dirname, 'data')
+const DATA_DIR = resolveDataDir()   // data_dir.js: the one resolver
 const KEY_FILE = path.join(DATA_DIR, '.report-sign.key')
 
 export const REPORT_ISSUER = 'AdmireVeda'

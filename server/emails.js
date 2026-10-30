@@ -16,6 +16,7 @@ import * as store from './store.js'
 import * as ai from './ai.js'
 import { runInBackgroundUsage } from './ai_usage.js'
 import { getLocaleMeta } from './locales.js'
+import { PUBLIC_BASE } from './public_url.js'
 
 function httpErr(status, message) { const e = new Error(message); e.status = status; return e }
 
@@ -236,7 +237,7 @@ export function sendTemplateAsync(type, to, data = {}, opts = {}) {
 }
 
 // ---- Account lifecycle emails ---------------------------------------------
-const APP_BASE = (process.env.WORK_PUBLIC_URL || 'https://admireveda.com').replace(/\/+$/, '')
+const APP_BASE = PUBLIC_BASE   // public_url.js: the one place the public origin is read
 const SET_PASSWORD_TTL_LABEL = '48 hours'
 export const setPasswordLink = (raw) => `${APP_BASE}/work/set-password?token=${encodeURIComponent(raw)}`
 

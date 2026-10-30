@@ -50,6 +50,8 @@ const WorkExec = lazy(() => import('./pages/WorkExec.jsx'))
 const TeachStudio = lazy(() => import('./pages/work/teach/TeachStudio.jsx'))
 // Workflow issues inbox (Teach Wave 3 part C): standalone .wka console; self-gates on roleView.showIncidents.
 const WorkflowIssues = lazy(() => import('./pages/work/incidents/WorkflowIssues.jsx'))
+// Launch link (/work/launch#<token>): a company app's one-time link that starts a workflow.
+const LaunchPage = lazy(() => import('./pages/work/launch/LaunchPage.jsx'))
 // Standalone white sub-pages of the dashboard (same tokens, own white sub-shell).
 const WorkTasks = lazy(() => import('./pages/work/MyTasks.jsx'))
 const CompletedTasks = lazy(() => import('./pages/work/Completed.jsx'))
@@ -197,6 +199,10 @@ export default function App() {
         <Route path="/work/exec" element={<WorkExec />} />
         <Route path="/work/teach" element={<TeachStudio />} />
         <Route path="/work/workflow-issues" element={<WorkflowIssues />} />
+        {/* Launch link from a company's own app: redeems the fragment token, then
+            starts the workflow and opens /work/session/:id. Self-gates on the
+            session (parks the token through the sign-in hop when needed). */}
+        <Route path="/work/launch" element={<LaunchPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

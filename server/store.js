@@ -70,11 +70,14 @@ import { createWorkflowFrames } from './workflow_frames.js'
 import { createWorkflowFrameSweep } from './workflow_frame_sweep.js'
 import { execOverview } from './exec_overview.js'
 import { makeExportKey } from './export_key.js'
+import { createIntegrationState } from './integration_store.js'
+import { resolveDataDir } from './data_dir.js'
+import { assertResolvesPublic } from './egress_guard.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // WORK_DATA_DIR lets the owner point the DB + on-disk docs/shots anywhere (the
 // save/handoff drive); web-dev falls back to ./data next to the server.
-const DATA_DIR = process.env.WORK_DATA_DIR || path.join(__dirname, 'data')
+const DATA_DIR = resolveDataDir()   // data_dir.js: the one resolver (a test can never land on the real dir)
 const DB_FILE = path.join(DATA_DIR, 'db.json')
 // Optional one-time AI seed the owner drops at deploy (providers + keys +
 // platform-allowed flag + model pins). Never contains a hardcoded key in source.
@@ -492,6 +495,26 @@ export const {
 } = wfIncidents
 // Each person's workflow-alert inbox (incident alerts only; billing alerts stay in
 // the shared inbox and are never pushed out by a burst of incidents).
+// Company-scoped reads for the integration API (a company key, not a person).
+export const { listPublishedWorkflowsForCompany, getPublishedWorkflowForCompany } = wfs
+export const { listIncidentsForCompany, getIncidentForCompany } = wfIncidents
+// ---- Integration API: company API keys, webhooks, launch links (module: integration_store.js) ----
+// Key hashes are HMAC-peppered from the platform KEK; webhook signing secrets are
+// sealed with the same KEK as every other stored secret.
+const integ = createIntegrationState({
+  db: () => db, persist, persistSoon, httpErr, getUser, company: _company,
+  companyUsers: (companyId) => (db.users || []).filter((u) => u.companyId === companyId),
+  masterKey: encKey, seal: encSecret, open: decSecret,
+  verifyMfa: (user, token) => verifyUserMfa(user.id, token), hosted: HOSTED, mfaGloballyEnabled,
+  audit: (a) => recordAdminAction(a), workflows: wfs, incidents: wfIncidents,
+  resolveHost: (host) => assertResolvesPublic(host),
+})
+export const {
+  apiKeyStepUpRequired, listApiKeys, createApiKey, rotateApiKey, revokeApiKey, resolveApiKey, recordApiKeyUse, listApiKeyUsage,
+  listWebhooks, createWebhook, updateWebhook, rotateWebhookSecret, deleteWebhook, testWebhook,
+  listWebhookDeliveries, retryWebhookDelivery, enqueueWebhookEvent, dueWebhookDeliveries, webhookDeliveryJob, recordWebhookAttempt,
+  createLaunchLink, redeemLaunchLink,
+} = integ
 export const listWorkflowAlerts = (userId, opts) => (getUser(userId) ? wfAlertInbox.list(alertInboxOf(userId), opts) : [])
 export const unreadWorkflowAlerts = (userId) => wfAlertInbox.unreadCount(alertInboxOf(userId))
 export const markWorkflowAlertsRead = (userId, idOrAll) => wfAlertInbox.markRead(alertInboxOf(userId), idOrAll)
@@ -4271,6 +4294,7 @@ export function deleteCompany(companyId, { reason = '', by = '', deleteMembers =
     for (const m of members) { m.companyId = null; m.companyRole = null; try { bumpSessionEpoch(m.id) } catch { /* ignore */ } }
   }
   try { purgeWorkflowIncidents({ companyId }) } catch { /* best-effort */ }
+  try { integ.purgeCompanyIntegrations(companyId) } catch { /* best-effort */ }   // its API keys, webhooks, launch links
   const i = (db.companies || []).findIndex((x) => x.id === companyId)
   if (i >= 0) db.companies.splice(i, 1)
   // The company's captured workflow frames go with it (privacy: no tenant
@@ -6648,7 +6672,7 @@ export function deleteWorkSession(workUserId, sessionId, reason = '') {
     const safe = String(sessionId).replace(/[^\w-]/g, '')
     const sdir = safe && path.join(SHOTS_DIR, safe)
     if (sdir && fs.existsSync(sdir)) fs.rmSync(sdir, { recursive: true, force: true })
-  } catch { /* best effort */ }
+  } catch { /* best effort */ }
   // Workflow incidents: drop this session's occurrences and any screenshot it supplied.
   try { purgeWorkflowIncidents({ sessionId }) } catch { /* best-effort, never blocks a delete */ }
   db.workSessions.splice(i, 1)

@@ -248,11 +248,30 @@ export function createWorkflows(ctx) {
     return publicShape(w)
   }
 
+  // ---- Company-scoped reads for the integration API (a key, not a person) ----
+  // A company API key acts for the COMPANY, so these take the companyId from the
+  // authenticated key and return PUBLISHED workflows only (drafts and retired
+  // versions stay inside the app). Callers map them to the public v1 shape.
+  function listPublishedWorkflowsForCompany(companyId) {
+    return all().filter((w) => String(w.companyId) === String(companyId) && w.state === 'published')
+      .sort((x, y) => String(y.publishedAt || '').localeCompare(String(x.publishedAt || '')))
+  }
+  function getPublishedWorkflowForCompany(companyId, wid) {
+    const w = all().find((x) => x.id === String(wid || ''))
+    return w && String(w.companyId) === String(companyId) && w.state === 'published' ? w : null
+  }
+  // Any state, same company: what a webhook event describes right after a change.
+  function getWorkflowForCompany(companyId, wid) {
+    const w = all().find((x) => x.id === String(wid || ''))
+    return w && String(w.companyId) === String(companyId) ? w : null
+  }
+
   return {
     listWorkflowsForUser, getWorkflowForUser, createWorkflow, updateWorkflow,
     publishWorkflow, reviseWorkflow, retireWorkflow, deleteWorkflow,
     uploadWorkflowFrame, readWorkflowFrame, userCanAuthorWorkflows,
     prepareStepRead, saveStepReading, referencedFrames,
+    listPublishedWorkflowsForCompany, getPublishedWorkflowForCompany, getWorkflowForCompany,
   }
 }
 

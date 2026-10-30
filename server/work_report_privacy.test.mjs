@@ -10,7 +10,14 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { Writable } from 'node:stream'
 import { createRequire } from 'node:module'
-import { buildWorkReportPdf } from './pdf.js'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+
+// pdf.js loads store.js: set a temp data dir BEFORE importing it (a static import
+// would be hoisted above this line and open the real server/data).
+process.env.WORK_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'wc-report-privacy-'))
+const { buildWorkReportPdf } = await import('./pdf.js')
 
 const require = createRequire(import.meta.url)
 const { PDFParse } = require('pdf-parse')

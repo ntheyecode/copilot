@@ -267,6 +267,29 @@ export const api = {
   // Removing a space ungroups its learnings (server rule); the reason is logged.
   workCompanyKbSpaceDelete: (id, reason) => req('DELETE', `/api/work/company/kb-spaces/${encodeURIComponent(id)}`, { reason: clean(reason || '') }),
   workCompanyLearningSpace: (learningId, space) => req('POST', `/api/work/company/learnings/${encodeURIComponent(learningId)}/space`, { space: space || null }),
+  // Company API keys (company admin; server/api_keys.js). GET carries the keys,
+  // the scope registry and whether a step-up code is required. The SECRET is in
+  // the create / rotate response ONLY and is never stored client-side beyond the
+  // show-once panel. body: { name, scopes, expiresInDays|null, ipAllowlist, mfaToken? }.
+  workCompanyApiKeys: () => req('GET', '/api/work/company/api-keys'),
+  workCompanyApiKeyCreate: (body) => req('POST', '/api/work/company/api-keys', { ...body, name: clean((body && body.name) || '') }),
+  workCompanyApiKeyRotate: (id, body) => req('POST', `/api/work/company/api-keys/${encodeURIComponent(id)}/rotate`, body || {}),
+  workCompanyApiKeyRevoke: (id) => req('DELETE', `/api/work/company/api-keys/${encodeURIComponent(id)}`),
+  // Company webhooks (company admin; server/webhook_events.js): endpoints, the
+  // event registry, per-endpoint deliveries. The signing secret comes back from
+  // create / rotate-secret ONLY (same show-once rule as API keys).
+  workCompanyWebhooks: () => req('GET', '/api/work/company/webhooks'),
+  workCompanyWebhookCreate: (body) => req('POST', '/api/work/company/webhooks', { ...body, description: clean((body && body.description) || '') }),
+  workCompanyWebhookUpdate: (id, patch) => req('PATCH', `/api/work/company/webhooks/${encodeURIComponent(id)}`, patch || {}),
+  workCompanyWebhookRotateSecret: (id) => req('POST', `/api/work/company/webhooks/${encodeURIComponent(id)}/rotate-secret`, {}),
+  workCompanyWebhookTest: (id) => req('POST', `/api/work/company/webhooks/${encodeURIComponent(id)}/test`, {}),
+  workCompanyWebhookDelete: (id) => req('DELETE', `/api/work/company/webhooks/${encodeURIComponent(id)}`),
+  workCompanyWebhookDeliveries: (id) => req('GET', `/api/work/company/webhooks/${encodeURIComponent(id)}/deliveries`),
+  workCompanyWebhookRetry: (deliveryId) => req('POST', `/api/work/company/webhooks/deliveries/${encodeURIComponent(deliveryId)}/retry`, {}),
+  // Launch link (employee): redeem the token a company app minted through
+  // POST /api/v1/workflows/:id/launch. The token travels in the URL FRAGMENT and
+  // reaches the server only here, in the body. -> { workflowId, title }.
+  workLaunchRedeem: (token) => req('POST', '/api/work/launch/redeem', { token }),
   // Company customers ("who the work is for"): the project picker reads the list;
   // the company console adds / renames / archives (Default is server-protected).
   workCompanyCustomers: () => req('GET', '/api/work/company/customers'),
