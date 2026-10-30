@@ -660,7 +660,6 @@ export const api = {
   getInterviewSittings: (id) => req('GET', `/api/interviews/${id}/sittings`),
   // PHASE 2: live self-recording for the debrief (candidate's own mic, gated).
   aiSaid: (body) => req('POST', '/api/ai/said', body || {}),
-  aiTranscribe: (body) => req('POST', '/api/ai/transcribe', body || {}),
   getSelfRecord: () => req('GET', '/api/ai/self-record'),
   setSelfRecord: (on) => req('POST', '/api/ai/self-record', { on: !!on }),
   // PREMIUM: web-search provider pool for curation (admin).
@@ -698,9 +697,6 @@ export const api = {
   // The suggested read-aloud answer, fetched separately so the question voices
   // instantly (fast, human back-and-forth).
   practiceAnswer: (body) => req('POST', '/api/practice/answer', body),
-  // Server-side transcription of a recorded answer clip (the Electron shell can't
-  // use the browser SpeechRecognition), best-effort.
-  practiceTranscribe: (body) => req('POST', '/api/practice/transcribe', body),
   practiceEnd: (body) => req('POST', '/api/practice/end', body),
   // Separate practice-LICENCE check (the creation checkbox). Gates the Training
   // Assistant with a clear "Practice licence is not available" when off.

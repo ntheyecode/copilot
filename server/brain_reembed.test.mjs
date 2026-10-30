@@ -91,6 +91,14 @@ test('retrieval still works after a re-embed (query is embedded at the new dim)'
   assert.equal(out.hits[0].sourceTitle, 'Expense Reimbursement Policy')
 })
 
+test('regression: an incremental manifest (since = latest cursor) still reports the re-embedded model, never the default', async () => {
+  const full = await buildManifest('rb-main')
+  const inc = await buildManifest('rb-main', { since: full.cursor })
+  assert.equal(inc.sources.length, 0, 'nothing newer than the cursor')
+  assert.equal(inc.model.dim, 768)
+  assert.equal(inc.model.id, 'Xenova/bge-base-en-v1.5')
+})
+
 test('re-embed is abortable before the swap and leaves the brain unchanged', async () => {
   const cid = 'rb-abort'
   await seed(cid)

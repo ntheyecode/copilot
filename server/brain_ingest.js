@@ -13,7 +13,7 @@
 // one store (brain_store.js). This module adds no parallel copy of any of them.
 
 import { brainStore } from './brain_store.js'
-import { EMBED, contentHashOf, chunkHashOf, policyVersionOf, resolveEmbedModelByVersion, publicEmbedModel } from './brain_model.js'
+import { EMBED, contentHashOf, chunkHashOf, policyVersionOf, activeEmbedModel, publicEmbedModel } from './brain_model.js'
 import { embedPassages } from './brain_embed.js'
 import { scrubSensitive, scrubWithPolicy } from './work-scrub.js'
 import { chunkCode, detectLanguage } from './brain_code_chunk.js'
@@ -271,6 +271,9 @@ export async function buildManifest(companyId, { since } = {}) {
   }
 
   let sources = [...latest.values()]
+  // The tenant's model comes from the FULL source list, before the `since` page:
+  // an incremental pull with nothing new must still report the real model.
+  const model = publicEmbedModel(activeEmbedModel(sources))
   if (since != null && since !== '') {
     const sinceVal = Number.isFinite(Number(since)) ? Number(since) : Date.parse(since) || 0
     sources = sources.filter((s) => cursorValue(s) > sinceVal)
@@ -282,13 +285,8 @@ export async function buildManifest(companyId, { since } = {}) {
     : (Number.isFinite(Number(since)) ? Number(since) : 0)
   const policyVersion = (sources.find((s) => s.policyVersion) || {}).policyVersion || ''
 
-  // Report the tenant's ACTUAL pinned model (it may have been re-embedded by a
-  // larger model), resolved from the sources' embeddingModelVersion; default to
-  // the pinned EMBED when none is recorded. A client re-embeds when this differs
-  // from what it holds.
-  const modelVersion = (sources.find((s) => s.embeddingModelVersion) || {}).embeddingModelVersion
-  const model = publicEmbedModel(resolveEmbedModelByVersion(modelVersion) || EMBED)
-
+  // `model` (computed above) is the tenant's ACTUAL pinned model, which may be a
+  // larger re-embedded one. A client re-embeds when it differs from what it holds.
   return { cursor, sources, model, policyVersion }
 }
 

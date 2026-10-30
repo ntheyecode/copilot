@@ -27,6 +27,7 @@ const store = await imp('store.js')
 const ce = await imp('customer_export.js')
 const bc = await imp('brain_crypto.js')
 const bs = await imp('brain_store.js')
+const { reembedTenant } = await imp('brain_reembed.js')
 
 // Wire the brain exactly as the server does at boot (platform custody by default).
 bc.configureBrainCrypto({ getMasterKey: store.brainMasterKey })
@@ -178,6 +179,27 @@ test('the Company Brain is enveloped (DEK re-wrapped under the password; blobs o
 
   // The wrong password cannot recover the DEK.
   assert.throws(() => ce.unwrapBrainDek(header, WRONG))
+})
+
+test('regression: the export labels the brain with its CURRENT embedding model and dim, also after a re-embed', async () => {
+  // Starts on the default model (the brain seeded by the envelope test above).
+  let { header, payload } = ce.parseArchive(ce.buildCompanyArchive({ companyId: CID, password: PASSWORD }).buffer, PASSWORD)
+  assert.equal(header.brain.embedding.dim, 384)
+  assert.equal(header.brain.embedding.model.id, 'Xenova/bge-small-en-v1.5')
+  assert.equal(payload.brain.dim, 384)
+
+  // Re-embed to the 768-dim model through the real re-embed path (fake embedder).
+  const v768 = Array.from({ length: 768 }, (_, i) => (i === 0 ? 1 : 0))
+  const out = await reembedTenant(CID, { model: 'bge-base-en-v1.5' }, { embed: async (_m, texts) => texts.map(() => v768) })
+  assert.equal(out.dim, 768)
+
+  ;({ header, payload } = ce.parseArchive(ce.buildCompanyArchive({ companyId: CID, password: PASSWORD }).buffer, PASSWORD))
+  assert.equal(header.brain.embedding.dim, 768, 'header dim follows the re-embed, never the default')
+  assert.equal(header.brain.embedding.model.id, 'Xenova/bge-base-en-v1.5')
+  assert.equal(header.brain.embedding.model.dim, 768)
+  assert.equal(payload.brain.dim, 768, 'payload dim matches the vectors it carries')
+  assert.deepEqual(payload.brain.model, header.brain.embedding.model)
+  assert.equal(ce.verifyArchiveHeader(ce.buildCompanyArchive({ companyId: CID, password: PASSWORD }).buffer).valid, true)
 })
 
 test('once a password is set, the plaintext-export gate predicate is true', () => {

@@ -66,6 +66,7 @@ import { isFrameRef } from './workflows_rules.js'
 import { createWorkflowIncidents, alertInboxOf } from './workflow_incidents.js'
 import { createInbox } from './notifications.js'
 import { createWorkflowFrames } from './workflow_frames.js'
+import { createWorkflowFrameSweep } from './workflow_frame_sweep.js'
 import { execOverview } from './exec_overview.js'
 import { makeExportKey } from './export_key.js'
 
@@ -467,6 +468,10 @@ export const {
   uploadWorkflowFrame, readWorkflowFrame, userCanAuthorWorkflows,
   prepareStepRead, saveStepReading,
 } = wfs
+// Orphan-frame sweep (uploaded but never saved, interrupted saves, deleted
+// companies). The keep-rule is wfs.referencedFrames, the same one edit/delete use.
+const wfFrameSweep = createWorkflowFrameSweep({ frames: wfFrames, referencedFrames: wfs.referencedFrames, companyIds: () => (db.companies || []).map((c) => c.id) })
+export function sweepOrphanWorkflowFrames() { return wfFrameSweep.sweepAll() }
 // Wave 3 part C: deviations raised while an employee follows a published workflow
 // (workflow_incidents.js). Their screenshots live in their own encrypted folder,
 // readable only through the incident (recipients), never the workflow frame route.
@@ -4260,9 +4265,13 @@ export function deleteCompany(companyId, { reason = '', by = '', deleteMembers =
   try { purgeWorkflowIncidents({ companyId }) } catch { /* best-effort */ }
   const i = (db.companies || []).findIndex((x) => x.id === companyId)
   if (i >= 0) db.companies.splice(i, 1)
+  // The company's captured workflow frames go with it (privacy: no tenant
+  // screenshots left on disk). A failure here is logged, never fatal.
+  let framesPurged = 0
+  try { framesPurged = wfFrames.removeCompany(companyId) } catch (e) { console.warn(`[work] company frame purge error: ${e.message}`) }
   recordAdminAction({ action: 'company_deleted', reason: r, detail: `${c.name} (${members.length} members ${deleteMembers ? 'deleted' : 'detached'}) by ${by}` })
   persist()
-  return { ok: true, members: members.length }
+  return { ok: true, members: members.length, framesPurged }
 }
 
 // ---- Editable email templates (superadmin) --------------------------------

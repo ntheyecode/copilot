@@ -47,6 +47,7 @@ import {
   ensureTenantDek,
   isUnlocked,
 } from './brain_crypto.js'
+import { activeEmbedModel, publicEmbedModel } from './brain_model.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -765,14 +766,20 @@ export function readSealedBlobsForExport(companyId) {
   const index = read(INDEX_FILE)
   const vectors = read(VECTORS_FILE)
   const texts = read(TEXTS_FILE)
-  // This helper copies SEALED bytes without the DEK, so it cannot read the true
-  // per-tenant dim from the (encrypted) manifest. It reports DEFAULT_DIM, which is
-  // correct for every tenant on the default model. NOTE: a tenant re-embedded to a
-  // larger model (dim != default) would be described here with the default dim;
-  // wiring the real dim into the export is a follow-up (the exporter holds the DEK
-  // during a password export and could pass the unlocked dim through). See
-  // docs/company-brain.md "Re-embedding".
-  return { present: !!(index && index.length), dim: DEFAULT_DIM, index, vectors, texts }
+  // Bytes only: this helper has no DEK, so it cannot read the geometry from the
+  // encrypted manifest. The export reads that from readEmbeddingForExport below.
+  return { present: !!(index && index.length), index, vectors, texts }
+}
+
+// The tenant's CURRENT embedding geometry for the export label: `dim` is the
+// manifest's own dim (what the sealed vectors really are, updated atomically by
+// reembed) and `model` is brain_model.activeEmbedModel over the tenant's sources,
+// the same rule retrieval and the sync manifest use. Opens the manifest with the
+// tenant key, so the exporter calls it only once the brain is resolvable; a
+// locked customer brain throws BRAIN_LOCKED (loadTenant's gate), never a guess.
+export function readEmbeddingForExport(companyId) {
+  const resident = loadTenant(String(companyId))
+  return { dim: resident.dim, model: publicEmbedModel(activeEmbedModel(Array.from(resident.sources.values()))) }
 }
 
 // Sum the on-disk sealed-blob sizes for the tenant.
