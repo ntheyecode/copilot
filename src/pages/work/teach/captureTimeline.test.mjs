@@ -57,6 +57,26 @@ test('regression: actions closer than the lead keep their own narration', () => 
   assert.deepEqual(r.steps.map((s) => s.narration), ['first', 'second', 'third'])
 })
 
+test('regression: narration just before an action in a long gap goes to that action, with no empty review step', () => {
+  const r = alignCapture({
+    t0: 0,
+    events: [{ t: 9000, kind: 'change', frame: 'A' }],
+    voice: [{ t: 8200, text: 'open the transfers screen' }],    // 0.8 s before the action, after a long quiet gap
+  })
+  assert.equal(r.steps.length, 1)
+  assert.equal(r.steps[0].kind, 'change')
+  assert.equal(r.steps[0].narration, 'open the transfers screen')
+})
+
+test('narration at the very start, before any action, becomes a review step of the first screen', () => {
+  const r = alignCapture({
+    t0: 0,
+    events: [{ t: 0, kind: 'frame', frame: 'home' }, { t: 12000, kind: 'change', frame: 'home' }],
+    voice: [{ t: 500, text: 'this is the dashboard' }, { t: 11500, text: 'now open transfers' }],
+  })
+  assert.deepEqual(r.steps.map((s) => [s.kind, s.narration]), [['watch', 'this is the dashboard'], ['change', 'now open transfers']])
+})
+
 test('a long narrated gap with no action inserts a watch step', () => {
   const r = alignCapture({
     t0: 0,

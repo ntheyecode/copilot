@@ -88,7 +88,7 @@ const ALLOWED_AI_HOSTS = new Set(Object.values(PROVIDERS).flatMap((p) => {
   for (const h of (p.altHosts || [])) if (h) hosts.push(String(h).trim().toLowerCase())
   return hosts
 }).filter(Boolean))
-function assertAllowedHost(base) {
+export function assertAllowedHost(base) {
   let h
   try { h = new URL(base).hostname } catch { throw Object.assign(new Error('AI endpoint is misconfigured.'), { status: 502 }) }
   if (!ALLOWED_AI_HOSTS.has(h)) throw Object.assign(new Error('AI endpoint host is not on the allowlist.'), { status: 502 })
@@ -118,7 +118,7 @@ export function allowAiHost(base) {
 // Resolve a runtime's provider definition. Built-ins come from PROVIDERS; a custom
 // provider carries its own definition on cfg.provider ({id,label,base,kind,chatModels}),
 // supplied by the store when it builds the runtime.
-function providerOf(cfg) { return (cfg && cfg.provider) || PROVIDERS[cfg && cfg.providerId] || null }
+export function providerOf(cfg) { return (cfg && cfg.provider) || PROVIDERS[cfg && cfg.providerId] || null }
 
 // What each provider is actually good at, so the setup UI can say it plainly
 // (vision is the gap people hit: most fast text keys cannot see images at all).
@@ -165,6 +165,9 @@ function httpErr(status, message, code = null) {
   const e = new Error(message); e.status = status; e.ai = true; if (code) e.code = code
   return e
 }
+// Shared with sibling AI modules (ai_transcribe.js) so every AI-layer error has
+// the same system-error shape. One definition (SUPREME RULE II).
+export const aiError = httpErr
 
 // Model calls occasionally hang or come back EMPTY (Groq does this under load),
 // so every call gets an abort timeout, and empty/timeout is retried once.
@@ -265,7 +268,7 @@ async function geminiChat(p, apiKey, model, system, turns) {
 }
 
 // ---- model-error self-heal (never masks a key error) ---------------------
-function looksLikeModelError(e) {
+export function looksLikeModelError(e) {
   const status = e?.status
   const msg = (e?.message || '').toLowerCase()
   return (status === 400 || status === 404) && /model/.test(msg) &&

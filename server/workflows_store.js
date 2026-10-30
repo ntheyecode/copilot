@@ -77,6 +77,11 @@ export function createWorkflows(ctx) {
     return publicShape(w)
   }
 
+  // May this user author workflows (record, upload frames, transcribe)? Never throws.
+  function userCanAuthorWorkflows(userId) {
+    try { return actor(userId).canAuthor } catch { return false }
+  }
+
   function requireAuthor(a) {
     if (!a.canAuthor) throw httpErr(403, 'Only a trainer or company admin can author workflows.')
   }
@@ -198,7 +203,7 @@ export function createWorkflows(ctx) {
   return {
     listWorkflowsForUser, getWorkflowForUser, createWorkflow, updateWorkflow,
     publishWorkflow, reviseWorkflow, retireWorkflow, deleteWorkflow,
-    uploadWorkflowFrame, readWorkflowFrame,
+    uploadWorkflowFrame, readWorkflowFrame, userCanAuthorWorkflows,
   }
 }
 

@@ -22,7 +22,7 @@ const ACTION_KINDS = new Set(['click', 'nav', 'submit', 'change', 'mark'])
 
 // Inputs (one clock, ms):
 //   events: [{ t, kind:'click'|'nav'|'submit'|'change'|'mark'|'keypress'|'frame', frame?, target?, url? }]
-//   voice:  [{ t, endT?, text }]
+//   voice:  [{ t, endT?, text, speaker? }]   speaker: 'trainer' (default) | 'presenter'
 // `t` is absolute ms on the same clock as `t0`; output `atMs` is relative to t0.
 export function alignCapture({ t0 = 0, events = [], voice = [], periodicMs = DEFAULT_PERIODIC_MS } = {}) {
   const warnings = []
@@ -43,24 +43,34 @@ export function alignCapture({ t0 = 0, events = [], voice = [], periodicMs = DEF
   }
   const watchStep = (t) => ({ t, kind: 'watch', target: null, url: null, frame: nearestFrame(t), source: 'periodic' })
 
-  // Step boundaries are the ACTIONS; a long narrated gap with no action becomes a
-  // 'watch' step (reading / waiting for a result) so nothing silent is lost.
+  // Step boundaries are the ACTIONS. A long gap becomes a 'watch' step (reading,
+  // waiting for a result) only for narration NEITHER neighbouring action claims:
+  // a line said within the lead of the next action belongs to that action, and
+  // one said just after an action describes that action's screen. The watch step
+  // starts where that unclaimed narration starts, so it never sits empty.
+  const firstUnclaimed = (from, to) => { const v = vo.find((x) => x.t >= from && x.t < to); return v ? v.t : null }
   const markers = []
-  let prevT = t0
+  let prevT = t0, hasPrev = false
   for (const e of ev) {
     if (!ACTION_KINDS.has(e.kind)) continue
-    if (e.t - prevT > beat && vo.some((v) => v.t >= prevT && v.t < e.t)) markers.push(watchStep(Math.round((prevT + e.t) / 2)))
+    if (e.t - prevT > beat) {
+      const wt = firstUnclaimed(hasPrev ? prevT + NARRATION_LEAD_MS : t0, e.t - NARRATION_LEAD_MS)
+      if (wt != null) markers.push(watchStep(wt))
+    }
     markers.push({ t: e.t, kind: e.kind, target: e.target || null, url: e.url || null, frame: e.frame || nearestFrame(e.t), source: 'event' })
-    prevT = e.t
+    prevT = e.t; hasPrev = true
   }
-  if (lastT - prevT > beat && vo.some((v) => v.t >= prevT && v.t <= lastT)) markers.push(watchStep(Math.round((prevT + lastT) / 2)))
+  if (lastT - prevT > beat) {
+    const wt = firstUnclaimed(hasPrev ? prevT + NARRATION_LEAD_MS : t0, lastT + 1)
+    if (wt != null) markers.push(watchStep(wt))
+  }
   markers.sort((a, b) => a.t - b.t)
 
   if (!markers.length) warnings.push({ code: 'CAPTURE_EMPTY', message: 'No actions or narration were captured, so there are no steps yet.' })
 
   const steps = markers.map((m, i) => ({
     index: i + 1, atMs: rel(m.t), kind: m.kind, source: m.source,
-    target: m.target, url: m.url, frame: m.frame || null, hasFrame: !!m.frame, narration: '', _t: m.t,
+    target: m.target, url: m.url, frame: m.frame || null, hasFrame: !!m.frame, narration: '', voices: [], _t: m.t,
   }))
 
   // Bind each narration line: if an action is coming up within the lead (or at the
@@ -76,7 +86,9 @@ export function alignCapture({ t0 = 0, events = [], voice = [], periodicMs = DEF
       for (let i = steps.length - 1; i >= 0; i--) if (steps[i]._t <= v.t) { placed = i; break }
       if (placed === -1) placed = 0
     }
-    steps[placed].narration = (steps[placed].narration ? `${steps[placed].narration} ` : '') + String(v.text).trim()
+    const said = String(v.text).trim()
+    steps[placed].narration = (steps[placed].narration ? `${steps[placed].narration} ` : '') + said
+    steps[placed].voices.push({ speaker: v.speaker || 'trainer', text: said })   // who said what, for the review UI
   }
   for (const s of steps) {
     if (!s.hasFrame) warnings.push({ code: 'STEP_NO_FRAME', step: s.index, message: `Step ${s.index} has no frame.` })

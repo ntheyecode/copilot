@@ -37,7 +37,7 @@ export function createCaptureSession(deps) {
   let t0 = 0, pausedAt = 0, pausedTotal = 0
   const events = []
   const voice = []
-  let lastSig = null, stable = 0, settledSig = null
+  let lastSig = null, stable = 0, settledSig = null, moveStartT = null
   let lastFrame = null, lastFrameT = 0, lastActionT = -Infinity
 
   const clock = () => now() - pausedTotal             // the recording clock excludes paused time
@@ -56,14 +56,21 @@ export function createCaptureSession(deps) {
     const t = clock()
     const sig = sigOf(video)
     if (sig != null) {
-      stable = (lastSig != null && changed(lastSig, sig)) ? 0 : stable + 1
+      const moving = lastSig != null && changed(lastSig, sig)
+      stable = moving ? 0 : stable + 1
+      if (moving && moveStartT == null) moveStartT = t        // when the screen STARTED to change = when the action happened
       lastSig = sig
-      if (stable === SETTLE_TICKS && (settledSig == null || changed(settledSig, sig, CHANGE_THRESHOLD))) {
-        const frame = frameOf(video)
+      if (stable === SETTLE_TICKS) {
+        const significant = settledSig == null || changed(settledSig, sig, CHANGE_THRESHOLD)
+        const changeT = moveStartT != null ? moveStartT : t
+        moveStartT = null
+        const frame = significant ? frameOf(video) : null
         if (frame) {
-          const isChange = settledSig != null && !!lastFrame && (t - lastActionT > ACTION_MERGE_MS)
-          if (isChange) events.push({ t, kind: 'change', frame: lastFrame })   // the screen the action happened on
-          events.push({ t, kind: 'frame', frame })                             // the new screen
+          // The step is stamped when the change BEGAN, not when it settled, so
+          // narration said just before the action still lands on it.
+          const isChange = settledSig != null && !!lastFrame && (changeT - lastActionT > ACTION_MERGE_MS)
+          if (isChange) events.push({ t: changeT, kind: 'change', frame: lastFrame })   // the screen the action happened on
+          events.push({ t, kind: 'frame', frame })                                     // the new screen
           settledSig = sig; lastFrame = frame; lastFrameT = t
           return isChange ? 'change' : 'frame'
         }
@@ -89,11 +96,16 @@ export function createCaptureSession(deps) {
 
   // A narration line. Pass `at` = nowMs() taken when the speech STARTED (the
   // transcript arrives later); without it the line is stamped now.
-  function addVoice(text, { at, endAt } = {}) {
+  function addVoice(text, { at, endAt, speaker } = {}) {
     const s = String(text == null ? '' : text).trim()
     if (!s || state === 'idle' || state === 'stopped') return false
     if (!Number.isFinite(at) && state !== 'recording') return false
-    voice.push({ t: Number.isFinite(at) ? at : clock(), ...(Number.isFinite(endAt) ? { endT: endAt } : {}), text: s })
+    voice.push({
+      t: Number.isFinite(at) ? at : clock(),
+      ...(Number.isFinite(endAt) ? { endT: endAt } : {}),
+      ...(speaker === 'presenter' ? { speaker: 'presenter' } : {}),
+      text: s,
+    })
     return true
   }
 
