@@ -10,7 +10,7 @@ a fork. The security and key-custody posture of each configuration is in
 | 1. Capability registry and the first call sites | BUILT |
 | 2. Storage drivers (json, postgres) | BUILT (document-per-record first cut) |
 | 3. Folder split | BUILT (minimal: editions/ + build/ composer); full move PLANNED |
-| 4. On-prem and managed first-run setup | PLANNED |
+| 4. On-prem and managed first-run setup | DESIGNED, not built (decisions needed) |
 
 ---
 
@@ -396,3 +396,98 @@ safe today:
    goes under `editions/<id>/`, registered through a hook the shared server
    calls with the active capabilities. None exists yet.
 
+---
+
+## 4. On-prem and managed first-run setup (DESIGN; not built)
+
+Applies to editions with `onprem_setup` (`onprem`, `managed`). The hosted
+editions never run it.
+
+### Shape: a separate setup process, then the server
+
+The store opens its persistence when it is imported, so the server cannot
+switch drivers while running. Setup therefore runs as its own small process,
+`node editions/setup.mjs`, which never imports the store:
+
+1. `node editions/start.mjs onprem` on a box where setup has not completed
+   (no `<WORK_DATA_DIR>/setup.json`) starts the setup process instead of the
+   server.
+2. The setup process serves only the setup wizard and its API, bound to
+   `127.0.0.1` by default (`WORK_SETUP_BIND` to open it on the network), and
+   prints a one-time setup code to the console and the service log. Every
+   setup call needs that code, so a fresh install cannot be claimed by
+   whoever reaches the port first.
+3. When setup finishes it writes its results, marks itself complete, and
+   starts the real server in the same way `start.mjs` does. A later
+   `node editions/setup.mjs --reconfigure` needs the setup code again plus a
+   superadmin sign-in.
+
+The same steps run headless for our managed provisioning and for scripted
+installs: `node editions/setup.mjs --answers answers.json` (no secrets on the
+command line; the answers file is read once and can be deleted after).
+
+### Steps
+
+1. **Persistence.** Choose one:
+   - `json`: db.json in the data dir (single box, small installs);
+   - PostgreSQL on this box ("our engine locally"; the installer can install
+     PostgreSQL, the wizard then takes `localhost` with `WORK_DB_SSL=disable`);
+   - a database we provisioned in the cloud for them (we hand over the
+     connection string);
+   - their own external PostgreSQL (connection string, TLS mode, optional CA).
+   The wizard tests the connection (reach, TLS, credentials, `CREATE` on the
+   schema, server version), then runs `db:migrate`, then offers `db:import`
+   of an existing db.json. Errors carry the fix (the storage layer's messages
+   are already written that way). Result: `<WORK_DATA_DIR>/storage.json`
+   with the `WORK_DB_*` values, the connection string stored as `enc:v1:`
+   ciphertext under the master key. **To build:** `server/storage/config.js`
+   reads `storage.json` when no `WORK_DB_*` variable is set (the environment
+   still wins).
+2. **Data folder and master key.** Put `WORK_DATA_DIR` outside the program
+   folder (so an upgrade never touches data). Generate `.enc.key` or take
+   `WORK_ENC_KEY`, and make the
+   operator confirm a backup of it before continuing: without it the stored
+   secrets, screenshots and brain cannot be opened.
+3. **First admin.** Username, email and password for the superadmin, replacing
+   the seeded `admin` account; MFA enrollment on first sign-in, as today. Then
+   the one company (`single_company`): name, seats, the company admin.
+4. **AI and custody.**
+   - `onprem` (`ai_custody_customer`, no `platform_ai`): the company's own
+     provider keys (validated with one test call each), company AI source set
+     to `company`, platform AI refused; brain custody customer-held by default
+     (passphrase plus the 24-word recovery phrase shown once, the existing
+     `enablePrivateEncryption` flow).
+   - `managed` (`platform_ai` + `ai_custody_customer`): our AI at usage, brain
+     custody customer-held through their KMS (design in `docs/editions.md`).
+5. **License** (`offline_licensing`, onprem only). Paste an activation key: a
+   signed document (customer, edition, seats, features, expiry, wrapped brain
+   key where applicable) verified offline against a public key built into the
+   server. Expired or tampered keys are refused with what to do. Managed has no
+   license step; it is invoiced.
+6. **Network and mail.** Public URL (`WORK_PUBLIC_URL`), behind a TLS proxy or
+   not (secure cookies, trust proxy), SMTP for invites and resets.
+7. **Review and finish.** Shows every choice (secrets masked), writes
+   `setup.json` (version, completedAt, steps, no secrets), records the setup
+   in the audit log, starts the server.
+
+Every step is resumable: state is saved per step, so a failure at step 4 does
+not repeat steps 1 to 3.
+
+### Decisions needed before building it
+
+- **License format and our signing key.** Who holds the private key, how it is
+  rotated, and what a license carries (seats, features, expiry, grace period).
+- **Setup UI.** The wizard is a guided, multi-step UI, so it goes through the
+  usual design pass and the 16-locale translation gate.
+- **PostgreSQL bundling.** Whether the on-prem installer installs PostgreSQL
+  itself, or the customer provides one and the "local engine" choice means
+  "PostgreSQL you installed on this box".
+
+### Build order once decided
+
+1. `storage.json` support in `server/storage/config.js` (small, testable now).
+2. Headless `editions/setup.mjs --answers` covering steps 1 to 3 and 6 to 7.
+3. Activation key verification (step 5) and the license gate for
+   `offline_licensing` (also closes "Not wired yet" item 6).
+4. The `platform_ai` and `ai_custody_customer` call sites (item 4).
+5. The wizard UI on top of the same setup API.
