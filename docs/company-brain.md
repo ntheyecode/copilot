@@ -395,13 +395,14 @@ tenant's vectors can be rebuilt by a different embedding model with NO re-upload
   streamed progress (the function already supports `onProgress`/`signal`); the
   synchronous route is the V1.
 
-Known follow-up (flagged, not degraded): the executive export
-(`readSealedBlobsForExport` -> `customer_export.js`) reports `dim` as the default
-384 because it copies sealed bytes without the DEK and cannot read the encrypted
-manifest's true dim. After a non-default-dim re-embed the archive's `dim` header
-would read 384 while the vectors are larger. Wiring the real dim through (the
-exporter holds the DEK during a password export) is a small follow-up; the export
-flow itself is unchanged by this work.
+Export label: the executive export (`customer_export.js`) labels the brain with
+its CURRENT geometry, read by `brain_store.readEmbeddingForExport` once the DEK is
+resolvable: `header.brain.embedding = { dim, model:{id,rev,dim,quant} }`, with the
+same `dim` and `model` on `payload.brain`. `dim` is the manifest's own dim (what the
+sealed vectors are) and `model` comes from `brain_model.activeEmbedModel`, the one
+rule retrieval and the sync manifest also use, so after a re-embed all three
+report the new model. If the manifest cannot be read the label is `null` with a
+stated note, never a default guess.
 
 ## 11. External-platform query access (token design - NOT YET WIRED)
 

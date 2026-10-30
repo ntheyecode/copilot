@@ -14,7 +14,7 @@
 // and the same embedder (brain_embed.embedQuery). No parallel copies.
 
 import { brainStore } from './brain_store.js'
-import { tokenize, normalizeText, EMBED, resolveEmbedModelByVersion } from './brain_model.js'
+import { tokenize, normalizeText, activeEmbedModel } from './brain_model.js'
 import { embedQueryWith } from './brain_embed.js'
 
 // Fusion weights (named constants - single source of truth for the blend).
@@ -93,8 +93,7 @@ export async function retrieveForGoal({ companyId, goal, app, topK = 6 }) {
   // is recorded on each active source as `embeddingModelVersion` (id@rev); it is
   // the default EMBED unless the tenant was re-embedded by a larger model. An
   // unknown/absent version falls back to the default, matching legacy tenants.
-  const activeModelVersion = (sources.find((s) => s.status === 'active' && s.embeddingModelVersion) || {}).embeddingModelVersion
-  const queryModel = resolveEmbedModelByVersion(activeModelVersion) || EMBED
+  const queryModel = activeEmbedModel(sources)
 
   // Candidate pool from the dense arm. Pool size K1 = max(topK*4, 20).
   const K1 = Math.max(topK * 4, 20)

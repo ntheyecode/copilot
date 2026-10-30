@@ -9,6 +9,8 @@ import {
   contentHashOf,
   chunkHashOf,
   policyVersionOf,
+  activeEmbedModel,
+  EMBED_MODELS,
 } from './brain_model.js'
 
 test('EMBED is the frozen pin', () => {
@@ -89,4 +91,18 @@ test('policyVersionOf: empty for no policy, short stable sha otherwise', () => {
   assert.equal(policyVersionOf({ redactEmail: true, level: 2 }), policyVersionOf({ level: 2, redactEmail: true }))
   // different policy -> different version
   assert.notEqual(policyVersionOf({ level: 2 }), policyVersionOf({ level: 3 }))
+})
+
+test('activeEmbedModel: the pinned model of the active sources, the default when none is recorded', () => {
+  const base = EMBED_MODELS['bge-base-en-v1.5']
+  assert.equal(activeEmbedModel([]), EMBED)
+  assert.equal(activeEmbedModel(null), EMBED)
+  assert.equal(activeEmbedModel([{ status: 'active', embeddingModelVersion: '' }]), EMBED)          // legacy tenant
+  assert.equal(activeEmbedModel([{ status: 'active', embeddingModelVersion: 'nope@x' }]), EMBED)    // unknown version
+  assert.equal(activeEmbedModel([{ status: 'active', embeddingModelVersion: `${base.id}@${base.rev}` }]), base)
+  // A non-active row never decides the model, even when it comes first.
+  assert.equal(activeEmbedModel([
+    { status: 'deleted', embeddingModelVersion: 'Xenova/bge-small-en-v1.5@main' },
+    { status: 'active', embeddingModelVersion: `${base.id}@${base.rev}` },
+  ]), base)
 })

@@ -93,6 +93,18 @@ export function resolveEmbedModelByVersion(version) {
   return null
 }
 
+// THE rule for which embedding model a tenant is on right now: the pinned version
+// recorded on its ACTIVE sources (a re-embed stamps every source that holds chunks;
+// a deleted source holds none and may still carry an older version), resolved to
+// its catalog config; the default EMBED when none is recorded (legacy tenants).
+// Retrieval, the sync manifest and the export all read this one function, so the
+// model they report can never disagree. Pass the tenant's full source list, never
+// a filtered page of it.
+export function activeEmbedModel(sources) {
+  const row = (Array.isArray(sources) ? sources : []).find((s) => s && s.status === 'active' && s.embeddingModelVersion)
+  return resolveEmbedModelByVersion(row && row.embeddingModelVersion) || EMBED
+}
+
 function sha256Hex(str) {
   return crypto.createHash('sha256').update(String(str), 'utf8').digest('hex')
 }
