@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo, useReducer } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Calculator, Compass, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard, ShieldCheck, RefreshCw, Paperclip, PenLine, Upload, FileSpreadsheet, Building2, Phone, MapPin, BarChart3, Settings, Wrench, Table } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, ChevronRight, Sparkles, Rocket, Calculator, Compass, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard, ShieldCheck, RefreshCw, Paperclip, PenLine, Upload, FileSpreadsheet, Building2, Phone, MapPin, BarChart3, Settings, Wrench, Table } from 'lucide-react'
 import { api, friendlyError } from '../../api.js'
 import AnswerBody, { splitSegments } from '../../components/AnswerBody.jsx'
 import RichText from '../../components/RichText.jsx'
@@ -39,6 +39,7 @@ import { WD_TOKENS_CSS } from './tokens.css.js'
 import FadeSwap from './FadeSwap.jsx'
 import ReadingStrip, { readingIsProminent } from './ReadingStrip.jsx'
 import StepCard from './StepCard.jsx'
+import SourceChip from './SourceChip.jsx'
 import AskFocus from './AskFocus.jsx'
 import GoalLine from './GoalLine.jsx'
 import TaskOverview from './TaskOverview.jsx'
@@ -715,26 +716,8 @@ const CONSOLE_CSS = `
 // src/shared/links.js (hrefForUrl), shared with the public "try it live" widget
 // so there is ONE renderer for a step's link / command / code. Same markup,
 // same classes, same behaviour in the console and the floating panel.
-// Source attribution indicator: a small, tasteful chip shown when the guide
-// grounded this step or answer in the user's/organization's OWN material (an
-// uploaded reference document, the Company Brain, or a skill/playbook). The guide
-// fills the `source` field (named once, server-side, as work.WORK_SOURCE_FIELD =
-// 'source') with a short human label like "Your document: Runbook v3" or
-// "Company Brain: Onboarding SOP"; we read that same property here. Honest and
-// defensive: renders NOTHING when there is no source (general knowledge, or an
-// older session without the field), so it never claims grounding falsely.
-function SourceChip({ source }) {
-  const t = useT()
-  const label = String(source || '').trim()
-  if (!label) return null
-  return (
-    <div className="wc-source" title={t('guideConsole.source.tip', { label })}>
-      <BookOpen size={11} strokeWidth={2.5} aria-hidden="true" />
-      <span className="wc-source-k">{t('guideConsole.source.label')}</span>
-      <span className="wc-source-src">{label}</span>
-    </div>
-  )
-}
+// The source chip (grounded in your documents / a company workflow) lives in
+// SourceChip.jsx; its .wc-source styles stay in this file's console CSS.
 // A small "How?" control shown next to a step or the live guidance. Tapping it
 // asks the server to break that one action into detailed sub-steps. It shows a
 // spinner while it loads and flips to "Hide how" once the detail is open.
@@ -2538,7 +2521,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                       extra={<>
                         {/* Grounded-in-your-documents: shows only when the guide marked this
                             step as grounded in the user's own material (else renders nothing). */}
-                        <SourceChip source={cur.step.source} />
+                        <SourceChip source={cur.step.source} workflowRef={sess && sess.workflowRef} />
                         <HowButton open={!!(howTo[key] && howTo[key].open)} loading={!!(howTo[key] && howTo[key].loading)} onClick={() => drillHow(key, cur.step.text, ci)} />
                         <HowDetail entry={howTo[key]} onRetry={() => drillHow(key, cur.step.text, ci)} />
                       </>} />
@@ -2601,7 +2584,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                   <span className="wc-step-check" aria-hidden="true">{isDone ? <Check size={16} strokeWidth={2.5} /> : <span className="wc-step-num">{i + 1}</span>}</span>
                   <div className="wc-step-body">
                     <div className="wc-step-title"><RichText text={s.text} /></div>
-                    <SourceChip source={s.source} />
+                    <SourceChip source={s.source} workflowRef={sess && sess.workflowRef} />
                     {/* The record shows the commands/code and the step link ONLY for
                         steps the user actually completed - never for "Not reached"
                         steps, so the record can't leak the how-to (or generated code)
@@ -2643,7 +2626,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                       <span className="wc-plan-badge">{mk === 'done' ? <Check size={13} strokeWidth={2.5} /> : i + 1}</span>
                       <span className="wc-plan-txt"><RichText text={s.text} /></span>
                       {mk === 'current' && <span className="wc-plan-tag">{t('guideConsole.plan.now')}</span>}
-                      <SourceChip source={s.source} />
+                      <SourceChip source={s.source} workflowRef={sess && sess.workflowRef} />
                     </div>
                   )
                 })}

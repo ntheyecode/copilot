@@ -4,7 +4,7 @@
   "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "test": "node --test server/*.test.mjs server/eval/*.test.mjs src/pages/work/projects/*.test.mjs src/pages/work/pm/*.test.mjs src/pages/work/teach/*.test.mjs src/shared/*.test.mjs src/theme/*.test.mjs",
+    "test": "node --test server/*.test.mjs server/eval/*.test.mjs src/pages/work/projects/*.test.mjs src/pages/work/pm/*.test.mjs src/pages/work/teach/*.test.mjs src/pages/work/workflows/*.test.mjs src/shared/*.test.mjs src/theme/*.test.mjs",
     "dev:web": "vite",
     "dev:api": "node --watch server/index.js",
     "check:jsx-imports": "node scripts/check-jsx-imports.mjs",

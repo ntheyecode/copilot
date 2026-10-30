@@ -38,6 +38,7 @@ export default {
     // A company member whose admin set a task ceiling (company policy).
     gateCompanyTaskLimit: 'You have reached the task limit your company set. New tasks open {reset}. Ask your company administrator if you need more.',
     gateCompanyNoLicense: 'Your company has not assigned you a WorkCoPilot license yet, or all licenses are in use. Ask your company administrator to add you.',
+    gateCompanyTrialUsed: "Your company's free trial is used up. Ask your company administrator to add more.",
     // The quiet slots line under the goal box.
     openSlots_one: '{open} of {max} tasks open. Room for {n} more.',
     openSlots_other: '{open} of {max} tasks open. Room for {n} more.',
