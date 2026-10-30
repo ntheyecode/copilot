@@ -69,12 +69,15 @@ import { createWorkflowFrames } from './workflow_frames.js'
 import { createWorkflowFrameSweep } from './workflow_frame_sweep.js'
 import { execOverview } from './exec_overview.js'
 import { makeExportKey } from './export_key.js'
+// Persistence driver (server/storage/): json (db.json, the default) or postgres.
+// The store keeps its in-memory db exactly as before; only the bytes-to-disk
+// step at load/persist goes through the driver.
+import { openStorage } from './storage/index.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // WORK_DATA_DIR lets the owner point the DB + on-disk docs/shots anywhere (the
 // save/handoff drive); web-dev falls back to ./data next to the server.
 const DATA_DIR = process.env.WORK_DATA_DIR || path.join(__dirname, 'data')
-const DB_FILE = path.join(DATA_DIR, 'db.json')
 // Optional one-time AI seed the owner drops at deploy (providers + keys +
 // platform-allowed flag + model pins). Never contains a hardcoded key in source.
 const AI_SEED_FILE = path.join(DATA_DIR, 'ai-seed.json')
@@ -326,35 +329,39 @@ let db = EMPTY
 let _usersById = new Map()
 function indexUsers() { _usersById = new Map((db.users || []).map((u) => [u.id, u])) }
 
+// The driver refuses (throws) when stored data exists but cannot be read, so an
+// unreadable or corrupt store is never reseeded over the real one.
+const storage = openStorage({ dataDir: DATA_DIR })
+// The ciphertexts last stored for each secret (plaintext -> list). encSecret
+// draws a fresh random IV, so re-encrypting an unchanged secret on every save
+// would change its stored bytes every time (and make the postgres driver
+// rewrite every record holding a key). Writing back a value already stored is
+// not a new encryption, so no IV is ever reused for different data. Each stored
+// ciphertext is handed to one field only, so two fields with the same secret
+// still get different ciphertexts (stored data never shows they match).
+// Rebuilt on each persist.
+let _cipherOf = new Map()
+const takeCipher = (pool, plain) => { const l = pool.get(plain); return l && l.length ? l.shift() : null }
+const keepCipher = (map, plain, c) => { if (!map.has(plain)) map.set(plain, []); map.get(plain).push(c) }
+
 function load() {
   ensureDir()
-  if (fs.existsSync(DB_FILE)) {
-    let raw
-    try {
-      raw = fs.readFileSync(DB_FILE, 'utf8')
-    } catch (e) {
-      // An existing DB we CANNOT READ must NEVER be reseeded (that silently
-      // overwrites every account). Fail loud, leave the bytes untouched.
-      throw new Error(
-        `[store] db.json exists but is UNREADABLE (${e.code || e.message}). ` +
-        `Refusing to start so your data is not overwritten. Fix ownership then restart.`)
-    }
-    try {
-      db = { ...EMPTY, ...JSON.parse(raw) }
-    } catch (e) {
-      // Present but CORRUPT: preserve a copy and refuse to start, rather than
-      // seed an empty DB over the real one.
-      const bak = `${DB_FILE}.corrupt-${Date.now()}`
-      try { fs.copyFileSync(DB_FILE, bak) } catch { /* best effort */ }
-      throw new Error(`[store] db.json is CORRUPT (${e.message}). Saved a copy to ${bak} and refusing to start.`)
-    }
+  const stored = storage.load()
+  if (stored) {
+    db = { ...EMPTY, ...stored }
     // Decrypt stored secrets into memory. A key that is marked encrypted but
     // cannot be decrypted (wrong/lost master key) must fail loud, NOT blank the
     // key (SUPREME RULE III) - refuse to start so the operator fixes the key.
     // Also note any LEGACY plaintext so we can encrypt it on disk immediately
     // (eager migration) rather than waiting for the next mutation.
     let sawLegacy = false
-    const decTrack = (v) => { const s = v == null ? '' : String(v); if (s && !s.startsWith(ENC_PREFIX)) sawLegacy = true; return decSecret(v) }
+    const decTrack = (v) => {
+      const s = v == null ? '' : String(v)
+      if (s && !s.startsWith(ENC_PREFIX)) sawLegacy = true
+      const plain = decSecret(v)
+      if (s.startsWith(ENC_PREFIX)) keepCipher(_cipherOf, plain, s)
+      return plain
+    }
     try { mapSecrets(db, decTrack) } catch (e) {
       throw new Error(`[store] cannot decrypt stored secrets (${e.message}). The master key (WORK_ENC_KEY or ${ENC_KEY_FILE}) is missing or wrong. Refusing to start so no key is silently lost. Restore the key and restart.`)
     }
@@ -368,28 +375,32 @@ function load() {
   indexUsers()
 }
 
-// Atomic write: write + fsync the temp file, preserve the live file's owner/mode
-// on the replacement (a root-performed write must not leave a db the service
-// user can no longer read), then rename.
+// Atomic save through the driver (json: temp + fsync + rename; postgres: one
+// transaction). Returns once the write is durable, or throws.
 function persist() {
-  ensureDir()
-  const tmp = DB_FILE + '.tmp'
   // Encrypt secrets on a disk-only CLONE so the in-memory db stays plaintext.
+  // The driver only ever sees the encrypted form, whichever driver it is.
   const disk = JSON.parse(JSON.stringify(db))
-  mapSecrets(disk, encSecret)
-  const fd = fs.openSync(tmp, 'w', 0o600)
+  const pool = new Map([..._cipherOf].map(([k, l]) => [k, l.slice()]))
+  const next = new Map()
+  mapSecrets(disk, (v) => {
+    const s = v == null ? '' : String(v)
+    if (!s || s.startsWith(ENC_PREFIX)) return encSecret(v)
+    const c = takeCipher(pool, s) || encSecret(s)
+    keepCipher(next, s, c)
+    return c
+  })
+  storage.save(disk)
+  _cipherOf = next
+}
+
+// Release the persistence driver (for postgres: its connection and lock, after
+// which every write throws) once any coalesced write is flushed. For a clean
+// shutdown and for tests that stand in for a restart.
+export function closeStore() {
   try {
-    fs.writeSync(fd, JSON.stringify(disk, null, 2))
-    fs.fsyncSync(fd)
-  } finally { fs.closeSync(fd) }
-  try {
-    if (fs.existsSync(DB_FILE)) {
-      const st = fs.statSync(DB_FILE)
-      fs.chownSync(tmp, st.uid, st.gid)
-      fs.chmodSync(tmp, st.mode & 0o777)
-    }
-  } catch { /* non-root same-user writes keep ownership anyway */ }
-  fs.renameSync(tmp, DB_FILE)
+    if (_soonTimer) { clearTimeout(_soonTimer); _soonTimer = null; persist() }
+  } finally { storage.close() }
 }
 
 // Coalesced write for high-frequency, low-criticality mutations (live step +
@@ -587,7 +598,7 @@ function seed() {
 load()
 seed()
 reregisterCustomHosts()   // restore any custom-provider hosts onto the egress allowlist
-console.log(`[store] data dir ${DATA_DIR} (hosted=${HOSTED ? '1' : '0'}, users=${(db.users || []).length})`)
+console.log(`[store] data dir ${DATA_DIR} (hosted=${HOSTED ? '1' : '0'}, storage=${storage.name}, users=${(db.users || []).length})`)
 
 // ---- accounts (the account IS the WorkCoPilot user) ----------------------
 export function findUser(username) {
@@ -6640,7 +6651,7 @@ export function deleteWorkSession(workUserId, sessionId, reason = '') {
     const safe = String(sessionId).replace(/[^\w-]/g, '')
     const sdir = safe && path.join(SHOTS_DIR, safe)
     if (sdir && fs.existsSync(sdir)) fs.rmSync(sdir, { recursive: true, force: true })
-  } catch { /* best effort */ }
+  } catch { /* best effort */ }
   // Workflow incidents: drop this session's occurrences and any screenshot it supplied.
   try { purgeWorkflowIncidents({ sessionId }) } catch { /* best-effort, never blocks a delete */ }
   db.workSessions.splice(i, 1)

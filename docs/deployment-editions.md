@@ -8,7 +8,7 @@ a fork. The security and key-custody posture of each configuration is in
 | Part | Status |
 |---|---|
 | 1. Capability registry and the first call sites | BUILT |
-| 2. Storage drivers (json, postgres) | PLANNED (next phase) |
+| 2. Storage drivers (json, postgres) | BUILT (document-per-record first cut) |
 | 3. Folder split | PLANNED |
 | 4. On-prem and managed first-run setup | PLANNED |
 
@@ -108,3 +108,170 @@ These capabilities exist so editions can be described completely, but setting
    subscription or license gate today (planned with the first-run setup).
 7. `store.getBillingPublic().annualReady` reads `db.billing` directly; route it
    through billing.js `cfg()` so it reads false where `stripe_billing` is off.
+
+---
+
+## 2. Storage drivers (BUILT, first cut)
+
+The store keeps its in-memory `db` object exactly as before. Only the step that
+turns it into bytes goes through a driver (`server/storage/`), at the two places
+`server/store.js` already had: `load()` at boot and `persist()` after a change.
+Every module that receives `db` through a factory is untouched.
+
+### Driver contract
+
+Every driver implements `load()` (the stored snapshot, or null when nothing is
+stored yet; throws, never reseeds, when stored data cannot be read),
+`save(snapshot)` (atomic; returns once durable, or throws), `migrate()`,
+`status()` (nothing secret) and `close()`. One contract test
+(`server/storage/driver_contract.test.mjs`) runs the same assertions against
+every driver.
+
+| Driver | Select with | Where the data lives | Atomic save |
+|---|---|---|---|
+| `json` (default) | nothing, or `WORK_DB_DRIVER=json` | `<WORK_DATA_DIR>/db.json`, the same bytes as before | temp file + fsync + rename (the original code, moved) |
+| `postgres` | `WORK_DB_DRIVER=postgres` + `WORK_DB_URL` | the `workcopilot` schema (or `WORK_DB_SCHEMA`) of any PostgreSQL | one transaction per save |
+
+The postgres driver serves all three customer choices; only the connection
+string differs: PostgreSQL installed on their own box, a database we provision
+in the cloud for them, or their own external database.
+
+### Why PostgreSQL via `pg`, and no SQLite driver
+
+- `pg` 8.23.1 (latest stable on 2026-10-30, `npm view pg version`), the standard
+  maintained Node client, pure JavaScript (no native build on Windows or
+  Linux). `npm audit`: 0 vulnerabilities, production and full tree.
+- One SQL dialect, one migration set and one test path for local, provisioned
+  and external databases.
+- SQLite was weighed for the local case. `node:sqlite` is built in but still
+  experimental in Node 24 (it prints an ExperimentalWarning), and
+  `better-sqlite3` is a native addon to build on every target. The local case
+  is served by PostgreSQL on the customer's box instead; the driver contract
+  leaves room for an embedded driver once `node:sqlite` is stable.
+- Test only: `@electric-sql/pglite` 0.5.13 and `@electric-sql/pglite-socket`
+  0.2.16 (devDependencies, latest on 2026-10-30). PGlite is PostgreSQL compiled
+  to WebAssembly, served over the normal wire protocol, so the tests run the
+  production `pg` client against a real PostgreSQL with nothing to install.
+  PGlite is one backend shared by every connection, so the advisory-lock
+  refusal of a second server is tested only when `WORK_TEST_PG_URL` points at a
+  real PostgreSQL (the whole contract suite then also runs there).
+- `pg` is loaded only by the postgres worker, on demand. A json-driver server
+  never loads it.
+
+### How it stays synchronous
+
+`persist()` is synchronous and every caller relies on "returned means durable".
+The pg client is asynchronous, so it runs in a worker thread
+(`postgres_worker.js`) and the main thread waits on a shared flag
+(`sync_bridge.js`, the technique synckit and esbuild use). The cost: the event
+loop pauses for each database round trip, as it pauses today for the db.json
+write and fsync. A timed-out call poisons the bridge so nothing writes on top of
+an unknown state; the server must be restarted.
+
+### Layout: document per record (first cut)
+
+`doc_layout.js` stores each top-level collection as a row in `wcp_collections`
+and each member as a row in `wcp_records (collection, rid, pos, doc json)`:
+one row per array element (keyed by its `id`), per object key, or per value.
+`pos` keeps order, so a load returns exactly the object that was saved, key
+order included. `doc` is `json`, not `jsonb`, because `json` keeps the text as
+written (jsonb reorders keys and rejects `\u0000`). Each save writes only the
+rows that changed since the last load or save. A key that a text column cannot
+hold (U+0000, a lone surrogate) is stored as `~json:` plus its JSON encoding,
+and an own `__proto__` key stays an own key.
+
+What a normalized schema would add later (not built): typed columns and foreign
+keys per entity (users, companies, sessions), indexes for reporting queries,
+row-level writes instead of a whole-snapshot diff, and several server processes
+writing at once. This first cut keeps the single-writer model the store
+already has.
+
+### Safety
+
+- **Single writer.** The server's connection holds a session advisory lock on
+  the schema for its whole life; a second server, or a `db:migrate` /
+  `db:import` run, against the same schema is refused. Every save also checks
+  and bumps a revision in `wcp_meta`, so even without the lock (a dropped
+  connection, a pooler in transaction mode) a stale writer gets
+  `WCP_REVISION_CONFLICT` and writes nothing.
+- **A lost commit answer heals itself.** Each save records this process's
+  writer id. If the connection drops after COMMIT reached the database but
+  before the answer came back, the next save sees its own writer id, re-reads
+  what the database holds and diffs again, instead of reporting "another
+  writer" until a restart.
+- **No silent fallback.** If the database is unreachable, the TLS settings are
+  wrong, or the schema is not deployed, the server refuses to start with the
+  reason and the fix. It never falls back to db.json.
+- **The URL cannot override what was configured.** The pg client copies every
+  `?parameter` over the connection (`?host=` changes the server, `?ssl=0` turns
+  TLS off), so only `sslmode` and `application_name` are accepted and anything
+  else is refused. TLS is set with `WORK_DB_SSL` and `WORK_DB_SSL_CA`;
+  `sslmode` in the URL is read in any letter case (`prefer` and `allow` count
+  as `require`: no plaintext fallback).
+- **No secrets in messages.** Every message shows the connection string with
+  the password masked. A password the URL parser would split (an unencoded
+  `#`, `?` or `/`) is refused with how to percent-encode it.
+- **Least privilege at runtime.** Only `db:migrate` runs DDL. The server, and
+  `db:status` / `db:export`, only read and write the three tables, so the
+  runtime database role needs no CREATE right.
+- **A crashed database worker is reported at once,** with its reason, not
+  after the operation timeout.
+- **Encryption at rest is unchanged.** The store encrypts secrets
+  (`enc:v1:`) on a disk-only clone before any driver sees it, so the database
+  holds ciphertext, exactly like db.json. The master key stays
+  `WORK_ENC_KEY` or `<WORK_DATA_DIR>/.enc.key`, for both drivers. An unchanged
+  secret keeps its stored ciphertext across saves (the value already stored is
+  written back, never a new encryption under a reused IV), so a save does not
+  rewrite every record that holds a key. Each stored ciphertext serves one
+  field only, so two fields with the same secret still differ on disk. This is
+  the one byte-level difference in db.json for the default driver: unchanged
+  secrets no longer get a fresh ciphertext on every save. The format is the
+  same.
+- **Files stay on disk.** Screenshots, workflow frames, reference docs and the
+  Company Brain store remain under `WORK_DATA_DIR` (already encrypted with the
+  same key). The postgres driver moves the store document only; a blob storage
+  adapter is a separate later step.
+
+### Settings
+
+| Variable | Meaning | Default |
+|---|---|---|
+| `WORK_DB_DRIVER` | `json` or `postgres` | `json` |
+| `WORK_DB_URL` | `postgres://user:password@host:5432/dbname` | none (required for postgres) |
+| `WORK_DB_SSL` | `disable`, `require` (encrypt, no certificate check) or `verify-full` | the URL's `sslmode`, else `disable` for localhost and `verify-full` for any other host |
+| `WORK_DB_SSL_CA` | path to a PEM CA bundle for `verify-full` | system CAs |
+| `WORK_DB_SCHEMA` | schema holding the tables | `workcopilot` |
+| `WORK_DB_TIMEOUT_MS` / `WORK_DB_CONNECT_TIMEOUT_MS` | per-operation / connect timeout | 30000 / 15000 |
+| `WORK_DB_AUTO_MIGRATE` | `1` = apply pending migrations at start | off: the server refuses and says to run `db:migrate` |
+
+There is one connection, not a pool: writes are serialized by design and that
+connection holds the single-writer lock. A pool comes with the first concurrent
+read path (for example reporting queries). A save that changed something costs
+up to seven round trips on that connection (BEGIN, revision check, up to five
+writes, COMMIT); a save that changed nothing sends nothing. Positions that
+shift (an insert at the front of a list) are updated without re-sending the
+documents.
+
+### Operations
+
+```
+npm run db:migrate                          deploy or upgrade all tables (idempotent)
+npm run db:status                           driver, target, schema version, row counts
+npm run db:import -- --from <db.json>       one-time move of an existing store; refuses a non-empty target without --replace
+npm run db:export -- --to <db.json>         write the database back out as db.json (rollback or portability)
+```
+
+`db:migrate` and `db:import` need the server stopped (they take the
+single-writer lock); `db:status` and `db:export` only read one consistent
+snapshot and work while it runs. The CLI lives in `server/storage/cli.js` so it
+ships with the server. Import
+reads the database back and compares it with the file before reporting success;
+an export of an import is byte-identical to the source. Secrets are copied as
+ciphertext, so the server that reads the database needs the same master key as
+the server that wrote the db.json.
+
+**Moving an existing server to PostgreSQL:** stop the server, set the
+`WORK_DB_*` variables, `npm run db:migrate`, `npm run db:import -- --from
+<data dir>/db.json`, start the server. Rollback: stop, `npm run db:export`,
+unset `WORK_DB_DRIVER`, start.
+
