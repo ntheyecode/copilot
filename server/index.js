@@ -39,6 +39,9 @@ import { registerGuidanceDepthRoutes } from './work_depth_routes.js'
 import { registerWorkProjectRoutes } from './work_project_routes.js'
 import { registerWorkRolesRoutes } from './work_roles_routes.js'
 import { sessionIdForSwitch } from './work_switch_scope.js'
+import { createWorkTaskGate } from './work_task_gate.js'
+import { makeWrap } from './route_wrap.js'
+import { pickPublishedWorkflow, choosePlanBackbone, publishedWorkflowNote, workflowRefOf } from './workflow_playback.js'
 import { registerWorkPracticeRoutes } from './work_practices_routes.js'
 import { registerTeamProjectRoutes } from './work_team_projects_routes.js'
 import { registerSsoRoutes } from './sso.js'
@@ -242,10 +245,9 @@ function readLocale(req) {
   const first = al ? al.split(',')[0].split(';')[0].trim() : ''
   return first || 'en'
 }
-const wrap = (fn) => (req, res) => {
-  try { fn(req, res) }
-  catch (e) { sendWorkError(res, e, req) }
-}
+// Sync and async handlers alike: a rejected async handler is answered too, never
+// left as an unhandled rejection (route_wrap.js says why).
+const wrap = makeWrap((res, e, req) => sendWorkError(res, e, req))
 // One place that turns a verified user into a live session, so epoch/loginAt are
 // never set on one path and forgotten on another.
 //
@@ -1608,6 +1610,7 @@ function watchExtraction(req, call) {
   } catch { /* alerting must never break a request */ }
 }
 
+const beginWorkTask = createWorkTaskGate({ store })
 function guardUserText(req, res, text, field, sessionId = null) {
   const hit = llmGuard.inspectUserText(text, { field })
   if (!hit) return null
@@ -1633,31 +1636,9 @@ app.post('/api/work/sessions', requireWorkAuth, requireWorkSubscription, wrap((r
     return res.status(403).json({ error: 'Your tasks are assigned by your project manager. Open an assigned task to begin.', workerFlow: true })
   }
   const g0 = guardUserText(req, res, goal, 'goal'); if (g0 === 'refused') return
-  // Company free trial: a pool of 1-hour sessions shared across the company's
-  // users. Consume one here; gate when the pool is used up.
-  const cu = store.getUser(req.workUser.id)
-  // Task gate FIRST (before consuming a company trial). Individuals: hours are
-  // the only usage limit (402 outOfHours) and up to WORK_MAX_OPEN_TASKS may be
-  // open at once (409 tooManyOpen). Company members: unlimited unless their
-  // admin set a task ceiling (402 taskLimit). Every coded flag the store sets is
-  // forwarded so the client can show the matching message and action instead of
-  // guessing from the status alone (the old mustCompleteCurrent flag is retired
-  // with the single-running-task block).
-  try {
-    store.startWorkTask(req.workUser.id)
-  } catch (e) {
-    const body = { error: e.message }
-    if (e.outOfHours) { body.outOfHours = true; body.resetLabel = e.resetLabel }
-    if (e.tooManyOpen) { body.tooManyOpen = true; body.maxOpen = e.maxOpen; body.open = e.open }
-    if (e.taskLimit) { body.taskLimit = true; body.cap = e.cap; body.resetLabel = e.resetLabel; if (e.window) body.window = e.window }
-    return res.status(e.status || 402).json(body)
-  }
-  if (cu && cu.companyId) {
-    if (store.companyTrialRemaining(cu.companyId) <= 0) {
-      return res.status(402).json({ error: 'Your company free trial is used up. Your administrator can add more.', trialExhausted: true })
-    }
-    store.consumeCompanyTrialSession(cu.companyId)
-  }
+  // Usage gates (hours / open tasks / task ceiling / company trial pool), shared
+  // with every other way to start a task (work_task_gate.js).
+  if (!beginWorkTask(req, res)) return
   res.json({ session: store.createWorkSession(req.workUser.id, { title, goal, scope }), taskUsage: store.getWorkTaskUsage(req.workUser.id), ...(g0 && g0.guard ? { guard: g0.guard } : {}) })
 }))
 app.get('/api/work/sessions', requireWorkAuth, wrap((req, res) => {
@@ -2384,9 +2365,30 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     // tenant-routed). Deterministic match -> serve (strong) or seed (partial). This
     // is the template rung of private-brain-first grounding (and the seed for Plan B).
     let templateNote = ''
+    // Backbone for the plan, decided by ONE pure rule (choosePlanBackbone): a
+    // workflow the company's trainer PUBLISHED outranks a learned template (it is
+    // the reviewed, approved way), then learned, then partial matches of each.
+    // Published workflows are company-scoped, so company members only; a re-plan
+    // that keeps progress does not re-match. Deterministic, same scoring rule as
+    // the private brain. The session's link to the workflow is written only after
+    // the plan succeeds (below), so a refused or failed plan links nothing.
+    let published = { workflow: null, tier: 'none' }
+    if (req.workUser.companyId && !doneSteps.length) {
+      try { published = pickPublishedWorkflow({ ...s, goal: safeGoal }, store.listWorkflowsForUser(req.workUser.id, { state: 'published' })) }
+      catch (e) { console.warn(`[work] published workflow match error: ${e.message}`) }
+    }
+    let followsPublished = false
     try {
-      const tmatch = work.pickWorkflowTemplate({ ...s, goal: planGoal }, store.getWorkflowTemplates(req.workUser.id))
-      if (tmatch && tmatch.template && (tmatch.tier === 'strong' || tmatch.tier === 'partial')) {
+      const tmatch = published.tier === 'strong' ? null : work.pickWorkflowTemplate({ ...s, goal: planGoal }, store.getWorkflowTemplates(req.workUser.id))
+      const backbone = choosePlanBackbone(published, tmatch)
+      if (backbone.use === 'published') {
+        const title = workflowRefOf(published.workflow).title
+        templateNote = scrubText(publishedWorkflowNote(published)).clean
+        followsPublished = published.tier === 'strong'
+        store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: followsPublished
+          ? `Following the "${title}" workflow your company published.`
+          : `Found a related workflow your company published ("${title}") and adapted it.` })
+      } else if (backbone.use === 'template') {
         const tsteps = Array.isArray(tmatch.template.steps) ? tmatch.template.steps : []
         templateNote = scrubText((tmatch.tier === 'strong'
           ? 'A PROVEN WORKFLOW from your own private knowledge fits this goal. Follow it as the backbone, adjusting only where the live screen differs:\n'
@@ -2430,7 +2432,14 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
       ? `Planned by a top-ranked model (per ${plannedBy.source}).`
       : 'Planned by the best model available on your key.' })
     if (keepProgress && doneSteps.length) store.replanKeepingProgress(req.workUser.id, req.params.id, plan.steps)
-    else store.setWorkSessionSteps(req.workUser.id, req.params.id, plan.steps)
+    else {
+      store.setWorkSessionSteps(req.workUser.id, req.params.id, plan.steps)
+      // Link the published workflow only now that the plan exists. A fresh plan
+      // that follows one links it; one that does not clears a stale link (its
+      // steps are no longer the workflow's). A keep-progress re-plan keeps its link.
+      try { store.setWorkSessionWorkflowRef(req.workUser.id, req.params.id, followsPublished ? workflowRefOf(published.workflow) : null) }
+      catch (e) { console.warn(`[work] workflow link failed: ${e.message}`) }
+    }
     // Store the rich "what you'll be doing" overview from the plan (or a derived
     // fallback) so a resumed/scanned session shows a clear description.
     try { store.setWorkSessionOverview(req.workUser.id, req.params.id, plan.overview) } catch { /* never block the plan response */ }
@@ -3665,7 +3674,9 @@ app.post('/api/work/sessions/:id/finalize', requireWorkAuth, async (req, res) =>
     // distill returns null unless EVERY step is confirmed done with no trailing
     // flag, so a half-done or failed task is never captured (zero-tolerance for
     // false templates). Best-effort: a capture failure never breaks finalize.
-    try { const rec = work.distillWorkflowTemplate(s); if (rec) store.captureWorkflowTemplate(req.workUser.id, rec) } catch (e) { console.warn(`[work] template capture failed: ${e.message}`) }
+    // A session that followed a published workflow is not distilled: the trainer's
+    // workflow is the authority, and a learned copy would compete with it.
+    try { const rec = s.workflowRef ? null : work.distillWorkflowTemplate(s); if (rec) store.captureWorkflowTemplate(req.workUser.id, rec) } catch (e) { console.warn(`[work] template capture failed: ${e.message}`) }
     // If this session is a project task, close the forward-learning loop: mark the task
     // done, record its outcome + telemetry (completed-task storage), and keep the ledger
     // populated for the next task. Best-effort - never breaks finalize.
@@ -3695,7 +3706,7 @@ registerWorkCustomerRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, w
 registerKbSpaceRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap })
 registerGuidanceDepthRoutes(app, { store, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
 registerWorkProjectRoutes(app, { store, work, ai, requireWorkAuth, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale })
-registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale })
+registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale, beginWorkTask, runPolicyGate })
 registerWorkPracticeRoutes(app, { store, requireWorkAuth, wrap })
 registerTeamProjectRoutes(app, { store, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError })
 registerWorkImageRoutes(app, { store, ai, requireWorkAuth, wrap, resolveWorkRuntime })

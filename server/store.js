@@ -62,6 +62,7 @@ import { createEnterpriseBilling } from './enterprise_billing.js'
 import { createPlanAllowance } from './plan_allowance.js'
 import { createOnboarding } from './onboarding_store.js'
 import { createWorkflows } from './workflows_store.js'
+import { isFrameRef } from './workflows_rules.js'
 import { createWorkflowFrames } from './workflow_frames.js'
 import { execOverview } from './exec_overview.js'
 import { makeExportKey } from './export_key.js'
@@ -444,7 +445,20 @@ export const {
 // screenshots (encryptBuffer/decryptBuffer stay single-source here), in their own
 // folder so session-shot housekeeping never walks them.
 const wfFrames = createWorkflowFrames({ dir: path.join(DATA_DIR, 'workflow-frames'), seal: encryptBuffer, open: decryptBuffer })
-const wfs = createWorkflows({ db: () => db, persist, id, now, httpErr, getUser, emit: emitStoreEvent, frames: wfFrames })
+// Frames a still-running guided session shows (a published workflow's step
+// screenshots copied onto the session), so deleting or editing the workflow never
+// breaks the screen an employee is following right now. Ended sessions do not pin.
+function workflowFramesInUse(companyId) {
+  const out = new Set()
+  for (const s of (db.workSessions || [])) {
+    if (!s || s.status === 'ended' || !s.workflowRef) continue
+    const u = getUser(s.workUserId)
+    if (!u || String(u.companyId) !== String(companyId)) continue
+    for (const st of (s.steps || [])) if (st && st.shot) out.add(st.shot)
+  }
+  return out
+}
+const wfs = createWorkflows({ db: () => db, persist, id, now, httpErr, getUser, emit: emitStoreEvent, frames: wfFrames, framesInUse: workflowFramesInUse })
 export const {
   listWorkflowsForUser, getWorkflowForUser, createWorkflow, updateWorkflow,
   publishWorkflow, reviseWorkflow, retireWorkflow, deleteWorkflow,
@@ -5690,6 +5704,8 @@ export function setWorkSessionSteps(workUserId, sessionId, steps) {
       ? { file: String(x.code.file || '').trim() || null, content: String(x.code.content) }
       : null,
     source: (x && x.source) ? String(x.source) : '',
+    // A published workflow's step carries the trainer's screenshot (frame ref only).
+    ...(x && isFrameRef(x.shot) ? { shot: x.shot } : {}),
     status: i === 0 ? 'current' : 'pending',
   })).filter((x) => x.text)
   s.currentStep = 0
@@ -6494,6 +6510,18 @@ export function setWorkSessionSummary(workUserId, sessionId, summary) {
 // The rich "what you'll be doing" overview for a session, set from the plan (the
 // planner returns it; a fallback is composed from the goal). Shown when the task
 // is resumed or scanned. Never throws into the plan response path.
+// Wave 3: the published workflow a session follows ({ id, groupId, version,
+// title }), set when it was started from one or a plan matched one strongly.
+// Deviation reporting and run counts read it; the private brain does not distill
+// such a session (the trainer's workflow is already the authority).
+export function setWorkSessionWorkflowRef(workUserId, sessionId, ref) {
+  const s = findWorkSession(workUserId, sessionId)
+  if (!s) throw httpErr(404, 'Session not found')
+  const r = ref && typeof ref === 'object' ? ref : null
+  s.workflowRef = r && r.id ? { id: String(r.id), groupId: String(r.groupId || ''), version: Number(r.version) || 1, title: String(r.title || '').slice(0, 200) } : null
+  persist()
+  return s
+}
 export function setWorkSessionOverview(workUserId, sessionId, overview) {
   const s = findWorkSession(workUserId, sessionId)
   if (!s) return null

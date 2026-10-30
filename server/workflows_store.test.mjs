@@ -199,3 +199,28 @@ test('regression: repeated step ids are made unique, so a read can never land on
   assert.equal(new Set(ids).size, 3)
   assert.deepEqual(ids.slice(0, 2), ['s2', 's3'])
 })
+
+test('regression: deleting a workflow keeps the frames a running session still shows', () => {
+  const db = { workflows: [] }
+  let seq = 0
+  const store = new Map()
+  const frames = {
+    save: (cid, buf, ext) => { const ref = `${String(++seq).padStart(32, '0')}.${ext}`; store.set(`${cid}/${ref}`, buf); return ref },
+    read: (cid, ref) => (store.has(`${cid}/${ref}`) ? { buffer: store.get(`${cid}/${ref}`), mime: 'image/jpeg' } : null),
+    remove: (cid, refs) => { let n = 0; for (const r of refs) if (store.delete(`${cid}/${r}`)) n++; return n },
+  }
+  let inUse = new Set()
+  const api = createWorkflows({
+    frames, framesInUse: () => inUse, db: () => db, persist: () => {}, id: () => `id${++seq}`,
+    now: () => new Date(Date.UTC(2026, 0, 1, 0, 0, ++seq)).toISOString(),
+    httpErr: (code, msg) => { const e = new Error(msg); e.status = code; return e },
+    getUser: (uid) => (uid === 't' ? trainer : null), emit: () => {},
+  })
+  const f1 = api.uploadWorkflowFrame('t', JPG).ref
+  const f2 = api.uploadWorkflowFrame('t', JPG).ref
+  const w = api.createWorkflow('t', { meta: META, steps: [{ instruction: 'a', shot: f1 }, { instruction: 'b', shot: f2 }] })
+  inUse = new Set([f1])                                   // an employee is mid-run on step 1
+  api.deleteWorkflow('t', w.id)
+  assert.ok(api.readWorkflowFrame('t', f1))               // still served to the running session
+  assert.throws(() => api.readWorkflowFrame('t', f2), /not found/)   // the unused one is purged
+})
