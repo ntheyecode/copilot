@@ -1,20 +1,28 @@
 // Guided, context-aware authoring wizard for a single workflow. Five phases
 // (Basics, Details, Scope & privacy, Steps, Review) with a stepper, inline
 // reflections of what the author has entered, required-field validation that
-// mirrors the server, and a Save draft / Publish footer. Presentational + its
-// own save round-trips; it never changes backend logic. Small, single purpose.
+// mirrors the server, and a Save draft / Publish footer. In Steps the author
+// writes steps by hand, records a demonstration, or imports a recording
+// (CaptureCard), which drafts them into the same editor (StepEditor) for review. Presentational + its own save
+// round-trips; it never changes backend logic.
 import React, { useMemo, useState } from 'react'
 import {
-  GraduationCap, ChevronLeft, ChevronRight, Check, Plus, Trash2, ArrowUp, ArrowDown,
+  GraduationCap, ChevronLeft, ChevronRight, Check, Plus,
   Info, AlertTriangle, ShieldCheck, X, ListChecks,
 } from 'lucide-react'
 import { api, friendlyError } from '../../../api.js'
-import { useT } from '../../../i18n/index.jsx'
+import { useLocale } from '../../../i18n/index.jsx'
 import { Spinning, ErrorBox } from '../../workadmin/sections/_shared.jsx'
+import { isDlpActive } from '../../../scrub.js'
 import {
   PHASES, emptyMeta, emptyStep, metaToForm, stepsToForm, metaToPayload, stepsToPayload,
   missingMeta, stepsValid, REQUIRED_META,
 } from './workflowModel.js'
+import { withRowKeys, newRowKey, initialOpenKeys } from './stepRows.js'
+import { mergeRecordedSteps } from './recordModel.js'
+import StepEditor from './StepEditor.jsx'
+import CaptureCard from './CaptureCard.jsx'
+import { transcribeLanguage } from './voiceModel.js'
 
 // One text field in the wizard (label + optional required marker + input).
 function Field({ label, required, hint, full, children }) {
@@ -27,10 +35,15 @@ function Field({ label, required, hint, full, children }) {
 }
 
 export default function WorkflowWizard({ initial, onCancel, onSaved }) {
-  const t = useT()
+  const { t, locale } = useLocale()
   const editing = !!(initial && initial.id)
   const [meta, setMeta] = useState(() => (editing ? metaToForm(initial.meta) : emptyMeta()))
-  const [steps, setSteps] = useState(() => (editing && Array.isArray(initial.steps) && initial.steps.length ? stepsToForm(initial.steps) : [emptyStep()]))
+  const [steps, setSteps] = useState(() => withRowKeys(editing && Array.isArray(initial.steps) && initial.steps.length ? stepsToForm(initial.steps) : [emptyStep()]))
+  const [open, setOpen] = useState(() => initialOpenKeys(steps))   // which step rows are expanded
+  const [maskFrames, setMaskFrames] = useState(true)                // mask sensitive text in recorded screenshots
+  const [recBusy, setRecBusy] = useState(false)                     // a recording is live or saving: hold navigation
+  const holdTitle = recBusy ? t('teach.capture.busyHint') : ''
+  const dlp = isDlpActive()
   const [phase, setPhase] = useState(0)
   const [ack, setAck] = useState(editing)                 // privacy/scope acknowledgement
   const [id, setId] = useState(editing ? initial.id : null)
@@ -45,8 +58,24 @@ export default function WorkflowWizard({ initial, onCancel, onSaved }) {
 
   const setField = (k, v) => setMeta((m) => ({ ...m, [k]: v }))
   const setStep = (i, k, v) => setSteps((list) => list.map((s, j) => (j === i ? { ...s, [k]: v } : s)))
-  const addStep = () => setSteps((list) => [...list, emptyStep()])
+  const addStep = () => {
+    const row = { ...emptyStep(), _k: newRowKey() }
+    setSteps((list) => [...list, row])
+    setOpen((o) => new Set(o).add(row._k))
+  }
   const removeStep = (i) => setSteps((list) => (list.length > 1 ? list.filter((_, j) => j !== i) : list))
+  const toggleRow = (k) => setOpen((o) => { const n = new Set(o); if (n.has(k)) n.delete(k); else n.add(k); return n })
+  const setAllRows = (on) => setOpen(on ? new Set(steps.map((s) => s._k)) : new Set())
+  // A finished recording: its drafted steps replace a blank editor or follow the
+  // author's own steps; the first drafted step opens for review. Returns the mode
+  // so the recorder can say which one happened.
+  const loadRecorded = (recorded) => {
+    const rows = withRowKeys(recorded)
+    const { steps: next, mode } = mergeRecordedSteps(steps, rows)
+    setSteps(next)
+    setOpen(rows.length ? new Set([rows[0]._k]) : new Set())
+    return mode
+  }
   const moveStep = (i, dir) => setSteps((list) => {
     const j = i + dir
     if (j < 0 || j >= list.length) return list
@@ -114,14 +143,14 @@ export default function WorkflowWizard({ initial, onCancel, onSaved }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
         <h2 style={{ margin: 0 }}><GraduationCap size={16} style={{ verticalAlign: -3, marginRight: 6, color: 'var(--wka-accent)' }} />{editing ? t('teach.wizard.editTitle', { v: initial.version }) : t('teach.wizard.newTitle')}</h2>
         <span className="wka-spacer" style={{ flex: 1 }} />
-        <button type="button" className="wka-btn sm ghost" onClick={onCancel}><X size={14} /> {t('teach.wizard.cancel')}</button>
+        <button type="button" className="wka-btn sm ghost" disabled={recBusy} title={holdTitle} onClick={onCancel}><X size={14} /> {t('teach.wizard.cancel')}</button>
       </div>
 
       {/* stepper */}
       <div className="tch-stepper" role="tablist" aria-label={t('teach.wizard.stepsAria')}>
         {PHASES.map((k, i) => (
           <button key={k} type="button" role="tab" aria-selected={i === phase}
-            className={`tch-step${i === phase ? ' on' : ''}${i < phase ? ' done' : ''}`} onClick={() => jump(i)}>
+            className={`tch-step${i === phase ? ' on' : ''}${i < phase ? ' done' : ''}`} disabled={recBusy && i !== phase} title={i !== phase ? holdTitle : ''} onClick={() => jump(i)}>
             <span className="n">{i < phase ? <Check size={12} /> : i + 1}</span>{stepLabel(k)}
           </button>
         ))}
@@ -198,8 +227,13 @@ export default function WorkflowWizard({ initial, onCancel, onSaved }) {
             <li>{t('teach.wizard.scope.point1')}</li>
             <li>{t('teach.wizard.scope.point2')}</li>
             <li>{t('teach.wizard.scope.point3')}</li>
+            <li>{t('teach.wizard.scope.point4')}</li>
           </ul>
           <label className="wka-check"><input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} /> {t('teach.wizard.scope.ack')}</label>
+          <div className="tch-maskopt">
+            <label className="wka-check"><input type="checkbox" checked={dlp || maskFrames} disabled={dlp} onChange={(e) => setMaskFrames(e.target.checked)} /> {t('teach.wizard.scope.mask')}</label>
+            <p className="tch-rec-fine">{dlp ? t('teach.wizard.scope.maskDlp') : t('teach.wizard.scope.maskHint')}</p>
+          </div>
         </div>
       )}
 
@@ -207,36 +241,9 @@ export default function WorkflowWizard({ initial, onCancel, onSaved }) {
       {cur === 'steps' && (
         <div>
           <p className="tch-phase-lead">{t('teach.wizard.steps.lead')}</p>
-          <div className="tch-editsteps">
-            {steps.map((s, i) => (
-              <div key={i} className="tch-editstep">
-                <div className="tch-editstep-head">
-                  <span className="tch-editstep-n">{i + 1}</span>
-                  <span className="tch-editstep-ttl">{t('teach.wizard.steps.stepN', { n: i + 1 })}</span>
-                  <span className="tch-editstep-tools">
-                    <button type="button" className="wka-btn sm ghost" disabled={i === 0} title={t('teach.wizard.steps.moveUp')} onClick={() => moveStep(i, -1)}><ArrowUp size={13} /></button>
-                    <button type="button" className="wka-btn sm ghost" disabled={i === steps.length - 1} title={t('teach.wizard.steps.moveDown')} onClick={() => moveStep(i, 1)}><ArrowDown size={13} /></button>
-                    <button type="button" className="wka-btn sm ghost" disabled={steps.length <= 1} title={t('teach.wizard.steps.remove')} onClick={() => removeStep(i)}><Trash2 size={13} /></button>
-                  </span>
-                </div>
-                <div className="wka-field" style={{ marginBottom: 12 }}>
-                  <label>{t('teach.wizard.steps.instruction')}<span className="tch-req"> *</span></label>
-                  <textarea className="wka-input" rows={2} value={s.instruction} maxLength={600} placeholder={t('teach.wizard.steps.instructionPh')} onChange={(e) => setStep(i, 'instruction', e.target.value)} style={{ resize: 'vertical' }} />
-                </div>
-                <div className="tch-editstep-grid">
-                  <Field label={t('teach.wizard.steps.target')} hint={t('teach.wizard.optional')}>
-                    <input className="wka-input" value={s.target} maxLength={200} placeholder={t('teach.wizard.steps.targetPh')} onChange={(e) => setStep(i, 'target', e.target.value)} />
-                  </Field>
-                  <Field label={t('teach.wizard.steps.doneWhen')} hint={t('teach.wizard.optional')}>
-                    <input className="wka-input" value={s.doneWhen} maxLength={200} placeholder={t('teach.wizard.steps.doneWhenPh')} onChange={(e) => setStep(i, 'doneWhen', e.target.value)} />
-                  </Field>
-                  <Field label={t('teach.wizard.steps.docRef')} full hint={t('teach.wizard.optional')}>
-                    <input className="wka-input" value={s.docRef} maxLength={300} placeholder={t('teach.wizard.steps.docRefPh')} onChange={(e) => setStep(i, 'docRef', e.target.value)} />
-                  </Field>
-                </div>
-              </div>
-            ))}
-          </div>
+          <CaptureCard mask={maskFrames} language={transcribeLanguage(meta.language, locale)} onSteps={loadRecorded} onBusyChange={setRecBusy} />
+          <StepEditor steps={steps} open={open} onToggle={toggleRow} onSetAll={setAllRows}
+            onChange={setStep} onMove={moveStep} onRemove={removeStep} />
           <button type="button" className="wka-btn sm" style={{ marginTop: 12 }} onClick={addStep}><Plus size={14} /> {t('teach.wizard.steps.addStep')}</button>
           {!okSteps && <div className="tch-missing" style={{ marginTop: 14 }}><AlertTriangle size={15} /><span>{t('teach.wizard.steps.needOne')}</span></div>}
         </div>
@@ -275,13 +282,13 @@ export default function WorkflowWizard({ initial, onCancel, onSaved }) {
 
       {/* footer actions */}
       <div className="tch-wizfoot">
-        <button type="button" className="wka-btn ghost" disabled={phase === 0 || !!busy} onClick={goBack}><ChevronLeft size={14} /> {t('teach.wizard.back')}</button>
+        <button type="button" className="wka-btn ghost" disabled={phase === 0 || !!busy || recBusy} title={holdTitle} onClick={goBack}><ChevronLeft size={14} /> {t('teach.wizard.back')}</button>
         {phase < PHASES.length - 1
-          ? <button type="button" className="wka-btn primary" onClick={goNext}>{t('teach.wizard.next')} <ChevronRight size={14} /></button>
+          ? <button type="button" className="wka-btn primary" disabled={recBusy} title={holdTitle} onClick={goNext}>{t('teach.wizard.next')} <ChevronRight size={14} /></button>
           : <span />}
         <span className="wka-spacer" />
-        <button type="button" className="wka-btn" disabled={!canSaveDraft} title={missing.length ? t('teach.wizard.needBasicsFirst') : ''} onClick={saveDraft}>{busy === 'draft' ? <Spinning /> : <Check size={14} />} {t('teach.wizard.saveDraft')}</button>
-        <button type="button" className="wka-btn primary" disabled={!canPublishNow} title={!ack ? t('teach.wizard.ackFirst') : (missing.length || !okSteps) ? t('teach.wizard.completeFirst') : ''} onClick={publish}>{busy === 'publish' ? <Spinning /> : <GraduationCap size={14} />} {t('teach.wizard.publish')}</button>
+        <button type="button" className="wka-btn" disabled={!canSaveDraft || recBusy} title={recBusy ? holdTitle : missing.length ? t('teach.wizard.needBasicsFirst') : ''} onClick={saveDraft}>{busy === 'draft' ? <Spinning /> : <Check size={14} />} {t('teach.wizard.saveDraft')}</button>
+        <button type="button" className="wka-btn primary" disabled={!canPublishNow || recBusy} title={recBusy ? holdTitle : !ack ? t('teach.wizard.ackFirst') : (missing.length || !okSteps) ? t('teach.wizard.completeFirst') : ''} onClick={publish}>{busy === 'publish' ? <Spinning /> : <GraduationCap size={14} />} {t('teach.wizard.publish')}</button>
       </div>
     </section>
   )
