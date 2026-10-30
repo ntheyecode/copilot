@@ -28,6 +28,7 @@ export default {
       loading: 'Loading your workflows',
       emptyTitle: 'No workflows yet',
       emptyDetail: 'Create your first workflow to guide your team through a task in your app.',
+      draftGone: 'That draft could not be opened. It may have been published or removed since. Your workflows are listed below.',
       untitled: 'Untitled workflow',
       stepCount_one: '{n} step',
       stepCount_other: '{n} steps',

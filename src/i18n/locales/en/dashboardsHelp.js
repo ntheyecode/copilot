@@ -215,6 +215,34 @@ export default {
         ],
       },
     },
+    issues: {
+      title: 'Workflow issues',
+      lead: 'Workflow issues collects the moments when a published workflow did not match what a teammate saw on screen: the screen changed, an error showed, they could not continue, they needed a step the workflow does not have, or a step was skipped. Each issue is about the workflow, not about anyone\'s work.',
+      shot: {
+        alt: 'Workflow issues: summary chips, the Active filter, the new-since-your-last-visit list, and one issue opened with the suggested step and the screen the guide saw.',
+        caption: 'Workflow issues. Repeats of the same step and kind add to one issue instead of a new one.',
+      },
+      howTo: 'How to work through workflow issues',
+      steps: [
+        'Open <b>Workflow issues</b> from the Manage section of the menu, or from the Teach studio. The number beside it counts issues that are new since your last visit.',
+        'The chips at the top count open and acknowledged issues, and active issues by kind. Choose <b>Active</b>, <b>Resolved</b>, <b>Dismissed</b> or <b>All</b>, and pick one workflow to narrow the list.',
+        'Click a row to see what the guide noticed, the screen it saw and when it happened.',
+        '<b>Acknowledge</b> an issue so the team knows someone is on it. After you update the workflow, <b>Resolve</b> it. If nothing needs to change, <b>Dismiss</b> it and repeats stay quiet. Add a note to say why.',
+      ],
+      adopt: {
+        h: 'Add a missing step to the workflow',
+        steps: [
+          'When a teammate needed a step the workflow does not have, the issue shows the suggested step.',
+          'The workflow\'s author or a company admin presses <b>Add this step to the workflow draft</b> and confirms. The live workflow keeps running as it is.',
+          'Open the draft in the Teach studio, check the new step and publish when it reads right.',
+        ],
+      },
+      shotAdopt: {
+        alt: 'The confirmation to add the suggested step to a draft of the workflow.',
+        caption: 'Nothing changes for your team until someone publishes the draft.',
+      },
+      watch: 'GRC and executives follow every issue read-only. Executives also see the active issues by kind on the executive dashboard.',
+    },
     admin: {
       title: 'Flows and roles',
       lead: 'In the company console, Team, you set two things per person: their <b>work flow</b> (how guided tasks reach them) and their <b>role</b> (what they manage). Changes take effect right away.',

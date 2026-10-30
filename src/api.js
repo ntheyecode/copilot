@@ -219,7 +219,7 @@ export const api = {
   workGrcStats: () => req('GET', '/api/work/grc/stats'),
   // Teach workflows (trainer / company admin author; everyone sees published).
   workflowsList: (state) => req('GET', `/api/work/workflows${state ? `?state=${encodeURIComponent(state)}` : ''}`),
-  workflowGet: (id) => req('GET', `/api/work/workflows/${id}`),
+  workflowGet: (id) => req('GET', `/api/work/workflows/${encodeURIComponent(id)}`),
   workflowCreate: (body) => req('POST', '/api/work/workflows', body),
   workflowUpdate: (id, body) => req('PATCH', `/api/work/workflows/${id}`, body),
   workflowPublish: (id) => req('POST', `/api/work/workflows/${id}/publish`),
@@ -233,7 +233,7 @@ export const api = {
   // open the guided console on sessionId (same as an assigned task's start).
   workflowStart: (id) => req('POST', `/api/work/workflows/${encodeURIComponent(id)}/start`),
   // Wave 3 part C: workflow incidents (trainers, PMs and above, admins, executives).
-  workflowIncidents: ({ state, workflow } = {}) => req('GET', `/api/work/workflow-incidents?${new URLSearchParams({ ...(state ? { state } : {}), ...(workflow ? { workflow } : {}) })}`),
+  workflowIncidents: ({ state, workflow, limit } = {}) => req('GET', `/api/work/workflow-incidents?${new URLSearchParams({ ...(state ? { state } : {}), ...(workflow ? { workflow } : {}), ...(limit ? { limit: String(Number(limit)) } : {}) })}`),
   workflowIncidentSetState: (id, state, note) => req('PATCH', `/api/work/workflow-incidents/${encodeURIComponent(id)}`, { state, note }),
   workflowIncidentFramePath: (id) => `/api/work/workflow-incidents/${encodeURIComponent(id)}/frame`,
   workflowIncidentAdopt: (id) => req('POST', `/api/work/workflow-incidents/${encodeURIComponent(id)}/adopt`),

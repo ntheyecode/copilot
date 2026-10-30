@@ -13,7 +13,7 @@
 // it consumes src/api.js workflow* calls only.
 // ============================================================================
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { GraduationCap, Plus, RefreshCw, Building2, Check } from 'lucide-react'
+import { GraduationCap, Plus, RefreshCw, Building2, Check, Signpost } from 'lucide-react'
 import { api, friendlyError } from '../../../api.js'
 import { useT } from '../../../i18n/index.jsx'
 import { roleViewOf } from '../../../shared/work_roles_options.js'
@@ -23,6 +23,9 @@ import { TEACH_CSS } from './teach.css.js'
 import { STEP_READING_CSS } from './stepReading.css.js'
 import WorkflowList from './WorkflowList.jsx'
 import WorkflowWizard from './WorkflowWizard.jsx'
+import { useDraftDeepLink } from './useDraftDeepLink.js'
+import { useWorkflowAlertsUnread } from '../incidents/useWorkflowAlertsUnread.js'
+import { INBOX_PATH } from '../incidents/incidentsModel.js'
 
 // The shared `.wka` shell (top bar + main), same frame as the exec dashboard.
 function Shell({ company, children }) {
@@ -76,7 +79,10 @@ export default function TeachStudio() {
 
   const toast = (msg) => { setOk(msg); setTimeout(() => setOk(''), 4000) }
   const startNew = () => { setEditing(null); setMode('wizard') }
-  const startEdit = (wf) => { setEditing(wf); setMode('wizard') }
+  const startEdit = useCallback((wf) => { setEditing(wf); setMode('wizard') }, [])
+  // ?draft=<id> (from the Workflow issues inbox) opens that draft in the wizard.
+  useDraftDeepLink(roleView.showTeach ? workflows : null, startEdit, () => setErr(t('teach.list.draftGone')))
+  const issuesUnread = useWorkflowAlertsUnread(ready && roleView.showIncidents)
   const onSaved = ({ action }) => {
     setMode('list'); setEditing(null); load()
     toast(action === 'publish' ? t('teach.wizard.publishedOk') : t('teach.wizard.draftSavedOk'))
@@ -128,6 +134,12 @@ export default function TeachStudio() {
             <div className="wka-toolbar">
               <button type="button" className="wka-btn primary" onClick={startNew}><Plus size={14} /> {t('teach.list.newWorkflow')}</button>
               <button type="button" className="wka-btn sm ghost" onClick={load}><RefreshCw size={13} /> {t('teach.list.refresh')}</button>
+              {roleView.showIncidents && (
+                <a className="wka-btn sm tch-issues" href={INBOX_PATH} title={t('wfIssues.nav.tip')}>
+                  <Signpost size={13} /> {t('wfIssues.nav.label')}
+                  {issuesUnread > 0 && <span className="tch-issues-n" aria-label={t.n('wfIssues.nav.unread', issuesUnread, { n: issuesUnread })}>{issuesUnread > 99 ? '99+' : issuesUnread}</span>}
+                </a>
+              )}
               <span className="wka-spacer" />
               {workflows && workflows.length > 0 && (
                 <span className="tch-counts">
