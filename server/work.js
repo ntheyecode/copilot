@@ -220,11 +220,19 @@ export function extractJson(text, preferKey = null) {
 // next call, so the strong model is a just-in-time backup, not the default.
 // Returns { raw, escalated, reason }. Never silently swallows a real failure:
 // a strong-model error on the error path propagates (SUPREME RULE III).
-async function escalateVision(run, primary, strong, isWeak) {
+// `better(a, b)` (optional): on the weak path, which of the two answers to keep
+// (true = the backup's). Without it the backup's answer always wins (unchanged for
+// existing callers); with it, a backup that comes back worse cannot replace a usable
+// primary answer.
+export async function escalateVision(run, primary, strong, isWeak, better = null) {
   try {
     const raw = await run(primary.cfg, primary.visionModel)
     if (strong && isWeak(raw)) {
-      try { const raw2 = await run(strong.cfg, strong.visionModel); return { raw: raw2, escalated: true, reason: 'weak' } }
+      try {
+        const raw2 = await run(strong.cfg, strong.visionModel)
+        if (better && !better(raw2, raw)) return { raw, escalated: false, reason: 'strong_not_better' }
+        return { raw: raw2, escalated: true, reason: 'weak' }
+      }
       catch { return { raw, escalated: false, reason: 'strong_failed' } }   // keep primary's result if the backup also fails
     }
     return { raw, escalated: false, reason: '' }

@@ -38,6 +38,7 @@ import { registerKbSpaceRoutes } from './kb_spaces_routes.js'
 import { registerGuidanceDepthRoutes } from './work_depth_routes.js'
 import { registerWorkProjectRoutes } from './work_project_routes.js'
 import { registerWorkRolesRoutes } from './work_roles_routes.js'
+import { sessionIdForSwitch } from './work_switch_scope.js'
 import { registerWorkPracticeRoutes } from './work_practices_routes.js'
 import { registerTeamProjectRoutes } from './work_team_projects_routes.js'
 import { registerSsoRoutes } from './sso.js'
@@ -678,7 +679,7 @@ function makeOnSwitch(req, sessionId) {
   return (evt) => {
     try {
       const label = (id) => (id && ai.PROVIDERS[id] && ai.PROVIDERS[id].label) || id || 'another provider'
-      const why = evt.reason === 'rate_limit' ? 'busy (rate limit)' : (evt.reason === 'retired' ? 'retired' : 'unavailable')
+      const why = evt.reason === 'rate_limit' ? 'busy (rate limit)' : evt.reason === 'retired' ? 'retired' : evt.reason === 'weak' ? 'gave an unclear answer' : 'unavailable'
       store.recordWorkIncident({
         kind: evt.fatal ? 'ai_exhausted' : 'ai_failover',
         status: evt.fatal ? 503 : null,
@@ -704,8 +705,7 @@ function makeOnSwitch(req, sessionId) {
 // runtimes both get it.
 function withFailover(req, rt) {
   if (!rt) return rt
-  const sessionId = (req && req.params && req.params.id) || null
-  return { ...rt, alternates: aiAlternates(req, rt.providerId), onSwitch: makeOnSwitch(req, sessionId) }
+  return { ...rt, alternates: aiAlternates(req, rt.providerId), onSwitch: makeOnSwitch(req, sessionIdForSwitch(req)) }
 }
 // MANDATORY security gate, in ONE place (SUPREME RULE II). Deterministically
 // verifies the code + dependencies we are about to hand the user BEFORE they act:

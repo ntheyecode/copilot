@@ -6,6 +6,7 @@
 import { planProjectMap } from './work_project_plan.js'
 import { validateBreakdown, shouldBeProject } from './work_project_validate.js'
 import { parseAudioPayload, pickTranscribeRuntime, transcribeAudio, AI_NO_TRANSCRIBE } from './ai_transcribe.js'
+import { readWorkflowStep, isWeakReading, isBetterReading, STEP_READ_CODES } from './workflow_step_reader.js'
 
 export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale }) {
   // ---- PM / Sr PM / admin: projects ----
@@ -181,6 +182,39 @@ export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth,
       }
       const out = await transcribeAudio(pick.rt, { audio: v.buffer, mime: v.mime, language: v.language })
       res.json({ text: out.text, segments: out.segments || null })
+    } catch (e) { sendWorkError(res, e, req) }
+  })
+  // Wave 3: read ONE step of a draft with the company's own vision model: the
+  // control's visible label and what shows once the step is done. One step per
+  // call, so the review screen shows progress and a long workflow never becomes
+  // one unbounded request. The cheap vision model reads first; the stronger one
+  // gets a single retry only when the answer is unusable or self-doubting. The
+  // result is stored as a suggestion beside the trainer's text, never over it.
+  app.post('/api/work/workflows/:id/steps/:stepId/read', requireWorkAuth, requireWorkSubscription, async (req, res) => {
+    try {
+      const input = store.prepareStepRead(req.workUser.id, req.params.id, req.params.stepId)
+      if (!input.step.shot) return res.status(400).json({ error: 'This step has no captured screen to read. Record it again or fill in the control yourself.', code: STEP_READ_CODES.NO_FRAME })
+      const rr = await resolveWorkRuntime(req, res, { needVision: true }); if (!rr) return
+      const primary = { cfg: rr.rt, visionModel: rr.visionModel }
+      const strong = rr.strong ? { cfg: rr.strong.rt, visionModel: rr.strong.visionModel } : null
+      const see = async (images, prompt) => {
+        const out = await work.escalateVision(
+          (cfg, model) => ai.analyseImages(cfg, prompt, images, model), primary, strong, isWeakReading, isBetterReading,
+        )
+        // A switch to the stronger model is recorded like every other substitution.
+        if (out.escalated && typeof primary.cfg.onSwitch === 'function') {
+          primary.cfg.onSwitch({
+            scope: 'vision', reason: out.reason, crossProvider: strong.cfg.providerId !== primary.cfg.providerId,
+            fromProvider: primary.cfg.providerId, fromModel: primary.visionModel, toProvider: strong.cfg.providerId, toModel: strong.visionModel,
+          })
+        }
+        return out.raw
+      }
+      const out = await readWorkflowStep({ ...input, see })
+      if (!out.ok) {
+        return res.status(422).json({ error: 'The screen for this step could not be read clearly. Fill in the control and the done check yourself.', code: out.code })
+      }
+      res.json({ workflow: store.saveStepReading(req.workUser.id, req.params.id, req.params.stepId, out.reading) })
     } catch (e) { sendWorkError(res, e, req) }
   })
   app.get('/api/work/workflows/frames/:ref', requireWorkAuth, wrap((req, res) => {

@@ -138,3 +138,64 @@ test('without frame storage, frame calls fail clearly (never a silent success)',
   const { api } = harness([trainer])
   assert.throws(() => api.uploadWorkflowFrame('t', JPG), /not configured/)
 })
+
+test('step reading: author of a draft only; tenant-scoped frames; saved beside trainer text', () => {
+  const { api } = harness([trainer, member, other, admin], { withFrames: true })
+  const f1 = api.uploadWorkflowFrame('t', JPG).ref
+  const f2 = api.uploadWorkflowFrame('t', JPG).ref
+  const w = api.createWorkflow('t', { meta: META, steps: [{ id: 's1', instruction: 'Open', target: 'Mine', shot: f1 }, { id: 's2', instruction: 'Save', shot: f2 }] })
+  assert.throws(() => api.prepareStepRead('m', w.id, 's1'), /trainer or company admin/)
+  assert.throws(() => api.prepareStepRead('o', w.id, 's1'), /not found/)
+  assert.throws(() => api.prepareStepRead('t', w.id, 'nope'), /Step not found/)
+  const p = api.prepareStepRead('t', w.id, 's1')
+  assert.equal(p.nextStep.shot, f2)
+  assert.equal(p.total, 2)
+  assert.match(p.loadFrame(f1), /^data:image\/jpeg;base64,/)
+  assert.throws(() => p.loadFrame('f'.repeat(32) + '.jpg'), /missing/)
+  const saved = api.saveStepReading('t', w.id, 's1', { controlLabel: 'Transfers', doneWhen: 'List shows', confidence: 0.9, shot: f1, afterShot: f2 })
+  assert.equal(saved.steps[0].target, 'Mine')                       // trainer text untouched
+  assert.equal(saved.steps[0].reading.controlLabel, 'Transfers')
+  // a reading for a frame the step no longer shows is refused, not stored
+  assert.throws(() => api.saveStepReading('t', w.id, 's1', { controlLabel: 'X', confidence: 1, shot: f2 }), /changed while it was being read/)
+  // the reading survives an ordinary edit that keeps the frame, and travels with a revision
+  const edited = api.updateWorkflow('t', w.id, { steps: saved.steps })
+  assert.equal(edited.steps[0].reading.controlLabel, 'Transfers')
+  api.publishWorkflow('t', w.id)
+  assert.throws(() => api.prepareStepRead('t', w.id, 's1'), /Only a draft/)
+  const rev = api.reviseWorkflow('t', w.id)
+  assert.equal(rev.steps[0].reading.controlLabel, 'Transfers')
+})
+
+test('regression: a reading cannot be forged through a save; the server copy is kept by screenshot', () => {
+  const { api } = harness([trainer], { withFrames: true })
+  const f1 = api.uploadWorkflowFrame('t', JPG).ref
+  const forged = { controlLabel: 'Forged', confidence: 1, shot: f1 }
+  const w = api.createWorkflow('t', { meta: META, steps: [{ id: 's1', instruction: 'Open', shot: f1, reading: forged }] })
+  assert.equal(w.steps[0].reading, null)                          // create drops client readings
+  api.saveStepReading('t', w.id, 's1', { controlLabel: 'Real', confidence: 0.7, shot: f1 })
+  const out = api.updateWorkflow('t', w.id, { steps: [{ id: 's1', instruction: 'Open now', shot: f1, reading: forged }] })
+  assert.equal(out.steps[0].reading.controlLabel, 'Real')         // server copy kept, forged one ignored
+  const cleared = api.updateWorkflow('t', w.id, { steps: [{ id: 's1', instruction: 'Open now', shot: null }] })
+  assert.equal(cleared.steps[0].reading, null)                    // screenshot removed -> reading gone
+})
+
+test('regression: a reading whose after screen is no longer the next step is dropped', () => {
+  const { api } = harness([trainer], { withFrames: true })
+  const [f1, f2, f3] = [1, 2, 3].map(() => api.uploadWorkflowFrame('t', JPG).ref)
+  const w = api.createWorkflow('t', { meta: META, steps: [{ id: 's1', instruction: 'a', shot: f1 }, { id: 's2', instruction: 'b', shot: f2 }] })
+  api.saveStepReading('t', w.id, 's1', { controlLabel: 'Go', doneWhen: 'B shows', confidence: 0.9, shot: f1, afterShot: f2 })
+  const kept = api.updateWorkflow('t', w.id, { steps: [{ id: 's1', instruction: 'a', shot: f1 }, { id: 's2', instruction: 'b2', shot: f2 }] })
+  assert.equal(kept.steps[0].reading.controlLabel, 'Go')
+  const swapped = api.updateWorkflow('t', w.id, { steps: [{ id: 's1', instruction: 'a', shot: f1 }, { id: 's3', instruction: 'c', shot: f3 }] })
+  assert.equal(swapped.steps[0].reading, null)
+  // and a save racing a read: the after frame changed in flight -> refused
+  assert.throws(() => api.saveStepReading('t', w.id, 's1', { controlLabel: 'Go', confidence: 0.9, shot: f1, afterShot: f2 }), /changed while it was being read/)
+})
+
+test('regression: repeated step ids are made unique, so a read can never land on another step', () => {
+  const { api } = harness([trainer])
+  const w = api.createWorkflow('t', { meta: META, steps: [{ id: 's2', instruction: 'a' }, { id: 's3', instruction: 'b' }, { instruction: 'c' }] })
+  const ids = w.steps.map((s) => s.id)
+  assert.equal(new Set(ids).size, 3)
+  assert.deepEqual(ids.slice(0, 2), ['s2', 's3'])
+})

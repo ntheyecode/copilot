@@ -449,6 +449,7 @@ export const {
   listWorkflowsForUser, getWorkflowForUser, createWorkflow, updateWorkflow,
   publishWorkflow, reviseWorkflow, retireWorkflow, deleteWorkflow,
   uploadWorkflowFrame, readWorkflowFrame, userCanAuthorWorkflows,
+  prepareStepRead, saveStepReading,
 } = wfs
 
 // ---- AI seed (one-time, at deploy) ---------------------------------------

@@ -103,7 +103,8 @@ export function createWorkflows(ctx) {
     const t = now()
     const rec = {
       id: id(), groupId: id(), version: 1, state: 'draft',
-      companyId: a.companyId, authorId: a.id, meta: v.meta, steps: s.steps,
+      // a new workflow has no server readings yet; any sent by the client are dropped
+      companyId: a.companyId, authorId: a.id, meta: v.meta, steps: wf.carryReadings([], s.steps),
       createdAt: t, updatedAt: t, publishedAt: null, retiredAt: null,
     }
     all().push(rec); persist()
@@ -120,7 +121,7 @@ export function createWorkflows(ctx) {
       w.meta = v.meta
     }
     let dropped = null
-    if (steps !== undefined) { dropped = shotsOf(w); w.steps = wf.validateSteps(steps).steps }
+    if (steps !== undefined) { dropped = shotsOf(w); w.steps = wf.carryReadings(w.steps, wf.validateSteps(steps).steps) }
     w.updatedAt = now()
     if (dropped) purgeUnreferenced(w.companyId, dropped)   // frames this edit removed
     persist()
@@ -200,10 +201,45 @@ export function createWorkflows(ctx) {
     return out
   }
 
+  // ---- Wave 3 step reading: what the vision model saw in a step's frames ----
+  // prepare: the author/admin of a DRAFT gets the step, its after-step and a
+  // tenant-scoped frame loader (data URL) for workflow_step_reader.js.
+  function prepareStepRead(userId, wid, stepId) {
+    const { w } = mustAct(userId, wid)
+    if (!wf.canEditContent(w.state)) throw httpErr(409, 'Only a draft can be read. Revise a published workflow to make a new version.')
+    if (!frames) throw httpErr(503, 'Frame storage is not configured on this server.')
+    const index = (w.steps || []).findIndex((s) => s && s.id === stepId)
+    if (index < 0) throw httpErr(404, 'Step not found.')
+    const companyId = w.companyId
+    const loadFrame = (ref) => {
+      const f = wf.isFrameRef(ref) ? frames.read(companyId, ref) : null
+      if (!f) throw httpErr(404, 'The screenshot for this step is missing. Record it again or fill in the control yourself.')
+      return `data:${f.mime};base64,${f.buffer.toString('base64')}`
+    }
+    return { step: w.steps[index], nextStep: w.steps[index + 1] || null, meta: w.meta, index, total: w.steps.length, loadFrame }
+  }
+  // save: attach the reading as a suggestion. It never touches the trainer's own
+  // target/doneWhen, and it is dropped when the step's frame changed while the
+  // read was in flight (the trainer edited the step), so a reading always
+  // describes the frame the step shows now.
+  function saveStepReading(userId, wid, stepId, reading) {
+    const { w } = mustAct(userId, wid)
+    if (!wf.canEditContent(w.state)) throw httpErr(409, 'Only a draft can be edited. Revise a published workflow to make a new version.')
+    const i = (w.steps || []).findIndex((x) => x && x.id === stepId)
+    if (i < 0) throw httpErr(404, 'Step not found.')
+    const s = w.steps[i]
+    const r = wf.normalizeReading(reading, s.shot)
+    const nextShot = w.steps[i + 1] ? w.steps[i + 1].shot : null
+    if (!r || (r.afterShot && r.afterShot !== nextShot)) throw httpErr(409, 'This step changed while it was being read. Read it again.')
+    s.reading = r; w.updatedAt = now(); persist()
+    return publicShape(w)
+  }
+
   return {
     listWorkflowsForUser, getWorkflowForUser, createWorkflow, updateWorkflow,
     publishWorkflow, reviseWorkflow, retireWorkflow, deleteWorkflow,
     uploadWorkflowFrame, readWorkflowFrame, userCanAuthorWorkflows,
+    prepareStepRead, saveStepReading,
   }
 }
 

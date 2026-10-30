@@ -100,6 +100,8 @@ export function stepsToPayload(steps) {
         const v = String((s && s[k]) || '').trim()
         if (v) out[k] = v
       }
+      // No `reading`: the step reader's suggestion is written by the server only,
+      // and a save keeps the one it holds for each screenshot.
       return out
     })
     .filter(Boolean)
@@ -126,5 +128,6 @@ export function stepsToForm(steps) {
     doneWhen: String((s && s.doneWhen) || ''),
     docRef: String((s && s.docRef) || ''),
     shot: String((s && s.shot) || ''),
+    reading: s && s.reading && typeof s.reading === 'object' ? s.reading : null,
   }))
 }

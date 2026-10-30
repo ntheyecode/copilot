@@ -51,22 +51,72 @@ export function validateMeta(meta) {
   return { ok: missing.length === 0, missing, meta: m }
 }
 
+// Wave 3: what the step reader saw in the step's frame. A SUGGESTION only: it sits
+// beside the trainer's own target/doneWhen and never replaces them; the trainer
+// accepts it in review. It is bound to the frame it was read from, so a step whose
+// shot changed drops its stale reading instead of showing one for another screen.
+export const CONTROL_KINDS = ['button', 'link', 'menu', 'tab', 'field', 'checkbox', 'option', 'icon', 'other', 'none']
+// One line of plain text: no control characters, no bold/backtick markup.
+const LINE = (v, n) => STR(v).replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/[*`]+/g, '').replace(/\s+/g, ' ').trim().slice(0, n)
+export function normalizeReading(r, shot) {
+  if (!r || typeof r !== 'object' || !shot || r.shot !== shot) return null
+  const controlLabel = LINE(r.controlLabel, 120)
+  const doneWhen = LINE(r.doneWhen, 300)
+  if (!controlLabel && !doneWhen) return null
+  const c = Number(r.confidence)
+  return {
+    controlLabel: controlLabel || null,
+    controlKind: CONTROL_KINDS.includes(r.controlKind) ? r.controlKind : 'other',
+    doneWhen: doneWhen || null,
+    confidence: Number.isFinite(c) ? Math.max(0, Math.min(1, Math.round(c * 100) / 100)) : 0,
+    shot,
+    afterShot: isFrameRef(r.afterShot) ? r.afterShot : null,
+    at: STR(r.at).slice(0, 40) || null,
+  }
+}
+
 export function normalizeStep(step = {}, i = 0) {
   const s = step && typeof step === 'object' ? step : {}
+  const shot = isFrameRef(s.shot) ? s.shot : null   // scrubbed frame ref from the Wave 2 capture, or none
   return {
     id: STR(s.id) || `s${i + 1}`,
     instruction: STR(s.instruction),
     target: STR(s.target) || null,     // the control Guide mode finds on playback
     doneWhen: STR(s.doneWhen) || null, // the completion check
     docRef: STR(s.docRef) || null,     // backing doc id / anchor
-    shot: isFrameRef(s.shot) ? s.shot : null,   // scrubbed frame ref from the Wave 2 capture, or none
+    shot,
+    reading: normalizeReading(s.reading, shot),
   }
 }
 
 export function validateSteps(steps) {
   const arr = Array.isArray(steps) ? steps.map(normalizeStep) : []
+  // Step ids are unique within a workflow: a repeated id (a deleted step's id
+  // reused by position, a pasted row) gets a fresh one, so an action on one step
+  // can never land on another.
+  const seen = new Set()
+  let n = arr.length
+  for (const s of arr) {
+    while (seen.has(s.id)) s.id = `s${++n}`
+    seen.add(s.id)
+  }
   const firstEmpty = arr.findIndex((s) => !s.instruction)
   return { ok: arr.length > 0 && firstEmpty === -1, steps: arr, firstEmpty }
+}
+
+// Readings are written by the step reader only. On a save, each step keeps the
+// reading the server already holds for its screenshot (the client's copy is never
+// trusted), and loses it when the frame it was read with is no longer the next
+// step's frame (the "done when" described a screen that is not there now).
+export function carryReadings(prevSteps, nextSteps) {
+  const byShot = new Map()
+  for (const s of (Array.isArray(prevSteps) ? prevSteps : [])) if (s && s.shot && s.reading) byShot.set(s.shot, s.reading)
+  return nextSteps.map((s, i) => {
+    const r = s.shot ? byShot.get(s.shot) : null
+    const after = nextSteps[i + 1] ? nextSteps[i + 1].shot : null
+    const ok = r && (!r.afterShot || r.afterShot === after)
+    return { ...s, reading: ok ? normalizeReading(r, s.shot) : null }
+  })
 }
 
 // Lifecycle predicates. A draft is the only editable state; a published
@@ -83,5 +133,5 @@ export function nextVersion(versionsInGroup) {
 
 export default {
   WORKFLOW_STATES, REQUIRED_META, FRAME_REF_RE, isFrameRef, normalizeMeta, validateMeta,
-  normalizeStep, validateSteps, canEditContent, canPublish, canRetire, nextVersion,
+  CONTROL_KINDS, normalizeReading, normalizeStep, validateSteps, carryReadings, canEditContent, canPublish, canRetire, nextVersion,
 }

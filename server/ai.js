@@ -401,6 +401,13 @@ export async function generate(cfg, system, userText, tele = null) {
   return chat(cfg, String(system || ''), [{ role: 'user', content: String(userText || '') }], tele)
 }
 
+const GEMINI_IMAGE_MIMES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif'])
+export function geminiImageMime(type) {
+  const t = String(type || '').toLowerCase()
+  if (t === 'image/jpg') return 'image/jpeg'
+  return GEMINI_IMAGE_MIMES.has(t) ? t : 'image/jpeg'
+}
+
 // Several images in ONE vision call (WorkCoPilot's screen read). model is the
 // vision-capable model resolved by findVisionModel; a missing one is a clear 400.
 export async function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}, tele = null) {
@@ -421,7 +428,13 @@ export async function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}
   const run = (m) => {
     if (p.kind === 'gemini') {
       const parts = [{ text: prompt }]
-      for (const u of imgs) parts.push({ inline_data: { mime_type: 'image/jpeg', data: String(u).replace(/^data:[^;]+;base64,/, '') } })
+      // The data URL's own type when Gemini accepts it (PNG/WebP workflow frames as
+      // well as JPEG screen grabs); anything else (GIF/BMP attachments) keeps the
+      // long-standing JPEG label rather than a type Gemini rejects.
+      for (const u of imgs) {
+        const mt = /^data:(image\/[a-z0-9.+-]+);base64,/i.exec(String(u))
+        parts.push({ inline_data: { mime_type: geminiImageMime(mt && mt[1]), data: String(u).replace(/^data:[^;]+;base64,/, '') } })
+      }
       return geminiGenerate(p, cfg.apiKey, m, parts, mediaRes)
     }
     return openaiVision(p, cfg.apiKey, m, prompt, imgs, mediaRes)

@@ -229,6 +229,9 @@ export const api = {
   // Wave 2 capture: upload a scrubbed frame -> { ref } for a step's `shot`; the path serves it back.
   workflowFrameUpload: (dataUrl) => req('POST', '/api/work/workflows/frames', { dataUrl }),
   workflowFramePath: (ref) => `/api/work/workflows/frames/${encodeURIComponent(ref)}`,
+  // Wave 3: read one draft step's frames -> { workflow } with steps[i].reading
+  // ({ controlLabel, controlKind, doneWhen, confidence }), a suggestion for review.
+  workflowReadStep: (id, stepId) => req('POST', `/api/work/workflows/${encodeURIComponent(id)}/steps/${encodeURIComponent(stepId)}/read`),
   // Speech to text for one audio chunk (base64 or data URL) -> { text, segments|null };
   // segments are relative to the chunk. Uses the company's own AI provider.
   workTranscribe: (audio, mime, language) => req('POST', '/api/work/transcribe', { audio, mime, language }),
