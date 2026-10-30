@@ -1,0 +1,7 @@
+{
+  "edition": "onprem",
+  "env": {
+    "WORK_DB_AUTO_MIGRATE": "1"
+  },
+  "notes": "Installed on the customer's servers. Keep WORK_DATA_DIR outside the program folder. An upgrade copies the program files of a new bundle over the installation (compose never writes into an installation), and the next start applies any new schema migrations, each in its own transaction. Persistence (WORK_DB_*) is chosen at first-run setup."
+}

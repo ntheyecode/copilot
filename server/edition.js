@@ -4,7 +4,8 @@
 //
 // WORK_EDITION picks the edition (default `all`, today's product). An unknown
 // value throws at import, so the server refuses to start rather than running as
-// the wrong edition. This is the only module that reads WORK_EDITION.
+// the wrong edition. This is the only server module that reads WORK_EDITION
+// (editions/profile.js sets it before the server loads).
 import { makeCaps } from './edition_registry.js'
 
 export const caps = makeCaps(process.env.WORK_EDITION)

@@ -8,6 +8,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { CAPABILITIES, EDITIONS, EDITION_IDS, DEFAULT_EDITION, makeCaps, resolveEditionId } from './edition_registry.js'
 import { publicEdition, soloSignupRefusal, companyCreationRefusal, stripeOffReason } from './edition.js'
+import { importsOf } from '../build/import_check.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(here, '..')
@@ -116,7 +117,9 @@ function codeFiles(dirs, { skip = () => false } = {}) {
 // Call sites ask for capabilities, never edition names, and only
 // server/edition.js reads WORK_EDITION. Tests are exempt (they pick editions on
 // purpose); the HTTP harness is the one test helper that sets WORK_EDITION.
-const REGISTRY_FILES = new Set(['server/edition_registry.js', 'server/edition.js'])
+// The registry, the resolver, and the edition plumbing (start an edition,
+// compose an edition) are the only places that handle edition ids by design.
+const REGISTRY_FILES = new Set(['server/edition_registry.js', 'server/edition.js', 'editions/profile.js', 'editions/start.mjs', 'build/compose.js', 'build/compose.mjs'])
 const isTest = (rel) => /\.test\.m?js$/.test(rel) || rel === 'server/edition_http_harness.mjs'
 const ids = EDITION_IDS.join('|')
 const QUOTED_ID = new RegExp(`['"\`](${ids})['"\`]`)
@@ -147,25 +150,19 @@ test('the edition gate catches the shapes it exists for', () => {
 })
 
 test('no code outside the registry branches on an edition or reads WORK_EDITION', () => {
-  const files = codeFiles(['server', 'src', 'scripts', 'workcopilot'], { skip: (rel) => REGISTRY_FILES.has(rel) || isTest(rel) })
+  const files = codeFiles(['server', 'src', 'scripts', 'workcopilot', 'editions', 'build'], { skip: (rel) => REGISTRY_FILES.has(rel) || isTest(rel) })
   assert.deepEqual(offenders(files), [])
 })
 
 // Deploy contract: the server is deployed by copying server/ (and dist/), see
 // docs/WORKCOPILOT-HANDOFF.md. A server module that imports from outside
 // server/ would deploy fine and then fail to start. Tests are exempt (they are
-// not deployed).
+// not deployed). The import scanner is the one build/compose.js also uses.
 test('server modules import nothing outside server/ (other than packages)', () => {
   const SERVER = path.join(ROOT, 'server')
   const bad = []
   for (const f of codeFiles(['server'], { skip: isTest })) {
-    const src = fs.readFileSync(f.abs, 'utf8')
-    const re = /(?:import\s[^'"`]*?from\s*|import\s*\(\s*|import\s*|export\s[^'"`]*?from\s*|new URL\(\s*|require\(\s*)['"`](\.{1,2}\/[^'"`]+)['"`]/g
-    let m
-    while ((m = re.exec(src))) {
-      const target = path.resolve(path.dirname(f.abs), m[1])
-      if (!target.startsWith(SERVER + path.sep)) bad.push(`${f.rel} imports ${m[1]}`)
-    }
+    for (const imp of importsOf(f.abs)) if (!imp.target.startsWith(SERVER + path.sep)) bad.push(`${f.rel} imports ${imp.spec}`)
   }
   assert.deepEqual(bad, [])
 })

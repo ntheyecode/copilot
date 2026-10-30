@@ -9,7 +9,7 @@ a fork. The security and key-custody posture of each configuration is in
 |---|---|
 | 1. Capability registry and the first call sites | BUILT |
 | 2. Storage drivers (json, postgres) | BUILT (document-per-record first cut) |
-| 3. Folder split | PLANNED |
+| 3. Folder split | BUILT (minimal: editions/ + build/ composer); full move PLANNED |
 | 4. On-prem and managed first-run setup | PLANNED |
 
 ---
@@ -274,4 +274,125 @@ the server that wrote the db.json.
 `WORK_DB_*` variables, `npm run db:migrate`, `npm run db:import -- --from
 <data dir>/db.json`, start the server. Rollback: stop, `npm run db:export`,
 unset `WORK_DB_DRIVER`, start.
+
+---
+
+## 3. Folder split (BUILT: minimal version; full move PLANNED)
+
+### What was done
+
+The minimal version: an `editions/` folder and a `build/` composer, with the
+shared code left where it is.
+
+```
+editions/
+  <id>/manifest.json   per edition: { edition, env defaults, notes }. Only what
+                       differs and is not a capability (capabilities stay in
+                       server/edition_registry.js). Today: onprem and managed
+                       default WORK_DB_AUTO_MIGRATE=1, so an upgrade migrates the
+                       schema at start; the hosted editions have no defaults.
+  profile.js           reads and validates a manifest; the operator's own
+                       environment always wins over a manifest default; a
+                       WORK_EDITION that disagrees with the edition being started
+                       stops the start.
+  start.mjs            node editions/start.mjs <edition>: apply the profile, then
+                       start server/index.js exactly as node server/index.js does.
+build/
+  compose.js / .mjs    npm run compose -- --edition <id> --out <folder> [--no-spa]
+  import_check.js      the one import scanner (the composer and the deploy gate)
+```
+
+`npm run compose` assembles an installable folder for one edition:
+
+- **Server:** the files git tracks under `server/` (so an untracked data copy,
+  `.env`, key or model file next to the code never ships), minus tests, test
+  helpers, `server/data`, the eval corpus, dotfiles and `db.json*` / `*.env` /
+  `*.pem` / `*.key` / `*.log` / `*.tmp` / `ai-seed.json`. (When the license
+  check of section 4 needs our public key on disk, embed it in a JS module or
+  allow-list it here; a `.pem` would otherwise be left out.) The generated
+  `server/eval/results/*-public.json` are added, because the public benchmark
+  page reads them.
+- **SPA:** the built `dist/` (run `npm run build` first, or `--no-spa`).
+- **Edition:** `editions/start.mjs`, `profile.js` and only that edition's folder.
+- **Install:** `package.json` + lockfile for `npm ci --omit=dev`.
+- **`ship-manifest.json`:** edition, capabilities, commit plus a `dirty` flag
+  when the working tree has uncommitted changes, the start command, and every
+  file with its size and sha256.
+
+Before anything is written, every relative import of every shipped module
+must name a shipped file with exact letter case (a Windows build must also
+start on Linux), and every package it imports must be a production
+dependency. Imports with a computed name (`import(name)`) and files read at
+runtime are not seen by this check; today those are the brain embedder (it
+has a fallback), `docs/business-claims-audit.json` (claims report, empty when
+absent, as on today's hosted deploy) and `downloads/` (desktop installers,
+copied separately as today).
+
+The bundle is built in a staging folder and moved into place only when it is
+complete; the previous bundle is moved aside first and moved back if the swap
+fails, so a failed run never loses it. `--replace` only replaces a folder that
+is an earlier bundle and holds nothing but the files its `ship-manifest.json`
+lists (plus `node_modules`). A bundle is a build artifact: a folder holding
+anything else, such as the `server/data` of an installed and started server,
+is never replaced. Upgrade an installation from a fresh bundle instead. A
+filesystem root, the repository or a folder above it, and any repository
+folder outside `out/` are refused.
+
+This is the start of replacing the hand-typed tar list in
+`docs/WORKCOPILOT-HANDOFF.md`; the hosted deploy itself is unchanged
+(`node server/index.js` is the `all` edition).
+
+Gates: every registry edition has exactly one folder with a valid manifest;
+`node editions/start.mjs onprem` from the repository, and a composed `onprem`
+bundle started from its own folder, must each answer `GET /api/work/edition`
+as onprem; each edition composes; the composer's refusals (paths, imports,
+packages, missing build or lockfile) each have a test.
+
+### Why not the full `shared/` move in this pass
+
+The target layout moves nearly all code under `shared/` (server core, SPA,
+brain, roles, workflows). It was not done now because it is not mechanical and
+safe today:
+
+1. **Deploy.** The hosted deploy copies `server/` and `dist/` by hand. A
+   `shared/` folder the server imports from would deploy and then fail to
+   start (the phase 1 review caught exactly this). The move has to land
+   together with switching the deploy to `npm run compose`.
+2. **Parallel work.** Two other branches are editing `server/store.js` and
+   `server/index.js` right now. Moving the trees (about 250 server modules
+   and tests, 440 SPA files) would turn each of their merges into a conflict
+   on every touched file.
+3. **Paths in code.** `server/index.js` resolves `dist/` and `downloads/`
+   relative to the repo root, the brain model lives in `server/models/`, the
+   Vite config, the prebuild gates, the test globs and the Electron app
+   (`workcopilot/`) all name today's paths.
+
+### Full move plan (one dedicated pass, after those branches merge)
+
+1. Switch the hosted deploy to `npm run compose -- --edition all`, extract the
+   bundle on the server, `npm ci --omit=dev`, start with
+   `node editions/start.mjs all`. Run one deploy this way with no move, so
+   the new path is proven before anything moves.
+2. Freeze merges for the move window. `git mv server shared/server` and
+   `git mv src shared/web` (history kept); `index.html`, `vite.config.js` and
+   `public/` follow the SPA.
+3. Update the path constants that point at the repo root
+   (`server/index.js` `ROOT`/`DIST`/`downloads`, `brain_model` model path,
+   the data-dir default), the npm scripts, the test globs, the prebuild gate
+   scripts, and the composer's source paths.
+4. Relative imports inside each moved tree do not change. SPA files that
+   import `server/` modules (`src/scrub.js`, `src/frame_scrub.js`,
+   `src/components/AnswerBody.jsx`, `src/pages/WorkMarketing.jsx`,
+   `src/pages/WorkSecurity.jsx`, `src/pages/work/Guiding.jsx` and the
+   `src/shared` tests) keep the same relative depth under `shared/`. The
+   imports that cross from outside into `server/` DO change:
+   `editions/profile.js`, `editions/start.mjs`, `build/compose.js` and its
+   test import `../server/...`, and `server/edition.test.mjs` imports
+   `../build/import_check.js`.
+5. Gates: the full suite, the prebuild gates, `npm run compose` for every
+   edition, a boot of each composed bundle, and the import-resolution check.
+   Then one hosted deploy through the composer.
+6. Edition-only code (routes, pages, config that only one edition has) then
+   goes under `editions/<id>/`, registered through a hook the shared server
+   calls with the active capabilities. None exists yet.
 
