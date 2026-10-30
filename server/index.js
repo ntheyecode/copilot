@@ -76,6 +76,7 @@ import { securityReview } from './security_gate.js'
 import { enforceRules, extractRulesAI, extractRulesHeuristic, ruleSummary } from './policy_rules.js'
 import { COMPLIANCE_PRESETS, COMPLIANCE_LABELS } from './compliance-presets.js'
 import { estimateCostUsd } from './model-prices.js'
+import { currentUsageScope, drainUsage, costForCall, setUsageSink, usageScopeMiddleware, runInBackgroundUsage } from './ai_usage.js'
 import * as llmGuard from './llm_guard.js'
 import * as extractionWatch from './extraction_watch.js'
 
@@ -97,6 +98,22 @@ app.disable('x-powered-by')
 // the signature check fails). Guarded so a missing key never crashes anything.
 app.post('/api/work/stripe/webhook', express.raw({ type: '*/*' }), workStripeWebhook({ store }))
 app.use(express.json({ limit: '16mb' })) // generous: pasted base64 frames + uploaded reference docs (base64)
+// AI usage at actuals (ai_usage.js): every API request runs in its own usage
+// scope. Provider calls report the token / audio counts their responses carry;
+// meterCost takes them per call; whatever no meter took is booked to the
+// company's ledger when the request ends (and anything later, as it lands).
+// Who an AI call's spend belongs to: the signed-in person's company (or solo
+// account). Support work done while a superadmin views a customer is booked to
+// the platform, never billed to that customer.
+const usageHolder = (req) => {
+  const u = req && !req.impersonating ? req.workUser : null
+  return { companyId: (u && u.companyId) || null, userId: (u && u.id) || null, kind: req && req.impersonating ? 'support' : null }
+}
+setUsageSink((r) => store.recordAiUsage(r))
+app.use('/api', usageScopeMiddleware((req, entries) => {
+  const h = usageHolder(req)
+  store.recordAiUsage({ companyId: h.companyId, userId: h.userId, kind: h.kind || 'other', entries })
+}))
 
 // express-session's default MemoryStore does not survive a restart, which would
 // force a fresh login every time (and break the desktop buddy window sharing the
@@ -496,8 +513,19 @@ function scrubIf(on, text, userId) { return govScrub(userId, text, on) }
 // compute/result/compose/howto). Premium = the model served was top-tier.
 function meterCost(sessionId, model, inText, outText, images = 0, opts = {}) {
   try {
-    const usd = estimateCostUsd(model, String(inText || '').length, String(outText || '').length, images)
+    // ACTUALS first: the usage the provider reported for this call (ai_usage.js).
+    // The text-length estimate covers only calls whose provider sent no usage
+    // block, and the ledger keeps the two apart (actual vs estimated).
+    const entries = drainUsage()
+    const { usd, estimatedUsd: estimated, estimateKeySource } = costForCall(entries, () => estimateCostUsd(model, String(inText || '').length, String(outText || '').length, images))
     if (usd > 0) store.addWorkSessionCost(sessionId, usd)
+    const scope = currentUsageScope()
+    const h = scope && scope.req ? usageHolder(scope.req) : null
+    const who = h ? null : ((opts && opts.workUserId) ? store.getUser(opts.workUserId) : null)
+    store.recordAiUsage({
+      companyId: h ? h.companyId : ((who && who.companyId) || null), userId: h ? h.userId : ((who && who.id) || null),
+      kind: (h && h.kind) || (opts && opts.kind) || 'guide', entries, estimatedUsd: estimated, estimateKeySource,
+    })
     if (sessionId && typeof store.recordSessionCall === 'function') {
       const tele = opts && opts.tele
       const owner = (opts && opts.workUserId) || null
@@ -1522,6 +1550,15 @@ app.post('/api/work/admin/companies/:id/hour-requests/:rid/decide', requireAuth,
   res.json(store.decideCompanyHours(req.params.id, req.params.rid, { approve: !!approve, by: req.user && req.user.username || 'superadmin', note }))
 }))
 // Superadmin notifications inbox (pool-threshold + hour-request alerts).
+// Superadmin: AI spend per company (or solo account) per month, at the token and
+// audio counts the providers reported (ai_usage_ledger.js). ?month=YYYY-MM for
+// every holder that month, or ?companyId=<id> for one company's months. Shows the
+// actual vs estimated split, so a Managed invoice states how much was measured.
+app.get('/api/work/admin/ai-usage', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  const q = req.query || {}
+  const month = /^\d{4}-\d{2}$/.test(String(q.month || '')) ? String(q.month) : null
+  res.json({ usage: store.listAiUsage({ month, companyId: q.companyId ? String(q.companyId) : null }) })
+}))
 app.get('/api/work/admin/notifications', requireAuth, requireSuperAdmin, wrap((req, res) => {
   res.json({ notifications: store.listSuperadminNotifications({ limit: Number((req.query || {}).limit) || 100 }), unread: store.superadminUnreadCount() })
 }))
@@ -3850,7 +3887,10 @@ async function sweepIdleWorkSessions() {
       try {
         const rt = store.getWorkUserRuntime(s.workUserId)
         if (rt && rt.apiKey && !s.summary && (s.steps || []).length) {
-          const summary = await work.workSummarize(ai, rt, { ...s, ...scrubForAi(s, store.workUserScrubOn(s.workUserId), s.workUserId) })
+          // A background job runs outside any request: book its AI to the session owner.
+          const owner = store.getUser(s.workUserId)
+          const summary = await runInBackgroundUsage({ companyId: (owner && owner.companyId) || null, userId: s.workUserId, kind: 'summary' },
+            () => work.workSummarize(ai, rt, { ...s, ...scrubForAi(s, store.workUserScrubOn(s.workUserId), s.workUserId) }))
           store.setWorkSessionSummary(s.workUserId, s.id, summary)
         }
         store.endWorkSession(s.workUserId, s.id)

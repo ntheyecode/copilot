@@ -64,6 +64,7 @@ import { createOnboarding } from './onboarding_store.js'
 import { createWorkflows } from './workflows_store.js'
 import { isFrameRef } from './workflows_rules.js'
 import { createWorkflowIncidents, alertInboxOf } from './workflow_incidents.js'
+import { createAiUsageLedger } from './ai_usage_ledger.js'
 import { createInbox } from './notifications.js'
 import { createWorkflowFrames } from './workflow_frames.js'
 import { createWorkflowFrameSweep } from './workflow_frame_sweep.js'
@@ -494,6 +495,10 @@ export const {
 export const listWorkflowAlerts = (userId, opts) => (getUser(userId) ? wfAlertInbox.list(alertInboxOf(userId), opts) : [])
 export const unreadWorkflowAlerts = (userId) => wfAlertInbox.unreadCount(alertInboxOf(userId))
 export const markWorkflowAlertsRead = (userId, idOrAll) => wfAlertInbox.markRead(alertInboxOf(userId), idOrAll)
+// AI spend per company (or solo account) per month at provider-reported actuals
+// (ai_usage_ledger.js). Superadmin-only; the record Managed billing reads.
+const aiUsageLedger = createAiUsageLedger({ db: () => db, persistSoon })
+export const { recordAiUsage, listAiUsage } = aiUsageLedger
 
 // ---- AI seed (one-time, at deploy) ---------------------------------------
 // If an ai-seed.json exists and the platform AI is not already configured, load
@@ -1410,7 +1415,9 @@ export function getCompanyRuntime(workUserId) {
   if (!c || c.aiSource !== 'company') return null
   const k = c.companyAi || {}
   if (!k.apiKey) return null
-  return { providerId: k.providerId || null, apiKey: k.apiKey, chatModel: k.chatModel || null, visionModel: k.visionModel || null, companyId: c.id }
+  // keySource: whose AI key pays (ai_usage.js books it, so a company on its own
+  // keys is never billed for spend it already paid its provider for).
+  return { providerId: k.providerId || null, apiKey: k.apiKey, chatModel: k.chatModel || null, visionModel: k.visionModel || null, companyId: c.id, keySource: 'company' }
 }
 // The AI-key requirement for a user's company. When a company is explicitly set
 // to use its OWN keys, those keys are REQUIRED: the runtime must not silently
@@ -3020,6 +3027,7 @@ export function getProviderRuntime(id) {
     providerId: id, apiKey: rrPick(id, keys),
     chatModel: (cur && cur.chatModel) || (def.chatModels && def.chatModels[0]) || null,
     visionModel: (cur && cur.visionModel) || null,
+    keySource: 'platform',   // our keys: the spend a Managed invoice bills
   }
   // Custom providers carry their own definition so ai.js can resolve base/kind.
   if (!PROVIDERS[id]) rt.provider = { id, label: def.label, base: def.base, kind: def.kind || 'openai', chatModels: def.chatModels || [] }
@@ -5492,7 +5500,7 @@ export function getWorkUserRuntime(workUserId) {
   if (getWorkPlatformAllowed()) return getActiveRuntime()
   const u = getUser(workUserId)
   if (u && u.ai && u.ai.apiKey && u.ai.tested) {
-    return { providerId: u.ai.providerId, apiKey: u.ai.apiKey, chatModel: u.ai.chatModel, visionModel: u.ai.visionModel }
+    return { providerId: u.ai.providerId, apiKey: u.ai.apiKey, chatModel: u.ai.chatModel, visionModel: u.ai.visionModel, keySource: 'user' }
   }
   return null
 }

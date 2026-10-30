@@ -14,6 +14,7 @@ import { sendMail } from './mailer.js'
 import { renderEmail } from './email_templates.js'
 import * as store from './store.js'
 import * as ai from './ai.js'
+import { runInBackgroundUsage } from './ai_usage.js'
 import { getLocaleMeta } from './locales.js'
 
 function httpErr(status, message) { const e = new Error(message); e.status = status; return e }
@@ -76,7 +77,9 @@ async function translateEmailMessage(msg, langCode, type) {
     '- Return ONLY a JSON object with exactly these keys: "subject", "text", "html". Each value is the translated string; return an empty string for an empty input field.'
   const input = JSON.stringify({ subject: msg.subject || '', text: msg.text || '', html: msg.html || '' })
   let raw
-  try { raw = await ai.generate(rt, system, input) }
+  // Platform-key housekeeping, not the recipient's company's spend: booked to
+  // the platform ledger even when an email is sent inside a customer's request.
+  try { raw = await runInBackgroundUsage({ kind: 'email' }, () => ai.generate(rt, system, input)) }
   catch (e) { logEmailTranslationFallback(type, langCode, `ai-error: ${(e && e.message) || 'failed'}`); return null }
   const parsed = parseJsonLoose(raw)
   if (!parsed || typeof parsed !== 'object' || typeof parsed.subject !== 'string' || !parsed.subject.trim()) {

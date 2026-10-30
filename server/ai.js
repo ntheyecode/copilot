@@ -12,6 +12,8 @@
 // logged (SUPREME RULE III). No em dashes, no AI-language in surfaced text.
 // ---------------------------------------------------------------------------
 
+import { reportUsage, usageFromResponse, withKeySource } from './ai_usage.js'
+
 export const PROVIDERS = {
   groq: {
     id: 'groq',
@@ -206,6 +208,7 @@ async function openaiChat(p, apiKey, model, system, turns, _retry = 0) {
   }
   clearTimeout(timer)
   if (!res.ok) throw httpErr(res.status, data?.error?.message || `${p.label} chat failed (${res.status})`)
+  reportUsage({ provider: p.id, model, usage: usageFromResponse('openai', data), call: 'chat' })   // billed even if empty
   const text = data?.choices?.[0]?.message?.content?.trim()
   if (!text) {
     if (_retry < 1) return openaiChat(p, apiKey, model, system, turns, _retry + 1)
@@ -232,6 +235,7 @@ async function openaiVision(p, apiKey, model, prompt, imageDataUrls, mediaRes = 
   })
   const data = await res.json().catch(() => null)
   if (!res.ok) throw httpErr(res.status, data?.error?.message || `${p.label} vision failed (${res.status})`)
+  reportUsage({ provider: p.id, model, usage: usageFromResponse('openai', data), call: 'vision' })
   return (data?.choices?.[0]?.message?.content || '').trim()
 }
 
@@ -248,6 +252,7 @@ async function geminiGenerate(p, apiKey, model, parts, mediaRes = null) {
   })
   const data = await res.json().catch(() => null)
   if (!res.ok) throw httpErr(res.status, data?.error?.message || `Gemini failed (${res.status})`)
+  reportUsage({ provider: p.id, model, usage: usageFromResponse('gemini', data), call: 'vision' })
   const text = data?.candidates?.[0]?.content?.parts?.map((x) => x.text).filter(Boolean).join('').trim()
   if (!text) throw httpErr(502, 'Gemini returned an empty response')
   return text
@@ -262,6 +267,7 @@ async function geminiChat(p, apiKey, model, system, turns) {
   })
   const data = await res.json().catch(() => null)
   if (!res.ok) throw httpErr(res.status, data?.error?.message || `Gemini failed (${res.status})`)
+  reportUsage({ provider: p.id, model, usage: usageFromResponse('gemini', data), call: 'chat' })
   const text = data?.candidates?.[0]?.content?.parts?.map((x) => x.text).filter(Boolean).join('').trim()
   if (!text) throw httpErr(502, 'Gemini returned an empty response')
   return text
@@ -354,7 +360,12 @@ async function failoverChat(alternates, fromP, fromModel, system, turns, notify)
 // the SAME key (retired/quota heal), (3) the next configured PROVIDER's key, and
 // only when all are exhausted a crisp coded error. Every switch is reported via
 // cfg.onSwitch so the superadmin sees exactly what happened.
-export async function chat(cfg, system, turns, tele = null) {
+// Every AI call carries whose key it runs on, so the usage ledger can tell our
+// spend from a customer's own (ai_usage.js withKeySource).
+export function chat(cfg, system, turns, tele = null) {
+  return withKeySource(cfg && cfg.keySource, () => chatOnKey(cfg, system, turns, tele))
+}
+async function chatOnKey(cfg, system, turns, tele = null) {
   const p = providerOf(cfg)
   if (!p) throw httpErr(400, `Unknown provider: ${cfg.providerId}`, AI_CODES.PROVIDER)
   if (!cfg.apiKey) throw httpErr(400, `No API key configured for ${p.label}`, AI_CODES.KEY)
@@ -410,7 +421,10 @@ export function geminiImageMime(type) {
 
 // Several images in ONE vision call (WorkCoPilot's screen read). model is the
 // vision-capable model resolved by findVisionModel; a missing one is a clear 400.
-export async function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}, tele = null) {
+export function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}, tele = null) {
+  return withKeySource(cfg && cfg.keySource, () => analyseImagesOnKey(cfg, prompt, imageDataUrls, model, opts, tele))
+}
+async function analyseImagesOnKey(cfg, prompt, imageDataUrls, model, opts = {}, tele = null) {
   const p = providerOf(cfg)
   if (!p) throw httpErr(400, `Unknown provider: ${cfg.providerId}`, AI_CODES.PROVIDER)
   if (!cfg.apiKey || !model) throw httpErr(400, 'No vision-capable key.', AI_CODES.KEY)

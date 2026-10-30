@@ -18,6 +18,7 @@
 // trace; the product never shows them. Silence is not an error: it is ''.
 // ===========================================================================
 import { AI_CODES, aiError, assertAllowedHost, providerOf, looksLikeModelError, listModels } from './ai.js'
+import { reportUsage, usageFromResponse, withKeySource } from './ai_usage.js'
 
 export const AI_NO_TRANSCRIBE = 'AI-NO-TRANSCRIBE'
 export const TRANSCRIBE_PROVIDERS = new Set(['groq', 'openai', 'gemini'])
@@ -106,6 +107,7 @@ async function openaiTranscribe(p, apiKey, model, audio, mime, language, retry =
     throw e
   }
   if (!res.ok) throw aiError(res.status, (data && data.error && data.error.message) || `${p.label} transcription failed (${res.status})`)
+  reportUsage({ provider: p.id, model, usage: usageFromResponse('openai', data), call: 'transcribe' })
   const text = String((data && data.text) || '').trim()
   const segments = verbose && Array.isArray(data && data.segments)
     ? data.segments
@@ -135,6 +137,7 @@ async function geminiTranscribe(p, apiKey, model, audio, mime, language, retry =
     throw e
   }
   if (!res.ok) throw aiError(res.status, (data && data.error && data.error.message) || `Gemini transcription failed (${res.status})`)
+  reportUsage({ provider: p.id, model, usage: usageFromResponse('gemini', data), call: 'transcribe' })
   const parts = (data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || []
   return { text: parts.map((x) => x && x.text).filter(Boolean).join('').trim(), segments: null }
 }
@@ -168,7 +171,10 @@ async function pickModel(rt, { avoid = null, fresh = false } = {}) {
 
 // Transcribe one audio chunk. Returns { text, segments|null, provider, model }
 // (provider/model are for the trace only). `segments` are relative to the chunk.
-export async function transcribeAudio(rt, { audio, mime = 'audio/wav', language = null } = {}) {
+export function transcribeAudio(rt, opts = {}) {
+  return withKeySource(rt && rt.keySource, () => transcribeOnKey(rt, opts))
+}
+async function transcribeOnKey(rt, { audio, mime = 'audio/wav', language = null } = {}) {
   const p = providerOf(rt)
   if (!p) throw aiError(400, `Unknown provider: ${rt && rt.providerId}`, AI_CODES.PROVIDER)
   if (!canTranscribe(rt)) throw aiError(400, `${p.label} cannot transcribe speech.`, AI_NO_TRANSCRIBE)
