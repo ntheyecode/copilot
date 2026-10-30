@@ -36,6 +36,7 @@ import { sendTemplateAsync, sendOwnerSubscriptionAlertAsync } from './emails.js'
 import * as billingDefault from './billing.js'
 import { applyCheckoutSession, checkoutSessionPaid, PLANS } from './billing_checkout.js'
 import { OTP_TTL_MS } from './email_otp.js'
+import { soloSignupRefusal } from './edition.js'
 
 const MARKER_TTL_MS = 24 * 3600 * 1000      // the onboarding marker's own life (the cookie is shorter)
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
@@ -159,6 +160,8 @@ export function registerOnboardingRoutes(app, deps = {}) {
   app.post('/api/work/onboarding/signup', (req, res) => {
     try {
       if (authBlocked(req)) return res.status(429).json({ error: 'Too many attempts. Please wait a few minutes and try again.' })
+      const noSignup = soloSignupRefusal()
+      if (noSignup) return res.status(noSignup.status).json(noSignup.body)
       if (mailRateBlocked(req, res)) return
       const b = req.body || {}
       const email = String(b.email || '').trim().toLowerCase()
@@ -402,6 +405,10 @@ export function resolveSocialAccount(store, { email, displayName = '', provider 
     return { user: existing, isNew: false }
   }
   if (store.findUserByLogin(email)) return { error: 'An account with this email already exists. Sign in with your password, or reset it, to continue.' }
+  // A first-time social sign-in CREATES an individual account, so it obeys the
+  // same edition rule as email sign-up. Existing accounts still sign in above.
+  const noSignup = soloSignupRefusal()
+  if (noSignup) return { error: noSignup.body.error }
   try { return { user: store.createSocialUser({ email, displayName, provider }), isNew: true } }
   catch (e) { return { error: (e && e.message) || 'Sign-in could not be completed.' } }
 }

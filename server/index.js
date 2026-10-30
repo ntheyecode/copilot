@@ -78,6 +78,9 @@ import { COMPLIANCE_PRESETS, COMPLIANCE_LABELS } from './compliance-presets.js'
 import { estimateCostUsd } from './model-prices.js'
 import * as llmGuard from './llm_guard.js'
 import * as extractionWatch from './extraction_watch.js'
+// Deployment edition (server/edition_registry.js is the registry): routes ask
+// for a capability, never an edition name.
+import { publicEdition, soloSignupRefusal } from './edition.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(__dirname, '..')
@@ -1101,6 +1104,8 @@ app.post('/api/work/login/mfa', wrap((req, res) => {
 // login applies to brand-new accounts too).
 app.post('/api/work/signup', wrap((req, res) => {
   if (authBlocked(req)) return res.status(429).json({ error: 'Too many attempts. Please wait a few minutes and try again.' })
+  const noSignup = soloSignupRefusal()
+  if (noSignup) return res.status(noSignup.status).json(noSignup.body)
   const b = req.body || {}
   const { username, password } = b
   const email = String(b.email || '').trim()
@@ -1132,6 +1137,10 @@ app.post('/api/work/signup', wrap((req, res) => {
 // checkbox at signup and the blocking consent modal on first login, and send the
 // version back. Version always comes from the server (never trusts the client).
 app.get('/api/work/legal', wrap((req, res) => res.json(legalManifest())))
+// Public: which edition this server runs and the capabilities it turns on, so
+// the SPA shows only what this installation offers (e.g. no Sign up button when
+// solo_signup is off). Nothing secret.
+app.get('/api/work/edition', (req, res) => res.json(publicEdition()))
 // Signed-in: accept the current agreements. This is how a social / SSO / admin-
 // created account (or any user after a version bump) clears the consent gate on
 // first use. Recorded with version + timestamp + IP + user agent. Only requires
