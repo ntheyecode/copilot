@@ -78,6 +78,15 @@ import { COMPLIANCE_PRESETS, COMPLIANCE_LABELS } from './compliance-presets.js'
 import { estimateCostUsd } from './model-prices.js'
 import * as llmGuard from './llm_guard.js'
 import * as extractionWatch from './extraction_watch.js'
+// Integration API (company API keys, /api/v1, webhooks, launch links). The routes,
+// the auth middleware and the worker are their own modules; this file only wires.
+import { registerV1Routes } from './routes_v1.js'
+import { registerApiAdminRoutes } from './api_admin_routes.js'
+import { makeRequireApiKey } from './api_key_auth.js'
+import { createRateLimiter } from './api_rate_limit.js'
+import { startWebhookWorker } from './webhook_worker.js'
+import { isPublicHttpUrl } from './egress_guard.js'
+import { PUBLIC_BASE } from './public_url.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(__dirname, '..')
@@ -96,6 +105,9 @@ app.disable('x-powered-by')
 // mounted BEFORE the json parser (otherwise express.json consumes the body and
 // the signature check fails). Guarded so a missing key never crashes anything.
 app.post('/api/work/stripe/webhook', express.raw({ type: '*/*' }), workStripeWebhook({ store }))
+// The integration API takes small JSON only: parsed here first with a tight limit,
+// so the app-wide 16 MB parser below skips it (body-parser runs once per request).
+app.use('/api/v1', express.json({ limit: '64kb' }))
 app.use(express.json({ limit: '16mb' })) // generous: pasted base64 frames + uploaded reference docs (base64)
 
 // express-session's default MemoryStore does not survive a restart, which would
@@ -923,20 +935,7 @@ async function workResearchNotes(goal, apiKey) {
 // the SERVER, extract the readable text, and ground the plan in it. Safe by
 // construction: only public http(s), never private/internal hosts (no SSRF),
 // bounded pages/bytes/time, text only, and it never throws into a request.
-function isPublicHttpUrl(u) {
-  let url; try { url = new URL(u) } catch { return false }
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') return false
-  const h = url.hostname.toLowerCase()
-  if (!h.includes('.')) return false
-  if (/(^|\.)(localhost|local|internal|intranet|corp|lan|home|test|localdomain|priv|private)$/.test(h)) return false
-  if (h.includes(':')) return false // raw IPv6 literal
-  const m = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
-  if (m) {
-    const a = +m[1], b = +m[2]
-    if (a === 0 || a === 10 || a === 127 || a >= 224 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 169 && b === 254) || (a === 100 && b >= 64 && b <= 127)) return false
-  }
-  return true
-}
+// isPublicHttpUrl lives in egress_guard.js (the one SSRF rule set, shared with webhooks).
 function htmlToText(html) {
   let s = String(html || '')
   s = s.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<!--[\s\S]*?-->/g, ' ')
@@ -2028,11 +2027,10 @@ app.post('/api/work/brain/clear', requireWorkAuth, requireCompanyAdmin, wrap(asy
 // (only req.workUser.companyId), reuses the one embedder + hybrid retriever, and
 // returns NO vectors, hashes, raw content, or AI provider/model names. A locked or
 // empty brain, or a bad query, returns a STATED error (never a silent empty).
-// AUTH NOTE (auditor): session auth only. The admin-issued, hashed, revocable
-// `brain:query` API token for external-platform access is DESIGNED in
-// docs/company-brain.md, not wired here (store.js is mid-split and db files are off
-// limits this pass). To add it later, insert a token-auth branch BEFORE this line
-// that sets req.workUser.companyId from the token's company, then revoke/scope check.
+// AUTH NOTE (auditor): session auth only, for people in the app. External
+// platforms use the SAME queryBrain through POST /api/v1/brain/query with a company
+// API key holding the `brain:query` scope (routes_v1.js, docs/company-brain.md
+// section 11); this route never accepts a key.
 app.post('/api/work/brain/query', requireWorkAuth, wrap(async (req, res) => {
   const cid = req.workUser.companyId
   if (!cid) return res.status(403).json({ error: 'The Company Brain is for company accounts.' })
@@ -3734,6 +3732,24 @@ registerGuidanceDepthRoutes(app, { store, requireWorkAuth, requireSuperAdmin, re
 registerWorkProjectRoutes(app, { store, work, ai, requireWorkAuth, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale })
 registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale, beginWorkTask, runPolicyGate })
 registerWorkflowIncidentRoutes(app, { store, requireWorkAuth, wrap })
+// Integration API: the company console's key + webhook routes (session), and the
+// versioned /api/v1 surface for customer apps (company API key, never a session).
+// Rate limits: per key (WORK_API_RATE_PER_MIN, default 120/min), per company across
+// all its keys (WORK_API_COMPANY_RATE_PER_MIN, 600/min) and, for failed key attempts,
+// per client network (30/min).
+const recordApiIncident = (e, req) => {
+  try { store.recordWorkIncident({ kind: 'system_error', status: (e && e.status) || 500, message: (e && e.message) || 'unknown error', companyId: (req && req.apiPrincipal && req.apiPrincipal.companyId) || (req && req.workUser && req.workUser.companyId) || null, call: (req && req.path) || null }) } catch { /* never fail on logging */ }
+}
+registerApiAdminRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, onInternal: recordApiIncident })
+registerV1Routes(app, {
+  store, queryBrain, BrainQueryError, publicBase: PUBLIC_BASE, onInternal: recordApiIncident,
+  requireApiKey: makeRequireApiKey({
+    resolve: store.resolveApiKey, recordUse: store.recordApiKeyUse, ipOf: (req) => req.ip,
+    keyLimiter: createRateLimiter({ perMinute: Number(process.env.WORK_API_RATE_PER_MIN) || 120 }),
+    companyLimiter: createRateLimiter({ perMinute: Number(process.env.WORK_API_COMPANY_RATE_PER_MIN) || 600 }),
+    ipLimiter: createRateLimiter({ perMinute: 30 }),
+  }),
+})
 registerWorkPracticeRoutes(app, { store, requireWorkAuth, wrap })
 registerTeamProjectRoutes(app, { store, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError })
 registerWorkImageRoutes(app, { store, ai, requireWorkAuth, wrap, resolveWorkRuntime })
@@ -3896,6 +3912,8 @@ export function start({ port } = {}) {
       runRetention()
       const workRetentionTimer = setInterval(runRetention, 60 * 60 * 1000)
       if (workRetentionTimer.unref) workRetentionTimer.unref()
+      // Webhooks: deliver queued events (durable in the store) with retries.
+      try { startWebhookWorker({ store, log: (m, d) => console.warn(`[work] ${m}: ${d || ''}`) }) } catch (e) { console.warn(`[work] webhook worker error: ${e.message}`) }
       // Orphan workflow-frame sweep: shortly after boot, then daily (counts only in the log).
       scheduleFrameSweep(() => { try { const r = store.sweepOrphanWorkflowFrames(); if (r.removed) console.log(`[work] workflow frames: removed ${r.removed} orphan frame(s)`) } catch (e) { console.warn(`[work] workflow frame sweep error: ${e.message}`) } })
       // Periodic AI-model research (owner directive): on a daily cadence, recompute

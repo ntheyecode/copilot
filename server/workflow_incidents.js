@@ -290,9 +290,26 @@ export function createWorkflowIncidents(ctx) {
     return changed
   }
 
+  // ---- Company-scoped reads for the integration API (a key, not a person) ----
+  // Raw records of ONE company; the v1 layer maps them to a shape with no person
+  // names, user ids or frames.
+  function listIncidentsForCompany(companyId, { state = null, workflowId = null, limit = 100 } = {}) {
+    let list = all().filter((x) => String(x.companyId) === String(companyId))
+    if (state === 'active') list = list.filter((x) => ACTIVE.has(x.state))
+    else if (state && INCIDENT_STATES.includes(state)) list = list.filter((x) => x.state === state)
+    if (workflowId) list = list.filter((x) => x.workflowRef.id === workflowId || x.workflowRef.groupId === workflowId)
+    list.sort((a, b) => String(b.lastAt).localeCompare(String(a.lastAt)))
+    return list.slice(0, Math.max(1, Math.min(500, Number(limit) || 100)))
+  }
+  function getIncidentForCompany(companyId, incidentId) {
+    const x = all().find((i) => i.id === String(incidentId || ''))
+    return x && String(x.companyId) === String(companyId) ? x : null
+  }
+
   return {
     recordWorkflowIncident, listWorkflowIncidents, setWorkflowIncidentState,
     readWorkflowIncidentFrame, adoptWorkflowIncidentStep, purgeWorkflowIncidents,
+    listIncidentsForCompany, getIncidentForCompany,
   }
 }
 

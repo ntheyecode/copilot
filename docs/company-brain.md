@@ -404,45 +404,43 @@ rule retrieval and the sync manifest also use, so after a re-embed all three
 report the new model. If the manifest cannot be read the label is `null` with a
 stated note, never a default guess.
 
-## 11. External-platform query access (token design - NOT YET WIRED)
+## 11. External-platform query access (company API keys - BUILT)
 
-Requirement: a company-scoped, admin-issued, hashed, revocable, read-only
-(`brain:query`) API token so another platform can call `POST /api/work/brain/query`
-without a browser session.
+Requirement: a company-scoped, admin-issued, hashed, revocable token so another
+platform can query the brain without a browser session. Built as the general
+**company API key** of the integration API (`docs/integration-api.md`); brain
+access is the `brain:query` scope on `POST /api/v1/brain/query`, which calls the
+same `queryBrain` as the session route. The session route
+`POST /api/work/brain/query` stays session-only and never accepts a key.
 
-Decision for THIS pass: the query endpoint is wired under SESSION auth only
-(`requireWorkAuth` + company scope). The token is DESIGNED here but NOT built,
-because a clean persistent home for the hashed tokens is not available right now:
-`server/store.js` is being actively split by another session and billing is adding
-to it (growing it is off limits per the no-monolith rule), and this task must not
-create or touch db files. Half-building the security-sensitive path would be worse
-than deferring it. The query route is structured so the token branch is a single
-insertion (see the AUTH NOTE comment above `POST /api/work/brain/query`).
-
-Proposed design (for review):
-- **Shape:** an opaque token `wcpq_<base64url(32 random bytes)>`. Only a SHA-256
-  hash of the token is stored (tokens are high-entropy, so a fast hash is the right
-  primitive, as for GitHub-style PATs; no KDF needed). The plaintext is shown once
-  at issue and never again.
-- **Record (per company):** `{ id, name, hash, scope: 'brain:query', createdBy,
-  createdAt, lastUsedAt, expiresAt?, revokedAt? }`. Scope is fixed to `brain:query`
-  (read-only); the token can never ingest, export, or administer.
-- **Issue / list / revoke:** company-admin routes
-  (`POST/GET/DELETE /api/work/brain/tokens`), audit-logged like the other admin
-  brain actions. Revoke sets `revokedAt` (the hash stays, so a leaked token keeps
-  failing).
-- **Check on the query route:** before `requireWorkAuth`, a small middleware reads
-  `Authorization: Bearer wcpq_...`, hashes it, looks up the record, rejects when
-  missing / revoked / expired, sets `req.workUser = { companyId }` (company scope
-  only), and updates `lastUsedAt`. Everything else in `brain_query.js` is unchanged
-  (it is already company-scoped and read-only).
-- **Persistence home (the open choice for the owner):** either (a) a dedicated
-  small `server/brain_token_store.js` with its own atomic-write sealed file under
-  `DATA_DIR/brain/` (keeps `store.js` untouched, matches the no-monolith rule), or
-  (b) company-record accessors added to `store.js` AFTER its split settles. (a) is
-  recommended.
-- **Rate limiting / abuse:** a per-token request cap is advisable since this path
-  has no session; out of scope for the first cut.
+What was built, against the design proposed here:
+- **Shape:** `wcp_live_<16 hex id>_<43 base64url secret>` (256-bit secret). The
+  public id makes lookup O(1); the secret is shown once at creation or rotation.
+- **Hash (departure, stronger at the same cost):** HMAC-SHA256 with a server pepper
+  derived (HKDF) from the platform KEK, over `id.salt.secret` with a per-key random
+  salt, compared in constant time. The proposal was plain SHA-256. A slow KDF was
+  rejected on purpose: the secret already has 256 bits of entropy, and scrypt on
+  every API call would turn auth into a denial-of-service lever. The pepper means a
+  leaked database alone cannot test a guess.
+- **Scopes (extension):** one registry, `server/api_scopes.js`: `brain:query`,
+  `workflows:read`, `workflows:run`, `incidents:read`, `webhooks:manage`. No scope
+  reaches billing, users, keys, brain ingest/export or company settings.
+- **Record:** `{ id, companyId, name, scopes, hashAlg, salt, hash, last4, createdBy,
+  createdAt, lastUsedAt, expiresAt?, ttlDays?, ipAllowlist[], revokedAt?, rotatedFromId?,
+  rotatedToId? }` in `db.apiKeys` (owned by store.js through `api_keys.js`; the
+  persistence home question is settled by the store-context factory pattern, not a
+  separate file). Revoke keeps the record, so a leaked copy keeps failing.
+- **Routes (company admin, session):** `GET/POST /api/work/company/api-keys`,
+  `POST /api/work/company/api-keys/:id/rotate`, `DELETE /api/work/company/api-keys/:id`,
+  `GET /api/work/company/api-keys/:id/usage`. Create and rotate need an MFA step-up
+  on the hosted service when the admin has MFA (shared `mfa_step_up.js`, the policy
+  extracted from `export_key.js`), and are refused during a support impersonation.
+- **Middleware:** `requireApiKey(scope)` (`server/api_key_auth.js`) sets only
+  `req.apiPrincipal = { kind:'api_key', keyId, companyId, scopes }`, never
+  `req.workUser`. Order: key valid and live, company enabled, IP allowlist, per-key
+  rate limit (429 + Retry-After), scope.
+- **Audit:** create, rotate, revoke go to the admin action log; every use is
+  aggregated per key per UTC hour (`db.apiKeyUsage`, bounded).
 
 ## 12. Related documents
 
