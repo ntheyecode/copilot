@@ -15,6 +15,7 @@
 // ===========================================================================
 import { pickWorkflowTemplate, workflowGoalSignature } from './work.js'
 import { isFrameRef } from './workflows_rules.js'
+import { stripGuideMarkup } from './guide_markup.js'
 
 const STR = (v) => (v == null ? '' : String(v)).trim()
 const isUrl = (v) => /^https?:\/\/\S+$/i.test(STR(v))
@@ -26,7 +27,7 @@ const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 // text stays in the workflow's own language.
 export function stepText(instruction, target) {
   const text = STR(instruction)
-  const label = STR(target).replace(/[*`]+/g, '')
+  const label = stripGuideMarkup(STR(target))
   if (!label || text.includes('**')) return text
   const re = new RegExp(escapeRe(label), 'i')
   if (re.test(text)) return text.replace(re, (m) => `**${m}**`)

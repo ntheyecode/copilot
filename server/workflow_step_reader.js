@@ -18,6 +18,7 @@
 // ===========================================================================
 import { extractJson, languageForLocale } from './work.js'
 import { CONTROL_KINDS, normalizeReading } from './workflows_rules.js'
+import { stripGuideMarkup } from './guide_markup.js'
 
 export const STEP_READ_CODES = {
   NO_FRAME: 'STEP_READ_NO_FRAME',     // the step has no captured frame to read
@@ -58,7 +59,7 @@ export function stepReadPrompt({ instruction = '', productName = '', stepNo = 1,
 export function parseStepReading(raw) {
   const j = extractJson(raw, 'controlLabel')
   if (!j || typeof j !== 'object' || Array.isArray(j)) return null
-  const plain = (v, n) => clip(String(v == null ? '' : v).replace(/[*`]+/g, ''), n)
+  const plain = (v, n) => clip(stripGuideMarkup(v), n)
   const controlLabel = plain(j.controlLabel, 120)
   const doneWhen = plain(j.doneWhen, 300)
   if (!controlLabel && !doneWhen) return null

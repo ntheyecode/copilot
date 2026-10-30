@@ -214,3 +214,15 @@ test('privacy: deleting a session, an account or a company removes what it contr
   inc.purgeWorkflowIncidents({ companyId: 'c1' })
   assert.equal(inc.listWorkflowIncidents('pm').incidents.length, 0)
 })
+
+// E2E finding (e2e/FINDINGS.md #2): a run session's step text carries Guide's
+// **bold** control markup, and the Workflow issues inbox showed it raw.
+test('the incident step text is plain text, also for records saved before the fix', () => {
+  const { inc, db } = harness()
+  rec(inc, { stepText: 'Click **Approve** in the `Transfers` tab' })
+  assert.equal(db.workflowIncidents[0].stepText, 'Click Approve in the Transfers tab', 'stored plain')
+  assert.equal(inc.listWorkflowIncidents('pm').incidents[0].stepText, 'Click Approve in the Transfers tab')
+  // A record written before the fix still carries the markup on disk.
+  db.workflowIncidents[0].stepText = 'Click **Approve**'
+  assert.equal(inc.listWorkflowIncidents('pm').incidents[0].stepText, 'Click Approve')
+})

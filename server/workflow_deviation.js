@@ -19,10 +19,11 @@
 // ===========================================================================
 
 import { scrubGuidance } from './ai_language.js'
+import { stripGuideMarkup } from './guide_markup.js'
 
 export const DEVIATION_KINDS = ['ui_changed', 'error', 'blocked', 'untrained_path', 'skipped']
 
-const line = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/[*`]+/g, '').replace(/\s+/g, ' ').trim().slice(0, n)
+const line = (v, n) => stripGuideMarkup(String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f]+/g, ' ')).replace(/\s+/g, ' ').trim().slice(0, n)
 
 export function deviationPromptBlock(workflowTitle) {
   const title = line(workflowTitle, 160).replace(/["“”]/g, "'")

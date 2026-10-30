@@ -26,6 +26,7 @@
 import * as roles from './work_roles.js'
 import { DEVIATION_KINDS } from './workflow_deviation.js'
 import { parseImageDataUrl } from './image_data_url.js'
+import { stripGuideMarkup } from './guide_markup.js'
 
 export const INCIDENT_STATES = ['open', 'acknowledged', 'resolved', 'dismissed']
 const ACTIVE = new Set(['open', 'acknowledged'])
@@ -147,7 +148,7 @@ export function createWorkflowIncidents(ctx) {
       // The workflow step's own id, so an adopted step lands in the right place in
       // a later draft even after other steps were added before it.
       workflowStepId: idx != null && live && live.steps && live.steps[idx] ? STR(live.steps[idx].id, 80) || null : null,
-      stepText: STR(stepText, 400),
+      stepText: STR(stripGuideMarkup(stepText), 400),
       kind: deviation.kind, why: STR(deviation.why, 300), extraStep: deviation.extraStep ? STR(deviation.extraStep, 300) : null,
       frameRef, frameSessionId: frameRef ? sid : null, frameUserId: frameRef ? u.id : null, masked: !!masked,
       state: 'open', count: 1, sessionIds: [sid], occurrences: [occ], firstAt: t, lastAt: t,
@@ -172,7 +173,7 @@ export function createWorkflowIncidents(ctx) {
 
   function publicShape(x, v) {
     return {
-      id: x.id, workflowRef: x.workflowRef, stepIndex: x.stepIndex, stepText: x.stepText,
+      id: x.id, workflowRef: x.workflowRef, stepIndex: x.stepIndex, stepText: stripGuideMarkup(x.stepText),
       kind: x.kind, why: x.why, extraStep: x.extraStep, hasFrame: !!x.frameRef, masked: !!x.masked,
       state: x.state, count: x.count || 1, firstAt: x.firstAt, lastAt: x.lastAt,
       occurrences: (x.occurrences || []).slice(0, 10).map((o) => {
