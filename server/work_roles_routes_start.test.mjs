@@ -44,7 +44,7 @@ test('start: a published workflow becomes a guided session with its own steps, l
   assert.equal(calls.steps[0].text, 'Open **Transfers**')
   assert.equal(calls.steps[0].validate, 'List shows')
   assert.equal(calls.steps[0].shot, A)
-  assert.deepEqual(calls.ref, { id: 'w1', groupId: 'g1', version: 2, title: 'Raise a transfer' })
+  assert.deepEqual(calls.ref, { id: 'w1', groupId: 'g1', version: 2, title: 'Raise a transfer', mode: 'run' })
   assert.match(calls.events[0].text, /Following the "Raise a transfer" workflow/)
 })
 

@@ -38,7 +38,8 @@ test('goal, overview and ref', () => {
   assert.equal(workflowSessionGoal(WF), 'Raise a transfer (Zamina)')
   assert.equal(workflowSessionGoal({ meta: { title: 'Zamina: raise a transfer', productName: 'Zamina' } }), 'Zamina: raise a transfer')
   assert.equal(workflowOverview(WF), '**Raise a transfer (Zamina)**\n\nHave the account number ready.')
-  assert.deepEqual(workflowRefOf(WF), { id: 'w1', groupId: 'g1', version: 3, title: 'Raise a transfer' })
+  assert.deepEqual(workflowRefOf(WF), { id: 'w1', groupId: 'g1', version: 3, title: 'Raise a transfer', mode: 'run' })
+  assert.equal(workflowRefOf(WF, 'plan').mode, 'plan')
 })
 
 test('match: a goal naming the product is a strong match; without it, partial; unrelated, none', () => {

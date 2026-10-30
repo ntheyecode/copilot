@@ -67,6 +67,16 @@ export function sanitizeGrants(role, grants) {
   return set.filter((g) => g !== 'trainer' || canGrantTrainer(role))
 }
 export function canAuthorWorkflow(role, grants) { return hasTrainerGrant(grants) || isCompanyAdmin(role) }
+// Workflow incidents (Wave 3 part C): who RECEIVES a deviation raised while an
+// employee follows a published workflow: trainers, PMs and above (PM, Sr PM, GRC),
+// company admins and executives. Who may ACT on one (acknowledge, resolve,
+// dismiss): trainers, PMs, Sr PMs and company admins. GRC and executives watch.
+export function canReceiveWorkflowIncidents(role, grants) {
+  return hasTrainerGrant(grants) || isPM(role) || isGRC(role) || isCompanyAdmin(role) || role === 'executive'
+}
+export function canManageWorkflowIncidents(role, grants) {
+  return hasTrainerGrant(grants) || isPM(role) || isCompanyAdmin(role)
+}
 export function canCreateProject(role) { return isPM(role) || isCompanyAdmin(role) }
 export function canAssignTask(role) { return isPM(role) || isCompanyAdmin(role) }
 export function canReassignProject(role) { return isSrPM(role) || isCompanyAdmin(role) }
@@ -102,6 +112,7 @@ export function roleViewOf(user) {
     isPM: pm, isSrPM: srpm, isGRC: grc, isCompanyAdmin: admin, isTrainer: trainer,
     // Teach studio: anyone holding the trainer grant; a company admin can too.
     showTeach: trainer || admin,               // /work/teach (record + author)
+    showIncidents: company && canReceiveWorkflowIncidents(role, user && user.grants),   // workflow deviation inbox
     showPm: pm || admin,                       // /work/pm  (projects I manage)
     showSrPm: srpm || admin,                   // /work/srpm (all managers)
     showGrc: grc || srpm || admin,             // /work/grc  (oversight, read-only for GRC)
@@ -137,5 +148,5 @@ export default {
   roleLabelKey, flowLabelKey, normalizeFlow, canStartOwnTask, canReceiveAssignment,
   GRANTS, GRANT_OPTIONS, canGrantTrainer, hasTrainerGrant, sanitizeGrants,
   isSrPM, isGRC, isPM, isCompanyAdmin, canCreateProject, canAssignTask, canReassignProject,
-  canAssignProjectManager, canSeeAllProjects, canManageProject, canAuthorWorkflow, roleViewOf, assignablePeople, managerCandidates,
+  canAssignProjectManager, canSeeAllProjects, canManageProject, canAuthorWorkflow, canReceiveWorkflowIncidents, canManageWorkflowIncidents, roleViewOf, assignablePeople, managerCandidates,
 }

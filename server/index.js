@@ -42,6 +42,8 @@ import { sessionIdForSwitch } from './work_switch_scope.js'
 import { createWorkTaskGate } from './work_task_gate.js'
 import { makeWrap } from './route_wrap.js'
 import { pickPublishedWorkflow, choosePlanBackbone, publishedWorkflowNote, workflowRefOf } from './workflow_playback.js'
+import { deviationHook } from './workflow_deviation.js'
+import { registerWorkflowIncidentRoutes } from './workflow_incidents_routes.js'
 import { registerWorkPracticeRoutes } from './work_practices_routes.js'
 import { registerTeamProjectRoutes } from './work_team_projects_routes.js'
 import { registerSsoRoutes } from './sso.js'
@@ -2431,13 +2433,19 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     else store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: plannedBy.topRanked
       ? `Planned by a top-ranked model (per ${plannedBy.source}).`
       : 'Planned by the best model available on your key.' })
-    if (keepProgress && doneSteps.length) store.replanKeepingProgress(req.workUser.id, req.params.id, plan.steps)
-    else {
+    if (keepProgress && doneSteps.length) {
+      store.replanKeepingProgress(req.workUser.id, req.params.id, plan.steps)
+      // The steps are no longer the workflow's own, so its link becomes a plan link
+      // (no step-level incidents against the workflow from here on).
+      if (s.workflowRef && s.workflowRef.mode !== 'plan') {
+        try { store.setWorkSessionWorkflowRef(req.workUser.id, req.params.id, { ...s.workflowRef, mode: 'plan' }) } catch { /* best-effort */ }
+      }
+    } else {
       store.setWorkSessionSteps(req.workUser.id, req.params.id, plan.steps)
       // Link the published workflow only now that the plan exists. A fresh plan
       // that follows one links it; one that does not clears a stale link (its
       // steps are no longer the workflow's). A keep-progress re-plan keeps its link.
-      try { store.setWorkSessionWorkflowRef(req.workUser.id, req.params.id, followsPublished ? workflowRefOf(published.workflow) : null) }
+      try { store.setWorkSessionWorkflowRef(req.workUser.id, req.params.id, followsPublished ? workflowRefOf(published.workflow, 'plan') : null) }
       catch (e) { console.warn(`[work] workflow link failed: ${e.message}`) }
     }
     // Store the rich "what you'll be doing" overview from the plan (or a derived
@@ -2678,6 +2686,11 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
     const r = await work.workNavigate(ai, call.rt, {
       base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), level: watchLevel, goal: watchGoal, steps: s.steps, currentStep: s.currentStep,
       frame, visionModel: call.visionModel, strong: escalateOk ? call.backup : null,
+      // Following a published workflow: the same read also says whether the screen
+      // left the workflow (Wave 3 part C). Other sessions are unchanged.
+      // Only when the steps ARE the workflow's (run mode): a plan built around a
+      // workflow has its own steps, and its gaps are not the workflow's.
+      extra: s.workflowRef && s.workflowRef.mode !== 'plan' ? deviationHook(s.workflowRef.title) : null,
     })
     // Track the empty-read streak: an unreadable frame (no guidance AND no
     // observation) is tolerated and counted; a readable one resets it.
@@ -2726,6 +2739,18 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
         if (newly.length) store.captureMilestoneShot(req.workUser.id, req.params.id, Math.max.apply(null, newly), frame)
       }
     } catch { /* evidence capture is best-effort */ }
+    // Wave 3 part C: a deviation from a published workflow becomes an incident for
+    // its trainers, PMs and above, admins and executives (deduplicated per step and
+    // kind). Best-effort: it never blocks or changes the person's guidance.
+    if (s.workflowRef && r.extra) {
+      try {
+        const at = r.current != null ? r.current : (s.currentStep || 0)
+        store.recordWorkflowIncident({
+          userId: req.workUser.id, sessionId: req.params.id, workflowRef: s.workflowRef, stepIndex: at,
+          stepText: (s.steps[at] && s.steps[at].text) || '', deviation: r.extra, frameDataUrl: frame, masked: watchScrubOn,
+        })
+      } catch (e) { console.warn(`[work] workflow incident not recorded: ${e.message}`) }
+    }
     if (r.flag) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'flag', text: r.flag })
     const allDone = r.done || updated.currentStep >= updated.steps.length
     res.json({
@@ -3707,6 +3732,7 @@ registerKbSpaceRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap }
 registerGuidanceDepthRoutes(app, { store, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
 registerWorkProjectRoutes(app, { store, work, ai, requireWorkAuth, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale })
 registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale, beginWorkTask, runPolicyGate })
+registerWorkflowIncidentRoutes(app, { store, requireWorkAuth, wrap })
 registerWorkPracticeRoutes(app, { store, requireWorkAuth, wrap })
 registerTeamProjectRoutes(app, { store, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError })
 registerWorkImageRoutes(app, { store, ai, requireWorkAuth, wrap, resolveWorkRuntime })

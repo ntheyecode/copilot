@@ -68,8 +68,10 @@ export function workflowOverview(w) {
 
 // What a session records about the workflow it follows (deviation reporting and
 // run counts read this; the private brain skips sessions that carry it).
-export function workflowRefOf(w) {
-  return { id: STR(w && w.id), groupId: STR(w && w.groupId), version: Number(w && w.version) || 1, title: STR(w && w.meta && w.meta.title).slice(0, 200) }
+// mode: 'run' = the session's steps ARE the workflow's steps (1:1, so an incident
+// maps to a workflow step); 'plan' = a plan was built around it (steps differ).
+export function workflowRefOf(w, mode = 'run') {
+  return { id: STR(w && w.id), groupId: STR(w && w.groupId), version: Number(w && w.version) || 1, title: STR(w && w.meta && w.meta.title).slice(0, 200), mode: mode === 'plan' ? 'plan' : 'run' }
 }
 
 // A published workflow in the private-brain template shape the matcher scores.

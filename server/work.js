@@ -1118,8 +1118,15 @@ export function workNavigateUser({ goal, steps, currentStep }) {
     `CHECKLIST (the list currently assumes step ${Number(currentStep || 0) + 1} is next):\n${list}\n\n` +
     'Look at the screenshot and return the navigation JSON now.')
 }
-export async function workNavigate(ai, cfg, { base, voice = '', mode = 'stepwise', level = 'medium', goal, steps, currentStep, frame, visionModel, strong = null }) {
-  const system = workNavigateSystem({ base, voice, mode, level })
+// `extra` (optional): { system, parse } adds one caller-owned block to the watch
+// prompt and parses its own field from the same reply (one call, no second read).
+// Used by sessions that follow a published workflow (workflow_deviation.js);
+// every other session's prompt and cost are unchanged.
+export async function workNavigate(ai, cfg, { base, voice = '', mode = 'stepwise', level = 'medium', goal, steps, currentStep, frame, visionModel, strong = null, extra = null }) {
+  const system = workNavigateSystem({ base, voice, mode, level }) + (extra && extra.system ? `
+
+---
+${extra.system}` : '')
   const user = workNavigateUser({ goal, steps, currentStep })
   const n = (steps || []).length
   const curPlanIdx = Number.isFinite(Number(currentStep)) ? Math.round(Number(currentStep)) : null
@@ -1185,6 +1192,7 @@ export async function workNavigate(ai, cfg, { base, voice = '', mode = 'stepwise
     // it as escalated (the caller meters the strong model accordingly).
     escalated: out.escalated || preferStrong,
     reason: out.escalated ? out.reason : (preferStrong ? 'verify' : out.reason),
+    extra: extra && typeof extra.parse === 'function' ? extra.parse(parsed) : null,
   }
 }
 

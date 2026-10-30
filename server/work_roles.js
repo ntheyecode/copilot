@@ -9,7 +9,7 @@
 //       member | company_admin | executive  (existing)
 //       project_manager | senior_project_manager | grc  (added here)
 // Plus additive GRANTS a user can hold on top of the primary role (multi-role):
-//   trainer  (records/authors guided workflows) — only with member or PM.
+//   trainer  (records/authors guided workflows), only with member or PM.
 // A Senior PM is a superset of PM (can also manage projects directly). GRC is
 // read-only oversight. The flow governs starting vs receiving tasks regardless
 // of role.
@@ -70,6 +70,16 @@ export function canSetUserFlowAndRole(role) { return isCompanyAdmin(role) }
 // Teach studio: who may record and author guided workflows. Anyone holding the
 // trainer grant, or a company admin (superset). Oversight roles only view.
 export function canAuthorWorkflow(role, grants) { return hasTrainerGrant(grants) || isCompanyAdmin(role) }
+// Workflow incidents (Wave 3 part C): who RECEIVES a deviation raised while an
+// employee follows a published workflow: trainers, PMs and above (PM, Sr PM, GRC),
+// company admins and executives. Who may ACT on one (acknowledge, resolve,
+// dismiss): trainers, PMs, Sr PMs and company admins. GRC and executives watch.
+export function canReceiveWorkflowIncidents(role, grants) {
+  return hasTrainerGrant(grants) || isPM(role) || isGRC(role) || isCompanyAdmin(role) || role === 'executive'
+}
+export function canManageWorkflowIncidents(role, grants) {
+  return hasTrainerGrant(grants) || isPM(role) || isCompanyAdmin(role)
+}
 
 // Can this user act on this specific project? GRC is view-only (see canWrite*).
 export function canViewProject(role, userId, project) {
@@ -105,5 +115,6 @@ export default {
   isSrPM, isGRC, isPM, isCompanyAdmin, hasTrainerGrant, canGrantTrainer, sanitizeGrants,
   canCreateProject, canAssignTask, canReassignTask, canReassignProject, canAssignProjectManager,
   canSeeAllProjects, isReadOnlyOversight, canSetUserFlowAndRole, canAuthorWorkflow,
+  canReceiveWorkflowIncidents, canManageWorkflowIncidents,
   canViewProject, canManageProject, taskSlaRisk,
 }

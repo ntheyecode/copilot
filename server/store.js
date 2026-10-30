@@ -63,6 +63,8 @@ import { createPlanAllowance } from './plan_allowance.js'
 import { createOnboarding } from './onboarding_store.js'
 import { createWorkflows } from './workflows_store.js'
 import { isFrameRef } from './workflows_rules.js'
+import { createWorkflowIncidents, alertInboxOf } from './workflow_incidents.js'
+import { createInbox } from './notifications.js'
 import { createWorkflowFrames } from './workflow_frames.js'
 import { execOverview } from './exec_overview.js'
 import { makeExportKey } from './export_key.js'
@@ -465,6 +467,28 @@ export const {
   uploadWorkflowFrame, readWorkflowFrame, userCanAuthorWorkflows,
   prepareStepRead, saveStepReading,
 } = wfs
+// Wave 3 part C: deviations raised while an employee follows a published workflow
+// (workflow_incidents.js). Their screenshots live in their own encrypted folder,
+// readable only through the incident (recipients), never the workflow frame route.
+const wfIncidentFrames = createWorkflowFrames({ dir: path.join(DATA_DIR, 'workflow-incident-frames'), seal: encryptBuffer, open: decryptBuffer })
+const wfAlertInbox = createInbox({ db: () => db, persistSoon, id })
+const wfIncidents = createWorkflowIncidents({
+  db: () => db, persist, id, now, httpErr, getUser, emit: emitStoreEvent,
+  companyUsers: (companyId) => (db.users || []).filter((u) => u.companyId === companyId),
+  inbox: wfAlertInbox, frames: wfIncidentFrames, workflows: wfs,
+  // The screen the guide saw is kept only when the company keeps screenshots
+  // (the same setting that governs report screenshots).
+  shotsAllowed: (userId) => workUserReportShotsOn(userId),
+})
+export const {
+  recordWorkflowIncident, listWorkflowIncidents, setWorkflowIncidentState,
+  readWorkflowIncidentFrame, adoptWorkflowIncidentStep, purgeWorkflowIncidents,
+} = wfIncidents
+// Each person's workflow-alert inbox (incident alerts only; billing alerts stay in
+// the shared inbox and are never pushed out by a burst of incidents).
+export const listWorkflowAlerts = (userId, opts) => (getUser(userId) ? wfAlertInbox.list(alertInboxOf(userId), opts) : [])
+export const unreadWorkflowAlerts = (userId) => wfAlertInbox.unreadCount(alertInboxOf(userId))
+export const markWorkflowAlertsRead = (userId, idOrAll) => wfAlertInbox.markRead(alertInboxOf(userId), idOrAll)
 
 // ---- AI seed (one-time, at deploy) ---------------------------------------
 // If an ai-seed.json exists and the platform AI is not already configured, load
@@ -4195,6 +4219,7 @@ export function deleteWorkUser(userId, { reason = '', by = '' } = {}) {
   // Tickets key their owner as `userId`; the old `t.workUserId` comparison never
   // matched, so a deleted account's tickets silently outlived the account.
   db.workTickets = (db.workTickets || []).filter((t) => t.userId !== userId)
+  try { purgeWorkflowIncidents({ userId }) } catch { /* best-effort */ }
   bumpSessionEpoch(userId)
   const i = (db.users || []).findIndex((x) => x.id === userId)
   if (i >= 0) db.users.splice(i, 1)
@@ -4232,6 +4257,7 @@ export function deleteCompany(companyId, { reason = '', by = '', deleteMembers =
     // Detach members to standalone (no company access until they get their own plan).
     for (const m of members) { m.companyId = null; m.companyRole = null; try { bumpSessionEpoch(m.id) } catch { /* ignore */ } }
   }
+  try { purgeWorkflowIncidents({ companyId }) } catch { /* best-effort */ }
   const i = (db.companies || []).findIndex((x) => x.id === companyId)
   if (i >= 0) db.companies.splice(i, 1)
   recordAdminAction({ action: 'company_deleted', reason: r, detail: `${c.name} (${members.length} members ${deleteMembers ? 'deleted' : 'detached'}) by ${by}` })
@@ -6518,7 +6544,7 @@ export function setWorkSessionWorkflowRef(workUserId, sessionId, ref) {
   const s = findWorkSession(workUserId, sessionId)
   if (!s) throw httpErr(404, 'Session not found')
   const r = ref && typeof ref === 'object' ? ref : null
-  s.workflowRef = r && r.id ? { id: String(r.id), groupId: String(r.groupId || ''), version: Number(r.version) || 1, title: String(r.title || '').slice(0, 200) } : null
+  s.workflowRef = r && r.id ? { id: String(r.id), groupId: String(r.groupId || ''), version: Number(r.version) || 1, title: String(r.title || '').slice(0, 200), mode: r.mode === 'plan' ? 'plan' : 'run' } : null
   persist()
   return s
 }
@@ -6605,7 +6631,9 @@ export function deleteWorkSession(workUserId, sessionId, reason = '') {
     const safe = String(sessionId).replace(/[^\w-]/g, '')
     const sdir = safe && path.join(SHOTS_DIR, safe)
     if (sdir && fs.existsSync(sdir)) fs.rmSync(sdir, { recursive: true, force: true })
-  } catch { /* best effort */ }
+  } catch { /* best effort */ }
+  // Workflow incidents: drop this session's occurrences and any screenshot it supplied.
+  try { purgeWorkflowIncidents({ sessionId }) } catch { /* best-effort, never blocks a delete */ }
   db.workSessions.splice(i, 1)
   // Remove the session's transmission audit log too, so deleting a session really
   // removes what it transmitted (the log is not kept past the session).

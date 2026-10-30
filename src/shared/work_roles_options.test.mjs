@@ -115,3 +115,20 @@ test('assignablePeople / managerCandidates filter by flow and role', () => {
   assert.deepEqual(client.assignablePeople(derived).map((p) => p.id), ['x'])
   assert.deepEqual(client.managerCandidates(derived).map((p) => p.id), ['y'])
 })
+
+test('workflow incident predicates match the server for every role, with and without the trainer grant', () => {
+  for (const r of ROLES) {
+    for (const g of [[], ['trainer']]) {
+      for (const fn of ['canReceiveWorkflowIncidents', 'canManageWorkflowIncidents']) {
+        assert.equal(client[fn](r, g), server[fn](r, g), `${fn}(${r}, ${g})`)
+      }
+    }
+  }
+  assert.equal(server.canReceiveWorkflowIncidents('member', []), false)
+  assert.equal(server.canReceiveWorkflowIncidents('executive', []), true)
+  assert.equal(server.canManageWorkflowIncidents('executive', []), false)
+  assert.equal(server.canManageWorkflowIncidents('grc', []), false)
+  assert.equal(server.canManageWorkflowIncidents('member', ['trainer']), true)
+  assert.equal(client.roleViewOf({ companyId: 'c', companyRole: 'member', grants: [] }).showIncidents, false)
+  assert.equal(client.roleViewOf({ companyId: 'c', companyRole: 'executive', grants: [] }).showIncidents, true)
+})

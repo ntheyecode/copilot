@@ -232,6 +232,14 @@ export const api = {
   // Wave 3 part B: run a published workflow -> { sessionId, steps, taskUsage };
   // open the guided console on sessionId (same as an assigned task's start).
   workflowStart: (id) => req('POST', `/api/work/workflows/${encodeURIComponent(id)}/start`),
+  // Wave 3 part C: workflow incidents (trainers, PMs and above, admins, executives).
+  workflowIncidents: ({ state, workflow } = {}) => req('GET', `/api/work/workflow-incidents?${new URLSearchParams({ ...(state ? { state } : {}), ...(workflow ? { workflow } : {}) })}`),
+  workflowIncidentSetState: (id, state, note) => req('PATCH', `/api/work/workflow-incidents/${encodeURIComponent(id)}`, { state, note }),
+  workflowIncidentFramePath: (id) => `/api/work/workflow-incidents/${encodeURIComponent(id)}/frame`,
+  workflowIncidentAdopt: (id) => req('POST', `/api/work/workflow-incidents/${encodeURIComponent(id)}/adopt`),
+  // The signed-in person's workflow alerts: { alerts: [{ id, at, read, kind, workflowTitle, stepIndex, why, incidentId }], unread }.
+  workflowAlerts: (limit) => req('GET', `/api/work/workflow-incidents-alerts${limit ? `?limit=${Number(limit)}` : ''}`),
+  workflowAlertsRead: (id) => req('POST', '/api/work/workflow-incidents-alerts/read', { id: id || '*' }),
   // Wave 3: read one draft step's frames -> { workflow } with steps[i].reading
   // ({ controlLabel, controlKind, doneWhen, confidence }), a suggestion for review.
   workflowReadStep: (id, stepId) => req('POST', `/api/work/workflows/${encodeURIComponent(id)}/steps/${encodeURIComponent(stepId)}/read`),
