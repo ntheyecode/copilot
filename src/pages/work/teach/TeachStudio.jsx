@@ -8,8 +8,9 @@
 // is guided and context-aware: a workflow list collapsed to expandable rows, and
 // a five-phase authoring wizard with inline reflections and validation.
 //
-// In Wave 1 steps are authored by hand (no screen capture yet). Nothing here
-// changes backend logic; it consumes src/api.js workflow* calls only.
+// Steps are written by hand or drafted from a recorded demonstration (Wave 2,
+// RecordPanel in the wizard's Steps phase). Nothing here changes backend logic;
+// it consumes src/api.js workflow* calls only.
 // ============================================================================
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { GraduationCap, Plus, RefreshCw, Building2, Check } from 'lucide-react'
