@@ -2,7 +2,7 @@
 //
 // Pure-JS brute-force cosine VectorBrainAdapter. One instance: `brainStore`.
 // Per-tenant ENCRYPTED files under BRAIN_DIR = path.join(DATA_DIR,'brain',companyId)
-// with DATA_DIR = process.env.WORK_DATA_DIR || path.join(__dirname,'data').
+// with DATA_DIR from data_dir.js (WORK_DATA_DIR, else <server>/data).
 //
 // Design (why this layout):
 //   The retrieval hot path scores every chunk vector with a dot product (vectors
@@ -48,11 +48,12 @@ import {
   isUnlocked,
 } from './brain_crypto.js'
 import { activeEmbedModel, publicEmbedModel } from './brain_model.js'
+import { resolveDataDir } from './data_dir.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// Mirror store.js: WORK_DATA_DIR relocates all on-disk state; default <server>/data.
-const DATA_DIR = process.env.WORK_DATA_DIR || path.join(__dirname, 'data')
+// Same resolver as store.js (data_dir.js): WORK_DATA_DIR relocates all on-disk state.
+const DATA_DIR = resolveDataDir()
 const BRAIN_ROOT = path.join(DATA_DIR, 'brain')
 
 // Default embedding geometry (bge-small-en-v1.5): dim 384, L2-normalized, so

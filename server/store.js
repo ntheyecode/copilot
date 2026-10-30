@@ -70,12 +70,13 @@ import { createWorkflowFrameSweep } from './workflow_frame_sweep.js'
 import { execOverview } from './exec_overview.js'
 import { makeExportKey } from './export_key.js'
 import { createIntegrationState } from './integration_store.js'
+import { resolveDataDir } from './data_dir.js'
 import { assertResolvesPublic } from './egress_guard.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // WORK_DATA_DIR lets the owner point the DB + on-disk docs/shots anywhere (the
 // save/handoff drive); web-dev falls back to ./data next to the server.
-const DATA_DIR = process.env.WORK_DATA_DIR || path.join(__dirname, 'data')
+const DATA_DIR = resolveDataDir()   // data_dir.js: the one resolver (a test can never land on the real dir)
 const DB_FILE = path.join(DATA_DIR, 'db.json')
 // Optional one-time AI seed the owner drops at deploy (providers + keys +
 // platform-allowed flag + model pins). Never contains a hardcoded key in source.
