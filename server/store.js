@@ -2967,16 +2967,21 @@ export function newSessionSecret() {
   if (!db.sessionSecret) { db.sessionSecret = crypto.randomBytes(24).toString('hex'); persist() }
   return db.sessionSecret
 }
+// Session records are stored and handed out as SNAPSHOTS (a JSON copy), like any
+// serializing store. Keeping the live req.session object let express-session's
+// per-request touch() slide the stored expiry forward on every request, so a
+// session in use never expired server-side (gate: session_store_snapshot.test.mjs).
+const sessionSnapshot = (rec) => JSON.parse(JSON.stringify(rec))
 export function getSessionRecord(sid) {
   const rec = (db.sessions || {})[sid]
   if (!rec) return null
   const exp = rec.cookie?.expires
   if (exp && new Date(exp).getTime() <= Date.now()) { delete db.sessions[sid]; persist(); return null }
-  return rec
+  return sessionSnapshot(rec)
 }
 export function setSessionRecord(sid, data) {
   if (!db.sessions) db.sessions = {}
-  db.sessions[sid] = data
+  db.sessions[sid] = sessionSnapshot(data)
   persist()
 }
 export function destroySessionRecord(sid) {
