@@ -448,7 +448,7 @@ const wfs = createWorkflows({ db: () => db, persist, id, now, httpErr, getUser, 
 export const {
   listWorkflowsForUser, getWorkflowForUser, createWorkflow, updateWorkflow,
   publishWorkflow, reviseWorkflow, retireWorkflow, deleteWorkflow,
-  uploadWorkflowFrame, readWorkflowFrame,
+  uploadWorkflowFrame, readWorkflowFrame, userCanAuthorWorkflows,
 } = wfs
 
 // ---- AI seed (one-time, at deploy) ---------------------------------------

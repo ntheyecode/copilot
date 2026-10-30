@@ -229,6 +229,9 @@ export const api = {
   // Wave 2 capture: upload a scrubbed frame -> { ref } for a step's `shot`; the path serves it back.
   workflowFrameUpload: (dataUrl) => req('POST', '/api/work/workflows/frames', { dataUrl }),
   workflowFramePath: (ref) => `/api/work/workflows/frames/${encodeURIComponent(ref)}`,
+  // Speech to text for one audio chunk (base64 or data URL) -> { text, segments|null };
+  // segments are relative to the chunk. Uses the company's own AI provider.
+  workTranscribe: (audio, mime, language) => req('POST', '/api/work/transcribe', { audio, mime, language }),
   workGrcLog: (projectId, limit) => req('GET', `/api/work/grc/log${projectId || limit ? `?${[projectId ? `project=${encodeURIComponent(projectId)}` : '', limit ? `limit=${Number(limit)}` : ''].filter(Boolean).join('&')}` : ''}`),
   // Project templates (team projects, Model B): a template is a planned task map
   // a PM / Sr PM / company admin assigns to many people, each getting their own

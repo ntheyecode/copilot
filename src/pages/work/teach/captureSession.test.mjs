@@ -32,6 +32,15 @@ test('the first screen is a plain frame; a settled significant change is a step 
   assert.deepEqual(events.map((e) => `${e.kind}:${e.frame}`), ['frame:A', 'change:A', 'frame:B'])
 })
 
+test('regression: a change step is stamped when the screen STARTED changing, not when it settled', () => {
+  const r = rig(); r.s.start()
+  r.setScreen(0, 'A'); settle(r)
+  const cutAt = r.s.nowMs()
+  r.setScreen(50, 'B'); settle(r)                                   // settles a few ticks later
+  const change = r.s.stop().events.find((e) => e.kind === 'change')
+  assert.equal(change.t, cutAt)
+})
+
 test('jitter (typing, a blinking cursor) never makes a step', () => {
   const r = rig(); r.s.start()
   r.setScreen(0, 'A'); settle(r)
