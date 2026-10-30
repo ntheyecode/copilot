@@ -46,15 +46,23 @@ export function createWorkflows(ctx) {
   // editing a workflow never leaves its dropped frames behind.
   function purgeUnreferenced(companyId, candidates) {
     if (!frames || !candidates || !candidates.size) return 0
+    for (const ref of referencedFrames(companyId)) candidates.delete(ref)
+    return candidates.size ? frames.remove(companyId, [...candidates]) : 0
+  }
+  // THE rule for which frames a company still needs: any step shot of any of its
+  // workflows (every state and version), plus the frames an employee's running
+  // session shows (Wave 3 part B). The orphan sweep (workflow_frame_sweep.js)
+  // reads this same function, so the two never disagree on what is safe to delete.
+  function referencedFrames(companyId) {
+    const out = new Set()
     for (const o of all()) {
       if (String(o.companyId) !== String(companyId)) continue
-      for (const s of (o.steps || [])) if (s && s.shot) candidates.delete(s.shot)
+      for (const s of (o.steps || [])) if (s && s.shot) out.add(s.shot)
     }
-    // Frames an employee's running session still shows are kept too (Wave 3 part B).
     if (typeof ctx.framesInUse === 'function') {
-      for (const ref of ctx.framesInUse(companyId)) candidates.delete(ref)
+      for (const ref of ctx.framesInUse(companyId)) out.add(ref)
     }
-    return candidates.size ? frames.remove(companyId, [...candidates]) : 0
+    return out
   }
   const shotsOf = (w) => new Set((w && w.steps ? w.steps : []).map((s) => s && s.shot).filter(Boolean))
 
@@ -244,7 +252,7 @@ export function createWorkflows(ctx) {
     listWorkflowsForUser, getWorkflowForUser, createWorkflow, updateWorkflow,
     publishWorkflow, reviseWorkflow, retireWorkflow, deleteWorkflow,
     uploadWorkflowFrame, readWorkflowFrame, userCanAuthorWorkflows,
-    prepareStepRead, saveStepReading,
+    prepareStepRead, saveStepReading, referencedFrames,
   }
 }
 

@@ -64,6 +64,7 @@ import { createOnboarding } from './onboarding_store.js'
 import { createWorkflows } from './workflows_store.js'
 import { isFrameRef } from './workflows_rules.js'
 import { createWorkflowFrames } from './workflow_frames.js'
+import { createWorkflowFrameSweep } from './workflow_frame_sweep.js'
 import { execOverview } from './exec_overview.js'
 import { makeExportKey } from './export_key.js'
 
@@ -465,6 +466,10 @@ export const {
   uploadWorkflowFrame, readWorkflowFrame, userCanAuthorWorkflows,
   prepareStepRead, saveStepReading,
 } = wfs
+// Orphan-frame sweep (uploaded but never saved, interrupted saves, deleted
+// companies). The keep-rule is wfs.referencedFrames, the same one edit/delete use.
+const wfFrameSweep = createWorkflowFrameSweep({ frames: wfFrames, referencedFrames: wfs.referencedFrames, companyIds: () => (db.companies || []).map((c) => c.id) })
+export function sweepOrphanWorkflowFrames() { return wfFrameSweep.sweepAll() }
 
 // ---- AI seed (one-time, at deploy) ---------------------------------------
 // If an ai-seed.json exists and the platform AI is not already configured, load
@@ -4234,9 +4239,13 @@ export function deleteCompany(companyId, { reason = '', by = '', deleteMembers =
   }
   const i = (db.companies || []).findIndex((x) => x.id === companyId)
   if (i >= 0) db.companies.splice(i, 1)
+  // The company's captured workflow frames go with it (privacy: no tenant
+  // screenshots left on disk). A failure here is logged, never fatal.
+  let framesPurged = 0
+  try { framesPurged = wfFrames.removeCompany(companyId) } catch (e) { console.warn(`[work] company frame purge error: ${e.message}`) }
   recordAdminAction({ action: 'company_deleted', reason: r, detail: `${c.name} (${members.length} members ${deleteMembers ? 'deleted' : 'detached'}) by ${by}` })
   persist()
-  return { ok: true, members: members.length }
+  return { ok: true, members: members.length, framesPurged }
 }
 
 // ---- Editable email templates (superadmin) --------------------------------

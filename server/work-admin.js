@@ -441,6 +441,13 @@ export function registerWorkAdminRoutes(app, deps = {}) {
   app.post('/api/work/admin/leads/clear', requireAuth, superGate, w((req, res) => {
     res.json(store.clearWorkLeads({ reason: reasonBody(req), by: req.user.username }))
   }))
+  // Run the orphan workflow-frame sweep now (it also runs daily). Same rule and
+  // 24h grace as the scheduled run; returns counts only, never file names.
+  app.post('/api/work/admin/workflow-frames/sweep', requireAuth, superGate, w((req, res) => {
+    const r = store.sweepOrphanWorkflowFrames()
+    if (r.removed) console.log(`[work] workflow frames: removed ${r.removed} orphan frame(s) (manual run)`)
+    res.json(r)
+  }))
   app.delete('/api/work/admin/tickets/:id', requireAuth, superGate, w((req, res) => {
     res.json(store.deleteWorkTicket(req.params.id, { reason: reasonBody(req), by: req.user.username }))
   }))

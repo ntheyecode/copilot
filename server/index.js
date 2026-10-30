@@ -29,6 +29,7 @@ import { sendTemplate, sendTemplateAsync, sendAccountWelcomeAsync, sendPasswordR
 import { EMAIL_DEFS, renderEmail } from './email_templates.js'
 import { Writable } from 'node:stream'
 import { registerWorkAdminRoutes } from './work-admin.js'
+import { scheduleFrameSweep } from './workflow_frame_sweep.js'
 import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
 import { verifyResponse } from './work_verify.js'
@@ -3869,6 +3870,8 @@ export function start({ port } = {}) {
       runRetention()
       const workRetentionTimer = setInterval(runRetention, 60 * 60 * 1000)
       if (workRetentionTimer.unref) workRetentionTimer.unref()
+      // Orphan workflow-frame sweep: shortly after boot, then daily (counts only in the log).
+      scheduleFrameSweep(() => { try { const r = store.sweepOrphanWorkflowFrames(); if (r.removed) console.log(`[work] workflow frames: removed ${r.removed} orphan frame(s)`) } catch (e) { console.warn(`[work] workflow frame sweep error: ${e.message}`) } })
       // Periodic AI-model research (owner directive): on a daily cadence, recompute
       // the best/cheapest recommendation across the configured providers against
       // their LIVE catalogs, so the superadmin's "AI Research" view stays current

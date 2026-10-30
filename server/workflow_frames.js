@@ -16,13 +16,18 @@ import crypto from 'node:crypto'
 import { isFrameRef } from './workflows_rules.js'
 
 const MIME_BY_EXT = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp' }
+// The tenant folder name for a company id (also how the sweep maps a folder back
+// to a live company).
+export const folderName = (companyId) => String(companyId == null ? '' : companyId).replace(/[^a-zA-Z0-9_-]/g, '')
+// The temp file save() writes before its atomic rename.
+const isTempName = (name) => typeof name === 'string' && name.endsWith('.tmp') && isFrameRef(name.slice(0, -4))
 
 // ctx: { dir, seal(buf)->buf, open(buf)->buf }
 export function createWorkflowFrames(ctx) {
   const { dir, seal, open } = ctx
 
   function companyDir(companyId) {
-    const safe = String(companyId == null ? '' : companyId).replace(/[^a-zA-Z0-9_-]/g, '')
+    const safe = folderName(companyId)
     if (!safe) throw new Error('[workflow_frames] a company id is required')
     return path.join(dir, safe)
   }
@@ -51,18 +56,51 @@ export function createWorkflowFrames(ctx) {
     } catch { return null }
   }
 
-  // Delete frames for a tenant; returns how many were removed. Invalid refs and
-  // already-missing files are skipped.
+  // Delete frames for a tenant; returns how many were removed. A name is either
+  // a frame ref or the temp file of an interrupted save (`<ref>.tmp`); anything
+  // else and already-missing files are skipped.
   function remove(companyId, refs) {
     let n = 0
     for (const ref of (Array.isArray(refs) ? refs : [])) {
-      if (!isFrameRef(ref)) continue
+      if (!isFrameRef(ref) && !isTempName(ref)) continue
       try { fs.unlinkSync(path.join(companyDir(companyId), ref)); n++ } catch { /* already gone */ }
     }
     return n
   }
 
-  return { save, read, remove }
+  // Tenant folders present on disk (folder name = sanitized company id).
+  function companies() {
+    try {
+      return fs.readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name)
+    } catch { return [] }
+  }
+
+  // Frame files of one tenant with their mtime, for the orphan sweep. Only
+  // frame refs and save temps are listed; any other file is never touched.
+  function entries(companyId) {
+    let names = []
+    const cdir = companyDir(companyId)
+    try { names = fs.readdirSync(cdir) } catch { return [] }
+    const out = []
+    for (const name of names) {
+      const temp = isTempName(name)
+      if (!temp && !isFrameRef(name)) continue
+      try { out.push({ name, temp, mtimeMs: fs.statSync(path.join(cdir, name)).mtimeMs }) } catch { /* raced away */ }
+    }
+    return out
+  }
+
+  // Delete a tenant's whole frame folder (company deletion); returns how many
+  // files it held. Missing folder = 0.
+  function removeCompany(companyId) {
+    const cdir = companyDir(companyId)
+    let n = 0
+    try { n = fs.readdirSync(cdir).length } catch { return 0 }
+    fs.rmSync(cdir, { recursive: true, force: true })
+    return n
+  }
+
+  return { save, read, remove, companies, entries, removeCompany }
 }
 
-export default { createWorkflowFrames }
+export default { createWorkflowFrames, folderName }
