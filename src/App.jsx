@@ -48,6 +48,8 @@ const WorkExec = lazy(() => import('./pages/WorkExec.jsx'))
 // Teach studio: record + author guided workflows (trainer grant or company admin).
 // Standalone .wka console like the exec dashboard; self-gates on roleView.showTeach.
 const TeachStudio = lazy(() => import('./pages/work/teach/TeachStudio.jsx'))
+// Workflow issues inbox (Teach Wave 3 part C): standalone .wka console; self-gates on roleView.showIncidents.
+const WorkflowIssues = lazy(() => import('./pages/work/incidents/WorkflowIssues.jsx'))
 // Standalone white sub-pages of the dashboard (same tokens, own white sub-shell).
 const WorkTasks = lazy(() => import('./pages/work/MyTasks.jsx'))
 const CompletedTasks = lazy(() => import('./pages/work/Completed.jsx'))
@@ -194,6 +196,7 @@ export default function App() {
         <Route path="/work/company" element={<WorkCompanyAdmin />} />
         <Route path="/work/exec" element={<WorkExec />} />
         <Route path="/work/teach" element={<TeachStudio />} />
+        <Route path="/work/workflow-issues" element={<WorkflowIssues />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

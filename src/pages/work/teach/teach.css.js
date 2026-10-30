@@ -20,6 +20,11 @@ export const TEACH_CSS = `
 .wka .tch-count { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--wka-muted); white-space:nowrap; }
 .wka .tch-count b { color:var(--wka-text); font-variant-numeric:tabular-nums; }
 
+/* link to the Workflow issues inbox, with a calm unread count */
+.wka .tch-issues { white-space:nowrap; flex:0 0 auto; }
+.wka .tch-issues-n { min-width:19px; height:19px; padding:0 6px; border-radius:999px; display:inline-grid; place-items:center; font-size:11px; font-weight:700;
+  line-height:1; font-variant-numeric:tabular-nums; background:var(--wka-accent-soft); color:var(--wka-accent-dark); border:1px solid var(--wka-accent-line); }
+
 /* workflow list: collapsed expandable rows */
 .wka .tch-rows { display:flex; flex-direction:column; gap:10px; }
 .wka .tch-row { border:1px solid var(--wka-line); border-radius:12px; background:var(--wka-panel); overflow:hidden; }

@@ -12,7 +12,7 @@
 // (src/i18n/locales/en/dashboardsHelp.js); `k` is the entry's key there. Lists
 // are keyed arrays rendered through renderRich so inline <b> stays markup, not
 // HTML. Image paths stay here (they are assets, not copy).
-import { Inbox, Briefcase, Users, ShieldCheck, UserCog, LayoutDashboard, Play, FolderKanban, Compass, FileText } from 'lucide-react'
+import { Inbox, Briefcase, Users, ShieldCheck, UserCog, LayoutDashboard, Play, FolderKanban, Compass, FileText, Signpost } from 'lucide-react'
 import { useT, renderRich } from '../../../i18n/index.jsx'
 
 // One screenshot with its caption (the figure recipe the guide already uses).
@@ -140,6 +140,21 @@ export const DASHBOARD_HELP = [
       <Shot src="/help/dashboards/grc-risks.webp" width={1080} height={600} alt={t('dashboardsHelp.grc.shotRisks.alt')} caption={t('dashboardsHelp.grc.shotRisks.caption')} />
       <h3 className="sub">{t('dashboardsHelp.grc.log.h')}</h3>
       <Steps t={t} k="dashboardsHelp.grc.log.steps" />
+    </>),
+  },
+  {
+    // Workflow issues inbox (Teach Wave 3 part C): trainers, PMs, Sr PMs, GRC,
+    // company admins and executives (roleViewOf .showIncidents).
+    id: 'dash-issues', k: 'issues', icon: Signpost, show: (v) => v.showIncidents,
+    body: (v, t) => (<>
+      <p>{t('dashboardsHelp.issues.lead')}</p>
+      <Shot src="/help/dashboards/workflow-issues.webp" height={1195} alt={t('dashboardsHelp.issues.shot.alt')} caption={t('dashboardsHelp.issues.shot.caption')} />
+      <h3 className="sub">{t('dashboardsHelp.issues.howTo')}</h3>
+      <Steps t={t} k="dashboardsHelp.issues.steps" />
+      <h3 className="sub">{t('dashboardsHelp.issues.adopt.h')}</h3>
+      <Steps t={t} k="dashboardsHelp.issues.adopt.steps" />
+      <Shot src="/help/dashboards/workflow-issues-adopt.webp" width={740} height={314} alt={t('dashboardsHelp.issues.shotAdopt.alt')} caption={t('dashboardsHelp.issues.shotAdopt.caption')} />
+      <p>{t('dashboardsHelp.issues.watch')}</p>
     </>),
   },
   {

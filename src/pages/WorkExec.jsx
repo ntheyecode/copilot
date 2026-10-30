@@ -40,6 +40,7 @@ import { Loading, ErrorBox, EmptyState } from './workadmin/sections/_shared.jsx'
 import { EXEC_DRILL_CSS } from './exec/exec.css.js'
 import { ProjectsDrilldown, PerformersDrilldown } from './exec/ExecDrilldowns.jsx'
 import BrainExportPanel from './exec/BrainExportPanel.jsx'
+import ExecIncidentsCard from './exec/ExecIncidentsCard.jsx'
 
 const RANGES = [7, 30, 90]
 const POLL_MS = 45000
@@ -644,6 +645,9 @@ export default function WorkExec() {
           </>
         )}
 
+        {/* Active workflow issues by kind (Teach Wave 3 part C), linking to the inbox.
+            A live action card, not part of the productivity report export. */}
+        <div className="wx-noexport"><ExecIncidentsCard /></div>
         {/* Detailed drill-downs (projects + performers on both axes). They ride
             along in the CSV-adjacent image/PDF exports and handle their own empty
             states, so they appear whether or not any task was completed. */}

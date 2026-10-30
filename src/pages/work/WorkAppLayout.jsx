@@ -22,6 +22,7 @@ import { WD_CSS } from './workApp.css.js'
 import { card, shell } from './lib.js'
 import { WorkAppContext } from './WorkAppContext.jsx'
 import PlanPill from './PlanPill.jsx'
+import IncidentsNavItem from './incidents/IncidentsNavItem.jsx'
 import { planView, fmtRenewDate, fmtDuration } from './planModel.js'
 
 // ---- Android self-update banner (moved verbatim from WorkPage) --------------
@@ -438,11 +439,13 @@ export default function WorkAppLayout() {
             <NavLink to="/work/skills" className={navClass} title={t('workShell.nav.skills')}><Blocks size={18} /> <span className="wd-nav-t">{t('workShell.nav.skills')}</span></NavLink>
             {/* Role-based management section: PM / Sr PM / GRC, the Teach studio
                 (trainer grant or company admin), and the company admin. */}
-            {(roleView.showPm || roleView.showSrPm || roleView.showGrc || roleView.showTemplates || roleView.showTeach) && (<>
+            {(roleView.showPm || roleView.showSrPm || roleView.showGrc || roleView.showTemplates || roleView.showTeach || roleView.showIncidents) && (<>
               <div className="wd-sect">{t('workShell.nav.manage')}</div><span className="wd-sect-rule" aria-hidden />
               {/* Teach is a standalone .wka console (own route, full navigation) like
                   the exec dashboard, so it is a plain anchor, not a NavLink. */}
               {roleView.showTeach && <a className="wd-nav" href="/work/teach" title={t('workShell.nav.teachTip')}><GraduationCap size={18} /> <span className="wd-nav-t">{t('workShell.nav.teach')}</span></a>}
+              {/* Workflow issues inbox (Wave 3 part C): its own .wka console, with an unread badge. */}
+              <IncidentsNavItem enabled={roleView.showIncidents} />
               {roleView.showPm && <NavLink to="/work/pm" className={navClass} title={t('workShell.nav.pmTip')}><Briefcase size={18} /> <span className="wd-nav-t">{t('workShell.nav.pm')}</span></NavLink>}
               {roleView.showTemplates && <NavLink to="/work/templates" className={navClass} title={t('workShell.nav.templatesTip')}><LayoutTemplate size={18} /> <span className="wd-nav-t">{t('workShell.nav.templates')}</span></NavLink>}
               {roleView.showSrPm && <NavLink to="/work/srpm" className={navClass} title={t('workShell.nav.srpmTip')}><Users size={18} /> <span className="wd-nav-t">{t('workShell.nav.srpm')}</span></NavLink>}
