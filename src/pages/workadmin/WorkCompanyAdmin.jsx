@@ -15,7 +15,7 @@ import {
   Loader2, ShieldAlert, LogOut, Plus, Trash2, Check, Info, KeyRound, Lock, AlertTriangle,
   Building2, UserCog, RefreshCw, Receipt, Copy, Clock, Mail, ChevronDown, ChevronRight,
   FileText, Download, Activity, Globe, Upload, Brain, X, Blocks, Camera, BookOpen, Gauge,
-  Network, Briefcase,
+  Network, Briefcase, Code2,
 } from 'lucide-react'
 import { api } from '../../api.js'
 import { useT } from '../../i18n/index.jsx'
@@ -30,6 +30,8 @@ import HelpCompany from './sections/HelpCompany.jsx'
 import CompanyPoolCard from './sections/CompanyPoolCard.jsx'
 import GuidanceDepth from './sections/GuidanceDepth.jsx'
 import Customers from './sections/Customers.jsx'
+import ApiKeys from './sections/ApiKeys.jsx'
+import Webhooks from './sections/Webhooks.jsx'
 import { DEPTH_CHOICE_CSS } from './sections/DepthChoice.jsx'
 import { WORKADMIN_CSS } from './workadmin.css.js'
 import { Loading, ErrorBox, EmptyState, Spinning, SavedTag, RecRow, EditToggle, useReasonModal } from './sections/_shared.jsx'
@@ -77,6 +79,7 @@ const SECTIONS = [
   { id: 'brainsecurity', label: 'companyAdmin.nav.brainsecurity', icon: Lock, title: 'companyAdmin.sections.brainsecurity.title', sub: 'companyAdmin.sections.brainsecurity.sub' },
   { id: 'alerts', label: 'companyAdmin.nav.alerts', icon: ShieldAlert, title: 'companyAdmin.sections.alerts.title', sub: 'companyAdmin.sections.alerts.sub' },
   { id: 'integrations', label: 'companyAdmin.nav.integrations', icon: Globe, title: 'companyAdmin.sections.integrations.title', sub: 'companyAdmin.sections.integrations.sub' },
+  { id: 'developer', label: 'companyAdmin.nav.developer', icon: Code2, title: 'companyAdmin.sections.developer.title', sub: 'companyAdmin.sections.developer.sub' },
   { id: 'sessions', label: 'companyAdmin.nav.sessions', icon: Activity, title: 'companyAdmin.sections.sessions.title', sub: 'companyAdmin.sections.sessions.sub' },
   { id: 'tickets', label: 'companyAdmin.nav.tickets', icon: LifeBuoy, title: 'companyAdmin.sections.tickets.title', sub: 'companyAdmin.sections.tickets.sub' },
   { id: 'help', label: 'companyAdmin.nav.help', icon: BookOpen, title: 'companyAdmin.sections.help.title', sub: 'companyAdmin.sections.help.sub' },
@@ -1922,6 +1925,7 @@ export default function WorkCompanyAdmin() {
       case 'activity': return <ActivitySection />
       case 'alerts': return <AlertsSection onSeen={alertsSeen} />
       case 'integrations': return <IntegrationsSection />
+      case 'developer': return (<><ApiKeys /><Webhooks /></>)
       case 'settings': return <SettingsSection viewer={viewer} company={company} onProfile={(u) => setViewer(u)} />
       case 'overview':
       default: return <OverviewSection company={company} onOpen={setActive} />

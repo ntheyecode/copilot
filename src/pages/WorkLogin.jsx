@@ -10,6 +10,7 @@ import { AVMark } from '../components/AdmireVedaLogo.jsx'
 import SocialMark from '../components/SocialMark.jsx'   // Google / Microsoft / Facebook marks (shared with the subscribe onboarding)
 import WorkShell from '../workShell.jsx'
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
+import { hasLaunchHop } from './work/launch/launchHop.js'   // a launch link parked its token for this sign-in hop
 import LanguageMenu from '../components/LanguageMenu.jsx'   // pick a language at login; the app adopts it
 import { useT } from '../i18n/index.jsx'
 
@@ -286,6 +287,10 @@ export default function WorkLogin() {
   useEffect(() => {
     if (!user || socialStep) return
     if (plan) { nav(`/workcopilot/signup/pay?plan=${encodeURIComponent(plan)}${cycle !== 'monthly' ? `&cycle=${encodeURIComponent(cycle)}` : ''}`, { replace: true }); return }
+    // A launch link (/work/launch#<token>) sent the person here to sign in and
+    // parked its token for this one hop: finish the launch instead of the
+    // role's home. The launch page takes and clears the parked token.
+    if (hasLaunchHop()) { nav('/work/launch', { replace: true }); return }
     const isAdmin = !!(user && ['superadmin', 'admin', 'accounting', 'affiliate_admin'].includes(user.role))
     const isCompanyAdmin = !!(user && user.companyRole === 'company_admin' && !isAdmin)
     nav(isAdmin ? '/work/admin' : isCompanyAdmin ? '/work/company' : '/work', { replace: true })
