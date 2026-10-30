@@ -19,6 +19,12 @@ export const REQUIRED_META = ['productName', 'title', 'owner', 'launchTarget']
 const STR = (v) => (v == null ? '' : String(v)).trim()
 const CAP = 400   // a single-line metadata field cap
 
+// A step's `shot` is a captured frame stored by workflow_frames.js: 128-bit random
+// hex + an image extension. Anything else is dropped, so a step can never point at
+// an arbitrary path or another tenant's file.
+export const FRAME_REF_RE = /^[a-f0-9]{32}\.(jpg|png|webp)$/
+export function isFrameRef(ref) { return typeof ref === 'string' && FRAME_REF_RE.test(ref) }
+
 export function normalizeMeta(meta = {}) {
   const m = meta && typeof meta === 'object' ? meta : {}
   const one = (v) => STR(v).slice(0, CAP)
@@ -53,7 +59,7 @@ export function normalizeStep(step = {}, i = 0) {
     target: STR(s.target) || null,     // the control Guide mode finds on playback
     doneWhen: STR(s.doneWhen) || null, // the completion check
     docRef: STR(s.docRef) || null,     // backing doc id / anchor
-    shot: STR(s.shot) || null,         // scrubbed screenshot ref (set by Wave 2 capture)
+    shot: isFrameRef(s.shot) ? s.shot : null,   // scrubbed frame ref from the Wave 2 capture, or none
   }
 }
 
@@ -76,6 +82,6 @@ export function nextVersion(versionsInGroup) {
 }
 
 export default {
-  WORKFLOW_STATES, REQUIRED_META, normalizeMeta, validateMeta,
+  WORKFLOW_STATES, REQUIRED_META, FRAME_REF_RE, isFrameRef, normalizeMeta, validateMeta,
   normalizeStep, validateSteps, canEditContent, canPublish, canRetire, nextVersion,
 }

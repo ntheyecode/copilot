@@ -226,6 +226,9 @@ export const api = {
   workflowRevise: (id) => req('POST', `/api/work/workflows/${id}/revise`),
   workflowRetire: (id) => req('POST', `/api/work/workflows/${id}/retire`),
   workflowDelete: (id) => req('DELETE', `/api/work/workflows/${id}`),
+  // Wave 2 capture: upload a scrubbed frame -> { ref } for a step's `shot`; the path serves it back.
+  workflowFrameUpload: (dataUrl) => req('POST', '/api/work/workflows/frames', { dataUrl }),
+  workflowFramePath: (ref) => `/api/work/workflows/frames/${encodeURIComponent(ref)}`,
   workGrcLog: (projectId, limit) => req('GET', `/api/work/grc/log${projectId || limit ? `?${[projectId ? `project=${encodeURIComponent(projectId)}` : '', limit ? `limit=${Number(limit)}` : ''].filter(Boolean).join('&')}` : ''}`),
   // Project templates (team projects, Model B): a template is a planned task map
   // a PM / Sr PM / company admin assigns to many people, each getting their own

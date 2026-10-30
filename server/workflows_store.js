@@ -14,11 +14,14 @@
 // ===========================================================================
 import * as roles from './work_roles.js'
 import * as wf from './workflows_rules.js'
+import { parseImageDataUrl } from './image_data_url.js'
 
-// ctx: { db: () => object, persist, id, now, httpErr, getUser, emit }
+// ctx: { db: () => object, persist, id, now, httpErr, getUser, emit, frames? }
+//   frames (optional): workflow_frames.js { save, read, remove } for Wave 2 capture.
 export function createWorkflows(ctx) {
   const { persist, id, now, httpErr, getUser } = ctx
   const emit = ctx.emit || (() => {})
+  const frames = ctx.frames || null
   const db = () => { const d = ctx.db(); if (!Array.isArray(d.workflows)) d.workflows = []; return d }
   const all = () => db().workflows
 
@@ -35,6 +38,20 @@ export function createWorkflows(ctx) {
   const inCompany = (w, a) => !!w && String(w.companyId) === String(a.companyId)
   const owns = (w, a) => a.isAdmin || String(w.authorId) === String(a.id)
   const visible = (w, a) => w.state === 'published' || a.isAdmin || String(w.authorId) === String(a.id)
+
+  // Delete captured frames that NO remaining workflow in the company still
+  // references (revise copies step shots, so versions in a group can share a
+  // frame; only an unreferenced one is safe to purge). Privacy: deleting or
+  // editing a workflow never leaves its dropped frames behind.
+  function purgeUnreferenced(companyId, candidates) {
+    if (!frames || !candidates || !candidates.size) return 0
+    for (const o of all()) {
+      if (String(o.companyId) !== String(companyId)) continue
+      for (const s of (o.steps || [])) if (s && s.shot) candidates.delete(s.shot)
+    }
+    return candidates.size ? frames.remove(companyId, [...candidates]) : 0
+  }
+  const shotsOf = (w) => new Set((w && w.steps ? w.steps : []).map((s) => s && s.shot).filter(Boolean))
 
   function publicShape(w) {
     return {
@@ -97,8 +114,11 @@ export function createWorkflows(ctx) {
       if (!v.ok) throw httpErr(400, `Missing required fields: ${v.missing.join(', ')}.`)
       w.meta = v.meta
     }
-    if (steps !== undefined) w.steps = wf.validateSteps(steps).steps
-    w.updatedAt = now(); persist()
+    let dropped = null
+    if (steps !== undefined) { dropped = shotsOf(w); w.steps = wf.validateSteps(steps).steps }
+    w.updatedAt = now()
+    if (dropped) purgeUnreferenced(w.companyId, dropped)   // frames this edit removed
+    persist()
     return publicShape(w)
   }
 
@@ -146,14 +166,39 @@ export function createWorkflows(ctx) {
   function deleteWorkflow(userId, wid) {
     const { w } = mustAct(userId, wid)
     const i = all().findIndex((x) => x.id === w.id)
-    if (i >= 0) { all().splice(i, 1); persist() }
-    emit('workflow_deleted', { id: wid, companyId: w.companyId })
+    if (i >= 0) all().splice(i, 1)
+    // Purge its captured frames too, except any another version still shares.
+    const framesPurged = purgeUnreferenced(w.companyId, shotsOf(w))
+    persist()
+    emit('workflow_deleted', { id: wid, companyId: w.companyId, framesPurged })
     return { ok: true, id: wid }
+  }
+
+  // ---- Wave 2 capture frames: scrubbed screenshots referenced by step.shot ----
+  // Upload needs the trainer grant or company admin (same as authoring) and lands
+  // in the uploader's own tenant folder. Read is company-scoped: a ref resolves
+  // only inside the reader's own company folder, and refs are unguessable.
+  function uploadWorkflowFrame(userId, dataUrl) {
+    const a = actor(userId); requireAuthor(a)
+    if (!frames) throw httpErr(503, 'Frame storage is not configured on this server.')
+    const v = parseImageDataUrl(dataUrl)
+    if (!v.ok) throw httpErr(v.status, v.error)
+    if (!v.ext) throw httpErr(400, 'A workflow frame must be a JPEG, PNG or WebP image.')
+    return { ref: frames.save(a.companyId, v.buffer, v.ext) }
+  }
+  function readWorkflowFrame(userId, ref) {
+    const a = actor(userId)
+    if (!frames) throw httpErr(503, 'Frame storage is not configured on this server.')
+    if (!wf.isFrameRef(ref)) throw httpErr(400, 'That is not a valid frame reference.')
+    const out = frames.read(a.companyId, ref)
+    if (!out) throw httpErr(404, 'Frame not found.')
+    return out
   }
 
   return {
     listWorkflowsForUser, getWorkflowForUser, createWorkflow, updateWorkflow,
     publishWorkflow, reviseWorkflow, retireWorkflow, deleteWorkflow,
+    uploadWorkflowFrame, readWorkflowFrame,
   }
 }
 

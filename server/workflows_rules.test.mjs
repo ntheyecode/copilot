@@ -28,3 +28,10 @@ test('lifecycle predicates and version bump', () => {
   assert.equal(wf.nextVersion([]), 1)
   assert.equal(wf.nextVersion([{ version: 1 }, { version: 2 }]), 3)
 })
+
+test('a step shot must be a lowercase frame ref; anything else is dropped', () => {
+  const ref = `${'a'.repeat(32)}.jpg`
+  assert.equal(wf.normalizeStep({ instruction: 'x', shot: ref }).shot, ref)
+  assert.equal(wf.normalizeStep({ instruction: 'x', shot: '../../secret' }).shot, null)
+  assert.equal(wf.isFrameRef(`${'A'.repeat(32)}.jpg`), false)
+})

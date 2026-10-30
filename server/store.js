@@ -62,6 +62,7 @@ import { createEnterpriseBilling } from './enterprise_billing.js'
 import { createPlanAllowance } from './plan_allowance.js'
 import { createOnboarding } from './onboarding_store.js'
 import { createWorkflows } from './workflows_store.js'
+import { createWorkflowFrames } from './workflow_frames.js'
 import { execOverview } from './exec_overview.js'
 import { makeExportKey } from './export_key.js'
 
@@ -439,10 +440,15 @@ export const {
 // through. RBAC (company + trainer grant + ownership) lives in the module; the
 // store just owns db + persistence. Public API re-exported so the routes keep
 // their store.* names.
-const wfs = createWorkflows({ db: () => db, persist, id, now, httpErr, getUser, emit: emitStoreEvent })
+// Wave 2 capture frames: encrypted at rest with the SAME shot cipher as session
+// screenshots (encryptBuffer/decryptBuffer stay single-source here), in their own
+// folder so session-shot housekeeping never walks them.
+const wfFrames = createWorkflowFrames({ dir: path.join(DATA_DIR, 'workflow-frames'), seal: encryptBuffer, open: decryptBuffer })
+const wfs = createWorkflows({ db: () => db, persist, id, now, httpErr, getUser, emit: emitStoreEvent, frames: wfFrames })
 export const {
   listWorkflowsForUser, getWorkflowForUser, createWorkflow, updateWorkflow,
   publishWorkflow, reviseWorkflow, retireWorkflow, deleteWorkflow,
+  uploadWorkflowFrame, readWorkflowFrame,
 } = wfs
 
 // ---- AI seed (one-time, at deploy) ---------------------------------------

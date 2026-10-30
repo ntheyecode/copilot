@@ -3,11 +3,20 @@ import assert from 'node:assert/strict'
 import { createWorkflows } from './workflows_store.js'
 
 // A tiny in-memory harness: no real store, just the ctx the factory expects.
-function harness(users) {
+function harness(users, { withFrames = false } = {}) {
   const db = { workflows: [] }
   let seq = 0
   const byId = new Map(users.map((u) => [u.id, u]))
+  // An in-memory stand-in for workflow_frames.js (same save/read/remove contract).
+  const frameStore = new Map()
+  let fseq = 0
+  const frames = withFrames ? {
+    save: (cid, buf, ext) => { const ref = `${String(++fseq).padStart(32, '0')}.${ext}`; frameStore.set(`${cid}/${ref}`, buf); return ref },
+    read: (cid, ref) => (frameStore.has(`${cid}/${ref}`) ? { buffer: frameStore.get(`${cid}/${ref}`), mime: 'image/jpeg' } : null),
+    remove: (cid, refs) => { let n = 0; for (const r of refs) if (frameStore.delete(`${cid}/${r}`)) n++; return n },
+  } : null
   const api = createWorkflows({
+    frames,
     db: () => db,
     persist: () => {},
     id: () => `id${++seq}`,
@@ -16,7 +25,7 @@ function harness(users) {
     getUser: (uid) => byId.get(uid) || null,
     emit: () => {},
   })
-  return { db, api }
+  return { db, api, frameStore }
 }
 const META = { productName: 'Zamina', title: 'Raise a transfer', owner: 'Ops', launchTarget: 'https://zamina.internal' }
 const STEP = { instruction: 'Open Transfers' }
@@ -83,4 +92,49 @@ test('only a draft can be edited; a published one must be revised', () => {
   const d = api.createWorkflow('t', { meta: META, steps: [STEP] })
   api.publishWorkflow('t', d.id)
   assert.throws(() => api.updateWorkflow('t', d.id, { steps: [STEP] }), /Only a draft/)
+})
+
+const JPG = 'data:image/jpeg;base64,' + Buffer.from('fakejpeg').toString('base64')
+
+test('frames: only an author uploads; reads are company-scoped and ref-validated', () => {
+  const { api } = harness([trainer, member, other], { withFrames: true })
+  assert.throws(() => api.uploadWorkflowFrame('m', JPG), /trainer or company admin/)
+  const { ref } = api.uploadWorkflowFrame('t', JPG)
+  assert.match(ref, /^[a-f0-9]{32}\.jpg$/)
+  assert.equal(api.readWorkflowFrame('m', ref).buffer.toString(), 'fakejpeg')   // same company can view
+  assert.throws(() => api.readWorkflowFrame('o', ref), /Frame not found/)        // another company cannot
+  assert.throws(() => api.readWorkflowFrame('t', '../etc/passwd'), /valid frame reference/)
+})
+
+test('frames: bad uploads are refused with a clear reason', () => {
+  const { api } = harness([trainer], { withFrames: true })
+  assert.throws(() => api.uploadWorkflowFrame('t', 'not-an-image'), /image data URL/)
+  assert.throws(() => api.uploadWorkflowFrame('t', 'data:image/gif;base64,AAAA'), /JPEG, PNG or WebP/)
+})
+
+test('frames: edit and delete purge unreferenced frames but keep ones a revision still shares', () => {
+  const { api, frameStore } = harness([trainer], { withFrames: true })
+  const f1 = api.uploadWorkflowFrame('t', JPG).ref
+  const f2 = api.uploadWorkflowFrame('t', JPG).ref
+  const d = api.createWorkflow('t', { meta: META, steps: [{ instruction: 'a', shot: f1 }, { instruction: 'b', shot: f2 }] })
+  const v1 = api.publishWorkflow('t', d.id)
+  const r = api.reviseWorkflow('t', v1.id)                                  // v2 shares f1 + f2
+  api.updateWorkflow('t', r.id, { steps: [{ instruction: 'a', shot: f1 }] }) // v2 drops f2
+  assert.equal(frameStore.size, 2)                                          // f2 still used by v1 -> kept
+  api.deleteWorkflow('t', v1.id)                                            // f2 now unreferenced -> purged
+  assert.equal(frameStore.size, 1)
+  assert.ok(api.readWorkflowFrame('t', f1))                                 // f1 still shared by v2
+  api.deleteWorkflow('t', r.id)                                             // last reference gone
+  assert.equal(frameStore.size, 0)
+})
+
+test('a step shot that is not a frame ref is dropped', () => {
+  const { api } = harness([trainer])
+  const w = api.createWorkflow('t', { meta: META, steps: [{ instruction: 'a', shot: '../../etc/passwd' }] })
+  assert.equal(w.steps[0].shot, null)
+})
+
+test('without frame storage, frame calls fail clearly (never a silent success)', () => {
+  const { api } = harness([trainer])
+  assert.throws(() => api.uploadWorkflowFrame('t', JPG), /not configured/)
 })

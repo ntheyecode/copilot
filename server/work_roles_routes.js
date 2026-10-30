@@ -150,6 +150,19 @@ export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth,
   app.delete('/api/work/workflows/:id', requireWorkAuth, wrap((req, res) => {
     res.json(store.deleteWorkflow(req.workUser.id, req.params.id))
   }))
+  // Wave 2 capture: upload one scrubbed frame (trainer / company admin) and get a
+  // ref to put in a step's `shot`; read a frame back (company-scoped). Frames are
+  // encrypted at rest and only ever served to the frame's own tenant.
+  app.post('/api/work/workflows/frames', requireWorkAuth, wrap((req, res) => {
+    res.json(store.uploadWorkflowFrame(req.workUser.id, (req.body || {}).dataUrl))
+  }))
+  app.get('/api/work/workflows/frames/:ref', requireWorkAuth, wrap((req, res) => {
+    const f = store.readWorkflowFrame(req.workUser.id, req.params.ref)
+    res.setHeader('Content-Type', f.mime)
+    res.setHeader('Cache-Control', 'private, max-age=300')
+    res.setHeader('X-Content-Type-Options', 'nosniff')
+    res.send(f.buffer)
+  }))
 }
 
 export default { registerWorkRolesRoutes }
