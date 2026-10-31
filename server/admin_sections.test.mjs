@@ -15,13 +15,13 @@ test('all: every section is offered (today\'s product, unchanged)', () => {
 })
 
 test('saas: no individual-only, Stripe or social sections; company sections stay', () => {
-  assert.deepEqual(hidden('saas').sort(), ['affiliates', 'billing', 'cancelled', 'pricing', 'social', 'subscribers'].sort())
+  assert.deepEqual(hidden('saas').sort(), ['affiliates', 'billing', 'cancelled', 'pricing', 'social', 'subscribers', 'subscription-health'].sort())
   for (const id of ['companies', 'invoices', 'governance', 'notifications', 'users', 'finance', 'leads', 'hero']) assert.ok(adminSectionAvailable(id, makeCaps('saas')), id)
 })
 
 test('paid: no company sections; individual, Stripe and social sections stay', () => {
   assert.deepEqual(hidden('paid').sort(), ['companies', 'governance', 'invoices', 'notifications'].sort())
-  for (const id of ['subscribers', 'cancelled', 'pricing', 'billing', 'social', 'affiliates']) assert.ok(adminSectionAvailable(id, makeCaps('paid')), id)
+  for (const id of ['subscribers', 'cancelled', 'subscription-health', 'pricing', 'billing', 'social', 'affiliates']) assert.ok(adminSectionAvailable(id, makeCaps('paid')), id)
 })
 
 test('an unknown section id fails loudly (a console tab added without a registry row)', () => {

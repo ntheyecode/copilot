@@ -36,6 +36,8 @@ export const ADMIN_SECTIONS = Object.freeze([
   { id: 'pricing', needs: ['individual_plans'], api: ['/api/work/admin/pricing'] },
   { id: 'subscribers', needs: ['individual_plans'], api: ['/api/work/admin/subscribers'] },
   { id: 'cancelled', needs: ['individual_plans'], api: [] },
+  // Subscriber health: MRR by plan, churn, past due, Stripe wiring.
+  { id: 'subscription-health', needs: ['individual_plans', 'stripe_billing'], api: ['/api/work/admin/subscriptions/health'] },
   // Stripe keys, prices and the test call.
   { id: 'billing', needs: ['stripe_billing'], api: ['/api/work/admin/billing'] },
   { id: 'finance', needs: [], api: [] },

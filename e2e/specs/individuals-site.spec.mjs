@@ -3,7 +3,7 @@
 // Every test runs in every edition and checks THAT edition's contract:
 //   paid     the individuals chrome and pages, the plan hand-off to sign-up,
 //            no company wording, no sideways scroll at 1280/640 in light and
-//            dark, no raw keys and no English left behind in German and Arabic
+//            a dark system preference (the site stays light), no raw keys and no English left behind in German and Arabic
 //   all/saas the organization pages exactly as before (no individuals chrome)
 import { test, expect } from '../support/fixtures.mjs'
 import { capsOf } from '../support/editions.mjs'
@@ -106,8 +106,8 @@ test('every individuals page: no sideways scroll at 1280 and 640, light and dark
           paper: getComputedStyle(document.querySelector('.iv')).backgroundColor,
         }))
         if (m.scroll > m.inner + 1) problems.push(`${name} ${theme} ${width}px: page is ${m.scroll}px wide`)
-        const dark = /rgb\(15, 19, 28\)/.test(m.paper)
-        if ((theme === 'dark') !== dark) problems.push(`${name} ${theme} ${width}px: paper is ${m.paper}`)
+        // Public pages stay light even for a system that prefers dark (owner rule).
+        if (/rgb\(15, 19, 28\)/.test(m.paper)) problems.push(`${name} ${theme} ${width}px: the public site turned dark (paper ${m.paper})`)
         if (width === 1280 && (await page.locator('header.ivh.folded').count())) problems.push(`${name} ${theme}: the header folded at 1280`)
       }
     }

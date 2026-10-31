@@ -7,11 +7,11 @@
 // src/main.jsx). Soft 22px cards on a 1px warm line, a highlighter wash under
 // the key phrase of every heading, one benefit visual per section.
 //
-// Themes: light by default; dark when the document carries data-theme="dark"
-// or the visitor's system prefers dark and nothing pinned light. Every color
-// is a token, so both themes share one layout. RTL: logical properties only;
-// arrows flip under [dir="rtl"].
-// The dark token set, once; used for an explicit data-theme and for the system preference.
+// Themes: light, like every public page (owner rule). The dark token set below
+// only applies under an explicit data-theme="dark", which the public document
+// never carries. Every color is a token. RTL: logical properties only; arrows
+// flip under [dir="rtl"].
+// The dark token set, once.
 const DARK = `
   --iv-paper:#0f131c;--iv-paper-2:#171d29;--iv-paper-3:#1d2433;
   --iv-ink:#eef0f6;--iv-ink-2:#aab1c3;--iv-ink-3:#7f879a;
@@ -36,10 +36,9 @@ export const IV_CSS = `
   background:var(--iv-paper);color:var(--iv-ink);font-family:var(--iv-body);-webkit-font-smoothing:antialiased;
   min-height:100vh;display:flex;flex-direction:column;text-align:start;overflow-x:clip}
 [data-theme='dark'] .iv,.iv[data-theme='dark']{${DARK}}
-/* The public document carries data-theme="light" (the product shell owns that
-   attribute), so the system preference is read on the site root itself; a
-   host can pin the site light with data-theme="light" on .iv. */
-@media (prefers-color-scheme:dark){.iv:not([data-theme='light']){${DARK}}}
+/* Public pages are light, like the organization site (owner rule, src/theme/
+   prefs.js: outside the product shell the document is always data-theme="light").
+   The system preference is deliberately not read here. */
 .iv *,.iv *::before,.iv *::after{box-sizing:border-box}
 .iv a{color:inherit;text-decoration:none}
 .iv a:focus-visible,.iv button:focus-visible,.iv input:focus-visible,.iv summary:focus-visible{outline:3px solid var(--iv-sky);outline-offset:3px;border-radius:8px}

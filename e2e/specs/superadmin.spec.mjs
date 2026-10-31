@@ -66,3 +66,23 @@ test('superadmin routes refuse everyone else', async ({ as, seed, edition }) => 
     }
   }
 })
+
+test('subscriber health is in the console exactly where personal plans and Stripe exist', async ({ as, edition }) => {
+  const caps = capsOf(edition)
+  const offered = caps.has('individual_plans') && caps.has('stripe_billing')
+  const { page, api } = await as.page(SUPERADMIN, { path: '/work/admin' })
+  await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
+  if (await new LegalGate(page).dialog().isVisible()) await new LegalGate(page).accept()
+  const nav = page.locator('.wka-nav-item', { hasText: 'Subscriber health' })
+  const r = await api.get('/api/work/admin/subscriptions/health')
+  if (!offered) {
+    // The corporate site sells no personal plans: no tab, and its API is refused.
+    await expect(nav).toHaveCount(0)
+    expect(r.status).toBe(403)
+    return
+  }
+  expect(r.status).toBe(200)
+  await nav.first().click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Subscriber health' })).toBeVisible()
+  await expect(page.getByText('MRR').first()).toBeVisible()
+})

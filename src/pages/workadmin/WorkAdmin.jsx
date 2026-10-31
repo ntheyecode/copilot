@@ -9,7 +9,7 @@
 // Routing is by local state (no react-router inside). The owner wires this
 // component at a /work/admin route in App.jsx.
 import React, { useEffect, useState, useCallback } from 'react'
-import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut, LogIn, Megaphone, Mail, MailCheck, DollarSign, Share2, Wallet, UserMinus, Palette, BookOpen, Bell, Receipt, Info } from 'lucide-react'
+import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut, LogIn, Megaphone, Mail, MailCheck, DollarSign, Share2, Wallet, UserMinus, Palette, BookOpen, Bell, Receipt, Info, HeartPulse } from 'lucide-react'
 import { useT } from '../../i18n/index.jsx'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import PreferencesPanel from '../../components/PreferencesPanel.jsx'
@@ -34,6 +34,7 @@ import EmailTemplates from './sections/EmailTemplates.jsx'
 import Finance from './sections/Finance.jsx'
 import Subscribers from './sections/Subscribers.jsx'
 import Cancelled from './sections/Cancelled.jsx'
+import SubscriptionHealth from './sections/SubscriptionHealth.jsx'
 import Notifications from './sections/Notifications.jsx'
 import HelpSuper from './sections/HelpSuper.jsx'
 import B2bInvoices from './sections/B2bInvoices.jsx'
@@ -55,6 +56,7 @@ const SECTIONS = [
   { id: 'finance', label: 'superAdmin.nav.finance', icon: DollarSign, title: 'superAdmin.sections.finance.title', sub: 'superAdmin.sections.finance.sub' },
   { id: 'subscribers', label: 'superAdmin.nav.subscribers', icon: Wallet, title: 'superAdmin.sections.subscribers.title', sub: 'superAdmin.sections.subscribers.sub' },
   { id: 'cancelled', label: 'superAdmin.nav.cancelled', icon: UserMinus, title: 'superAdmin.sections.cancelled.title', sub: 'superAdmin.sections.cancelled.sub' },
+  { id: 'subscription-health', label: 'superAdmin.nav.subscription-health', icon: HeartPulse, title: 'superAdmin.sections.subscription-health.title', sub: 'superAdmin.sections.subscription-health.sub' },
   { id: 'email', label: 'superAdmin.nav.email', icon: Mail, title: 'superAdmin.sections.email.title', sub: 'superAdmin.sections.email.sub' },
   { id: 'email-templates', label: 'superAdmin.nav.email-templates', icon: MailCheck, title: 'superAdmin.sections.email-templates.title', sub: 'superAdmin.sections.email-templates.sub' },
   { id: 'ai', label: 'superAdmin.nav.ai', icon: Cpu, title: 'superAdmin.sections.ai.title', sub: 'superAdmin.sections.ai.sub' },
@@ -154,7 +156,8 @@ export default function WorkAdmin() {
   // Single source for the accounting role's allowed sections (used both to build
   // the nav and, via the generic fallback effect below, to land the role on its
   // first visible tab rather than force-pinning one tab).
-  const ACCOUNTING_SECTIONS = new Set(['finance', 'subscribers', 'cancelled', 'appearance'])
+  // Subscriber health sits behind the same finance gate as Finance and Subscribers.
+  const ACCOUNTING_SECTIONS = new Set(['finance', 'subscribers', 'cancelled', 'subscription-health', 'appearance'])
   // What this server offers comes first (the edition registry), then the role.
   const offered = SECTIONS.filter((s) => adminSectionAvailable(s.id, caps))
   const notOffered = SECTIONS.filter((s) => !adminSectionAvailable(s.id, caps))
@@ -185,6 +188,7 @@ export default function WorkAdmin() {
       case 'finance': return <Finance isSuperAdmin={isSuperAdmin} />
       case 'subscribers': return <Subscribers isSuperAdmin={isSuperAdmin} />
       case 'cancelled': return <Cancelled isSuperAdmin={isSuperAdmin} />
+      case 'subscription-health': return <SubscriptionHealth isSuperAdmin={isSuperAdmin} />
       case 'ai': return <AiConfig isSuperAdmin={isSuperAdmin} />
       case 'social': return <SocialSignIn isSuperAdmin={isSuperAdmin} />
       case 'sessions': return <Sessions isSuperAdmin={isSuperAdmin} />
