@@ -109,11 +109,20 @@ export function validateSteps(steps) {
 // reading the server already holds for its screenshot (the client's copy is never
 // trusted), and loses it when the frame it was read with is no longer the next
 // step's frame (the "done when" described a screen that is not there now).
+// A reading belongs to ITS step: matched by step id with the same screenshot.
+// A recording can give two steps the same screenshot, so a screenshot alone
+// cannot say whose reading it is; it is used only for a step whose id is new
+// and whose screenshot no other previous step had (e2e/FINDINGS.md #11).
 export function carryReadings(prevSteps, nextSteps) {
-  const byShot = new Map()
-  for (const s of (Array.isArray(prevSteps) ? prevSteps : [])) if (s && s.shot && s.reading) byShot.set(s.shot, s.reading)
+  const prev = (Array.isArray(prevSteps) ? prevSteps : []).filter(Boolean)
+  const byId = new Map(prev.filter((s) => s.id).map((s) => [s.id, s]))
+  const uses = new Map()
+  for (const s of prev) if (s.shot) uses.set(s.shot, (uses.get(s.shot) || 0) + 1)
+  const byUniqueShot = new Map(prev.filter((s) => s.shot && s.reading && uses.get(s.shot) === 1).map((s) => [s.shot, s.reading]))
   return nextSteps.map((s, i) => {
-    const r = s.shot ? byShot.get(s.shot) : null
+    const own = s.id ? byId.get(s.id) : null
+    let r = null
+    if (s.shot) r = own ? (own.shot === s.shot ? own.reading || null : null) : (byUniqueShot.get(s.shot) || null)
     const after = nextSteps[i + 1] ? nextSteps[i + 1].shot : null
     const ok = r && (!r.afterShot || r.afterShot === after)
     return { ...s, reading: ok ? normalizeReading(r, s.shot) : null }
