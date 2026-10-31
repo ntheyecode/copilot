@@ -52,7 +52,7 @@ if any server module imports from outside `server/`.
 |---|---|---|
 | `all` (default) | solo users + SaaS companies, hosted | solo_signup, saas_companies, individual_plans, stripe_billing, platform_ai, brain_export, brain_query, public_site, social_login |
 | `saas` | SaaS companies only, hosted | saas_companies, platform_ai, brain_export, brain_query, public_site |
-| `paid` | paying individuals only, hosted | solo_signup, paid_only, individual_plans, stripe_billing, platform_ai, public_site, social_login |
+| `paid` | paying individuals only, hosted | solo_signup, paid_only, individual_plans, stripe_billing, platform_ai, public_site, social_login, individual_site |
 | `onprem` | the customer's own servers | single_company, offline_licensing, onprem_setup, ai_custody_customer, brain_export, brain_query, external_db |
 | `managed` | a dedicated install we operate in the customer's cloud | single_company, onprem_setup, platform_ai, ai_custody_customer, brain_export, brain_query, external_db |
 
@@ -96,6 +96,7 @@ tenants and Stripe for enterprise billing.
 | `paid_only` | `requireWorkSubscription` (index.js) | With Stripe not configured, a personal account without comp access gets 503 `{ billingNotConfigured: true }` instead of free guiding; the server logs the fix for the operator. |
 | `solo_signup` (wording) | `soloSignupRefusal()` | Where the public site is served, the refusal says WorkCoPilot is for organizations and carries `contact: '/workcopilot/contact'`. |
 | lead form | `POST /api/work/leads` | The company field is required only where company tenants exist. |
+| `individual_site` | `src/sites/individuals/SitePage.jsx` (App.jsx routes `/`, `/workcopilot/how-it-works`, `/pricing`, `/use-cases`, `/faq`, `/security`) and `SiteHeader` / `SiteFooter` (the site chrome on every public page, legal pages included) | Off: the organization marketing pages render exactly as before. On: the individuals site renders at the same paths (its strings live in the `indiv` namespace, scanned by the edition copy gate), with the shared legal pages linked, not rewritten. |
 
 ### Not wired yet (defined in the registry, not enforced)
 
@@ -644,7 +645,11 @@ capabilities, and the page source carries the matching
   copy gate prints how many legal strings still mention companies
   (`LEGAL_PENDING`). The DPA footer link is hidden; the page stays reachable
   because the terms link to it.
-- Serves: the marketing site in the individuals wording, personal sign-up,
-  personal plans and checkout, the app for individuals.
+- Serves: the individuals marketing site (`src/sites/individuals/`, capability
+  `individual_site`: home, how it works, pricing, who it is for, FAQ and
+  privacy, at the usual public paths, with the shared legal pages linked),
+  personal sign-up, personal plans and checkout, the app for individuals
+  (dashboard with the billing alert, `/work/billing` with in-app cancel at
+  period end and resume, invoices, the Stripe portal for the payment method).
 - Refuses: every company route family (403, neutral wording) and company
   creation.

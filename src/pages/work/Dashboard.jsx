@@ -27,6 +27,7 @@ import { Loader2, X, Trash2, AlertTriangle, Globe, ChevronRight, Sparkles, Rocke
 import { api, friendlyError } from '../../api.js'
 import { AVMark } from '../../components/AdmireVedaLogo.jsx'
 import WorkBilling from '../../components/WorkBilling.jsx'
+import BillingAlert from '../../components/billing/BillingAlert.jsx'   // the one billing state that needs action (past due, ending, pending downgrade)
 import AliveBuddy, { resolveCharacter } from '../../components/AliveBuddy.jsx'
 import BuddyPicker from '../../components/BuddyPicker.jsx'
 import ScrubRules from '../../components/ScrubRules.jsx'
@@ -60,7 +61,7 @@ export default function Dashboard() {
     needsSub, gateMsg, pricing, money, titleCase,
     showBuy, setShowBuy, ready, aiStatus, aiErr, loadAi,
     sessions, sessLoaded, sessErr, reload, onOpen,
-    buddyPref, setBuddyPref, showBilling, billingOn, invoices,
+    buddyPref, setBuddyPref, showBilling, billingOn, invoices, subscription,
     canBuyHours, upgradeHref, buyCredits,
     roleView,
   } = useWorkApp()
@@ -168,6 +169,10 @@ export default function Dashboard() {
             }</div>
           : <div className="wd-plan-skel" aria-hidden />}
       </section>
+
+      {/* 2b. Billing state that needs action, for a personal account: a failed
+          payment, a plan set to end (Resume), a scheduled downgrade. */}
+      {!isCompanyMember && !isAdmin && <BillingAlert subscription={subscription} onReload={reload} />}
 
       {isAdmin && (
         <div className="wd-note wd-gap">
@@ -432,6 +437,7 @@ export default function Dashboard() {
       {showBilling && (
         <WorkBilling
           user={user}
+          subscription={subscription}
           pricing={pricing}
           invoices={invoices}
           billingConfigured={billingOn}

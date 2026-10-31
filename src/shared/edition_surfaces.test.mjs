@@ -38,6 +38,18 @@ test('a customer\'s own install (no public site) never points at our sales page'
   }
 })
 
+test('the individuals site shows only where individual_site is on (paid), never on all or saas', () => {
+  assert.equal(shows(view('paid'), 'individualSite'), true)
+  assert.equal(view('paid').individualSite, true)
+  for (const id of ['all', 'saas', 'onprem', 'managed']) {
+    assert.equal(shows(view(id), 'individualSite'), false, `${id} keeps the organization pages`)
+    assert.equal(view(id).individualSite, false, id)
+  }
+  // Without a view (a page rendered before the capabilities are known) the
+  // organization pages render, exactly as an unstamped build does today.
+  assert.equal(shows(undefined, 'individualSite'), true)
+})
+
 test('an unknown requirement fails loudly', () => {
   assert.throws(() => shows(view('all'), 'nope'), /unknown surface requirement/)
 })

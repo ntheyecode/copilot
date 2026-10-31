@@ -4249,6 +4249,614 @@ export default {
       deleteConfirm: 'Hapus insiden',
     },
   },
+  indiv: {
+    nav: {
+      main: 'Navigasi utama',
+      home: 'Beranda',
+      how: 'Cara kerja',
+      pricing: 'Harga',
+      use: 'Untuk siapa',
+      faq: 'FAQ',
+      security: 'Privasi',
+      signIn: 'Masuk',
+      start: 'Pilih paket',
+      openMenu: 'Buka menu',
+      closeMenu: 'Tutup menu',
+      language: 'Bahasa',
+    },
+    footer: {
+      aria: 'Kaki situs',
+      tag: 'Pemandu di samping Anda untuk pekerjaan yang Anda kerjakan di layar sendiri. Selangkah demi selangkah, sampai selesai.',
+      explore: 'Jelajahi',
+      account: 'Akun Anda',
+      legal: 'Hukum',
+      help: 'Bantuan',
+      support: 'Tulis ke dukungan',
+      demo: 'Tonton demo',
+      fields: 'Bidang yang dikuasai',
+      contact: 'Kontak',
+      accessibility: 'Aksesibilitas',
+      cookiePrefs: 'Preferensi cookie',
+      made: 'WorkCoPilot dibuat oleh AdmireVeda.',
+      note: 'Pembayaran diproses oleh Stripe. Data kartu Anda tidak pernah sampai ke server kami.',
+    },
+    common: {
+      choosePlan: 'Pilih paket',
+      seePlans: 'Lihat paket',
+      signIn: 'Masuk',
+      seeHow: 'Lihat cara kerjanya',
+      demo: 'Tonton demo 60 detik',
+      start: 'Mulai dengan {plan}',
+      perMonth: '/bulan',
+      readMore: 'Baca selengkapnya',
+      new: 'Baru',
+    },
+    home: {
+      seo: {
+        title: 'WorkCoPilot: pemandu langkah demi langkah untuk pekerjaan di layar Anda',
+        description: 'Beri tahu WorkCoPilot apa yang perlu Anda selesaikan. Ia mengamati layar Anda, menunjukkan klik atau perintah berikutnya dengan tepat, menangkap langkah yang keliru, dan memastikan pekerjaan selesai. Paket per jam, batalkan kapan saja.',
+      },
+      hero: {
+        eyebrow: 'Untuk yang mengerjakan sendiri',
+        h1: 'Selesaikan tugas di layar Anda. <em>Dengan pemandu tepat di samping Anda.</em>',
+        p: 'Katakan apa yang perlu diselesaikan. WorkCoPilot mengamati layar Anda, menunjukkan klik atau perintah berikutnya dengan tepat, menangkap langkah yang keliru, dan memastikan pekerjaan selesai.',
+        primary: 'Pilih paket',
+        secondary: 'Lihat cara kerjanya',
+        trust: [
+          'Bekerja di aplikasi yang sudah ada di layar Anda',
+          'Data sensitif disamarkan di perangkat Anda',
+          'Batalkan kapan saja, tanpa kontrak',
+        ],
+      },
+      visual: {
+        aria: 'Layar tempat WorkCoPilot memandu satu langkah setiap kali',
+        window: 'Aplikasi akuntansi Anda',
+        task: 'Mengirim faktur pertama dengan logo sendiri',
+        stepLabel: 'Langkah 3 dari 7',
+        step: 'Buka Pengaturan, lalu Templat faktur. Pilih templat yang menampilkan logo Anda.',
+        checked: 'Terperiksa: templat sudah tersimpan',
+        next: 'Langkah berikutnya',
+        watching: 'Mengamati layar Anda',
+      },
+      who: {
+        eyebrow: 'Dibuat untuk hari-hari Anda',
+        h2: 'Satu pemandu untuk apa pun yang Anda kerjakan sendiri.',
+        cta: 'Lihat untuk siapa',
+        cards: [
+          {
+            t: 'Pekerja lepas',
+            d: 'Faktur, portal klien, alat baru: benar sejak percobaan pertama, tanpa kehilangan sehari di artikel bantuan.',
+          },
+          {
+            t: 'Pelajar',
+            d: 'Siapkan perangkat lunak yang diminta mata kuliah dan kerjakan tugas, satu langkah terperiksa setiap kali.',
+          },
+          {
+            t: 'Pencari kerja',
+            d: 'Portofolio, lamaran, alat yang disebut di lowongan: pelajari sambil memakainya.',
+          },
+          {
+            t: 'Usaha mandiri',
+            d: 'Toko Anda, pembukuan Anda, reservasi Anda: setiap penyiapan dipandu sampai tuntas di layar Anda.',
+          },
+          {
+            t: 'Pindah karier',
+            d: 'Masuk ke alat-alat bidang baru dengan seseorang di samping yang mengenalnya.',
+          },
+        ],
+      },
+      how: {
+        eyebrow: 'Bagaimana tugas berpemandu berjalan',
+        h2: 'Empat langkah, diulang sampai selesai.',
+        steps: [
+          {
+            t: 'Sebutkan tujuannya',
+            d: 'Dengan kata-kata Anda sendiri. Pemeriksaan 30 detik memastikan tugasnya sesuai dengan yang Anda ketahui.',
+          },
+          {
+            t: 'Dapatkan langkah berikutnya yang tepat',
+            d: 'Klik, perintah, atau pengaturannya, di aplikasi yang sedang Anda buka, siap disalin.',
+          },
+          {
+            t: 'Langkah keliru tertangkap',
+            d: 'Ia mengamati layar, melihat kekeliruan saat itu juga, dan menunjukkan perbaikannya.',
+          },
+          {
+            t: 'Selesai dengan catatan',
+            d: 'Ringkasan rapi tentang yang Anda kerjakan, dengan gambar, untuk disimpan atau diulang.',
+          },
+        ],
+        honest: 'Ia memandu dan memeriksa. Ia tidak pernah mengeklik untuk Anda; kendali tetap di tangan Anda.',
+      },
+      hours: {
+        eyebrow: 'Paket per jam',
+        h2: 'Bayar untuk waktu berpemandu, <em>per menit yang Anda pakai.</em>',
+        p: 'Setiap paket mencakup jam pendampingan langsung setiap bulan, dihitung per menit yang Anda pakai. Bulan sibuk? Tambahkan satu jam kapan pun perlu.',
+        cta: 'Bandingkan paket',
+        live: 'Harga terkini',
+      },
+      privacy: {
+        eyebrow: 'Privat sejak rancangan',
+        h2: 'Layar Anda tetap milik Anda.',
+        points: [
+          {
+            t: 'Disamarkan sebelum keluar',
+            d: 'Nomor kartu, kunci, dan data pribadi dihitamkan di perangkat Anda sebelum apa pun dikirim.',
+          },
+          {
+            t: 'Hanya baca',
+            d: 'Ia menunjukkan langkah dan memeriksa hasilnya. Ia tidak pernah mengubah akun atau berkas Anda.',
+          },
+          {
+            t: 'Anda yang menghapus',
+            d: 'Setiap sesi milik Anda. Hapus yang mana pun, kapan pun.',
+          },
+        ],
+        cta: 'Bagaimana data Anda ditangani',
+      },
+      final: {
+        h2: 'Mulai tugas berikutnya dengan pemandu di samping Anda.',
+        p: 'Pilih paket, masuk dengan Google, Microsoft, Facebook, atau email Anda, dan mulai dalam hitungan menit.',
+        primary: 'Pilih paket',
+        secondary: 'Masuk',
+      },
+    },
+    how: {
+      seo: {
+        title: 'Cara kerja WorkCoPilot: pemandu di layar Anda',
+        description: 'WorkCoPilot merencanakan tugas Anda, menunjukkan langkah berikutnya dengan tepat di aplikasi yang sedang Anda buka, memeriksa bahwa langkah itu berhasil, memperbaiki langkah yang keliru, dan terus berjalan sampai pekerjaan selesai. Begini caranya.',
+      },
+      hero: {
+        eyebrow: 'Cara kerja',
+        h1: 'Seperti punya orang yang tepat <em>di samping Anda, setiap kali.</em>',
+        p: 'Anda membawa tujuan dan layar Anda. WorkCoPilot membawa rencana, langkah yang tepat, dan pemeriksaannya.',
+      },
+      loop: {
+        h2: 'Siklus di balik setiap tugas',
+        aria: 'Bagaimana setiap tugas berjalan: rencanakan, tanyakan, pandu, amati, perbaiki, diulang sampai tugas selesai',
+        rows: [
+          {
+            k: 'Rencanakan',
+            v: 'seluruh tugas direncanakan sebelum langkah pertama',
+          },
+          {
+            k: 'Tanyakan',
+            v: 'pertanyaan singkat saat ia butuh lebih dari Anda',
+          },
+          {
+            k: 'Pandu',
+            v: 'langkah berikutnya yang tepat, di layar Anda',
+          },
+          {
+            k: 'Amati',
+            v: 'memeriksa bahwa setiap langkah benar-benar berhasil',
+          },
+          {
+            k: 'Perbaiki',
+            v: 'memperbaiki langkah keliru saat itu juga',
+          },
+        ],
+        again: 'diulang sampai tugas selesai',
+      },
+      gridH2: 'Apa yang dilakukannya untuk Anda',
+      cards: [
+        {
+          t: 'Cara yang tepat, setiap kali',
+          d: 'Klik, perintah, atau pengaturan yang persis, siap disalin, dengan cara yang terbukti.',
+        },
+        {
+          t: 'Mulai dari nol',
+          d: 'Membuka halaman yang benar, membantu Anda masuk, dan mengantar ke titik yang tepat.',
+        },
+        {
+          t: 'Menangkap dan memperbaiki kesalahan',
+          d: 'Melihat langkah keliru saat itu juga dan menunjukkan perbaikannya, bahkan jika tombolnya berpindah.',
+        },
+        {
+          t: 'Aplikasi apa pun di layar Anda',
+          d: 'Aplikasi web, aplikasi desktop, dan alat Anda sendiri: ia membaca apa pun yang ada di layar.',
+        },
+        {
+          t: 'Berdasar catatan Anda sendiri',
+          d: 'Di Advanced dan Premium, unggah dokumen rujukan Anda dan langkah-langkahnya mengikuti.',
+        },
+        {
+          t: 'Catatan yang Anda simpan',
+          d: 'Selesai dengan ringkasan rapi bergambar tentang yang Anda kerjakan, untuk disimpan atau diulang.',
+        },
+        {
+          t: 'Ajarkan cara Anda',
+          d: 'Tempel daftar periksa atau panduan kerja dan pendampingan mengikuti alat serta istilah Anda.',
+        },
+        {
+          t: 'Desktop, web, dan ponsel',
+          d: 'Lapisan di desktop, peramban tanpa perlu memasang apa pun, atau kamera ponsel Anda.',
+        },
+      ],
+      depth: {
+        h2: 'Sesederhana atau seteknis yang Anda mau',
+        p: 'Pilih kedalaman tiap langkah, dari bahasa sehari-hari sampai opsi yang persis. Ubah kapan saja, bahkan di tengah tugas.',
+        levels: [
+          'Sederhana',
+          'Dipandu',
+          'Teknis',
+        ],
+      },
+      honest: {
+        h2: 'Apa itu, dan apa yang bukan',
+        is: [
+          'Pemandu yang mengamati layar Anda dan menunjukkan langkah berikutnya',
+          'Pemeriksa yang memastikan setiap langkah berhasil',
+          'Catatan tentang yang Anda kerjakan, dengan gambar',
+        ],
+        not: [
+          'Bukan kotak obrolan yang jawabannya harus Anda kerjakan sendiri',
+          'Bukan otomasi yang mengeklik untuk Anda',
+          'Bukan penganalisis dokumen: ia membantu Anda mengerjakan dan menyelesaikan pekerjaan',
+        ],
+      },
+      cta: {
+        h2: 'Coba pada tugas berikutnya.',
+        p: 'Paket mulai dari yang kecil dan tumbuh bersama bulan Anda. Batalkan kapan saja.',
+      },
+    },
+    pricing: {
+      seo: {
+        title: 'Paket WorkCoPilot: Lite, Basic, Advanced, dan Premium',
+        description: 'Empat paket dengan jam pendampingan langsung setiap bulan, dihitung per menit yang dipakai. Bulanan atau tahunan. Jam tambahan kapan saja, batalkan kapan pun Anda mau.',
+      },
+      hero: {
+        eyebrow: 'Harga',
+        h1: 'Paket sederhana. <em>Waktu berpemandu yang nyata.</em>',
+        p: 'Pilih paket berdasarkan jam pendampingan yang dibutuhkan bulan Anda. Privasi dan penyamaran ada di setiap paket, tidak pernah jadi biaya tambahan.',
+      },
+      toggle: {
+        aria: 'Siklus penagihan',
+        monthly: 'Bulanan',
+        annual: 'Tahunan',
+        save: 'hemat 20%',
+      },
+      popular: 'Paling banyak dipilih',
+      recommended: 'Direkomendasikan untuk Anda',
+      hoursHero: '{hours} jam',
+      hoursSub: 'waktu berpemandu per bulan',
+      perMonthLong: 'per bulan',
+      secure: 'Pembayaran aman dengan Stripe',
+      includedH2: 'Termasuk di setiap paket',
+      included: [
+        'Langkah demi langkah, dari awal sampai akhir, diperiksa sepanjang jalan',
+        'Perintah, klik, dan tautan yang tepat, siap disalin',
+        'Bekerja di aplikasi yang sudah ada di layar Anda',
+        'Data sensitif disamarkan di perangkat Anda',
+        'Catatan tertulis setiap tugas, dengan gambar',
+      ],
+      tiersH2: 'Yang bertambah seiring paket Anda',
+      tiers: [
+        {
+          t: 'Jam waktu berpemandu',
+          d: 'Dari beberapa tugas sebulan sampai pemandu di samping Anda hampir setiap hari kerja.',
+        },
+        {
+          t: 'Dokumen Anda sendiri',
+          d: 'Advanced dan Premium membaca catatan rujukan Anda agar langkah-langkahnya mengikuti cara kerja Anda.',
+        },
+        {
+          t: 'Visual buatan dan proyek',
+          d: 'Premium menambah diagram dan contoh, serta mengubah tujuan besar menjadi peta tugas berpemandu.',
+        },
+      ],
+      notesH2: 'Baik untuk diketahui',
+      notes: [
+        {
+          t: 'Per menit',
+          d: 'Gunakan jam Anda beberapa menit setiap kali sepanjang bulan. Tidak pernah dibulatkan ke atas ke jam.',
+        },
+        {
+          t: 'Waktu tambahan',
+          d: 'Bulan sibuk? Tambahkan satu jam kapan pun perlu. Waktu yang dibeli tidak pernah kedaluwarsa.',
+        },
+        {
+          t: 'Batalkan kapan saja',
+          d: 'Bulanan atau tahunan, tanpa kontrak. Batalkan di akun Anda; akses tetap sampai akhir periode yang sudah dibayar.',
+        },
+        {
+          t: 'Ganti paket',
+          d: 'Naik kapan saja dengan biaya prorata. Turun pada perpanjangan berikutnya.',
+        },
+      ],
+      fine: 'Harga dan hak akhir dikonfirmasi saat pembayaran. Pajak dapat berlaku sesuai lokasi.',
+      refund: 'Kebijakan pengembalian dana',
+      cta: {
+        h2: 'Pilih paket dan mulai hari ini.',
+        p: 'Masuk dengan Google, Microsoft, Facebook, atau email Anda. Anda dipandu dalam hitungan menit.',
+      },
+    },
+    use: {
+      seo: {
+        title: 'Untuk siapa WorkCoPilot: pekerja lepas, pelajar, pencari kerja, dan lainnya',
+        description: 'WorkCoPilot memandu orang yang mengerjakan pekerjaannya sendiri di layar sendiri: pekerja lepas, pelajar, pencari kerja, usaha mandiri, dan yang pindah karier. Lihat seperti apa tugas berpemandu untuk masing-masing.',
+      },
+      hero: {
+        eyebrow: 'Untuk siapa',
+        h1: 'Untuk pekerjaan yang Anda kerjakan <em>sendiri.</em>',
+        p: 'Pilih hari yang mirip dengan hari Anda. Masing-masing menunjukkan tugas nyata, jenis langkah yang Anda dapat, dan saat pemandu menangkap kekeliruan.',
+        chipsAria: 'Lompat ke kelompok',
+      },
+      labels: {
+        goal: 'Tujuannya',
+        step: 'Satu langkah yang Anda dapat',
+        catches: 'Yang ditangkapnya',
+        done: 'Selesai ketika',
+      },
+      cases: [
+        {
+          tag: 'Pekerja lepas',
+          h2: 'Bekerja seperti studio satu orang.',
+          d: 'Portal klien, penagihan, kontrak, alat desain dan proyek baru: disiapkan dan dipakai dengan benar, tanpa kehilangan sehari di artikel bantuan.',
+          goal: 'Mengirim faktur pertama dengan logo dan pembayaran daring',
+          step: 'Buka Pengaturan, lalu Pembayaran, dan hubungkan akun Anda. Lencana hijau memastikan sudah aktif.',
+          catches: 'Tarif pajak yang dibiarkan nol sebelum Anda menekan Kirim.',
+          done: 'faktur terkirim dan tautan pembayaran terbuka.',
+        },
+        {
+          tag: 'Pelajar',
+          h2: 'Siapkan alatnya, lalu kerjakan.',
+          d: 'Perangkat lunak yang diharapkan mata kuliah, terpasang dan terkonfigurasi, dan tugas dikerjakan satu langkah terperiksa setiap kali.',
+          goal: 'Memasang alat data untuk mata kuliah dan menjalankan notebook pertama',
+          step: 'Buat lingkungan baru bernama course, lalu pasang tiga paket yang tercantum di silabus Anda.',
+          catches: 'Notebook berjalan di lingkungan yang salah, sehingga impor gagal.',
+          done: 'notebook pertama berjalan dari awal sampai akhir tanpa galat.',
+        },
+        {
+          tag: 'Pencari kerja',
+          h2: 'Pelajari alat dari lowongan sambil memakainya.',
+          d: 'Situs portofolio, pelacak lamaran, alat yang diharapkan sebuah lowongan: pelajari langsung, dengan pemandu yang mengenalnya.',
+          goal: 'Menerbitkan situs portofolio di domain sendiri',
+          step: 'Di pengaturan domain, tambahkan dua catatan DNS yang ditampilkan di sini, persis seperti tertulis.',
+          catches: 'Catatan yang ditempel tanpa titik di akhir, sehingga situs tidak pernah terbuka.',
+          done: 'domain Anda membuka situs lewat koneksi aman.',
+        },
+        {
+          tag: 'Usaha mandiri',
+          h2: 'Jalankan toko, pembukuan, dan reservasi sendiri.',
+          d: 'Toko daring, pembukuan, halaman reservasi, daftar email: setiap penyiapan dipandu sampai tuntas di layar Anda sendiri.',
+          goal: 'Menyiapkan halaman reservasi yang menerima uang muka',
+          step: 'Nyalakan Wajibkan uang muka, atur ke 20 persen, dan pilih jendela pembatalan.',
+          catches: 'Zona waktu yang dibiarkan bawaan, sehingga slot tampil di jam yang salah.',
+          done: 'reservasi uji menerima uang muka dan masuk ke kalender Anda.',
+        },
+        {
+          tag: 'Pindah karier',
+          h2: 'Masuk ke bidang baru bersama yang mengenal alatnya.',
+          d: 'Konsol cloud, lembar kerja, aplikasi desain, atau kode: langkah yang tepat, dijelaskan sedalam yang Anda pilih, di banyak bidang.',
+          goal: 'Menerapkan aplikasi web pertama ke penyedia cloud',
+          step: 'Buat aplikasinya, pilih paket terkecil, lalu tempel perintah build dari proyek Anda di sini.',
+          catches: 'Kunci rahasia yang terlanjur masuk repositori sebelum push pertama.',
+          done: 'aplikasi terbuka di alamat publiknya dan kuncinya tersimpan sebagai rahasia.',
+        },
+      ],
+      cta: {
+        h2: 'Hari Anda mirip salah satunya.',
+        p: 'Pilih paket dan bawa tugas pertama Anda. Anda dipandu dalam hitungan menit.',
+      },
+    },
+    faq: {
+      seo: {
+        title: 'Pertanyaan tentang WorkCoPilot, terjawab',
+        description: 'Apa yang dilakukan dan tidak dilakukan WorkCoPilot, cara kerja paket dan jam, cara membatalkan, dan bagaimana layar serta data Anda dilindungi. Jawaban singkat dan langsung.',
+      },
+      hero: {
+        eyebrow: 'Pertanyaan',
+        h1: 'Jawaban singkat untuk <em>pertanyaan yang sering diajukan.</em>',
+        p: 'Masih ragu? Tulis ke kami dan seseorang akan menjawab.',
+      },
+      searchPh: 'Cari pertanyaan',
+      noMatch: 'Tidak ada pertanyaan yang cocok. Coba kata lain, atau tulis ke kami.',
+      groups: [
+        {
+          title: 'Apa yang dilakukannya',
+          items: [
+            {
+              q: 'Apa sebenarnya yang dilakukan WorkCoPilot?',
+              a: 'Ia memandu Anda melewati tugas di layar sendiri: merencanakan tugas, menunjukkan langkah berikutnya dengan tepat di aplikasi yang sedang Anda buka, memeriksa bahwa langkahnya berhasil, dan terus berjalan sampai tugas selesai.',
+            },
+            {
+              q: 'Apakah ia mengerjakan pekerjaan untuk saya?',
+              a: 'Tidak. Ia menunjukkan langkah dan memeriksa hasilnya; setiap klik Anda yang melakukan. Itu disengaja, agar Anda tetap memegang kendali dan mempelajari alatnya sambil jalan.',
+            },
+            {
+              q: 'Dengan aplikasi apa saja ia bekerja?',
+              a: 'Aplikasi apa pun di layar Anda: aplikasi web, aplikasi desktop, dan alat Anda sendiri. Ia membaca apa yang ada di layar, jadi tidak ada yang butuh plugin.',
+            },
+            {
+              q: 'Apakah ini asisten obrolan?',
+              a: 'Tidak juga. Jawaban obrolan membiarkan Anda mengerjakannya sendiri. WorkCoPilot tetap bersama Anda di layar, satu langkah setiap kali, dan memastikan selesai.',
+            },
+            {
+              q: 'Apakah ia menganalisis atau menulis dokumen saya?',
+              a: 'Tidak. Ia membantu Anda mengerjakan dan menyelesaikan pekerjaan di layar. Di Advanced dan Premium Anda bisa mengunggah catatan rujukan sendiri agar langkah-langkahnya mengikuti cara kerja Anda.',
+            },
+          ],
+        },
+        {
+          title: 'Paket dan penagihan',
+          items: [
+            {
+              q: 'Bagaimana jam bekerja?',
+              a: 'Setiap paket mencakup jam waktu berpemandu setiap bulan, dihitung per menit yang dipakai. Tidak ada yang dibulatkan ke atas ke jam. Halaman harga menampilkan angka terkini.',
+            },
+            {
+              q: 'Bisakah saya membeli waktu lebih?',
+              a: 'Bisa. Tambahkan satu jam kapan pun perlu dari akun Anda. Waktu yang dibeli tidak pernah kedaluwarsa.',
+            },
+            {
+              q: 'Bisakah saya ganti paket?',
+              a: 'Kapan saja. Naik berlaku langsung dengan biaya prorata. Turun berlaku pada perpanjangan berikutnya, sehingga yang sudah Anda bayar tetap utuh.',
+            },
+            {
+              q: 'Bagaimana cara membatalkan?',
+              a: 'Dari akun Anda, dengan dua klik. Akses tetap sampai akhir periode yang sudah dibayar, dan Anda bisa melanjutkan sebelum itu dengan satu klik.',
+            },
+            {
+              q: 'Apa yang terjadi jika pembayaran gagal?',
+              a: 'Anda menerima email dan pemberitahuan di akun dengan tombol untuk memperbarui kartu. Paket tetap milik Anda selagi Anda memperbaikinya.',
+            },
+            {
+              q: 'Apakah ada penagihan tahunan?',
+              a: 'Jika tersedia, halaman harga menampilkan harga tahunan dengan diskon. Anda bisa beralih antara bulanan dan tahunan dari akun.',
+            },
+          ],
+        },
+        {
+          title: 'Privasi dan keamanan',
+          items: [
+            {
+              q: 'Apa yang keluar dari perangkat saya?',
+              a: 'Bingkai layar berukuran kecil dengan baris sensitif yang sudah dihitamkan, dan teks Anda dengan nilai sensitif yang diganti token. Nilai aslinya tetap di perangkat Anda.',
+            },
+            {
+              q: 'Bisakah ia mengubah akun atau berkas saya?',
+              a: 'Tidak. Ia hanya baca. Ia menunjukkan langkah dan memeriksa hasilnya; tidak pernah bertindak di aplikasi Anda.',
+            },
+            {
+              q: 'Bisakah saya menghapus yang disimpannya?',
+              a: 'Bisa. Setiap sesi milik Anda. Hapus yang mana pun, kapan pun, dari akun Anda.',
+            },
+            {
+              q: 'Apakah kartu saya disimpan?',
+              a: 'Tidak. Pembayaran dan data kartu ditangani Stripe. Kami tidak pernah melihat atau menyimpan nomor kartu Anda.',
+            },
+          ],
+        },
+        {
+          title: 'Memulai',
+          items: [
+            {
+              q: 'Bagaimana cara memulai?',
+              a: 'Pilih paket, masuk dengan Google, Microsoft, Facebook, atau email Anda, dan bawa tugas pertama. Anda dipandu dalam hitungan menit.',
+            },
+            {
+              q: 'Apakah saya perlu memasang sesuatu?',
+              a: 'Tidak. Ia bekerja di peramban. Ada juga lapisan desktop dan aplikasi ponsel jika Anda mau.',
+            },
+            {
+              q: 'Bisakah saya mencoba dulu?',
+              a: 'Tonton demo 60 detik untuk melihat tugas berpemandu dari awal sampai akhir. Paket mulai dari yang kecil, dan Anda bisa membatalkan kapan saja.',
+            },
+          ],
+        },
+      ],
+      cta: {
+        h2: 'Belum menemukan jawabannya?',
+        p: 'Tulis ke kami. Setiap pesan dibaca oleh seseorang.',
+        write: 'Tulis ke dukungan',
+      },
+    },
+    security: {
+      seo: {
+        title: 'Privasi dan keamanan untuk layar Anda: WorkCoPilot',
+        description: 'Bagaimana WorkCoPilot melindungi Anda: nilai sensitif disamarkan di perangkat sebelum apa pun dikirim, pendampingan hanya baca, autentikator di akun Anda, catatan setiap sesi, enkripsi saat tersimpan, dan sesi yang bisa Anda hapus kapan saja.',
+      },
+      hero: {
+        eyebrow: 'Privat sejak rancangan',
+        h1: 'Rahasia Anda <em>tidak pernah keluar dari perangkat.</em>',
+        p: 'Data sensitif disamarkan di perangkat Anda sendiri sebelum apa pun dikirim. Pemandu melihat bentuk tugas Anda, tidak pernah rahasianya.',
+      },
+      visual: {
+        aria: 'Formulir sebelum dan sesudah penyamaran: nomor kartu, kunci, dan telepon dihitamkan',
+        before: 'Yang ada di layar Anda',
+        after: 'Yang keluar dari perangkat Anda',
+        fields: [
+          'Kartu tersimpan',
+          'Kunci API',
+          'Telepon',
+          'Paket',
+        ],
+        masked: 'disamarkan',
+      },
+      guaranteesAria: 'Yang dilindungi',
+      guarantees: [
+        {
+          t: 'Disamarkan di perangkat Anda',
+          d: 'Nomor kartu, kunci, dan data pribadi dihitamkan di tangkapan layar dan diganti token di teks sebelum apa pun dikirim.',
+        },
+        {
+          t: 'Hanya baca, selalu',
+          d: 'Ia menunjukkan langkah dan memeriksa hasilnya. Ia tidak pernah mengubah akun, berkas, atau pengaturan Anda.',
+        },
+        {
+          t: 'Kode diperiksa sebelum Anda jalankan',
+          d: 'Setiap perintah atau kode yang disarankan diperiksa dulu terhadap masalah yang diketahui.',
+        },
+        {
+          t: 'Autentikator di akun Anda',
+          d: 'Kata sandi, masuk dengan Google, Microsoft, atau Facebook semuanya melewati faktor kedua yang sama.',
+        },
+        {
+          t: 'Catatan setiap sesi',
+          d: 'Apa yang dikirim, apa yang dibaca dari layar Anda, apa yang diperiksa dan ditandai. Anda bisa membacanya.',
+        },
+        {
+          t: 'Terenkripsi saat tersimpan',
+          d: 'Kunci, rahasia, dan tangkapan layar laporan yang tersimpan dienkripsi dengan AES-256-GCM.',
+        },
+      ],
+      handling: {
+        h2: 'Bagaimana data Anda ditangani',
+        sub: 'Apa yang dilakukan produk hari ini. Kata-kata sederhana, tanpa tulisan kecil.',
+        groups: [
+          {
+            title: 'Yang keluar dari perangkat Anda',
+            items: [
+              'Bingkai layar berukuran kecil, baris sensitif sudah dihitamkan',
+              'Teks Anda, nilai sensitif sudah diganti token',
+              'Teks dari catatan rujukan yang Anda pilih untuk dilampirkan, bukan berkasnya',
+            ],
+          },
+          {
+            title: 'Yang kami simpan',
+            items: [
+              'Satu laporan per sesi, dengan gambar tonggak yang disamarkan (bisa dimatikan)',
+              'Satu catatan per sesi, mencatat apa yang dikirim',
+              'Riwayat sesi Anda, agar bisa dibuka dan ditinjau lagi',
+            ],
+          },
+          {
+            title: 'Yang tidak pernah disimpan',
+            items: [
+              'Dokumen asli Anda',
+              'Bingkai layar mentah',
+              'Nilai sensitif asli: pemandu tidak pernah melihatnya',
+            ],
+          },
+        ],
+      },
+      control: {
+        h2: 'Anda tetap memegang kendali',
+        points: [
+          {
+            t: 'Hapus kapan saja',
+            d: 'Setiap sesi milik Anda. Hapus satu, atau semuanya, kapan pun Anda mau.',
+          },
+          {
+            t: 'Tambahkan aturan sendiri',
+            d: 'Tambahkan kata dan pola Anda sendiri untuk disamarkan, di atas pendeteksi bawaan.',
+          },
+          {
+            t: 'Pembayaran oleh Stripe',
+            d: 'Data kartu ditangani di Stripe. Kami tidak pernah melihat atau menyimpan nomor kartu Anda.',
+          },
+        ],
+      },
+      contact: {
+        h2: 'Menemukan masalah keamanan?',
+        p: 'Tulis ke support@admireveda.com. Beri kami waktu untuk memastikan dan memperbaikinya sebelum Anda mengumumkan; riset dengan niat baik kami sambut.',
+        write: 'Tulis ke kami',
+        legal: 'Kebijakan privasi',
+        terms: 'Ketentuan',
+      },
+    },
+  },
   emailAdmin: {
     checkingAccess: 'Memeriksa akses',
     gateLabel: 'Pengaturan SMTP',
@@ -6419,6 +7027,7 @@ export default {
       finance: 'Keuangan',
       subscribers: 'Pelanggan',
       cancelled: 'Dibatalkan',
+      'subscription-health': 'Kesehatan langganan',
       email: 'Pengaturan SMTP',
       'email-templates': 'Template Email',
       ai: 'Konfigurasi AI',
@@ -6477,6 +7086,10 @@ export default {
       cancelled: {
         title: 'Pelanggan yang membatalkan',
         sub: 'Langganan yang churn: siapa yang membatalkan, kapan, mengapa, dan pendapatan seumur hidup yang mereka bawa sebelum pergi.',
+      },
+      'subscription-health': {
+        title: 'Kesehatan langganan',
+        sub: 'Bisnis pelanggan perorangan sekilas pandang: MRR per paket, uji coba, pembayaran gagal, paket yang akan berakhir, churn 30 hari, dan apakah Stripe sudah terhubung.',
       },
       email: {
         title: 'Pengaturan SMTP (Email / SES)',
@@ -7695,6 +8308,8 @@ export default {
       helpTip: 'Bantuan dan panduan',
       howto: 'Panduan',
       support: 'Dukungan',
+      billing: 'Penagihan',
+      billingTip: 'Paket, metode pembayaran, dan faktur Anda',
       team: 'Tim',
       exec: 'Dasbor eksekutif',
       teach: 'Studio Ajar',
@@ -8480,7 +9095,7 @@ export default {
     settingUp: 'Penagihan sedang disiapkan. Detail paket dan faktur Anda akan muncul di sini begitu aktif.',
     pastDue: {
       title: 'Pembayaran terakhir Anda tidak berhasil.',
-      body: 'Perbarui metode pembayaran Anda untuk mempertahankan akses. Paket Anda tetap aktif selama Anda memperbaikinya.',
+      body: 'Perbarui metode pembayaran untuk kembali dipandu. Paket dan jamnya tetap tersimpan selagi Anda memperbaikinya.',
       fix: 'Perbaiki pembayaran',
     },
     canceledNote: {
@@ -8559,6 +9174,29 @@ export default {
       fine: 'Pembatalan diselesaikan di portal Stripe yang aman, tempat Anda dapat mengonfirmasi dan melihat tanggal berakhir yang pasti.',
       keep: 'Pertahankan paket saya',
       continue: 'Lanjutkan membatalkan',
+    },
+    lifecycle: {
+      reasonLabel: 'Beri tahu alasannya (opsional)',
+      reasonPh: 'Satu dua baris membantu kami jadi lebih baik',
+      fine: 'Paket Anda berakhir di akhir periode, tanpa tagihan baru. Berubah pikiran sebelum itu? Lanjutkan dengan satu klik.',
+      confirmCancel: 'Batalkan di akhir periode',
+      resume: 'Lanjutkan paket saya',
+      errCancel: 'Paket Anda tidak bisa dibatalkan saat ini. Coba lagi atau tulis ke dukungan.',
+      errResume: 'Paket Anda tidak bisa dilanjutkan saat ini. Coba lagi atau tulis ke dukungan.',
+    },
+    alert: {
+      pastDueTitle: 'Pembayaran terakhir Anda tidak berhasil',
+      pastDueBody: 'Perbarui metode pembayaran untuk mempertahankan paket. Pendampingan dijeda sampai pembayaran berhasil.',
+      pastDueCta: 'Perbarui metode pembayaran',
+      endingTitle: 'Paket Anda berakhir pada {date}',
+      endingBody: 'Akses penuh tetap sampai saat itu. Lanjutkan kapan saja sebelum tanggal itu agar terus diperpanjang.',
+      endingCta: 'Lanjutkan paket',
+      pendingTitle: 'Beralih ke {plan} pada {date}',
+      pendingBody: 'Paket saat ini dan jamnya tetap milik Anda sampai saat itu. Tidak ada tagihan hari ini.',
+    },
+    page: {
+      title: 'Penagihan',
+      sub: 'Paket, metode pembayaran, dan faktur Anda.',
     },
   },
   buddyPage: {
@@ -12305,6 +12943,72 @@ export default {
       caption: 'Layar Anda mungkin sedikit berbeda, misalnya berisi data Anda sendiri.',
       missing: 'Tangkapan layar untuk langkah ini tidak dapat dimuat.',
     },
+  },
+  subHealthAdmin: {
+    loading: 'Memuat kesehatan langganan',
+    refresh: 'Segarkan',
+    window: '{days} hari terakhir',
+    asOf: 'Per {time}',
+    tiles: {
+      mrr: 'Pendapatan berulang bulanan',
+      mrrFoot: '{arr} setahun pada laju ini',
+      active: 'Pelanggan berbayar',
+      activeFoot: '{trialing} dalam uji coba',
+      pastDue: 'Pembayaran gagal',
+      pastDueFoot: 'akun yang menunggak saat ini',
+      ending: 'Paket akan berakhir',
+      endingFoot: 'dibatalkan di akhir periode, masih aktif',
+      churn: 'Churn',
+      churnFoot: '{canceled} dari {start} membatalkan',
+      newSubs: 'Pelanggan baru',
+      newSubsFoot: 'mulai dalam periode ini',
+    },
+    byPlan: {
+      h3: 'MRR per paket',
+      plan: 'Paket',
+      subscribers: 'Pelanggan',
+      annual: 'Tahunan',
+      mrr: 'MRR',
+      share: 'Porsi',
+    },
+    payments: {
+      h3: 'Uang dalam periode',
+      paid: 'Pembayaran',
+      refunds: 'Pengembalian dana',
+      net: 'Bersih',
+    },
+    stripe: {
+      h3: 'Stripe',
+      keys: 'Kunci rahasia',
+      webhook: 'Rahasia webhook',
+      annual: 'Harga tahunan',
+      mode: 'Mode',
+      on: 'Terpasang',
+      off: 'Belum ada',
+      fix: 'Atur di Penagihan',
+      ready: 'Pembayaran, perpanjangan, dan portal sudah terhubung.',
+      notReady: 'Sebelum kunci dan rahasia webhook diatur, tidak ada paket yang bisa dibeli dan tidak ada perpanjangan yang masuk.',
+    },
+    ending: {
+      h3: 'Segera berakhir',
+      empty: 'Tidak ada paket yang dijadwalkan berakhir.',
+      user: 'Pengguna',
+      plan: 'Paket',
+      endsAt: 'Berakhir',
+      reason: 'Alasan',
+      noReason: 'Tidak ada alasan',
+    },
+    pastDueList: {
+      h3: 'Menunggak',
+      empty: 'Semua perpanjangan berhasil.',
+      user: 'Pengguna',
+      plan: 'Paket',
+      since: 'Berlangganan sejak',
+      periodEnd: 'Akhir periode',
+      open: 'Buka di Pelanggan',
+    },
+    viewOnlyNote: 'Kesehatan langganan terlihat oleh superadmin dan peran akuntansi.',
+    unavailable: 'Kesehatan langganan belum tersedia di server ini.',
   },
   subprocessorsPage: {
     seo: {

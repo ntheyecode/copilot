@@ -8,7 +8,7 @@
 // the dashboard overview and the start-a-task wizard live in their own pages.
 import { useEffect, useState, useCallback, useMemo, Suspense } from 'react'
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
-import { Loader2, Check, X, Plus, LogOut, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, Download, AlertTriangle, Play, Blocks, BarChart3, Settings, FolderKanban, SlidersHorizontal, Inbox, Briefcase, ShieldCheck, LayoutTemplate, GraduationCap } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, Download, AlertTriangle, Play, Blocks, BarChart3, Settings, FolderKanban, SlidersHorizontal, Inbox, Briefcase, ShieldCheck, LayoutTemplate, GraduationCap, CreditCard } from 'lucide-react'
 import { roleViewOf } from '../../shared/work_roles_options.js'
 import { api } from '../../api.js'
 import WorkShell from '../../workShell.jsx'
@@ -186,6 +186,10 @@ export default function WorkAppLayout() {
   const [needsSub, setNeedsSub] = useState(false)
   const [gateMsg, setGateMsg] = useState('')
   const [invoices, setInvoices] = useState(null)
+  // The full safe subscription (cycle, renewal date, cancel-at-period-end, a
+  // scheduled downgrade): the public user carries status + plan only, so the
+  // billing panel and the dashboard alert read THIS (server/store.getSubscription).
+  const [subscription, setSubscription] = useState(null)
   const [impersonating, setImpersonating] = useState(null)
   const [impStopping, setImpStopping] = useState(false)
   const [buddyPref, setBuddyPref] = useState(() => readBuddyPref())
@@ -213,12 +217,16 @@ export default function WorkAppLayout() {
     api.workSubscription().then((r) => {
       const on = !!(r && r.configured)
       setBillingOn(on)
+      setSubscription((r && r.subscription) || null)
       const adm = !!(user && (user.role === 'superadmin' || user.role === 'admin'))
       const cov = adm || !!(user && (user.companyId || user.canUseService))
       // paid_only (no free tier): an account without a plan needs one even
       // before billing is configured, matching the server's subscription gate,
       // so the dashboard never reads "free access" on such an edition.
-      setNeedsSub(!cov && (on || ed.caps.has('paid_only')))
+      // A past-due plan is a plan with a failed payment, not a missing one:
+      // the billing alert carries the fix, the plan chooser stays away.
+      const pastDue = !!(r && r.subscription && r.subscription.status === 'past_due')
+      setNeedsSub(!cov && !pastDue && (on || ed.caps.has('paid_only')))
     }).catch(() => {})
     if (user && !user.companyId) api.workInvoices().then((r) => setInvoices(r.invoices || [])).catch(() => setInvoices([]))
   }, [authed, user, ed.caps])
@@ -352,7 +360,7 @@ export default function WorkAppLayout() {
     pricing, money, titleCase,
     aiStatus, ready, aiErr, loadAi,
     needsSub, setNeedsSub, gateMsg, setGateMsg,
-    billingOn, invoices, showBilling,
+    billingOn, invoices, showBilling, subscription,
     sessions, sessLoaded, sessErr, reload, refreshUsage,
     buddyPref, setBuddyPref,
     showBuy, setShowBuy, buyCredits,
@@ -360,7 +368,7 @@ export default function WorkAppLayout() {
   }), [
     user, sess, onOpen, showGuard, isAdmin, isCompanyMember, isCompanyAdmin, isExecutive, covered, hasPlan,
     roleView, company, usage, usageErr, plan, renewLabel, timeLeft, tier, planName, low, canBuyHours, upgradeHref,
-    pricing, aiStatus, ready, aiErr, loadAi, needsSub, gateMsg, billingOn, invoices, showBilling,
+    pricing, aiStatus, ready, aiErr, loadAi, needsSub, gateMsg, billingOn, invoices, showBilling, subscription,
     sessions, sessLoaded, sessErr, reload, refreshUsage, buddyPref, showBuy, buyCredits, desktop,
     signOut, money, titleCase,
   ])
@@ -393,7 +401,7 @@ export default function WorkAppLayout() {
   // `workShell.nav.*` key, so they always name the section identically in every
   // language (the help route is the one deliberate exception: rail "Help", title
   // "How-to", exactly as before).
-  const TITLES = { '/work': t('workShell.nav.dashboard'), '/work/start': t('workShell.nav.start'), '/work/projects': t('workShell.nav.projects'), '/work/tasks': t('workShell.nav.tasks'), '/work/completed': t('workShell.nav.completed'), '/work/logs': t('workShell.nav.logs'), '/work/skills': t('workShell.nav.skills'), '/work/help': t('workShell.nav.howto'), '/work/support': t('workShell.nav.support'), '/work/queue': t('workShell.nav.queue'), '/work/pm': t('workShell.nav.pm'), '/work/srpm': t('workShell.nav.srpm'), '/work/grc': t('workShell.nav.grc'), '/work/templates': t('workShell.nav.templates') }
+  const TITLES = { '/work': t('workShell.nav.dashboard'), '/work/start': t('workShell.nav.start'), '/work/projects': t('workShell.nav.projects'), '/work/tasks': t('workShell.nav.tasks'), '/work/completed': t('workShell.nav.completed'), '/work/logs': t('workShell.nav.logs'), '/work/skills': t('workShell.nav.skills'), '/work/help': t('workShell.nav.howto'), '/work/support': t('workShell.nav.support'), '/work/billing': t('workShell.nav.billing'),'/work/queue': t('workShell.nav.queue'), '/work/pm': t('workShell.nav.pm'), '/work/srpm': t('workShell.nav.srpm'), '/work/grc': t('workShell.nav.grc'), '/work/templates': t('workShell.nav.templates') }
   // A project's own view (/work/projects/:id, /work/pm/:id, /work/templates/:id) keeps its section title.
   const title = TITLES[pathname] || (/^\/work\/projects\//.test(pathname) ? t('workShell.nav.projects') : /^\/work\/pm\//.test(pathname) ? t('workShell.nav.pm') : /^\/work\/templates\//.test(pathname) ? t('workShell.nav.templates') : t('workShell.nav.dashboard'))
   const wide = /^\/work\/(help|support)$/.test(pathname)
@@ -459,6 +467,8 @@ export default function WorkAppLayout() {
             <div className="wd-sect">{t('workShell.nav.help')}</div><span className="wd-sect-rule" aria-hidden />
             <NavLink to="/work/help" className={navClass} title={t('workShell.nav.helpTip')}><BookOpen size={18} /> <span className="wd-nav-t">{t('workShell.nav.help')}</span></NavLink>
             <NavLink to="/work/support" className={navClass} title={t('workShell.nav.support')}><LifeBuoy size={18} /> <span className="wd-nav-t">{t('workShell.nav.support')}</span></NavLink>
+            {/* A personal account's plan, payment method and invoices (/work/billing). Company members are covered by their company and never see it. */}
+            {showBilling && <NavLink to="/work/billing" className={navClass} title={t('workShell.nav.billingTip')}><CreditCard size={18} /> <span className="wd-nav-t">{t('workShell.nav.billing')}</span></NavLink>}
             {isCompanyAdmin && (
               <a className="wd-nav" href="/work/company" title={t('workShell.nav.team')}><Users size={18} /> <span className="wd-nav-t">{t('workShell.nav.team')}</span></a>
             )}

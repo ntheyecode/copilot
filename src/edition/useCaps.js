@@ -20,6 +20,8 @@ export function useCaps() {
 //                    here; off on a customer's own on-prem / managed install
 //   socialLogin      social sign-in buttons are offered (individuals only)
 //   stripe           card payments through Stripe exist
+//   individualSite   the public site is the individuals site
+//                    (src/sites/individuals/) instead of the organization pages
 export function editionView(caps) {
   return {
     caps,
@@ -34,6 +36,7 @@ export function editionView(caps) {
     // Card payments through Stripe exist here (off where companies are billed
     // by contract and invoice).
     stripe: caps.has('stripe_billing'),
+    individualSite: caps.has('individual_site'),
   }
 }
 

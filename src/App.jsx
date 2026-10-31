@@ -35,6 +35,10 @@ import SignupClosed from './pages/onboarding/SignupClosed.jsx'         // where 
 import EditionRoute from './edition/EditionRoute.jsx'                  // capability gate per route (src/edition/surfaces.js)
 import PublicSiteGate from './edition/PublicSiteGate.jsx'              // marketing routes go to sign-in where no public site is served
 import { useEditionView } from './edition/useCaps.js'
+// The individuals site (capability individual_site): the same public paths
+// render the individuals pages instead of the organization ones; the fallback
+// is today's page, so every other edition is unchanged (src/sites/individuals/).
+import SitePage from './sites/individuals/SitePage.jsx'
 // Signed-in app + admin consoles are code-split: public marketing/SEO visitors
 // never download them, which keeps the initial bundle (and LCP) small.
 // The signed-in app is a shared shell (WorkAppLayout) with per-route pages under
@@ -46,6 +50,8 @@ const Guiding = lazy(() => import('./pages/work/Guiding.jsx'))
 const Skills = lazy(() => import('./pages/work/Skills.jsx'))
 const Help = lazy(() => import('./pages/work/Help.jsx'))
 const Support = lazy(() => import('./pages/work/Support.jsx'))
+// A personal account's plan, payment and invoices (also where the payment-failed email sends people).
+const Billing = lazy(() => import('./pages/work/Billing.jsx'))
 const WorkBuddy = lazy(() => import('./pages/WorkBuddy.jsx'))
 const WorkFullGuide = lazy(() => import('./pages/WorkFullGuide.jsx'))
 const WorkAdmin = lazy(() => import('./pages/workadmin/WorkAdmin.jsx'))
@@ -95,8 +101,7 @@ function RootRedirect() {
   const ed = useEditionView()
   if (!ready) return <Splash />
   // No public site here (a customer's own install): visitors sign in.
-  if (!user) return ed.publicSite ? <WorkMarketing /> : <Navigate to="/workcopilot" replace />
-
+  if (!user) return ed.publicSite ? <SitePage page="home" fallback={<WorkMarketing />} /> : <Navigate to="/workcopilot" replace />
   const admin = ['admin', 'superadmin', 'accounting', 'affiliate_admin'].includes(user.role)
   // A company admin lands on their own company console; platform/console admins on
   // the admin console (which shows only their allowed sections); everyone else the app.
@@ -136,8 +141,8 @@ export default function App() {
       {/* Subscribe onboarding (public; the server state picks the step, the URL mirrors it). */}
       <Route path="/workcopilot/signup" element={<EditionRoute needs="soloSignup" fallback={<SignupClosed />}><OnboardingPage /></EditionRoute>} />
       <Route path="/workcopilot/signup/:step" element={<EditionRoute needs="soloSignup" fallback={<SignupClosed />}><OnboardingPage /></EditionRoute>} />
-      <Route path="/workcopilot/use-cases" element={<WorkUseCases />} />
-      <Route path="/workcopilot/security" element={<WorkSecurity />} />
+      <Route path="/workcopilot/use-cases" element={<SitePage page="use" fallback={<WorkUseCases />} />} />
+      <Route path="/workcopilot/security" element={<SitePage page="security" fallback={<WorkSecurity />} />} />
       {/* Enterprise features: the full list, linked from the main page + nav. */}
       <Route path="/workcopilot/enterprise" element={<EditionRoute needs="companies"><WorkEnterprise /></EditionRoute>} />
       <Route path="/enterprise" element={<EditionRoute needs="companies"><WorkEnterprise /></EditionRoute>} />
@@ -156,12 +161,12 @@ export default function App() {
       <Route path="/workcopilot/subprocessors" element={<WorkSubprocessors />} />
       <Route path="/workcopilot/accessibility" element={<WorkAccessibility />} />
       <Route path="/workcopilot/benchmark" element={<WorkBenchmark />} />
-      <Route path="/workcopilot/how-it-works" element={<WorkCapabilities />} />
+      <Route path="/workcopilot/how-it-works" element={<SitePage page="how" fallback={<WorkCapabilities />} />} />
       {/* Content moved off the short main page (owner rule), linked from its footer. */}
       <Route path="/workcopilot/fields" element={<WorkFields />} />
-      <Route path="/workcopilot/pricing" element={<WorkPricing />} />
+      <Route path="/workcopilot/pricing" element={<SitePage page="pricing" fallback={<WorkPricing />} />} />
       {/* Public FAQ (AEO-optimized, with FAQPage structured data), linked from the footer. */}
-      <Route path="/workcopilot/faq" element={<WorkFaq />} />
+      <Route path="/workcopilot/faq" element={<SitePage page="faq" fallback={<WorkFaq />} />} />
       <Route path="/workcopilot/contact" element={<WorkContact />} />
       <Route path="/affliate" element={<EditionRoute needs="affiliates"><AffiliatePage /></EditionRoute>} />
       <Route path="/affiliate" element={<EditionRoute needs="affiliates"><AffiliatePage /></EditionRoute>} />
@@ -185,6 +190,7 @@ export default function App() {
           <Route path="skills" element={<Skills />} />
           <Route path="help" element={<Help />} />
           <Route path="support" element={<Support />} />
+          <Route path="billing" element={<Billing />} />
           {/* My tasks / completed / session logs render INSIDE the shell (left
               rail + top bar persist across clicks). They were sibling routes
               outside this block, which swapped the whole shell on every click;

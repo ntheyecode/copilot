@@ -72,6 +72,10 @@ export const workAdminApi = {
   // Endpoint is implemented by the server agent; the UI codes defensively (it may
   // 404/501 until wired, and any field may be null).
   subscribersCancelled: () => request('GET', '/api/work/admin/subscribers/cancelled'),
+  // Subscriber health for an individuals business (superadmin + accounting):
+  // MRR by plan, counts, churn over 30 days, payments, plans ending, Stripe
+  // wiring. Shape: server/admin_subscription_health.js subscriptionHealth().
+  subscriptionHealth: () => request('GET', '/api/work/admin/subscriptions/health'),
   incidents: (limit) => request('GET', `/api/work/admin/incidents${limit ? `?limit=${encodeURIComponent(limit)}` : ''}`),
   aiState: () => request('GET', '/api/work/admin/ai-state'),
 

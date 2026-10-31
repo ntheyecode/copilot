@@ -40,6 +40,7 @@ export const CAPABILITIES = Object.freeze({
   public_site: 'The public marketing pages, pricing and the "validate it live" lead capture are served.',
   // Appended last so the order of every existing list is unchanged.
   social_login: 'Individuals can sign in and sign up with a social identity (Google, Microsoft, Facebook). A company account never can, in any edition: it signs in with a password plus an authenticator, or through its company single sign-on.',
+  individual_site: 'The public site is the individuals site (src/sites/individuals/): home, how it works, pricing, use cases, FAQ and security written for one person on their own screen, instead of the organization site. Needs public_site.',
 })
 
 // The editions. `capabilities` lists every capability the edition turns on;
@@ -65,7 +66,7 @@ export const EDITIONS = Object.freeze({
   paid: {
     label: 'Paying users',
     summary: 'Individual accounts on a paid plan; no free tier and no company tenants.',
-    capabilities: ['solo_signup', 'paid_only', 'individual_plans', 'stripe_billing', 'platform_ai', 'public_site', 'social_login'],
+    capabilities: ['solo_signup', 'paid_only', 'individual_plans', 'stripe_billing', 'platform_ai', 'public_site', 'social_login', 'individual_site'],
   },
   // 4. The customer runs it on their own servers. One company, their own AI
   // keys, offline license, any of the three persistence choices.
@@ -89,6 +90,9 @@ export const DEFAULT_EDITION = 'all'
 
 // Pairs that can never be on together (validated at import, below).
 const EXCLUSIVE = [['saas_companies', 'single_company'], ['stripe_billing', 'offline_licensing']]
+// Pairs where the first needs the second: the individuals site IS the public
+// site, so an edition cannot serve it without serving a public site.
+const REQUIRES = [['individual_site', 'public_site']]
 
 function validateRegistry() {
   for (const [name, ed] of Object.entries(EDITIONS)) {
@@ -98,6 +102,9 @@ function validateRegistry() {
     if (new Set(ed.capabilities).size !== ed.capabilities.length) throw new Error(`[editions] edition "${name}" lists a capability twice.`)
     for (const [a, b] of EXCLUSIVE) {
       if (ed.capabilities.includes(a) && ed.capabilities.includes(b)) throw new Error(`[editions] edition "${name}" turns on both "${a}" and "${b}", which exclude each other.`)
+    }
+    for (const [a, b] of REQUIRES) {
+      if (ed.capabilities.includes(a) && !ed.capabilities.includes(b)) throw new Error(`[editions] edition "${name}" turns on "${a}" without "${b}", which it needs.`)
     }
     Object.freeze(ed.capabilities)
     Object.freeze(ed)

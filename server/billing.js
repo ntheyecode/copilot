@@ -25,6 +25,11 @@ import { sendTemplateAsync, sendOwnerSubscriptionAlertAsync } from './emails.js'
 import { PLANS, mapStatus, planFromSub, periodEndIso, cycleFromSub, subscriptionCheckoutParams, applyCheckoutSession } from './billing_checkout.js'
 import { caps, stripeOffReason, stripeOffCode, individualPlanRefusal } from './edition.js'
 import { stripeClientOptions } from './stripe_endpoint.js'
+// A person's own cancel-at-period-end / resume, and the superadmin's
+// subscriber-health summary: own modules, registered from here so they share
+// this file's Stripe client and config resolver (never a second one).
+import { registerLifecycleRoutes } from './billing_lifecycle.js'
+import { registerSubscriptionHealthRoute } from './admin_subscription_health.js'
 // Where Stripe sends the customer back. Fixed to the public site by default; an
 // operator can override it for a staging host via WORK_PUBLIC_URL.
 const SITE = (process.env.WORK_PUBLIC_URL || 'https://admireveda.com').replace(/\/+$/, '')
@@ -315,6 +320,10 @@ async function handleEvent(s, store, event) {
     const cycle = cycleFromSub(obj) || prior.cycle || null
     const patch = { status, plan, stripeCustomerId: customerId, stripeSubscriptionId: subId, currentPeriodEnd: periodEndIso(obj.current_period_end) }
     if (cycle) patch.cycle = cycle
+    // A cancel-at-period-end set or cleared anywhere (in-app, the Stripe
+    // portal, the Stripe dashboard) lands here, so the dashboard's "ends on"
+    // notice and its Resume button always tell the truth.
+    if (type === 'customer.subscription.updated' && typeof obj.cancel_at_period_end === 'boolean') patch.cancelAtPeriodEnd = obj.cancel_at_period_end
     // On a genuine end, record WHEN it ended and (if Stripe gave one) WHY, so the
     // cancelled-subscribers list + churn graphs have a real date + reason. We only
     // pass a reason when Stripe reports one, so an admin-stashed reason set ahead
@@ -597,10 +606,26 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
   })
 
   // The account's own subscription (safe fields only: status, plan, cycle,
-  // currentPeriodEnd, since, canceledAt, pendingChange - no Stripe ids).
+  // currentPeriodEnd, since, canceledAt, pendingChange, cancelAtPeriodEnd - no Stripe ids).
   app.get('/api/work/subscription', requireWorkAuth, wrap((req, res) => {
     res.json({ subscription: store.getSubscription(req.workUser.id), configured: billingConfigured(store) })
   }))
+
+  // Cancel at the period end / resume (billing_lifecycle.js). The owner hears
+  // about a person's cancel once, when it is set; the customer gets the same
+  // confirmation the webhook path sends, with the access-until date.
+  registerLifecycleRoutes(app, {
+    store, requireWorkAuth, getStripe, cfg,
+    onCanceled: ({ user, subscription, reason }) => {
+      sendOwnerSubscriptionAlertAsync('cancellation', { user, plan: subscription.plan, status: 'ending', cycle: subscription.cycle, stripeId: (user.subscription || {}).stripeSubscriptionId || null, reason })
+      const to = (typeof store.effectiveUserEmail === 'function') ? store.effectiveUserEmail(user.id) : null
+      if (to) sendTemplateAsync('subscription_canceled', to, { name: user.displayName || user.username, plan: subscription.plan ? subscription.plan[0].toUpperCase() + subscription.plan.slice(1) : '', accessUntil: subscription.currentPeriodEnd, canceledAt: new Date().toISOString() })
+    },
+    onResumed: ({ user, subscription }) => {
+      const to = (typeof store.effectiveUserEmail === 'function') ? store.effectiveUserEmail(user.id) : null
+      if (to) sendTemplateAsync('subscription_update', to, { name: user.displayName || user.username, plan: subscription.plan ? subscription.plan[0].toUpperCase() + subscription.plan.slice(1) : '', status: 'resumed', nextBillingDate: subscription.currentPeriodEnd })
+    },
+  })
 
   // Self-serve UPGRADE / DOWNGRADE of the active subscription.
   //
@@ -912,7 +937,7 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
           sub = await s.subscriptions.update(info.subId, { cancel_at_period_end: true })
           // Stash the reason now (status stays live until it ends) so the webhook
           // customer.subscription.deleted lands with the reason already recorded.
-          store.setSubscription(req.params.id, { cancelReason: reason })
+          store.setSubscription(req.params.id, { cancelReason: reason, cancelAtPeriodEnd: true })
         } else {
           const priorStatus = (info.user.subscription && info.user.subscription.status) || 'none'
           sub = await s.subscriptions.cancel(info.subId)
@@ -952,6 +977,9 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
     app.get('/api/work/admin/subscribers', requireAuth, financeGate, wrap((req, res) => {
       res.json(store.listSubscribers())
     }))
+    // Subscriber health for an individuals business (MRR by plan, churn, past
+    // due, plans ending, Stripe wiring): admin_subscription_health.js.
+    registerSubscriptionHealthRoute(app, { store, requireAuth, financeGate, wrap, billingConfigured, cfg })
     // Cancelled subscribers (churn view + graphs): every account whose sub ended,
     // with the end date + reason recorded at cancellation and the lifetime spend.
     app.get('/api/work/admin/subscribers/cancelled', requireAuth, financeGate, wrap((req, res) => {

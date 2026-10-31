@@ -33,6 +33,8 @@ export default {
       helpTip: 'Help & how-to',
       howto: 'How-to',
       support: 'Support',
+      billing: 'Billing',
+      billingTip: 'Your plan, payment method and invoices',
       team: 'Team',
       exec: 'Executive dashboard',
       teach: 'Teach studio',

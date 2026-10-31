@@ -21,12 +21,15 @@ const aiHosts = Object.values(PROVIDERS).flatMap((p) => [new URL(p.base).hostnam
 const fakeAi = await startFakeAi()
 const receiver = await startWebhookReceiver()
 // Mail, single sign-on and Stripe fakes (all on loopback). SMTP is used only
-// once a test points the product's email settings at it; Stripe only on a
-// server booted with E2E_FAKE_STRIPE=1 (its own worker, see specs/stripe.spec.mjs).
+// once a test points the product's email settings at it. The fake Stripe always
+// runs and the SDK is always pointed at it through the product's own hook
+// (STRIPE_API_BASE, loopback only: server/stripe_endpoint.js), set here before
+// the server loads; it is used only on a server that carries Stripe keys
+// (test.use({ serverEnv: STRIPE_E2E_ENV }), support/stripe-events.mjs).
 const smtp = await startFakeSmtp()
 const oidc = await startFakeOidc()
-const stripe = process.env.E2E_FAKE_STRIPE === '1' ? await startFakeStripe() : null
-if (stripe) process.env.STRIPE_API_BASE = stripe.base
+const stripe = await startFakeStripe()
+process.env.STRIPE_API_BASE = stripe.base
 installNetFakes({ aiHosts, aiPort: fakeAi.port, hookPort: receiver.port, idp: { host: FAKE_IDP_HOST, port: oidc.port } })
 
 const index = await import('../../../server/index.js')
@@ -49,4 +52,4 @@ process.on('message', async (m) => {
 })
 process.on('disconnect', () => process.exit(0))
 
-process.send({ type: 'ready', port, aiPort: fakeAi.port, hookPort: receiver.port, smtpPort: smtp.port, idpPort: oidc.port, stripePort: stripe ? stripe.port : null, edition: process.env.WORK_EDITION })
+process.send({ type: 'ready', port, aiPort: fakeAi.port, hookPort: receiver.port, smtpPort: smtp.port, idpPort: oidc.port, stripePort: stripe.port, edition: process.env.WORK_EDITION })

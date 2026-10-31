@@ -9,6 +9,9 @@
 //     signing; only the socket is swapped).
 // Anything else that is not loopback is REFUSED and recorded, so a test run can
 // never reach a real paid API, and the suite asserts that the list stays empty.
+// Stripe is not swapped here: the SDK is pointed at the loopback fake through
+// the product's own STRIPE_API_BASE hook (server-child.mjs), so a call that
+// still went to api.stripe.com would be refused and recorded like any other.
 import http from 'node:http'
 import https from 'node:https'
 import dns from 'node:dns'

@@ -61,11 +61,16 @@ export function makeCtl({ store, fakeAi, receiver, srv, smtp = null, oidc = null
     // Mock OpenID Connect provider (fake-oidc.mjs).
     'idp.configure'(args) { return need(oidc, 'the mock identity provider').configure(args) },
     'idp.calls'() { return need(oidc, 'the mock identity provider').calls() },
-    // Fake Stripe API (fake-stripe.mjs).
-    'stripe.calls'() { return need(stripe, 'the fake Stripe API').calls() },
-    'stripe.sessions'() { return need(stripe, 'the fake Stripe API').sessions() },
-    'stripe.subscription'({ id }) { return need(stripe, 'the fake Stripe API').subscription(id) },
-    'stripe.charges'({ customer }) { return need(stripe, 'the fake Stripe API').charges(customer) },
+    // Fake Stripe (fake-stripe.mjs): everything it holds (sessions,
+    // subscriptions, invoices, charges, customers, schedules, refunds) and every
+    // REST call the product made, for webhook payloads and assertions. The
+    // product's own safe subscription view is read through its API, never here.
+    'stripe.state'() { return need(stripe, 'the fake Stripe').state() },
+    'stripe.subscription'({ id }) { return need(stripe, 'the fake Stripe').subscription(id) },
+    'stripe.reset'() { return need(stripe, 'the fake Stripe').reset() },
+    // A seeded or signed-up account's Stripe ids (server side only; the
+    // product never returns them to a client).
+    'user.stripe'({ id }) { const u = store.getUser(id); const s = (u && u.subscription) || {}; return { customer: s.stripeCustomerId || null, subscription: s.stripeSubscriptionId || null, status: s.status || 'none' } },
     emails() {
       const f = process.env.WORK_EMAIL_SINK_FILE
       if (!f || !fs.existsSync(f)) return []

@@ -5464,6 +5464,614 @@ export default {
       deleteConfirm: 'Elimina incidente',
     },
   },
+  indiv: {
+    nav: {
+      main: 'Navigazione principale',
+      home: 'Home',
+      how: 'Come funziona',
+      pricing: 'Prezzi',
+      use: 'Per chi è',
+      faq: 'FAQ',
+      security: 'Privacy',
+      signIn: 'Accedi',
+      start: 'Scegli un piano',
+      openMenu: 'Apri il menu',
+      closeMenu: 'Chiudi il menu',
+      language: 'Lingua',
+    },
+    footer: {
+      aria: 'Piè di pagina',
+      tag: 'Una guida al tuo fianco per il lavoro che fai sul tuo schermo. Passo dopo passo, fino alla fine.',
+      explore: 'Esplora',
+      account: 'Il tuo account',
+      legal: 'Note legali',
+      help: 'Aiuto',
+      support: 'Scrivi al supporto',
+      demo: 'Guarda la demo',
+      fields: 'Settori che conosce',
+      contact: 'Contatti',
+      accessibility: 'Accessibilità',
+      cookiePrefs: 'Preferenze cookie',
+      made: 'WorkCoPilot è realizzato da AdmireVeda.',
+      note: 'I pagamenti sono gestiti da Stripe. I dati della tua carta non raggiungono mai i nostri server.',
+    },
+    common: {
+      choosePlan: 'Scegli un piano',
+      seePlans: 'Vedi i piani',
+      signIn: 'Accedi',
+      seeHow: 'Scopri come funziona',
+      demo: 'Guarda la demo di 60 secondi',
+      start: 'Inizia con {plan}',
+      perMonth: '/mese',
+      readMore: 'Leggi di più',
+      new: 'Novità',
+    },
+    home: {
+      seo: {
+        title: 'WorkCoPilot: una guida passo dopo passo per il lavoro sul tuo schermo',
+        description: 'Di\' a WorkCoPilot cosa devi fare. Osserva il tuo schermo, ti mostra il clic o il comando esatto, intercetta un passo falso e conferma quando hai finito. Piani a ore, disdici quando vuoi.',
+      },
+      hero: {
+        eyebrow: 'Per chi fa il lavoro da sé',
+        h1: 'Porta a termine il compito sul tuo schermo. <em>Con una guida proprio accanto a te.</em>',
+        p: 'Di\' cosa devi fare. WorkCoPilot osserva il tuo schermo, ti mostra il clic o il comando esatto, intercetta un passo falso e conferma quando hai finito.',
+        primary: 'Scegli un piano',
+        secondary: 'Scopri come funziona',
+        trust: [
+          'Funziona nelle app già sul tuo schermo',
+          'Dati sensibili mascherati sul tuo dispositivo',
+          'Disdici quando vuoi, senza vincoli',
+        ],
+      },
+      visual: {
+        aria: 'Uno schermo in cui WorkCoPilot guida un passo alla volta',
+        window: 'La tua app di contabilità',
+        task: 'Inviare la mia prima fattura con il mio logo',
+        stepLabel: 'Passo 3 di 7',
+        step: 'Apri Impostazioni, poi Modelli di fattura. Scegli il modello con il tuo logo.',
+        checked: 'Verificato: il modello è salvato',
+        next: 'Passo successivo',
+        watching: 'Osserva il tuo schermo',
+      },
+      who: {
+        eyebrow: 'Fatto per le tue giornate',
+        h2: 'Una sola guida per tutto ciò che fai da solo.',
+        cta: 'Scopri per chi è',
+        cards: [
+          {
+            t: 'Freelance',
+            d: 'Fatture, portali clienti, strumenti nuovi: fatti bene al primo colpo, senza perdere un giorno tra gli articoli di aiuto.',
+          },
+          {
+            t: 'Studenti',
+            d: 'Configura il software richiesto dal corso e porta avanti il compito, un passo verificato alla volta.',
+          },
+          {
+            t: 'In cerca di lavoro',
+            d: 'Portfolio, candidature, strumenti citati in un annuncio: imparali mentre li usi.',
+          },
+          {
+            t: 'Attività individuali',
+            d: 'Il tuo negozio, la tua contabilità, le tue prenotazioni: ogni configurazione guidata fino alla fine sul tuo schermo.',
+          },
+          {
+            t: 'Chi cambia carriera',
+            d: 'Entra negli strumenti di un nuovo settore con qualcuno accanto che li conosce.',
+          },
+        ],
+      },
+      how: {
+        eyebrow: 'Come si svolge un compito guidato',
+        h2: 'Quattro mosse, ripetute fino alla fine.',
+        steps: [
+          {
+            t: 'Dichiara l\'obiettivo',
+            d: 'Con parole tue. Un controllo di 30 secondi verifica che il compito sia adatto a ciò che sai.',
+          },
+          {
+            t: 'Ricevi la mossa esatta',
+            d: 'Il clic, il comando o l\'impostazione, nell\'app in cui ti trovi, pronto da copiare.',
+          },
+          {
+            t: 'Un passo falso viene intercettato',
+            d: 'Osserva lo schermo, coglie l\'errore nell\'istante e mostra la correzione.',
+          },
+          {
+            t: 'Concludi con un resoconto',
+            d: 'Un riepilogo pulito di ciò che hai fatto, con immagini, da conservare o ripetere.',
+          },
+        ],
+        honest: 'Guida e verifica. Non clicca mai al posto tuo: le mani restano sul volante.',
+      },
+      hours: {
+        eyebrow: 'Piani a ore',
+        h2: 'Paghi il tempo guidato, <em>al minuto usato.</em>',
+        p: 'Ogni piano include ore di guida dal vivo ogni mese, conteggiate al minuto che usi. Mese pieno? Aggiungi un\'ora quando ti serve.',
+        cta: 'Confronta i piani',
+        live: 'Prezzi in tempo reale',
+      },
+      privacy: {
+        eyebrow: 'Privato per impostazione',
+        h2: 'Il tuo schermo resta tuo.',
+        points: [
+          {
+            t: 'Mascherato prima di uscire',
+            d: 'Numeri di carta, chiavi e dati personali vengono oscurati sul tuo dispositivo prima di inviare qualsiasi cosa.',
+          },
+          {
+            t: 'Sola lettura',
+            d: 'Mostra la mossa e verifica il risultato. Non modifica mai i tuoi account o i tuoi file.',
+          },
+          {
+            t: 'Tuo da eliminare',
+            d: 'Ogni sessione è tua. Eliminane una qualsiasi, in qualsiasi momento.',
+          },
+        ],
+        cta: 'Come vengono trattati i tuoi dati',
+      },
+      final: {
+        h2: 'Inizia il prossimo compito con una guida al tuo fianco.',
+        p: 'Scegli un piano, accedi con Google, Microsoft, Facebook o la tua email, e parti in pochi minuti.',
+        primary: 'Scegli un piano',
+        secondary: 'Accedi',
+      },
+    },
+    how: {
+      seo: {
+        title: 'Come funziona WorkCoPilot: la guida sul tuo schermo',
+        description: 'WorkCoPilot pianifica il tuo compito, mostra il passo esatto nell\'app in cui ti trovi, verifica che abbia funzionato, corregge un passo falso e continua finché il lavoro è fatto. Ecco come.',
+      },
+      hero: {
+        eyebrow: 'Come funziona',
+        h1: 'Come avere la persona giusta <em>accanto a te, ogni volta.</em>',
+        p: 'Tu porti l\'obiettivo e il tuo schermo. WorkCoPilot porta il piano, le mosse esatte e le verifiche.',
+      },
+      loop: {
+        h2: 'Il ciclo dietro ogni compito',
+        aria: 'Come si svolge ogni compito: pianifica, chiedi, guida, osserva, correggi, ripetuto fino alla fine',
+        rows: [
+          {
+            k: 'Pianifica',
+            v: 'l\'intero compito viene pianificato prima del primo passo',
+          },
+          {
+            k: 'Chiedi',
+            v: 'una domanda rapida quando gli serve qualcosa in più da te',
+          },
+          {
+            k: 'Guida',
+            v: 'il passo esatto successivo, sul tuo schermo',
+          },
+          {
+            k: 'Osserva',
+            v: 'verifica che ogni passo abbia davvero funzionato',
+          },
+          {
+            k: 'Correggi',
+            v: 'sistema un passo falso nell\'istante in cui accade',
+          },
+        ],
+        again: 'si ripete finché il compito è fatto',
+      },
+      gridH2: 'Cosa fa per te',
+      cards: [
+        {
+          t: 'Il come esatto, ogni volta',
+          d: 'Il clic, il comando o l\'impostazione precisa, pronta da copiare, nel modo collaudato.',
+        },
+        {
+          t: 'Parte da zero',
+          d: 'Apre la pagina giusta, ti fa accedere e ti porta nel punto esatto.',
+        },
+        {
+          t: 'Intercetta e corregge gli errori',
+          d: 'Coglie un passo falso nell\'istante e mostra la correzione, anche se un pulsante si è spostato.',
+        },
+        {
+          t: 'Qualsiasi app sul tuo schermo',
+          d: 'App web, programmi desktop e i tuoi strumenti: legge ciò che c\'è sullo schermo.',
+        },
+        {
+          t: 'Basato sui tuoi appunti',
+          d: 'Con Advanced e Premium carichi i tuoi documenti di riferimento e i passi li seguono.',
+        },
+        {
+          t: 'Un resoconto che conservi',
+          d: 'Concludi con un riepilogo pulito e illustrato di ciò che hai fatto, da conservare o ripetere.',
+        },
+        {
+          t: 'Insegnagli il tuo modo',
+          d: 'Incolla una checklist o una procedura e la guida segue i tuoi strumenti e i tuoi termini.',
+        },
+        {
+          t: 'Desktop, web e telefono',
+          d: 'Un overlay sul desktop, il browser senza installare nulla, o la fotocamera del telefono.',
+        },
+      ],
+      depth: {
+        h2: 'Semplice o tecnico quanto vuoi',
+        p: 'Scegli la profondità di ogni passo, dal linguaggio semplice alle opzioni esatte. Cambiala quando vuoi, anche a metà compito.',
+        levels: [
+          'Semplice',
+          'Guidato',
+          'Tecnico',
+        ],
+      },
+      honest: {
+        h2: 'Cos\'è, e cosa non è',
+        is: [
+          'Una guida che osserva il tuo schermo e mostra la mossa successiva',
+          'Un verificatore che conferma che ogni passo ha funzionato',
+          'Un resoconto di ciò che hai fatto, con immagini',
+        ],
+        not: [
+          'Non una chat la cui risposta devi poi applicare da solo',
+          'Non un\'automazione che clicca al posto tuo',
+          'Non un analizzatore di documenti: ti aiuta a fare e finire il lavoro',
+        ],
+      },
+      cta: {
+        h2: 'Provalo sul tuo prossimo compito.',
+        p: 'I piani partono piccoli e crescono con il tuo mese. Disdici quando vuoi.',
+      },
+    },
+    pricing: {
+      seo: {
+        title: 'Piani WorkCoPilot: Lite, Basic, Advanced e Premium',
+        description: 'Quattro piani con ore di guida dal vivo ogni mese, conteggiate al minuto usato. Mensile o annuale. Ore extra quando vuoi, disdetta quando preferisci.',
+      },
+      hero: {
+        eyebrow: 'Prezzi',
+        h1: 'Piani semplici. <em>Tempo guidato vero.</em>',
+        p: 'Scegli il piano in base alle ore di guida che servono al tuo mese. Privacy e mascheramento sono inclusi in ogni piano, mai un extra.',
+      },
+      toggle: {
+        aria: 'Ciclo di fatturazione',
+        monthly: 'Mensile',
+        annual: 'Annuale',
+        save: 'risparmi il 20%',
+      },
+      popular: 'Il più scelto',
+      recommended: 'Consigliato per te',
+      hoursHero: '{hours} ore',
+      hoursSub: 'di tempo guidato al mese',
+      perMonthLong: 'al mese',
+      secure: 'Pagamento sicuro con Stripe',
+      includedH2: 'Incluso in ogni piano',
+      included: [
+        'Passo dopo passo, dall\'inizio alla fine, verificato strada facendo',
+        'I comandi, i clic e i link esatti, pronti da copiare',
+        'Funziona nelle app già sul tuo schermo',
+        'Dati sensibili mascherati sul tuo dispositivo',
+        'Un resoconto scritto di ogni compito, con immagini',
+      ],
+      tiersH2: 'Cosa cresce con il tuo piano',
+      tiers: [
+        {
+          t: 'Ore di tempo guidato',
+          d: 'Da pochi compiti al mese a una guida al tuo fianco quasi ogni giorno di lavoro.',
+        },
+        {
+          t: 'I tuoi documenti',
+          d: 'Advanced e Premium leggono i tuoi appunti di riferimento così i passi seguono il tuo modo di lavorare.',
+        },
+        {
+          t: 'Immagini generate e progetti',
+          d: 'Premium aggiunge schemi ed esempi, e trasforma un grande obiettivo in una mappa di compiti guidati.',
+        },
+      ],
+      notesH2: 'Buono a sapersi',
+      notes: [
+        {
+          t: 'Al minuto',
+          d: 'Usa le tue ore pochi minuti alla volta nel corso del mese. Mai arrotondato all\'ora.',
+        },
+        {
+          t: 'Tempo extra',
+          d: 'Mese pieno? Aggiungi un\'ora quando ti serve. Il tempo acquistato non scade mai.',
+        },
+        {
+          t: 'Disdici quando vuoi',
+          d: 'Mensile o annuale, senza vincoli. Disdici dal tuo account; mantieni l\'accesso fino alla fine di ciò che hai pagato.',
+        },
+        {
+          t: 'Cambia piano',
+          d: 'Sali quando vuoi con un addebito proporzionale. Scendi al prossimo rinnovo.',
+        },
+      ],
+      fine: 'Prezzi e contenuti definitivi sono confermati al pagamento. Possono applicarsi imposte in base alla località.',
+      refund: 'Politica di rimborso',
+      cta: {
+        h2: 'Scegli un piano e inizia oggi.',
+        p: 'Accedi con Google, Microsoft, Facebook o la tua email. Sei guidato in pochi minuti.',
+      },
+    },
+    use: {
+      seo: {
+        title: 'Per chi è WorkCoPilot: freelance, studenti, chi cerca lavoro e altri',
+        description: 'WorkCoPilot guida chi fa il proprio lavoro sul proprio schermo: freelance, studenti, chi cerca lavoro, attività individuali e chi cambia carriera. Guarda com\'è un compito guidato per ciascuno.',
+      },
+      hero: {
+        eyebrow: 'Per chi è',
+        h1: 'Per il lavoro che fai <em>da solo.</em>',
+        p: 'Scegli la giornata che somiglia alla tua. Ognuna mostra un compito reale, il tipo di passo che ricevi e il momento in cui la guida intercetta un errore.',
+        chipsAria: 'Vai a un profilo',
+      },
+      labels: {
+        goal: 'L\'obiettivo',
+        step: 'Un passo che ricevi',
+        catches: 'Cosa intercetta',
+        done: 'Fatto quando',
+      },
+      cases: [
+        {
+          tag: 'Freelance',
+          h2: 'Consegna come uno studio di una persona sola.',
+          d: 'Portali clienti, fatturazione, contratti, nuovi strumenti di design e di progetto: configurati e usati bene, senza perdere un giorno tra gli articoli di aiuto.',
+          goal: 'Inviare la mia prima fattura con logo e pagamento online',
+          step: 'Apri Impostazioni, poi Pagamenti, e collega il tuo conto. Il badge verde conferma che è attivo.',
+          catches: 'Un\'aliquota lasciata a zero prima di premere Invia.',
+          done: 'la fattura è inviata e il link di pagamento si apre.',
+        },
+        {
+          tag: 'Studenti',
+          h2: 'Configura gli strumenti, poi fai il lavoro.',
+          d: 'Il software che il corso richiede, installato e configurato, e il compito svolto un passo verificato alla volta.',
+          goal: 'Installare gli strumenti dati del mio corso ed eseguire il primo notebook',
+          step: 'Crea un nuovo ambiente chiamato course, poi installa i tre pacchetti elencati nel programma.',
+          catches: 'Un notebook eseguito nell\'ambiente sbagliato, così l\'import fallisce.',
+          done: 'il primo notebook gira dall\'inizio alla fine senza errori.',
+        },
+        {
+          tag: 'In cerca di lavoro',
+          h2: 'Impara gli strumenti dell\'annuncio mentre li usi.',
+          d: 'Siti portfolio, tracciamento candidature, gli strumenti che un annuncio richiede: imparali sul campo, con una guida che li conosce.',
+          goal: 'Pubblicare il mio sito portfolio sul mio dominio',
+          step: 'Nelle impostazioni del dominio, aggiungi i due record DNS mostrati qui, esattamente come scritti.',
+          catches: 'Un record incollato senza il punto finale, così il sito non risponde mai.',
+          done: 'il tuo dominio apre il sito con una connessione sicura.',
+        },
+        {
+          tag: 'Attività individuali',
+          h2: 'Gestisci da solo negozio, contabilità e prenotazioni.',
+          d: 'Negozio online, contabilità, pagine di prenotazione, liste email: ogni configurazione guidata fino alla fine sul tuo schermo.',
+          goal: 'Creare una pagina di prenotazione che incassa acconti',
+          step: 'Attiva Richiedi un acconto, impostalo al 20 per cento e scegli la finestra di cancellazione.',
+          catches: 'Un fuso orario lasciato di default, così gli orari compaiono alle ore sbagliate.',
+          done: 'una prenotazione di prova incassa un acconto e finisce nel tuo calendario.',
+        },
+        {
+          tag: 'Chi cambia carriera',
+          h2: 'Entra in un nuovo settore con qualcuno che conosce gli strumenti.',
+          d: 'Console cloud, fogli di calcolo, app di design o codice: le mosse esatte, spiegate alla profondità che scegli, in molti settori.',
+          goal: 'Pubblicare la mia prima web app su un provider cloud',
+          step: 'Crea l\'app, scegli il piano più piccolo, poi incolla qui il comando di build del tuo progetto.',
+          catches: 'Una chiave segreta inserita nel repository prima del primo push.',
+          done: 'l\'app si apre al suo indirizzo pubblico e la chiave è salvata come segreto.',
+        },
+      ],
+      cta: {
+        h2: 'La tua giornata somiglia a una di queste.',
+        p: 'Scegli un piano e porta il tuo primo compito. Sei guidato in pochi minuti.',
+      },
+    },
+    faq: {
+      seo: {
+        title: 'Domande su WorkCoPilot, con risposta',
+        description: 'Cosa fa e cosa non fa WorkCoPilot, come funzionano piani e ore, come disdire, e come sono protetti il tuo schermo e i tuoi dati. Risposte brevi e dirette.',
+      },
+      hero: {
+        eyebrow: 'Domande',
+        h1: 'Risposte brevi <em>alle domande che ci fanno.</em>',
+        p: 'Ancora dubbi? Scrivici, ti risponde una persona.',
+      },
+      searchPh: 'Cerca tra le domande',
+      noMatch: 'Nessuna domanda corrisponde. Prova un\'altra parola, o scrivici.',
+      groups: [
+        {
+          title: 'Cosa fa',
+          items: [
+            {
+              q: 'Cosa fa davvero WorkCoPilot?',
+              a: 'Ti guida in un compito sul tuo schermo: pianifica il compito, mostra il passo esatto nell\'app in cui ti trovi, verifica che il passo abbia funzionato e continua finché il compito è fatto.',
+            },
+            {
+              q: 'Fa il lavoro al posto mio?',
+              a: 'No. Mostra la mossa e verifica il risultato; ogni clic lo fai tu. È voluto, così resti al comando e impari lo strumento strada facendo.',
+            },
+            {
+              q: 'Con quali app funziona?',
+              a: 'Con qualsiasi app sul tuo schermo: app web, programmi desktop e i tuoi strumenti. Legge ciò che c\'è sullo schermo, quindi non serve alcun plugin.',
+            },
+            {
+              q: 'È un assistente in chat?',
+              a: 'Non proprio. Una risposta in chat ti lascia andare a farlo. WorkCoPilot resta con te sullo schermo, un passo alla volta, e conferma quando hai finito.',
+            },
+            {
+              q: 'Analizza o scrive i miei documenti?',
+              a: 'No. Ti aiuta a fare e finire il lavoro sullo schermo. Con Advanced e Premium puoi caricare i tuoi appunti di riferimento così i passi seguono il tuo modo di lavorare.',
+            },
+          ],
+        },
+        {
+          title: 'Piani e fatturazione',
+          items: [
+            {
+              q: 'Come funzionano le ore?',
+              a: 'Ogni piano include ore di tempo guidato ogni mese, conteggiate al minuto usato. Niente viene arrotondato all\'ora. La pagina dei prezzi mostra i numeri attuali.',
+            },
+            {
+              q: 'Posso comprare altro tempo?',
+              a: 'Sì. Aggiungi un\'ora quando ti serve dal tuo account. Il tempo acquistato non scade mai.',
+            },
+            {
+              q: 'Posso cambiare piano?',
+              a: 'Quando vuoi. Salire si applica subito con un addebito proporzionale. Scendere ha effetto al prossimo rinnovo, così mantieni ciò che hai pagato.',
+            },
+            {
+              q: 'Come disdico?',
+              a: 'Dal tuo account, in due clic. Mantieni l\'accesso fino alla fine del periodo pagato, e prima di allora puoi riprendere con un clic.',
+            },
+            {
+              q: 'Cosa succede se un pagamento fallisce?',
+              a: 'Ricevi un\'email e un avviso nel tuo account con un pulsante per aggiornare la carta. Il tuo piano resta tuo mentre sistemi la cosa.',
+            },
+            {
+              q: 'Esiste la fatturazione annuale?',
+              a: 'Dove c\'è, la pagina dei prezzi mostra il prezzo annuale scontato. Passi da mensile ad annuale dal tuo account.',
+            },
+          ],
+        },
+        {
+          title: 'Privacy e sicurezza',
+          items: [
+            {
+              q: 'Cosa esce dal mio dispositivo?',
+              a: 'Immagini dello schermo ridotte con le righe sensibili già oscurate, e il tuo testo con i valori sensibili sostituiti da segnaposto. I valori reali restano sul tuo dispositivo.',
+            },
+            {
+              q: 'Può modificare i miei account o i miei file?',
+              a: 'No. È in sola lettura. Mostra il passo e verifica il risultato; non agisce mai nelle tue app.',
+            },
+            {
+              q: 'Posso eliminare ciò che conserva?',
+              a: 'Sì. Ogni sessione è tua. Eliminane una qualsiasi, in qualsiasi momento, dal tuo account.',
+            },
+            {
+              q: 'Conservate la mia carta?',
+              a: 'No. Pagamento e dati della carta sono gestiti da Stripe. Non vediamo né conserviamo mai il numero della tua carta.',
+            },
+          ],
+        },
+        {
+          title: 'Per iniziare',
+          items: [
+            {
+              q: 'Come inizio?',
+              a: 'Scegli un piano, accedi con Google, Microsoft, Facebook o la tua email, e porta il tuo primo compito. Sei guidato in pochi minuti.',
+            },
+            {
+              q: 'Devo installare qualcosa?',
+              a: 'No. Funziona nel browser. Se preferisci, ci sono anche un overlay per il desktop e un\'app per il telefono.',
+            },
+            {
+              q: 'Posso provarlo prima?',
+              a: 'Guarda la demo di 60 secondi per vedere un compito guidato dall\'inizio alla fine. I piani partono piccoli e puoi disdire quando vuoi.',
+            },
+          ],
+        },
+      ],
+      cta: {
+        h2: 'Non hai trovato la risposta?',
+        p: 'Scrivici. Una persona legge ogni messaggio.',
+        write: 'Scrivi al supporto',
+      },
+    },
+    security: {
+      seo: {
+        title: 'Privacy e sicurezza per il tuo schermo: WorkCoPilot',
+        description: 'Come ti protegge WorkCoPilot: valori sensibili mascherati sul tuo dispositivo prima di inviare qualsiasi cosa, guida in sola lettura, autenticatore sul tuo account, un registro di ogni sessione, cifratura a riposo e sessioni che puoi eliminare quando vuoi.',
+      },
+      hero: {
+        eyebrow: 'Privato per impostazione',
+        h1: 'I tuoi segreti <em>non lasciano mai il tuo dispositivo.</em>',
+        p: 'I dati sensibili vengono mascherati sul tuo dispositivo prima di inviare qualsiasi cosa. La guida vede la forma del tuo compito, mai i segreti.',
+      },
+      visual: {
+        aria: 'Un modulo prima e dopo il mascheramento: numero di carta, chiave e telefono sono oscurati',
+        before: 'Cosa c\'è sul tuo schermo',
+        after: 'Cosa esce dal tuo dispositivo',
+        fields: [
+          'Carta salvata',
+          'Chiave API',
+          'Telefono',
+          'Piano',
+        ],
+        masked: 'mascherato',
+      },
+      guaranteesAria: 'Cosa è protetto',
+      guarantees: [
+        {
+          t: 'Mascherato sul tuo dispositivo',
+          d: 'Numeri di carta, chiavi e dati personali vengono oscurati negli screenshot e sostituiti da segnaposto nel testo prima di inviare qualsiasi cosa.',
+        },
+        {
+          t: 'Sola lettura, sempre',
+          d: 'Mostra la mossa e verifica il risultato. Non modifica mai i tuoi account, file o impostazioni.',
+        },
+        {
+          t: 'Codice verificato prima dell\'esecuzione',
+          d: 'Ogni comando o codice suggerito viene prima controllato per problemi noti.',
+        },
+        {
+          t: 'Autenticatore sul tuo account',
+          d: 'Password e accesso con Google, Microsoft o Facebook passano tutti dallo stesso secondo fattore.',
+        },
+        {
+          t: 'Un registro di ogni sessione',
+          d: 'Cosa è stato inviato, cosa è stato letto dallo schermo, cosa è stato verificato e segnalato. Tuo da leggere.',
+        },
+        {
+          t: 'Cifrato a riposo',
+          d: 'Chiavi, segreti e screenshot dei resoconti sono cifrati con AES-256-GCM.',
+        },
+      ],
+      handling: {
+        h2: 'Come vengono trattati i tuoi dati',
+        sub: 'Cosa fa il prodotto oggi. Parole chiare, niente caratteri piccoli.',
+        groups: [
+          {
+            title: 'Cosa esce dal tuo dispositivo',
+            items: [
+              'Immagini dello schermo ridotte, righe sensibili già oscurate',
+              'Il tuo testo, valori sensibili già sostituiti da segnaposto',
+              'Il testo degli appunti di riferimento che hai scelto di allegare, mai il file',
+            ],
+          },
+          {
+            title: 'Cosa conserviamo',
+            items: [
+              'Un resoconto per sessione, con immagini delle tappe mascherate (puoi disattivarlo)',
+              'Un registro per sessione, che annota cosa è stato inviato',
+              'La cronologia delle tue sessioni, per riaprirle e rivederle',
+            ],
+          },
+          {
+            title: 'Cosa non viene mai conservato',
+            items: [
+              'I tuoi documenti originali',
+              'Le immagini dello schermo grezze',
+              'I valori sensibili reali: la guida non li vede mai',
+            ],
+          },
+        ],
+      },
+      control: {
+        h2: 'Resti tu al comando',
+        points: [
+          {
+            t: 'Elimina quando vuoi',
+            d: 'Ogni sessione è tua. Eliminane una, o tutte, quando preferisci.',
+          },
+          {
+            t: 'Aggiungi le tue regole',
+            d: 'Aggiungi parole e pattern tuoi da mascherare, oltre ai rilevatori integrati.',
+          },
+          {
+            t: 'Pagamenti con Stripe',
+            d: 'I dati della carta sono gestiti da Stripe. Non vediamo né conserviamo mai il numero della tua carta.',
+          },
+        ],
+      },
+      contact: {
+        h2: 'Hai trovato un problema di sicurezza?',
+        p: 'Scrivi a support@admireveda.com. Dacci il tempo di confermarlo e correggerlo prima di pubblicarlo; la ricerca in buona fede è benvenuta.',
+        write: 'Scrivici',
+        legal: 'Informativa sulla privacy',
+        terms: 'Termini',
+      },
+    },
+  },
   leadsAdmin: {
     loadingLeads: 'Caricamento contatti',
     source: {
@@ -6143,6 +6751,7 @@ export default {
       finance: 'Finanze',
       subscribers: 'Abbonati',
       cancelled: 'Cancellati',
+      'subscription-health': 'Salute abbonamenti',
       email: 'Impostazioni SMTP',
       'email-templates': 'Modelli email',
       ai: 'Configurazione IA',
@@ -6201,6 +6810,10 @@ export default {
       cancelled: {
         title: 'Abbonati cancellati',
         sub: 'Abbonamenti persi: chi ha cancellato, quando, perché, e i ricavi totali che ha portato prima di andarsene.',
+      },
+      'subscription-health': {
+        title: 'Salute abbonamenti',
+        sub: 'Il business privati a colpo d\'occhio: MRR per piano, prove, pagamenti falliti, piani in scadenza, abbandono a 30 giorni e stato del collegamento Stripe.',
       },
       email: {
         title: 'Impostazioni SMTP (Email / SES)',
@@ -7341,6 +7954,8 @@ export default {
       helpTip: 'Aiuto e guide',
       howto: 'Guide',
       support: 'Supporto',
+      billing: 'Fatturazione',
+      billingTip: 'Il tuo piano, il metodo di pagamento e le fatture',
       team: 'Team',
       exec: 'Dashboard direzionale',
       teach: 'Studio di formazione',
@@ -8514,7 +9129,7 @@ export default {
     settingUp: 'La fatturazione è in fase di configurazione. I dettagli del suo piano e le fatture compariranno qui una volta attiva.',
     pastDue: {
       title: 'Il suo ultimo pagamento non è andato a buon fine.',
-      body: "Aggiorni il metodo di pagamento per mantenere l'accesso. Il suo piano resta attivo mentre risolve il problema.",
+      body: 'Aggiorna il metodo di pagamento per tornare alla guida. Il tuo piano e le sue ore restano tuoi mentre sistemi la cosa.',
       fix: 'Correggi il pagamento',
     },
     canceledNote: {
@@ -8593,6 +9208,29 @@ export default {
       fine: "L'annullamento si completa sul portale sicuro di Stripe, dove può confermare e vedere la data di fine esatta.",
       keep: 'Mantieni il mio piano',
       continue: "Continua con l'annullamento",
+    },
+    lifecycle: {
+      reasonLabel: 'Dicci perché (facoltativo)',
+      reasonPh: 'Una o due righe ci aiutano a migliorare',
+      fine: 'Il tuo piano termina alla fine del periodo, senza nuovi addebiti. Se cambi idea prima, riprendilo con un clic.',
+      confirmCancel: 'Disdici a fine periodo',
+      resume: 'Riprendi il mio piano',
+      errCancel: 'Non è stato possibile disdire il piano in questo momento. Riprova o scrivi al supporto.',
+      errResume: 'Non è stato possibile riprendere il piano in questo momento. Riprova o scrivi al supporto.',
+    },
+    alert: {
+      pastDueTitle: 'L\'ultimo pagamento non è andato a buon fine',
+      pastDueBody: 'Aggiorna il metodo di pagamento per mantenere il piano. La guida è in pausa finché il pagamento non va a buon fine.',
+      pastDueCta: 'Aggiorna il metodo di pagamento',
+      endingTitle: 'Il tuo piano termina il {date}',
+      endingBody: 'Mantieni l\'accesso completo fino ad allora. Riprendi in qualsiasi momento prima di quella data per continuare a rinnovare.',
+      endingCta: 'Riprendi il piano',
+      pendingTitle: 'Passaggio a {plan} il {date}',
+      pendingBody: 'Mantieni il piano attuale e le sue ore fino ad allora. Oggi non viene addebitato nulla.',
+    },
+    page: {
+      title: 'Fatturazione',
+      sub: 'Il tuo piano, il metodo di pagamento e le fatture.',
     },
   },
   buddyPage: {
@@ -12339,6 +12977,72 @@ export default {
       caption: 'Il tuo schermo potrebbe apparire un po\' diverso, ad esempio con i tuoi dati.',
       missing: 'Impossibile caricare lo screenshot di questo passaggio.',
     },
+  },
+  subHealthAdmin: {
+    loading: 'Caricamento salute abbonamenti',
+    refresh: 'Aggiorna',
+    window: 'Ultimi {days} giorni',
+    asOf: 'Al {time}',
+    tiles: {
+      mrr: 'Ricavo mensile ricorrente',
+      mrrFoot: '{arr} l\'anno a questo ritmo',
+      active: 'Abbonati paganti',
+      activeFoot: '{trialing} in prova',
+      pastDue: 'Pagamenti falliti',
+      pastDueFoot: 'account con pagamento scaduto ora',
+      ending: 'Piani in scadenza',
+      endingFoot: 'disdetta a fine periodo, ancora attivi',
+      churn: 'Abbandono',
+      churnFoot: '{canceled} su {start} hanno disdetto',
+      newSubs: 'Nuovi abbonati',
+      newSubsFoot: 'iniziati nel periodo',
+    },
+    byPlan: {
+      h3: 'MRR per piano',
+      plan: 'Piano',
+      subscribers: 'Abbonati',
+      annual: 'Annuali',
+      mrr: 'MRR',
+      share: 'Quota',
+    },
+    payments: {
+      h3: 'Denaro nel periodo',
+      paid: 'Pagamenti',
+      refunds: 'Rimborsi',
+      net: 'Netto',
+    },
+    stripe: {
+      h3: 'Stripe',
+      keys: 'Chiave segreta',
+      webhook: 'Segreto webhook',
+      annual: 'Prezzi annuali',
+      mode: 'Modalità',
+      on: 'Impostata',
+      off: 'Mancante',
+      fix: 'Impostala in Fatturazione',
+      ready: 'Pagamento, rinnovi e portale sono collegati.',
+      notReady: 'Finché chiave e segreto webhook non sono impostati, nessun piano può essere acquistato e nessun rinnovo arriva.',
+    },
+    ending: {
+      h3: 'In scadenza',
+      empty: 'Nessun piano è in scadenza.',
+      user: 'Utente',
+      plan: 'Piano',
+      endsAt: 'Termina',
+      reason: 'Motivo',
+      noReason: 'Nessun motivo indicato',
+    },
+    pastDueList: {
+      h3: 'Pagamento scaduto',
+      empty: 'Tutti i rinnovi sono andati a buon fine.',
+      user: 'Utente',
+      plan: 'Piano',
+      since: 'Abbonato dal',
+      periodEnd: 'Fine periodo',
+      open: 'Apri in Abbonati',
+    },
+    viewOnlyNote: 'La salute abbonamenti è visibile ai superadmin e al ruolo contabilità.',
+    unavailable: 'La salute abbonamenti non è ancora disponibile su questo server.',
   },
   subprocessorsPage: {
     seo: {

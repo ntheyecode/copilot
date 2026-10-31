@@ -35,7 +35,7 @@ export default {
     settingUp: 'Billing is being set up. Your plan details and invoices will appear here once it is live.',
     pastDue: {
       title: 'Your last payment did not go through.',
-      body: 'Update your payment method to keep your access. Your plan stays active while you fix this.',
+      body: 'Update your payment method to get back to guiding. Your plan and its hours are kept while you fix this.',
       fix: 'Fix payment',
     },
     canceledNote: {
@@ -114,6 +114,31 @@ export default {
       fine: 'Cancellation is completed on the secure Stripe portal, where you can confirm and see your exact end date.',
       keep: 'Keep my plan',
       continue: 'Continue to cancel',
+    },
+    // In-app cancel at the period end, and resume (server/billing_lifecycle.js).
+    lifecycle: {
+      reasonLabel: 'Tell us why (optional)',
+      reasonPh: 'A line or two helps us improve',
+      fine: 'Your plan ends at the period end, with no new charge. Change your mind before then and resume with one click.',
+      confirmCancel: 'Cancel at period end',
+      resume: 'Resume my plan',
+      errCancel: 'Could not cancel your plan right now. Please try again or write to support.',
+      errResume: 'Could not resume your plan right now. Please try again or write to support.',
+    },
+    // The one billing state that needs action, on the dashboard and the billing page.
+    alert: {
+      pastDueTitle: 'Your last payment did not go through',
+      pastDueBody: 'Update your payment method to keep your plan. Guidance pauses until the payment clears.',
+      pastDueCta: 'Update payment method',
+      endingTitle: 'Your plan ends on {date}',
+      endingBody: 'You keep full access until then. Resume any time before that date to keep renewing.',
+      endingCta: 'Resume plan',
+      pendingTitle: 'Switching to {plan} on {date}',
+      pendingBody: 'You keep your current plan and its hours until then. Nothing is charged today.',
+    },
+    page: {
+      title: 'Billing',
+      sub: 'Your plan, payment method and invoices.',
     },
   },
 }

@@ -3416,6 +3416,614 @@ export default {
       deleteConfirm: 'Vorfall löschen',
     },
   },
+  indiv: {
+    nav: {
+      main: 'Hauptnavigation',
+      home: 'Start',
+      how: 'So funktioniert es',
+      pricing: 'Preise',
+      use: 'Für wen',
+      faq: 'FAQ',
+      security: 'Datenschutz',
+      signIn: 'Anmelden',
+      start: 'Tarif wählen',
+      openMenu: 'Menü öffnen',
+      closeMenu: 'Menü schließen',
+      language: 'Sprache',
+    },
+    footer: {
+      aria: 'Fußzeile',
+      tag: 'Ein Begleiter für alles, was Sie auf Ihrem eigenen Bildschirm erledigen. Schritt für Schritt, bis es fertig ist.',
+      explore: 'Entdecken',
+      account: 'Ihr Konto',
+      legal: 'Rechtliches',
+      help: 'Hilfe',
+      support: 'An den Support schreiben',
+      demo: 'Demo ansehen',
+      fields: 'Bekannte Fachgebiete',
+      contact: 'Kontakt',
+      accessibility: 'Barrierefreiheit',
+      cookiePrefs: 'Cookie-Einstellungen',
+      made: 'WorkCoPilot wird von AdmireVeda entwickelt.',
+      note: 'Zahlungen laufen über Stripe. Ihre Kartendaten erreichen unsere Server nie.',
+    },
+    common: {
+      choosePlan: 'Tarif wählen',
+      seePlans: 'Tarife ansehen',
+      signIn: 'Anmelden',
+      seeHow: 'So funktioniert es',
+      demo: '60-Sekunden-Demo ansehen',
+      start: '{plan} starten',
+      perMonth: '/Monat',
+      readMore: 'Mehr lesen',
+      new: 'Neu',
+    },
+    home: {
+      seo: {
+        title: 'WorkCoPilot: Schritt-für-Schritt-Begleitung für die Arbeit auf Ihrem Bildschirm',
+        description: 'Sagen Sie WorkCoPilot, was erledigt werden soll. Es beobachtet Ihren Bildschirm, zeigt den genauen nächsten Klick oder Befehl, fängt Fehltritte ab und bestätigt den Abschluss. Tarife nach Stunden, jederzeit kündbar.',
+      },
+      hero: {
+        eyebrow: 'Für Menschen, die ihre Arbeit selbst erledigen',
+        h1: 'Bringen Sie die Aufgabe auf Ihrem Bildschirm zu Ende. <em>Mit einem Begleiter an Ihrer Seite.</em>',
+        p: 'Sagen Sie, was erledigt werden soll. WorkCoPilot beobachtet Ihren Bildschirm, zeigt den genauen nächsten Klick oder Befehl, fängt Fehltritte ab und bestätigt den Abschluss.',
+        primary: 'Tarif wählen',
+        secondary: 'So funktioniert es',
+        trust: [
+          'Funktioniert in den Apps, die Sie schon nutzen',
+          'Sensible Daten werden auf Ihrem Gerät maskiert',
+          'Jederzeit kündbar, kein Vertrag',
+        ],
+      },
+      visual: {
+        aria: 'Ein Bildschirm, auf dem WorkCoPilot Schritt für Schritt anleitet',
+        window: 'Ihre Buchhaltungs-App',
+        task: 'Meine erste Rechnung mit eigenem Logo senden',
+        stepLabel: 'Schritt 3 von 7',
+        step: 'Öffnen Sie Einstellungen, dann Rechnungsvorlagen. Wählen Sie die Vorlage mit Ihrem Logo.',
+        checked: 'Geprüft: Die Vorlage ist gespeichert',
+        next: 'Nächster Schritt',
+        watching: 'Beobachtet Ihren Bildschirm',
+      },
+      who: {
+        eyebrow: 'Gemacht für Ihren Alltag',
+        h2: 'Ein Begleiter für alles, was Sie allein erledigen.',
+        cta: 'Für wen es gedacht ist',
+        cards: [
+          {
+            t: 'Freiberufler',
+            d: 'Rechnungen, Kundenportale, neue Tools: gleich beim ersten Mal richtig, ohne einen Tag in Hilfeartikeln zu verlieren.',
+          },
+          {
+            t: 'Studierende',
+            d: 'Die Software für Ihren Kurs einrichten und die Aufgabe durcharbeiten, ein geprüfter Schritt nach dem anderen.',
+          },
+          {
+            t: 'Jobsuchende',
+            d: 'Portfolios, Bewerbungen, neue Tools aus einer Stellenanzeige: lernen, während Sie sie nutzen.',
+          },
+          {
+            t: 'Solo-Selbstständige',
+            d: 'Ihr Shop, Ihre Buchhaltung, Ihre Buchungen: jede Einrichtung auf Ihrem Bildschirm bis zum Ende begleitet.',
+          },
+          {
+            t: 'Quereinsteiger',
+            d: 'Steigen Sie in die Tools eines neuen Fachgebiets ein, mit jemandem an der Seite, der sie kennt.',
+          },
+        ],
+      },
+      how: {
+        eyebrow: 'So läuft eine begleitete Aufgabe',
+        h2: 'Vier Schritte, wiederholt, bis es fertig ist.',
+        steps: [
+          {
+            t: 'Ziel nennen',
+            d: 'In Ihren eigenen Worten. Ein 30-Sekunden-Check stellt sicher, dass die Aufgabe zu Ihrem Wissen passt.',
+          },
+          {
+            t: 'Den genauen nächsten Schritt bekommen',
+            d: 'Der Klick, der Befehl oder die Einstellung, in der App, in der Sie gerade sind, zum Kopieren bereit.',
+          },
+          {
+            t: 'Ein Fehltritt wird abgefangen',
+            d: 'Es beobachtet den Bildschirm, erkennt den Ausrutscher sofort und zeigt die Korrektur.',
+          },
+          {
+            t: 'Mit einem Protokoll abschließen',
+            d: 'Eine saubere Zusammenfassung mit Bildern, zum Aufbewahren oder Wiederholen.',
+          },
+        ],
+        honest: 'Es leitet an und prüft. Es klickt nie für Sie, Sie behalten das Steuer in der Hand.',
+      },
+      hours: {
+        eyebrow: 'Tarife nach Stunden',
+        h2: 'Zahlen Sie für begleitete Zeit, <em>minutengenau nach Verbrauch.</em>',
+        p: 'Jeder Tarif enthält monatlich Stunden Live-Begleitung, abgerechnet pro genutzter Minute. Viel zu tun? Fügen Sie jederzeit eine Stunde hinzu.',
+        cta: 'Tarife vergleichen',
+        live: 'Aktuelle Preise',
+      },
+      privacy: {
+        eyebrow: 'Privat von Grund auf',
+        h2: 'Ihr Bildschirm bleibt Ihrer.',
+        points: [
+          {
+            t: 'Maskiert, bevor etwas das Gerät verlässt',
+            d: 'Kartennummern, Schlüssel und persönliche Angaben werden auf Ihrem Gerät geschwärzt, bevor irgendetwas gesendet wird.',
+          },
+          {
+            t: 'Nur lesend',
+            d: 'Es zeigt den Schritt und prüft das Ergebnis. Es ändert nie Ihre Konten oder Dateien.',
+          },
+          {
+            t: 'Jederzeit löschbar',
+            d: 'Jede Sitzung gehört Ihnen. Löschen Sie jede davon, wann Sie wollen.',
+          },
+        ],
+        cta: 'So werden Ihre Daten behandelt',
+      },
+      final: {
+        h2: 'Starten Sie Ihre nächste Aufgabe mit einem Begleiter an der Seite.',
+        p: 'Tarif wählen, mit Google, Microsoft, Facebook oder E-Mail anmelden und in wenigen Minuten loslegen.',
+        primary: 'Tarif wählen',
+        secondary: 'Anmelden',
+      },
+    },
+    how: {
+      seo: {
+        title: 'So funktioniert WorkCoPilot: der Begleiter auf Ihrem Bildschirm',
+        description: 'WorkCoPilot plant Ihre Aufgabe, zeigt den genauen nächsten Schritt in der App, in der Sie sind, prüft, ob er geklappt hat, korrigiert Fehltritte und macht weiter, bis die Arbeit erledigt ist. So geht das.',
+      },
+      hero: {
+        eyebrow: 'So funktioniert es',
+        h1: 'Als säße die richtige Person <em>jedes Mal neben Ihnen.</em>',
+        p: 'Sie bringen das Ziel und Ihren Bildschirm mit. WorkCoPilot bringt den Plan, die genauen Schritte und die Prüfungen.',
+      },
+      loop: {
+        h2: 'Die Schleife hinter jeder Aufgabe',
+        aria: 'So läuft jede Aufgabe: planen, fragen, anleiten, beobachten, korrigieren, wiederholt bis zum Abschluss',
+        rows: [
+          {
+            k: 'Planen',
+            v: 'die ganze Aufgabe wird vor dem ersten Schritt geplant',
+          },
+          {
+            k: 'Fragen',
+            v: 'eine kurze Rückfrage, wenn es mehr von Ihnen braucht',
+          },
+          {
+            k: 'Anleiten',
+            v: 'der genaue nächste Schritt, auf Ihrem Bildschirm',
+          },
+          {
+            k: 'Beobachten',
+            v: 'prüft, ob jeder Schritt wirklich geklappt hat',
+          },
+          {
+            k: 'Korrigieren',
+            v: 'behebt einen Fehltritt in dem Moment, in dem er passiert',
+          },
+        ],
+        again: 'wiederholt sich, bis die Aufgabe erledigt ist',
+      },
+      gridH2: 'Was es für Sie tut',
+      cards: [
+        {
+          t: 'Das genaue Wie, jedes Mal',
+          d: 'Der präzise Klick, Befehl oder die Einstellung, zum Kopieren bereit, auf dem bewährten Weg.',
+        },
+        {
+          t: 'Beginnt bei null',
+          d: 'Öffnet die richtige Seite, bringt Sie zur Anmeldung und genau an die richtige Stelle.',
+        },
+        {
+          t: 'Fängt Fehler ab und korrigiert sie',
+          d: 'Erkennt einen Fehltritt sofort und zeigt die Korrektur, selbst wenn ein Button verschoben wurde.',
+        },
+        {
+          t: 'Jede App auf Ihrem Bildschirm',
+          d: 'Web-Apps, Desktop-Programme und Ihre eigenen Tools: es liest, was auf dem Bildschirm ist.',
+        },
+        {
+          t: 'Gestützt auf Ihre eigenen Notizen',
+          d: 'Bei Advanced und Premium laden Sie Ihre Referenzdokumente hoch, und die Schritte folgen ihnen.',
+        },
+        {
+          t: 'Ein Protokoll zum Behalten',
+          d: 'Schließen Sie mit einer sauberen, bebilderten Zusammenfassung ab, zum Aufbewahren oder Wiederholen.',
+        },
+        {
+          t: 'Bringen Sie ihm Ihre Art bei',
+          d: 'Fügen Sie eine Checkliste oder Anleitung ein, und die Begleitung folgt Ihren Tools und Begriffen.',
+        },
+        {
+          t: 'Desktop, Web und Handy',
+          d: 'Ein Desktop-Overlay, der Browser ohne Installation oder die Kamera Ihres Handys.',
+        },
+      ],
+      depth: {
+        h2: 'So einfach oder so technisch, wie Sie möchten',
+        p: 'Wählen Sie die Tiefe jedes Schritts, von einfacher Sprache bis zu den genauen Parametern. Jederzeit änderbar, auch mitten in der Aufgabe.',
+        levels: [
+          'Einfach',
+          'Begleitet',
+          'Technisch',
+        ],
+      },
+      honest: {
+        h2: 'Was es ist und was es nicht ist',
+        is: [
+          'Ein Begleiter, der Ihren Bildschirm beobachtet und den nächsten Schritt zeigt',
+          'Ein Prüfer, der bestätigt, dass jeder Schritt geklappt hat',
+          'Ein Protokoll dessen, was Sie getan haben, mit Bildern',
+        ],
+        not: [
+          'Keine Chatbox, deren Antwort Sie dann selbst umsetzen müssen',
+          'Keine Automatisierung, die für Sie klickt',
+          'Kein Dokumenten-Analysator: es hilft Ihnen, Arbeit zu erledigen und abzuschließen',
+        ],
+      },
+      cta: {
+        h2: 'Probieren Sie es bei Ihrer nächsten Aufgabe.',
+        p: 'Die Tarife beginnen klein und wachsen mit Ihrem Monat. Jederzeit kündbar.',
+      },
+    },
+    pricing: {
+      seo: {
+        title: 'WorkCoPilot-Tarife: Lite, Basic, Advanced und Premium',
+        description: 'Vier Tarife mit monatlichen Stunden Live-Begleitung, abgerechnet pro genutzter Minute. Monatlich oder jährlich. Zusatzstunden jederzeit, kündbar, wann Sie wollen.',
+      },
+      hero: {
+        eyebrow: 'Preise',
+        h1: 'Einfache Tarife. <em>Echte begleitete Zeit.</em>',
+        p: 'Wählen Sie den Tarif nach den Stunden Begleitung, die Ihr Monat braucht. Datenschutz und Maskierung sind in jedem Tarif enthalten, nie ein Aufpreis.',
+      },
+      toggle: {
+        aria: 'Abrechnungszeitraum',
+        monthly: 'Monatlich',
+        annual: 'Jährlich',
+        save: '20 % sparen',
+      },
+      popular: 'Am häufigsten gewählt',
+      recommended: 'Empfohlen für Sie',
+      hoursHero: '{hours} Stunden',
+      hoursSub: 'begleitete Zeit pro Monat',
+      perMonthLong: 'pro Monat',
+      secure: 'Sicherer Checkout mit Stripe',
+      includedH2: 'In jedem Tarif enthalten',
+      included: [
+        'Schritt für Schritt, von Anfang bis Ende, laufend geprüft',
+        'Die genauen Befehle, Klicks und Links, zum Kopieren bereit',
+        'Funktioniert in den Apps, die Sie schon nutzen',
+        'Sensible Daten werden auf Ihrem Gerät maskiert',
+        'Ein schriftliches Protokoll jeder Aufgabe, mit Bildern',
+      ],
+      tiersH2: 'Was mit Ihrem Tarif wächst',
+      tiers: [
+        {
+          t: 'Stunden begleitete Zeit',
+          d: 'Von ein paar Aufgaben im Monat bis zu einem Begleiter an fast jedem Arbeitstag.',
+        },
+        {
+          t: 'Ihre eigenen Dokumente',
+          d: 'Advanced und Premium lesen Ihre Referenznotizen, damit die Schritte Ihrer Arbeitsweise folgen.',
+        },
+        {
+          t: 'Generierte Visualisierungen und Projekte',
+          d: 'Premium ergänzt Diagramme und Beispiele und macht aus einem großen Ziel eine Karte begleiteter Aufgaben.',
+        },
+      ],
+      notesH2: 'Gut zu wissen',
+      notes: [
+        {
+          t: 'Minutengenau',
+          d: 'Nutzen Sie Ihre Stunden über den Monat verteilt, ein paar Minuten auf einmal. Nie auf die volle Stunde aufgerundet.',
+        },
+        {
+          t: 'Zusatzzeit',
+          d: 'Viel zu tun? Fügen Sie jederzeit eine Stunde hinzu. Gekaufte Zeit verfällt nie.',
+        },
+        {
+          t: 'Jederzeit kündbar',
+          d: 'Monatlich oder jährlich, kein Vertrag. Kündigen Sie in Ihrem Konto; der Zugang bleibt bis zum Ende des bezahlten Zeitraums.',
+        },
+        {
+          t: 'Tarif wechseln',
+          d: 'Jederzeit nach oben wechseln, anteilig berechnet. Nach unten zur nächsten Verlängerung.',
+        },
+      ],
+      fine: 'Endgültige Preise und Leistungen werden beim Checkout bestätigt. Je nach Standort können Steuern anfallen.',
+      refund: 'Erstattungsrichtlinie',
+      cta: {
+        h2: 'Tarif wählen und heute loslegen.',
+        p: 'Melden Sie sich mit Google, Microsoft, Facebook oder E-Mail an. In wenigen Minuten werden Sie begleitet.',
+      },
+    },
+    use: {
+      seo: {
+        title: 'Für wen WorkCoPilot ist: Freiberufler, Studierende, Jobsuchende und mehr',
+        description: 'WorkCoPilot begleitet Menschen, die ihre Arbeit selbst auf dem eigenen Bildschirm erledigen: Freiberufler, Studierende, Jobsuchende, Solo-Selbstständige und Quereinsteiger. Sehen Sie, wie eine begleitete Aufgabe für jede Gruppe aussieht.',
+      },
+      hero: {
+        eyebrow: 'Für wen',
+        h1: 'Für die Arbeit, die Sie <em>allein erledigen.</em>',
+        p: 'Wählen Sie den Alltag, der Ihrem ähnelt. Jeder zeigt eine echte Aufgabe, die Art von Schritt, die Sie bekommen, und den Moment, in dem der Begleiter einen Ausrutscher abfängt.',
+        chipsAria: 'Zu einer Gruppe springen',
+      },
+      labels: {
+        goal: 'Das Ziel',
+        step: 'Ein Schritt, den Sie bekommen',
+        catches: 'Was es abfängt',
+        done: 'Fertig, wenn',
+      },
+      cases: [
+        {
+          tag: 'Freiberufler',
+          h2: 'Liefern Sie wie ein Studio mit einer Person.',
+          d: 'Kundenportale, Rechnungen, Verträge, neue Design- und Projekt-Tools: richtig eingerichtet und genutzt, ohne einen Tag in Hilfeartikeln zu verlieren.',
+          goal: 'Meine erste Rechnung mit Logo und Online-Zahlung senden',
+          step: 'Öffnen Sie Einstellungen, dann Zahlungen, und verbinden Sie Ihr Konto. Das grüne Abzeichen bestätigt, dass es aktiv ist.',
+          catches: 'Ein Steuersatz, der auf null steht, bevor Sie auf Senden klicken.',
+          done: 'die Rechnung gesendet ist und der Zahlungslink sich öffnet.',
+        },
+        {
+          tag: 'Studierende',
+          h2: 'Erst die Tools einrichten, dann die Arbeit machen.',
+          d: 'Die Software, die Ihr Kurs erwartet, installiert und konfiguriert, und die Aufgabe durchgearbeitet, ein geprüfter Schritt nach dem anderen.',
+          goal: 'Die Datentools meines Kurses installieren und das erste Notebook ausführen',
+          step: 'Erstellen Sie eine neue Umgebung namens course und installieren Sie die drei Pakete aus Ihrem Kursplan.',
+          catches: 'Ein Notebook, das in der falschen Umgebung läuft, sodass der Import fehlschlägt.',
+          done: 'das erste Notebook ohne Fehler von Anfang bis Ende läuft.',
+        },
+        {
+          tag: 'Jobsuchende',
+          h2: 'Lernen Sie die Tools aus der Stellenanzeige, während Sie sie nutzen.',
+          d: 'Portfolio-Seiten, Bewerbungs-Tracker, die Tools, die eine Stellenanzeige erwartet: praktisch lernen, mit einem Begleiter, der sie kennt.',
+          goal: 'Meine Portfolio-Seite auf meiner eigenen Domain veröffentlichen',
+          step: 'Fügen Sie in Ihren Domain-Einstellungen die beiden hier gezeigten DNS-Einträge hinzu, genau wie geschrieben.',
+          catches: 'Ein Eintrag ohne den abschließenden Punkt, sodass die Seite nie erreichbar ist.',
+          done: 'Ihre Domain die Seite über eine sichere Verbindung öffnet.',
+        },
+        {
+          tag: 'Solo-Selbstständige',
+          h2: 'Shop, Buchhaltung und Buchungen selbst im Griff.',
+          d: 'Onlineshop, Buchhaltung, Buchungsseiten, E-Mail-Listen: jede Einrichtung auf Ihrem eigenen Bildschirm bis zum Ende begleitet.',
+          goal: 'Eine Buchungsseite einrichten, die Anzahlungen nimmt',
+          step: 'Aktivieren Sie Anzahlung erforderlich, setzen Sie 20 Prozent und wählen Sie Ihr Stornofenster.',
+          catches: 'Eine Zeitzone, die auf dem Standard blieb, sodass Termine zu falschen Uhrzeiten erscheinen.',
+          done: 'eine Testbuchung eine Anzahlung nimmt und in Ihrem Kalender landet.',
+        },
+        {
+          tag: 'Quereinsteiger',
+          h2: 'Steigen Sie mit jemandem ein, der die Tools kennt.',
+          d: 'Cloud-Konsolen, Tabellen, Design-Apps oder Code: die genauen Schritte, erklärt in der Tiefe, die Sie wählen, in vielen Fachgebieten.',
+          goal: 'Meine erste Web-App bei einem Cloud-Anbieter bereitstellen',
+          step: 'Erstellen Sie die App, wählen Sie den kleinsten Tarif und fügen Sie hier den Build-Befehl aus Ihrem Projekt ein.',
+          catches: 'Ein geheimer Schlüssel, der vor dem ersten Push ins Repository eingecheckt wurde.',
+          done: 'die App unter ihrer öffentlichen Adresse öffnet und der Schlüssel als Secret gespeichert ist.',
+        },
+      ],
+      cta: {
+        h2: 'Ihr Alltag sieht aus wie einer davon.',
+        p: 'Wählen Sie einen Tarif und bringen Sie Ihre erste Aufgabe mit. In wenigen Minuten werden Sie begleitet.',
+      },
+    },
+    faq: {
+      seo: {
+        title: 'Fragen zu WorkCoPilot, beantwortet',
+        description: 'Was WorkCoPilot tut und nicht tut, wie Tarife und Stunden funktionieren, wie Sie kündigen und wie Ihr Bildschirm und Ihre Daten geschützt sind. Kurze, direkte Antworten.',
+      },
+      hero: {
+        eyebrow: 'Fragen',
+        h1: 'Kurze Antworten auf <em>die Fragen, die gestellt werden.</em>',
+        p: 'Noch unsicher? Schreiben Sie uns, ein Mensch antwortet.',
+      },
+      searchPh: 'Fragen durchsuchen',
+      noMatch: 'Keine Frage passt dazu. Versuchen Sie ein anderes Wort oder schreiben Sie uns.',
+      groups: [
+        {
+          title: 'Was es tut',
+          items: [
+            {
+              q: 'Was macht WorkCoPilot eigentlich?',
+              a: 'Es führt Sie durch eine Aufgabe auf Ihrem eigenen Bildschirm: es plant die Aufgabe, zeigt den genauen nächsten Schritt in der App, in der Sie sind, prüft, ob der Schritt geklappt hat, und macht weiter, bis die Aufgabe erledigt ist.',
+            },
+            {
+              q: 'Erledigt es die Arbeit für mich?',
+              a: 'Nein. Es zeigt den Schritt und prüft das Ergebnis; jeden Klick machen Sie selbst. Das ist Absicht, damit Sie die Kontrolle behalten und das Tool nebenbei lernen.',
+            },
+            {
+              q: 'Mit welchen Apps funktioniert es?',
+              a: 'Mit jeder App auf Ihrem Bildschirm: Web-Apps, Desktop-Programme und Ihre eigenen Tools. Es liest, was auf dem Bildschirm ist, also braucht nichts ein Plug-in.',
+            },
+            {
+              q: 'Ist es ein Chat-Assistent?',
+              a: 'Nicht wirklich. Eine Chat-Antwort überlässt Ihnen die Umsetzung. WorkCoPilot bleibt bei Ihnen auf dem Bildschirm, Schritt für Schritt, und bestätigt den Abschluss.',
+            },
+            {
+              q: 'Analysiert oder schreibt es meine Dokumente?',
+              a: 'Nein. Es hilft Ihnen, Arbeit auf dem Bildschirm zu erledigen und abzuschließen. Bei Advanced und Premium können Sie eigene Referenznotizen hochladen, damit die Schritte Ihrer Arbeitsweise folgen.',
+            },
+          ],
+        },
+        {
+          title: 'Tarife und Abrechnung',
+          items: [
+            {
+              q: 'Wie funktionieren die Stunden?',
+              a: 'Jeder Tarif enthält monatlich Stunden begleitete Zeit, abgerechnet pro genutzter Minute. Nichts wird auf die volle Stunde aufgerundet. Die aktuellen Zahlen stehen auf der Preisseite.',
+            },
+            {
+              q: 'Kann ich mehr Zeit kaufen?',
+              a: 'Ja. Fügen Sie in Ihrem Konto jederzeit eine Stunde hinzu. Gekaufte Zeit verfällt nie.',
+            },
+            {
+              q: 'Kann ich den Tarif wechseln?',
+              a: 'Jederzeit. Ein Wechsel nach oben gilt sofort mit anteiliger Berechnung. Ein Wechsel nach unten greift zur nächsten Verlängerung, damit Sie behalten, was Sie bezahlt haben.',
+            },
+            {
+              q: 'Wie kündige ich?',
+              a: 'In Ihrem Konto, mit zwei Klicks. Der Zugang bleibt bis zum Ende des bezahlten Zeitraums, und bis dahin können Sie mit einem Klick fortsetzen.',
+            },
+            {
+              q: 'Was passiert, wenn eine Zahlung fehlschlägt?',
+              a: 'Sie bekommen eine E-Mail und einen Hinweis in Ihrem Konto mit einem Button, um Ihre Karte zu aktualisieren. Ihr Tarif bleibt Ihnen erhalten, während Sie das klären.',
+            },
+            {
+              q: 'Gibt es jährliche Abrechnung?',
+              a: 'Wo es sie gibt, zeigt die Preisseite den Jahrespreis mit Rabatt. Zwischen monatlich und jährlich wechseln Sie in Ihrem Konto.',
+            },
+          ],
+        },
+        {
+          title: 'Datenschutz und Sicherheit',
+          items: [
+            {
+              q: 'Was verlässt mein Gerät?',
+              a: 'Verkleinerte Bildschirmausschnitte, bei denen sensible Zeilen bereits geschwärzt sind, und Ihr Text, bei dem sensible Werte durch Platzhalter ersetzt sind. Die echten Werte bleiben auf Ihrem Gerät.',
+            },
+            {
+              q: 'Kann es meine Konten oder Dateien ändern?',
+              a: 'Nein. Es ist nur lesend. Es zeigt den Schritt und prüft das Ergebnis; es handelt nie in Ihren Apps.',
+            },
+            {
+              q: 'Kann ich löschen, was es speichert?',
+              a: 'Ja. Jede Sitzung gehört Ihnen. Löschen Sie jede davon jederzeit in Ihrem Konto.',
+            },
+            {
+              q: 'Speichern Sie meine Karte?',
+              a: 'Nein. Checkout und Kartendaten laufen über Stripe. Wir sehen oder speichern Ihre Kartennummer nie.',
+            },
+          ],
+        },
+        {
+          title: 'Erste Schritte',
+          items: [
+            {
+              q: 'Wie fange ich an?',
+              a: 'Wählen Sie einen Tarif, melden Sie sich mit Google, Microsoft, Facebook oder E-Mail an und bringen Sie Ihre erste Aufgabe mit. In wenigen Minuten werden Sie begleitet.',
+            },
+            {
+              q: 'Muss ich etwas installieren?',
+              a: 'Nein. Es funktioniert im Browser. Wer möchte, nutzt zusätzlich ein Desktop-Overlay oder eine Handy-App.',
+            },
+            {
+              q: 'Kann ich es vorher ausprobieren?',
+              a: 'Sehen Sie sich die 60-Sekunden-Demo an, um eine begleitete Aufgabe von Anfang bis Ende zu erleben. Die Tarife beginnen klein, und Sie können jederzeit kündigen.',
+            },
+          ],
+        },
+      ],
+      cta: {
+        h2: 'Antwort nicht gefunden?',
+        p: 'Schreiben Sie uns. Ein Mensch liest jede Nachricht.',
+        write: 'An den Support schreiben',
+      },
+    },
+    security: {
+      seo: {
+        title: 'Datenschutz und Sicherheit für Ihren Bildschirm: WorkCoPilot',
+        description: 'So schützt Sie WorkCoPilot: sensible Werte werden auf Ihrem Gerät maskiert, bevor etwas gesendet wird, nur lesende Begleitung, Authenticator für Ihr Konto, ein Protokoll jeder Sitzung, Verschlüsselung im Ruhezustand und Sitzungen, die Sie jederzeit löschen können.',
+      },
+      hero: {
+        eyebrow: 'Privat von Grund auf',
+        h1: 'Ihre Geheimnisse <em>verlassen Ihr Gerät nie.</em>',
+        p: 'Sensible Angaben werden auf Ihrem eigenen Gerät maskiert, bevor irgendetwas gesendet wird. Der Begleiter sieht die Form Ihrer Aufgabe, nie die Geheimnisse.',
+      },
+      visual: {
+        aria: 'Ein Formular vor und nach der Maskierung: Kartennummer, Schlüssel und Telefon sind geschwärzt',
+        before: 'Was auf Ihrem Bildschirm ist',
+        after: 'Was Ihr Gerät verlässt',
+        fields: [
+          'Hinterlegte Karte',
+          'API-Schlüssel',
+          'Telefon',
+          'Tarif',
+        ],
+        masked: 'maskiert',
+      },
+      guaranteesAria: 'Was geschützt ist',
+      guarantees: [
+        {
+          t: 'Auf Ihrem Gerät maskiert',
+          d: 'Kartennummern, Schlüssel und persönliche Angaben werden in Screenshots geschwärzt und im Text durch Platzhalter ersetzt, bevor etwas gesendet wird.',
+        },
+        {
+          t: 'Immer nur lesend',
+          d: 'Es zeigt den Schritt und prüft das Ergebnis. Es ändert nie Ihre Konten, Dateien oder Einstellungen.',
+        },
+        {
+          t: 'Code geprüft, bevor Sie ihn ausführen',
+          d: 'Jeder vorgeschlagene Befehl oder Code wird zuerst auf bekannte Probleme geprüft.',
+        },
+        {
+          t: 'Authenticator für Ihr Konto',
+          d: 'Passwort, Google-, Microsoft- oder Facebook-Anmeldung durchlaufen alle denselben zweiten Faktor.',
+        },
+        {
+          t: 'Ein Protokoll jeder Sitzung',
+          d: 'Was gesendet, was vom Bildschirm gelesen, was geprüft und markiert wurde. Für Sie einsehbar.',
+        },
+        {
+          t: 'Verschlüsselt im Ruhezustand',
+          d: 'Gespeicherte Schlüssel, Geheimnisse und Berichts-Screenshots sind mit AES-256-GCM verschlüsselt.',
+        },
+      ],
+      handling: {
+        h2: 'So werden Ihre Daten behandelt',
+        sub: 'Was das Produkt heute tut. In klaren Worten, ohne Kleingedrucktes.',
+        groups: [
+          {
+            title: 'Was Ihr Gerät verlässt',
+            items: [
+              'Verkleinerte Bildschirmausschnitte, sensible Zeilen bereits geschwärzt',
+              'Ihr Text, sensible Werte bereits durch Platzhalter ersetzt',
+              'Text aus Referenznotizen, die Sie selbst angehängt haben, nie die Datei',
+            ],
+          },
+          {
+            title: 'Was wir behalten',
+            items: [
+              'Ein Bericht pro Sitzung mit maskierten Meilenstein-Bildern (abschaltbar)',
+              'Ein Protokoll pro Sitzung, das festhält, was gesendet wurde',
+              'Ihr Sitzungsverlauf, damit Sie ihn erneut öffnen und ansehen können',
+            ],
+          },
+          {
+            title: 'Was nie behalten wird',
+            items: [
+              'Ihre Originaldokumente',
+              'Rohe Bildschirmausschnitte',
+              'Die echten sensiblen Werte: der Begleiter sieht sie nie',
+            ],
+          },
+        ],
+      },
+      control: {
+        h2: 'Sie behalten die Kontrolle',
+        points: [
+          {
+            t: 'Jederzeit löschen',
+            d: 'Jede Sitzung gehört Ihnen. Löschen Sie eine oder alle, wann immer Sie möchten.',
+          },
+          {
+            t: 'Eigene Regeln hinzufügen',
+            d: 'Ergänzen Sie eigene Wörter und Muster zum Maskieren, zusätzlich zu den eingebauten Erkennern.',
+          },
+          {
+            t: 'Zahlungen über Stripe',
+            d: 'Kartendaten werden bei Stripe verarbeitet. Wir sehen oder speichern Ihre Kartennummer nie.',
+          },
+        ],
+      },
+      contact: {
+        h2: 'Ein Sicherheitsproblem gefunden?',
+        p: 'Schreiben Sie an support@admireveda.com. Geben Sie uns Zeit, es zu bestätigen und zu beheben, bevor Sie es veröffentlichen; Forschung in gutem Glauben ist willkommen.',
+        write: 'Schreiben Sie uns',
+        legal: 'Datenschutzerklärung',
+        terms: 'Nutzungsbedingungen',
+      },
+    },
+  },
   sessionsAdmin: {
     loadingSession: 'Sitzung wird geladen',
     loadingSessions: 'Sitzungen werden geladen',
@@ -3986,6 +4594,7 @@ export default {
       finance: 'Finanzen',
       subscribers: 'Abonnenten',
       cancelled: 'Gekündigt',
+      'subscription-health': 'Abo-Gesundheit',
       email: 'SMTP-Einstellungen',
       'email-templates': 'E-Mail-Vorlagen',
       ai: 'KI-Konfiguration',
@@ -4044,6 +4653,10 @@ export default {
       cancelled: {
         title: 'Gekündigte Abonnenten',
         sub: 'Abgewanderte Abonnements: wer gekündigt hat, wann, warum und der Gesamtumsatz, den sie vor ihrem Weggang brachten.',
+      },
+      'subscription-health': {
+        title: 'Abo-Gesundheit',
+        sub: 'Das Einzelkundengeschäft auf einen Blick: MRR nach Tarif, Testphasen, fehlgeschlagene Zahlungen, auslaufende Tarife, Abwanderung über 30 Tage und ob Stripe angebunden ist.',
       },
       email: {
         title: 'SMTP-Einstellungen (E-Mail / SES)',
@@ -6676,6 +7289,8 @@ export default {
       helpTip: 'Hilfe & Anleitungen',
       howto: 'Anleitungen',
       support: 'Support',
+      billing: 'Abrechnung',
+      billingTip: 'Ihr Tarif, Ihre Zahlungsmethode und Ihre Rechnungen',
       team: 'Team',
       exec: 'Management-Dashboard',
       teach: 'Schulungsstudio',
@@ -8501,7 +9116,7 @@ export default {
     settingUp: 'Die Abrechnung wird eingerichtet. Ihre Tarifdetails und Rechnungen erscheinen hier, sobald sie aktiv ist.',
     pastDue: {
       title: 'Ihre letzte Zahlung ist nicht durchgegangen.',
-      body: 'Aktualisieren Sie Ihre Zahlungsmethode, um Ihren Zugang zu behalten. Ihr Tarif bleibt aktiv, während Sie dies beheben.',
+      body: 'Aktualisieren Sie Ihre Zahlungsmethode, um die Begleitung fortzusetzen. Ihr Tarif und seine Stunden bleiben erhalten, während Sie das klären.',
       fix: 'Zahlung beheben',
     },
     canceledNote: {
@@ -8580,6 +9195,29 @@ export default {
       fine: 'Die Kündigung wird im sicheren Stripe-Portal abgeschlossen, wo Sie bestätigen und Ihr genaues Enddatum sehen können.',
       keep: 'Meinen Tarif behalten',
       continue: 'Weiter zur Kündigung',
+    },
+    lifecycle: {
+      reasonLabel: 'Sagen Sie uns warum (optional)',
+      reasonPh: 'Ein, zwei Zeilen helfen uns, besser zu werden',
+      fine: 'Ihr Tarif endet zum Ende des Zeitraums, ohne neue Abbuchung. Überlegen Sie es sich bis dahin anders, setzen Sie ihn mit einem Klick fort.',
+      confirmCancel: 'Zum Ende des Zeitraums kündigen',
+      resume: 'Meinen Tarif fortsetzen',
+      errCancel: 'Ihr Tarif konnte gerade nicht gekündigt werden. Versuchen Sie es erneut oder schreiben Sie dem Support.',
+      errResume: 'Ihr Tarif konnte gerade nicht fortgesetzt werden. Versuchen Sie es erneut oder schreiben Sie dem Support.',
+    },
+    alert: {
+      pastDueTitle: 'Ihre letzte Zahlung ist fehlgeschlagen',
+      pastDueBody: 'Aktualisieren Sie Ihre Zahlungsmethode, um Ihren Tarif zu behalten. Die Begleitung pausiert, bis die Zahlung eingegangen ist.',
+      pastDueCta: 'Zahlungsmethode aktualisieren',
+      endingTitle: 'Ihr Tarif endet am {date}',
+      endingBody: 'Bis dahin behalten Sie vollen Zugang. Setzen Sie jederzeit vor diesem Datum fort, um weiter zu verlängern.',
+      endingCta: 'Tarif fortsetzen',
+      pendingTitle: 'Wechsel zu {plan} am {date}',
+      pendingBody: 'Bis dahin behalten Sie Ihren aktuellen Tarif und seine Stunden. Heute wird nichts berechnet.',
+    },
+    page: {
+      title: 'Abrechnung',
+      sub: 'Ihr Tarif, Ihre Zahlungsmethode und Ihre Rechnungen.',
     },
   },
   buddyPage: {
@@ -12326,6 +12964,72 @@ export default {
       caption: 'Ihr Bildschirm kann etwas anders aussehen, zum Beispiel mit Ihren eigenen Daten.',
       missing: 'Der Screenshot zu diesem Schritt konnte nicht geladen werden.',
     },
+  },
+  subHealthAdmin: {
+    loading: 'Abo-Gesundheit wird geladen',
+    refresh: 'Aktualisieren',
+    window: 'Letzte {days} Tage',
+    asOf: 'Stand {time}',
+    tiles: {
+      mrr: 'Monatlich wiederkehrender Umsatz',
+      mrrFoot: '{arr} pro Jahr bei diesem Tempo',
+      active: 'Zahlende Abonnenten',
+      activeFoot: '{trialing} in der Testphase',
+      pastDue: 'Fehlgeschlagene Zahlungen',
+      pastDueFoot: 'Konten aktuell im Zahlungsverzug',
+      ending: 'Auslaufende Tarife',
+      endingFoot: 'Kündigung zum Periodenende, noch aktiv',
+      churn: 'Abwanderung',
+      churnFoot: '{canceled} von {start} gekündigt',
+      newSubs: 'Neue Abonnenten',
+      newSubsFoot: 'im Zeitraum gestartet',
+    },
+    byPlan: {
+      h3: 'MRR nach Tarif',
+      plan: 'Tarif',
+      subscribers: 'Abonnenten',
+      annual: 'Jährlich',
+      mrr: 'MRR',
+      share: 'Anteil',
+    },
+    payments: {
+      h3: 'Geldfluss im Zeitraum',
+      paid: 'Zahlungen',
+      refunds: 'Erstattungen',
+      net: 'Netto',
+    },
+    stripe: {
+      h3: 'Stripe',
+      keys: 'Geheimer Schlüssel',
+      webhook: 'Webhook-Secret',
+      annual: 'Jahrespreise',
+      mode: 'Modus',
+      on: 'Gesetzt',
+      off: 'Fehlt',
+      fix: 'Unter Abrechnung setzen',
+      ready: 'Checkout, Verlängerungen und das Portal sind angebunden.',
+      notReady: 'Solange Schlüssel und Webhook-Secret fehlen, kann kein Tarif gekauft werden und keine Verlängerung kommt an.',
+    },
+    ending: {
+      h3: 'Läuft bald aus',
+      empty: 'Kein Tarif ist auf Beendigung gesetzt.',
+      user: 'Nutzer',
+      plan: 'Tarif',
+      endsAt: 'Endet',
+      reason: 'Grund',
+      noReason: 'Kein Grund angegeben',
+    },
+    pastDueList: {
+      h3: 'Im Verzug',
+      empty: 'Jede Verlängerung ist durchgegangen.',
+      user: 'Nutzer',
+      plan: 'Tarif',
+      since: 'Abonniert seit',
+      periodEnd: 'Periodenende',
+      open: 'In Abonnenten öffnen',
+    },
+    viewOnlyNote: 'Die Abo-Gesundheit sehen Superadmins und die Buchhaltungsrolle.',
+    unavailable: 'Die Abo-Gesundheit ist auf diesem Server noch nicht verfügbar.',
   },
   subprocessorsPage: {
     seo: {
