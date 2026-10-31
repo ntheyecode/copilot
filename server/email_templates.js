@@ -49,6 +49,7 @@
 // ---------------------------------------------------------------------------
 import { caps as editionCaps } from './edition.js'
 import { copyAudience } from './edition_registry.js'
+import { brandForAudience, rebrandText, renameBrand } from './brand.js'
 
 // ---------------------------------------------------------------------------
 // Brand constants. Change them here and every email follows.
@@ -2390,7 +2391,10 @@ export function renderEmail(type, data = {}, overrides = {}) {
     text = `${heading || subject}\n\n${bodyPlain}\n\n${afterPlain}`.trim()
   }
 
-  return { subject, html, text }
+  // The edition's brand (LinkNotes on the individuals edition): one pass over
+  // the finished message, the same rule the SPA's catalog uses (server/brand.js).
+  const brand = brandForAudience(copyAudience(editionCaps))
+  return { subject: rebrandText(subject, brand), html: renameBrand(html, brand), text: renameBrand(text, brand) }
 }
 
 // Used for unknown types so a misrouted call still produces a branded email.

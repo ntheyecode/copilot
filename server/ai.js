@@ -15,6 +15,9 @@
 import { reportUsage, usageFromResponse, withKeySource } from './ai_usage.js'
 import { dropRetired, isRetired, preferredReplacement, retiredModelMessage } from './ai_model_lifecycle.js'
 import { chatParamsFor } from './ai_model_params.js'
+import { caps as editionCaps } from './edition.js'
+import { copyAudience } from './edition_registry.js'
+import { brandForAudience, renameBrand } from './brand.js'
 import { rateFor, isVisionModel, RANK_META, modelRank, isPremiumModel } from './ai_ratecard.js'
 
 export { isVisionModel, RANK_META, modelRank, isPremiumModel }
@@ -386,8 +389,13 @@ async function failoverChat(alternates, fromP, fromModel, system, turns, notify)
 // Every AI call carries whose key it runs on, so the usage ledger can tell our
 // spend from a customer's own (ai_usage.js withKeySource).
 export function chat(cfg, system, turns, tele = null) {
-  return withKeySource(cfg && cfg.keySource, () => chatOnKey(cfg, system, turns, tele))
+  return withKeySource(cfg && cfg.keySource, () => chatOnKey(cfg, branded(system), turns, tele))
 }
+// The prompts are written in the corporate brand; on the individuals edition
+// (LinkNotes) the guide must call itself LinkNotes. One pass, at the two entry
+// points every prompt goes through (chat and the screen read).
+const PROMPT_BRAND = brandForAudience(copyAudience(editionCaps))
+const branded = (s) => renameBrand(s, PROMPT_BRAND)
 async function chatOnKey(cfg, system, turns, tele = null) {
   const p = providerOf(cfg)
   if (!p) throw httpErr(400, `Unknown provider: ${cfg.providerId}`, AI_CODES.PROVIDER)
@@ -446,7 +454,7 @@ export function geminiImageMime(type) {
 // Several images in ONE vision call (WorkCoPilot's screen read). model is the
 // vision-capable model resolved by findVisionModel; a missing one is a clear 400.
 export function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}, tele = null) {
-  return withKeySource(cfg && cfg.keySource, () => analyseImagesOnKey(cfg, prompt, imageDataUrls, model, opts, tele))
+  return withKeySource(cfg && cfg.keySource, () => analyseImagesOnKey(cfg, branded(prompt), imageDataUrls, model, opts, tele))
 }
 async function analyseImagesOnKey(cfg, prompt, imageDataUrls, model, opts = {}, tele = null) {
   const p = providerOf(cfg)

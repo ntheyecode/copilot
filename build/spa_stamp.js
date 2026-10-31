@@ -30,6 +30,7 @@ import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { CAPABILITIES, EDITIONS, DEFAULT_EDITION, COPY_AUDIENCES, copyAudience } from '../server/edition_registry.js'
 import { AUDIENCE_SHELL } from '../scripts/audience_seo.mjs'
+import { brandForAudience, brandDocument } from '../server/brand.js'
 import { loadEnCatalog, lookup } from '../scripts/en_catalog.mjs'
 import { indivPrerender } from '../src/sites/individuals/seo_pages.js'
 
@@ -110,7 +111,10 @@ export function stampShell(html, list, { origin = DEFAULT_ORIGIN } = {}) {
     h = swap(h, /(?<=<noscript>)\s*<h1>[\s\S]*?<\/h1>\s*<p>[\s\S]*?<\/p>\s*<p>[\s\S]*?<\/p>/, `\n      <h1>${esc(home.h1)}</h1>\n${home.lede.map((p) => `      <p>${esc(p)}</p>`).join('\n')}`, 'the <noscript> heading and opening lines')
   }
   if (origin !== DEFAULT_ORIGIN) h = h.split(DEFAULT_ORIGIN).join(origin)
-  return h
+  // The audience's brand (LinkNotes on the individuals edition): site name,
+  // JSON-LD names, domain and icon set. After the origin swap, so an operator's
+  // own origin wins over the brand's default domain.
+  return brandDocument(h, brandForAudience(aud))
 }
 
 // Regenerate the prerendered marketing routes for this audience from the

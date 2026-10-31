@@ -107,3 +107,23 @@ test('an edition without the public site gets the meta tag and no prerendered pa
   assert.deepEqual(fs.readdirSync(dir), ['index.html'])
   assert.match(stampShell(SHELL, makeCaps('onprem').list()), /wcp-capabilities" content="single_company,offline_licensing,onprem_setup/)
 })
+
+// The individuals edition is LinkNotes (server/brand.js): its shell and every
+// prerendered page a person reads carry the LinkNotes name and icons, never the
+// corporate brand. Legal pages keep their text as written (owner decision).
+test('paid: the shell and prerendered pages are branded LinkNotes', () => {
+  const dir = fixture()
+  stampSpa(dir, makeCaps('paid').list())
+  const shell = fs.readFileSync(path.join(dir, 'index.html'), 'utf8')
+  assert.match(shell, /href="\/brand\/linknotes\/favicon\.svg"/)
+  assert.match(shell, /<meta property="og:site_name" content="LinkNotes"/)
+  const LEGAL = /terms|privacy|refund|cookie|dpa|disclaimer|acceptable-use|subprocessors|accessibility/
+  const pages = []
+  const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (e.name === 'index.html') pages.push(p) } }
+  walk(dir)
+  for (const p of pages) {
+    if (LEGAL.test(path.relative(dir, p))) continue
+    const m = fs.readFileSync(p, 'utf8').match(/WorkCoPilot|AdmireVeda/)
+    assert.equal(m, null, `${path.relative(dir, p)} still names "${m && m[0]}"`)
+  }
+})

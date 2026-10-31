@@ -52,6 +52,7 @@ import { fileURLToPath } from 'node:url'
 import { LOCALES } from '../src/i18n/locales.js'   // single source for hreflang tags + ?lang codes
 import enFields from '../src/i18n/locales/en/fieldsPage.js'   // the Fields roster (fieldsPage.families) - what WorkFields.jsx renders
 import { COPY_AUDIENCES } from '../server/edition_registry.js'
+import { brandForAudience, brandDocument } from '../server/brand.js'
 import { routeFor } from './audience_seo.mjs'
 import { loadEnCatalog, lookup } from './en_catalog.mjs'
 import { INDIV_SEO_PAGES, indivPrerender } from '../src/sites/individuals/seo_pages.js'
@@ -427,8 +428,12 @@ function main() {
   const bundle = tags(template, BUNDLE_RE)
   if (!bundle.some((t) => t.startsWith('<script'))) { console.error('prerender: no /copilot-assets/ <script> in dist/index.html; refusing to write pages that would not load the app'); process.exit(1) }
 
+  // The audience's brand (LinkNotes for individuals), the same pass as the
+  // shell's (server/brand.js); legal pages keep their text as written.
+  const brand = brandForAudience(AUDIENCE)
+  const LEGAL_ROUTE = /\/(terms|privacy|refund|cookies?|dpa|disclaimer|acceptable-use|subprocessors|accessibility)\b/
   for (const r of R) {
-    const out = render(template, r)
+    const out = LEGAL_ROUTE.test(r.path) ? render(template, r) : brandDocument(render(template, r), brand)
     // The one invariant that protects the live SPA: identical bundle tags.
     const got = tags(out, BUNDLE_RE)
     if (JSON.stringify(got) !== JSON.stringify(bundle)) throw new Error(`${r.path}: bundle tags changed during render`)
