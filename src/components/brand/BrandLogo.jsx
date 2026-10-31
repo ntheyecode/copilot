@@ -19,6 +19,6 @@ export function BrandMark({ size = 30, id = 'av', glow = true }) {
 export default function BrandLogo({ size = 28, product = true, onDark = false, idSuffix = '' }) {
   const { audience } = useEditionView()
   return isLinkNotes(audience)
-    ? <LinkNotesLogo size={size} variant="full" onDark={onDark} idSuffix={idSuffix} />
+    ? <LinkNotesLogo size={size} variant="full" onDark={onDark} idSuffix={idSuffix} product={product} />
     : <AdmireVedaLogo size={size} product={product} onDark={onDark} idSuffix={idSuffix} />
 }

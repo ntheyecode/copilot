@@ -7084,13 +7084,13 @@ export default {
     },
     home: {
       seo: {
-        title: 'LinkNotes: giỏi nhất trong công việc của bạn, từng bước ngay trên màn hình',
-        description: 'LinkNotes đọc màn hình của bạn và đưa ra đúng cú nhấp, lệnh hoặc giá trị cho việc thật trong các ứng dụng bạn đang dùng. Nó bắt lỗi đi sai bước, kiểm tra từng bước và học từ chính tài liệu của bạn. Gói theo giờ, hủy bất cứ lúc nào.',
+        title: 'MyTaskPilot by LinkNotes: giỏi nhất trong công việc của bạn, từng bước ngay trên màn hình',
+        description: 'MyTaskPilot đọc màn hình của bạn và đưa ra đúng cú nhấp, lệnh hoặc giá trị cho việc thật trong các ứng dụng bạn đang dùng. Nó bắt lỗi đi sai bước, kiểm tra từng bước và học từ chính tài liệu của bạn. Gói theo giờ, hủy bất cứ lúc nào.',
       },
       hero: {
         eyebrow: 'Người dẫn đường cho việc thật',
         h1: 'Giỏi nhất trong việc của bạn. <em>Nhanh hơn.</em>',
-        p: 'Nói với LinkNotes việc bạn cần làm xong. Nó đọc màn hình và đưa ra đúng cú nhấp, lệnh hoặc giá trị, từng bước một, trong các ứng dụng bạn đang dùng. Bạn làm việc. Kỹ năng ở lại với bạn.',
+        p: 'Nói với MyTaskPilot việc bạn cần làm xong. Nó đọc màn hình và đưa ra đúng cú nhấp, lệnh hoặc giá trị, từng bước một, trong các ứng dụng bạn đang dùng. Bạn làm việc. Kỹ năng ở lại với bạn.',
         primary: 'Chọn gói',
         secondary: 'Xem cách hoạt động',
         trust: [
@@ -7100,7 +7100,7 @@ export default {
         ],
       },
       visual: {
-        aria: 'Một bảng tính với LinkNotes hướng dẫn từng bước và bắt một lỗi đi sai',
+        aria: 'Một bảng tính với MyTaskPilot hướng dẫn từng bước và bắt một lỗi đi sai',
         window: 'Ngân sách 2026, trang Q3',
         task: 'Lập bảng tổng hợp chi phí hàng tháng',
         stepLabel: 'Bước 2/6',
@@ -7157,7 +7157,7 @@ export default {
           {
             k: 'Trợ lực',
             t: 'Bộ não cá nhân của bạn',
-            d: 'Tải lên tài liệu của riêng bạn. LinkNotes học từ đó, cập nhật những gì thay đổi và xóa tệp. Các phiên làm việc cũng dạy nó, được che ngay trên thiết bị. Hướng dẫn đi theo cách làm việc của bạn.',
+            d: 'Tải lên tài liệu của riêng bạn. MyTaskPilot học từ đó, cập nhật những gì thay đổi và xóa tệp. Các phiên làm việc cũng dạy nó, được che ngay trên thiết bị. Hướng dẫn đi theo cách làm việc của bạn.',
             proof: 'Riêng tư cho tài khoản của bạn, luôn luôn',
           },
         ],
@@ -7168,7 +7168,7 @@ export default {
         steps: [
           {
             t: 'Nói mục tiêu',
-            d: 'Bằng lời của bạn. Một bước kiểm tra nhanh đảm bảo việc đó nằm trong những gì LinkNotes biết.',
+            d: 'Bằng lời của bạn. Một bước kiểm tra nhanh đảm bảo việc đó nằm trong những gì MyTaskPilot biết.',
           },
           {
             t: 'Nhận đúng thao tác',
@@ -7188,7 +7188,7 @@ export default {
       brain: {
         eyebrow: 'Mới: bộ não cá nhân của bạn',
         h2: 'Dạy một lần. <em>Nó hướng dẫn theo cách của bạn.</em>',
-        p: 'Thả vào ghi chú, danh sách kiểm tra, quy trình và các bản ghi cũ của bạn. LinkNotes học từ đó, giữ lại điều quan trọng, cập nhật điều thay đổi, rồi xóa tệp.',
+        p: 'Thả vào ghi chú, danh sách kiểm tra, quy trình và các bản ghi cũ của bạn. MyTaskPilot học từ đó, giữ lại điều quan trọng, cập nhật điều thay đổi, rồi xóa tệp.',
         steps: [
           {
             t: 'Tải lên',
@@ -7264,13 +7264,13 @@ export default {
     },
     how: {
       seo: {
-        title: 'LinkNotes hoạt động thế nào: người dẫn đường trên màn hình của bạn',
-        description: 'LinkNotes lên kế hoạch cho việc của bạn, chỉ đúng bước tiếp theo trong ứng dụng bạn đang mở, kiểm tra xem đã đúng chưa, sửa bước sai và tiếp tục đến khi xong việc. Nó học từ tài liệu và các phiên của riêng bạn, một cách riêng tư. Đây là cách nó hoạt động.',
+        title: 'MyTaskPilot hoạt động thế nào: người dẫn đường trên màn hình của bạn',
+        description: 'MyTaskPilot lên kế hoạch cho việc của bạn, chỉ đúng bước tiếp theo trong ứng dụng bạn đang mở, kiểm tra xem đã đúng chưa, sửa bước sai và tiếp tục đến khi xong việc. Nó học từ tài liệu và các phiên của riêng bạn, một cách riêng tư. Đây là cách nó hoạt động.',
       },
       hero: {
         eyebrow: 'Cách hoạt động',
         h1: 'Như có người giỏi nhất trong ngành <em>ngồi cạnh bạn.</em>',
-        p: 'Bạn mang đến mục tiêu và màn hình. LinkNotes mang đến kế hoạch, đúng thao tác và các bước kiểm tra, và nó học cách bạn muốn mọi thứ được làm.',
+        p: 'Bạn mang đến mục tiêu và màn hình. MyTaskPilot mang đến kế hoạch, đúng thao tác và các bước kiểm tra, và nó học cách bạn muốn mọi thứ được làm.',
       },
       loop: {
         h2: 'Vòng lặp đằng sau mỗi việc',
@@ -7359,7 +7359,7 @@ export default {
     },
     pricing: {
       seo: {
-        title: 'Các gói LinkNotes: Lite, Basic, Advanced và Premium',
+        title: 'Các gói MyTaskPilot: Lite, Basic, Advanced và Premium',
         description: 'Bốn gói với nhiều giờ hướng dẫn trực tiếp mỗi tháng, tính theo từng phút bạn dùng. Theo tháng hoặc theo năm. Thêm giờ bất cứ lúc nào, hủy khi bạn muốn.',
       },
       hero: {
@@ -7428,8 +7428,8 @@ export default {
     },
     use: {
       seo: {
-        title: 'LinkNotes dành cho ai: sinh viên, người chuyển ngành, freelancer, người đi làm và nhà sáng tạo',
-        description: 'LinkNotes hướng dẫn những người tự làm việc của mình trên màn hình của mình: sinh viên và người mới ra trường, người chuyển ngành, freelancer và người tự khởi nghiệp, người đi làm muốn lên trình, và nhà sáng tạo nội dung. Xem một việc thật được hướng dẫn cho mỗi nhóm.',
+        title: 'MyTaskPilot dành cho ai: sinh viên, người chuyển ngành, freelancer, người đi làm và nhà sáng tạo',
+        description: 'MyTaskPilot hướng dẫn những người tự làm việc của mình trên màn hình của mình: sinh viên và người mới ra trường, người chuyển ngành, freelancer và người tự khởi nghiệp, người đi làm muốn lên trình, và nhà sáng tạo nội dung. Xem một việc thật được hướng dẫn cho mỗi nhóm.',
       },
       hero: {
         eyebrow: 'Dành cho ai',
@@ -7497,8 +7497,8 @@ export default {
     },
     faq: {
       seo: {
-        title: 'Câu hỏi về LinkNotes, đã có lời giải đáp',
-        description: 'LinkNotes làm gì và không làm gì, gói và số giờ hoạt động thế nào, bộ não cá nhân học và xóa tệp của bạn ra sao, cách hủy, và màn hình cùng dữ liệu của bạn được bảo vệ thế nào.',
+        title: 'Câu hỏi về MyTaskPilot, đã có lời giải đáp',
+        description: 'MyTaskPilot làm gì và không làm gì, gói và số giờ hoạt động thế nào, bộ não cá nhân học và xóa tệp của bạn ra sao, cách hủy, và màn hình cùng dữ liệu của bạn được bảo vệ thế nào.',
       },
       hero: {
         eyebrow: 'Câu hỏi',
@@ -7512,7 +7512,7 @@ export default {
           title: 'Nó làm gì',
           items: [
             {
-              q: 'LinkNotes thực sự làm gì?',
+              q: 'MyTaskPilot thực sự làm gì?',
               a: 'Nó hướng dẫn bạn làm một việc ngay trên màn hình của bạn: lên kế hoạch, chỉ đúng bước tiếp theo trong ứng dụng bạn đang mở, kiểm tra bước đó đã đúng chưa, và tiếp tục đến khi xong việc.',
             },
             {
@@ -7525,7 +7525,7 @@ export default {
             },
             {
               q: 'Đây có phải trợ lý chat không?',
-              a: 'Không hẳn. Một câu trả lời chat để bạn tự đi làm. LinkNotes ở lại cùng bạn trên màn hình, từng bước một, và xác nhận khi xong.',
+              a: 'Không hẳn. Một câu trả lời chat để bạn tự đi làm. MyTaskPilot ở lại cùng bạn trên màn hình, từng bước một, và xác nhận khi xong.',
             },
             {
               q: 'Nó có phân tích hay viết tài liệu cho tôi không?',
@@ -7538,7 +7538,7 @@ export default {
           items: [
             {
               q: 'Bộ não cá nhân là gì?',
-              a: 'Một trang trong bảng điều khiển nơi bạn tải lên tài liệu của riêng mình: ghi chú, danh sách kiểm tra, quy trình, các bản ghi cũ. LinkNotes học từ đó, và hướng dẫn dùng những gì nó đã học.',
+              a: 'Một trang trong bảng điều khiển nơi bạn tải lên tài liệu của riêng mình: ghi chú, danh sách kiểm tra, quy trình, các bản ghi cũ. MyTaskPilot học từ đó, và hướng dẫn dùng những gì nó đã học.',
             },
             {
               q: 'Chuyện gì xảy ra với tệp tôi tải lên?',
@@ -7626,8 +7626,8 @@ export default {
     },
     security: {
       seo: {
-        title: 'Quyền riêng tư và bảo mật cho màn hình của bạn: LinkNotes',
-        description: 'LinkNotes bảo vệ bạn thế nào: giá trị nhạy cảm được che ngay trên thiết bị trước khi gửi bất cứ gì, hướng dẫn chỉ đọc, tài liệu tải lên bị xóa sau khi học và không bao giờ tải lại được, xác thực hai lớp trên tài khoản, nhật ký mọi phiên, mã hóa khi lưu trữ, và các phiên bạn có thể xóa bất cứ lúc nào.',
+        title: 'Quyền riêng tư và bảo mật cho màn hình của bạn: MyTaskPilot',
+        description: 'MyTaskPilot bảo vệ bạn thế nào: giá trị nhạy cảm được che ngay trên thiết bị trước khi gửi bất cứ gì, hướng dẫn chỉ đọc, tài liệu tải lên bị xóa sau khi học và không bao giờ tải lại được, xác thực hai lớp trên tài khoản, nhật ký mọi phiên, mã hóa khi lưu trữ, và các phiên bạn có thể xóa bất cứ lúc nào.',
       },
       hero: {
         eyebrow: 'Riêng tư từ thiết kế',

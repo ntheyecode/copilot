@@ -15,6 +15,7 @@
 // the same in the site, the signed-in shell and an email. No resemblance to
 // the AdmireVeda chevron: different geometry, container and palette.
 import { useId } from 'react'
+import { BRANDS } from '../../../server/brand.js'
 
 export const LN_VIOLET = '#5b3df5'
 export const LN_VIOLET_DEEP = '#4a2fe0'
@@ -52,16 +53,24 @@ export function LinkNotesMark({ size = 28, id, className }) {
   )
 }
 
-export default function LinkNotesLogo({ size = 28, variant = 'full', onDark = false, idSuffix = '', className }) {
+// `product`: also show the product the brand sells (MyTaskPilot by LinkNotes),
+// as a small label after the wordmark, the way AdmireVeda shows WorkCoPilot.
+// The name comes from the brand registry (server/brand.js), never a literal.
+export default function LinkNotesLogo({ size = 28, variant = 'full', onDark = false, idSuffix = '', className, product = false }) {
   if (variant === 'mark') return <LinkNotesMark size={size} id={idSuffix} className={className} />
   const ink = onDark ? '#ffffff' : LN_INK
   const accent = onDark ? LN_LIME : LN_VIOLET
   return (
-    <span className={className} style={{ display: 'inline-flex', alignItems: 'center', gap: Math.round(size * 0.36), lineHeight: 1 }}>
+    <span className={className} style={{ display: 'inline-flex', alignItems: 'center', gap: Math.round(size * 0.36), lineHeight: 1, whiteSpace: 'nowrap' }}>
       <LinkNotesMark size={size} id={idSuffix} />
       <span style={{ fontFamily: '"Inter Variable","Inter",system-ui,sans-serif', fontWeight: 800, fontSize: Math.round(size * 0.82), letterSpacing: '-.035em', color: ink, whiteSpace: 'nowrap' }}>
         {LN_WORDMARK[0]}<span style={{ color: accent }}>{LN_WORDMARK[1]}</span>
       </span>
+      {product && (
+        <span style={{ flexShrink: 0, fontFamily: '"Inter Variable","Inter",system-ui,sans-serif', fontWeight: 700, fontSize: Math.max(11, Math.round(size * 0.4)), color: accent, border: `1px solid ${onDark ? 'rgba(201,242,58,.45)' : 'rgba(91,61,245,.35)'}`, background: onDark ? 'transparent' : 'rgba(91,61,245,.07)', borderRadius: 999, padding: '2px 9px', whiteSpace: 'nowrap' }}>
+          {BRANDS.linknotes.product}
+        </span>
+      )}
     </span>
   )
 }

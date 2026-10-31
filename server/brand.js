@@ -14,7 +14,9 @@
 
 export const BRANDS = Object.freeze({
   admireveda: Object.freeze({ id: 'admireveda', product: 'WorkCoPilot', company: 'AdmireVeda', domain: 'admireveda.com', site: 'https://admireveda.com', supportEmail: 'support@admireveda.com' }),
-  linknotes: Object.freeze({ id: 'linknotes', product: 'LinkNotes', company: 'LinkNotes', domain: 'linknotes.com', site: 'https://linknotes.com', supportEmail: 'support@linknotes.com' }),
+  // "MyTaskPilot by LinkNotes" (owner, 2026-10-31): LinkNotes is the brand,
+  // company and site; MyTaskPilot is the product, as WorkCoPilot is AdmireVeda's.
+  linknotes: Object.freeze({ id: 'linknotes', product: 'MyTaskPilot', company: 'LinkNotes', domain: 'linknotes.com', site: 'https://linknotes.com', supportEmail: 'support@linknotes.com' }),
 })
 export const BASE_BRAND = BRANDS.admireveda
 
@@ -33,6 +35,7 @@ export const OWNERSHIP_KEYS = Object.freeze(['footer.ownership', 'indiv.footer.m
 // "<base product> <byline>" collapses to the product name in every language.
 export const BYLINE_KEYS = Object.freeze(['login.byAdmireVeda', 'onboarding.byAdmireVeda', 'setPasswordPage.byBrand'])
 
+const sameName = (brand) => brand.company === brand.product
 const get = (o, p) => p.split('.').reduce((v, k) => (v == null ? v : v[k]), o)
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
@@ -56,11 +59,16 @@ export function renameBrand(text, brand, phrases = { ownership: [], bylines: [] 
   if (typeof text !== 'string' || !brand || brand.id === BASE_BRAND.id) return text
   const b = BASE_BRAND
   let s = text
-  for (const sentence of phrases.ownership) s = s.split(sentence).join('')
-  for (const by of phrases.bylines) s = s.replace(new RegExp(`${esc(b.product)}\\s+${esc(by)}`, 'g'), brand.product)
-  s = s.split(`${b.product} by ${b.company}`).join(brand.product)
-    .split(`${b.company} ${b.product}`).join(brand.product)
-    .split(b.supportEmail).join(brand.supportEmail)
+  // Only a brand whose company IS the product drops the ownership line and
+  // collapses "<product> by <company>" (it would read "X by X"). A brand with
+  // its own product name (MyTaskPilot by LinkNotes) keeps both, renamed below.
+  if (sameName(brand)) {
+    for (const sentence of phrases.ownership) s = s.split(sentence).join('')
+    for (const by of phrases.bylines) s = s.replace(new RegExp(`${esc(b.product)}\\s+${esc(by)}`, 'g'), brand.product)
+    s = s.split(`${b.product} by ${b.company}`).join(brand.product)
+      .split(`${b.company} ${b.product}`).join(brand.product)
+  }
+  s = s.split(b.supportEmail).join(brand.supportEmail)
     .split(b.domain).join(brand.domain)
     .split(b.product).join(brand.product)
     .split(b.company).join(brand.company)
@@ -69,7 +77,7 @@ export function renameBrand(text, brand, phrases = { ownership: [], bylines: [] 
   // "LinkNotes 旗下 LinkNotes") folds into the product name. The connector is a
   // short word with no sentence punctuation, so two real mentions in one
   // sentence ("LinkNotes plans, then LinkNotes checks") are left alone.
-  if (brand.company === brand.product) {
+  if (sameName(brand)) {
     const p = esc(brand.product)
     s = s.replace(new RegExp(`${p}\\s*[^\\s.!?,;:。！？，、]{1,6}\\s*${p}`, 'gu'), brand.product)
   }
@@ -96,7 +104,7 @@ export function brandDocument(html, brand) {
 export function rebrandCatalog(dict, brand) {
   if (!dict || !brand || brand.id === BASE_BRAND.id) return dict
   const phrases = brandPhrases(dict)
-  const drop = new Set([...OWNERSHIP_KEYS, ...BYLINE_KEYS])
+  const drop = new Set(sameName(brand) ? [...OWNERSHIP_KEYS, ...BYLINE_KEYS] : [])
   const walk = (v, path) => {
     if (typeof v === 'string') return drop.has(path) ? '' : rebrandText(v, brand, phrases)
     if (Array.isArray(v)) return v.map((x, i) => walk(x, `${path}.${i}`))

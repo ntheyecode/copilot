@@ -13,8 +13,11 @@ import { LOCALE_DIR, VISIBLE, HIDDEN, loadEnglish, loadOverlay } from '../script
 import { mergeOverlay } from '../src/i18n/overlay_merge.js'
 
 const LN = BRANDS.linknotes
+// A brand whose company and product share one name (the rules that drop the
+// ownership line and fold "X by X" exist for that case).
+const SOLO = { id: 'solo', product: 'Solo', company: 'Solo', domain: 'solo.example', site: 'https://solo.example', supportEmail: 'help@solo.example' }
 const LEFTOVER = /WorkCoPilot|AdmireVeda|admireveda\.com/
-const DOUBLED = /LinkNotes[^.!?。！？\n]{0,24}LinkNotes/
+const DOUBLED = /(MyTaskPilot|LinkNotes)[^.!?。！？\n]{0,24}\1(?! by)/
 
 test('the audience decides the brand', () => {
   assert.equal(brandForAudience('individuals').id, 'linknotes')
@@ -22,18 +25,27 @@ test('the audience decides the brand', () => {
   assert.equal(brandForAudience(null).id, 'admireveda')
 })
 
-test('bylines, ownership lines, domains and support mail follow the brand', () => {
+test('MyTaskPilot by LinkNotes: product, company, bylines, domains and support mail follow the brand', () => {
   const de = { ownership: ['WorkCoPilot, ein Produkt von AdmireVeda.'], bylines: ['von AdmireVeda'] }
-  assert.equal(rebrandText('Preise - WorkCoPilot von AdmireVeda', LN, de), 'Preise - LinkNotes')
-  assert.equal(rebrandText('Hilfe: support@admireveda.com. WorkCoPilot, ein Produkt von AdmireVeda.', LN, de), 'Hilfe: support@linknotes.com.')
-  assert.equal(rebrandText('Pricing - WorkCoPilot by AdmireVeda', LN), 'Pricing - LinkNotes')
-  assert.equal(rebrandText('AdmireVeda WorkCoPilot, home', LN), 'LinkNotes, home')
+  assert.equal(LN.product, 'MyTaskPilot')
+  assert.equal(LN.company, 'LinkNotes')
+  assert.equal(rebrandText('Preise - WorkCoPilot von AdmireVeda', LN, de), 'Preise - MyTaskPilot von LinkNotes')
+  assert.equal(rebrandText('Hilfe: support@admireveda.com. WorkCoPilot, ein Produkt von AdmireVeda.', LN, de), 'Hilfe: support@linknotes.com. MyTaskPilot, ein Produkt von LinkNotes.')
+  assert.equal(rebrandText('Pricing - WorkCoPilot by AdmireVeda', LN), 'Pricing - MyTaskPilot by LinkNotes')
+  assert.equal(rebrandText('AdmireVeda WorkCoPilot, home', LN), 'LinkNotes MyTaskPilot, home')
+  assert.equal(rebrandText('खाता बनाएँ - AdmireVeda का WorkCoPilot', LN), 'खाता बनाएँ - LinkNotes का MyTaskPilot')
   assert.equal(rebrandText('Visit https://admireveda.com/workcopilot', LN), 'Visit https://linknotes.com/workcopilot')
   assert.equal(rebrandText('WorkCoPilot by AdmireVeda', BRANDS.admireveda), 'WorkCoPilot by AdmireVeda', 'the base brand is untouched')
-  // Company-first word orders fold into one name; two real mentions stay.
-  assert.equal(rebrandText('खाता बनाएँ - AdmireVeda का WorkCoPilot', LN), 'खाता बनाएँ - LinkNotes')
-  assert.equal(rebrandText('AdmireVeda의 WorkCoPilot - 전문가', LN), 'LinkNotes - 전문가')
-  assert.equal(rebrandText('WorkCoPilot plans the steps, then WorkCoPilot checks each one.', LN), 'LinkNotes plans the steps, then LinkNotes checks each one.')
+})
+
+test('a brand whose company is the product drops the ownership line and folds "X by X" in any word order', () => {
+  const de = { ownership: ['WorkCoPilot, ein Produkt von AdmireVeda.'], bylines: ['von AdmireVeda'] }
+  assert.equal(rebrandText('Preise - WorkCoPilot von AdmireVeda', SOLO, de), 'Preise - Solo')
+  assert.equal(rebrandText('Hilfe: support@admireveda.com. WorkCoPilot, ein Produkt von AdmireVeda.', SOLO, de), 'Hilfe: help@solo.example.')
+  assert.equal(rebrandText('AdmireVeda WorkCoPilot, home', SOLO), 'Solo, home')
+  assert.equal(rebrandText('खाता बनाएँ - AdmireVeda का WorkCoPilot', SOLO), 'खाता बनाएँ - Solo')
+  assert.equal(rebrandText('AdmireVeda의 WorkCoPilot - 전문가', SOLO), 'Solo - 전문가')
+  assert.equal(rebrandText('WorkCoPilot plans the steps, then WorkCoPilot checks each one.', SOLO), 'Solo plans the steps, then Solo checks each one.')
 })
 
 test('legal namespaces and non-strings pass through unchanged', () => {
@@ -41,7 +53,7 @@ test('legal namespaces and non-strings pass through unchanged', () => {
   assert.equal(out.termsPage.a, 'WorkCoPilot by AdmireVeda')
   assert.ok(UNBRANDED_NAMESPACES.includes('privacyPage'))
   assert.equal(out.n, 3)
-  assert.deepEqual(out.list, ['LinkNotes'])
+  assert.deepEqual(out.list, ['MyTaskPilot'])
 })
 
 const strings = function* (v, p) {
@@ -51,7 +63,7 @@ const strings = function* (v, p) {
 }
 const load = async (f) => { const m = await import(pathToFileURL(f).href); return m.default || {} }
 
-test('every language on the individuals edition reads LinkNotes, never the corporate brand', async () => {
+test('every language on the individuals edition reads MyTaskPilot by LinkNotes, never the corporate brand', async () => {
   const codes = fs.readdirSync(LOCALE_DIR).filter((f) => f.endsWith('.js')).map((f) => f.replace(/\.js$/, ''))
   const en = await loadEnglish()
   const bad = []

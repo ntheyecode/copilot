@@ -4326,13 +4326,13 @@ export default {
     },
     home: {
       seo: {
-        title: 'LinkNotes: jadi yang terbaik di pekerjaanmu, langkah demi langkah di layarmu sendiri',
-        description: 'LinkNotes membaca layarmu dan memberi klik, perintah, atau nilai yang tepat untuk tugas nyata di aplikasi yang sudah kamu pakai. Ia menangkap langkah keliru, memeriksa tiap langkah, dan belajar dari dokumenmu sendiri. Paket per jam, batalkan kapan saja.',
+        title: 'MyTaskPilot by LinkNotes: jadi yang terbaik di pekerjaanmu, langkah demi langkah di layarmu sendiri',
+        description: 'MyTaskPilot membaca layarmu dan memberi klik, perintah, atau nilai yang tepat untuk tugas nyata di aplikasi yang sudah kamu pakai. Ia menangkap langkah keliru, memeriksa tiap langkah, dan belajar dari dokumenmu sendiri. Paket per jam, batalkan kapan saja.',
       },
       hero: {
         eyebrow: 'Pemandu untuk pekerjaan nyata',
         h1: 'Jadi yang terbaik di pekerjaanmu. <em>Lebih cepat.</em>',
-        p: 'Beri tahu LinkNotes apa yang perlu kamu selesaikan. Ia membaca layarmu dan memberi klik, perintah, atau nilai yang tepat, langkah demi langkah, di aplikasi yang sudah kamu pakai. Kamu yang mengerjakan. Keahliannya jadi milikmu.',
+        p: 'Beri tahu MyTaskPilot apa yang perlu kamu selesaikan. Ia membaca layarmu dan memberi klik, perintah, atau nilai yang tepat, langkah demi langkah, di aplikasi yang sudah kamu pakai. Kamu yang mengerjakan. Keahliannya jadi milikmu.',
         primary: 'Pilih paket',
         secondary: 'Lihat cara kerjanya',
         trust: [
@@ -4342,7 +4342,7 @@ export default {
         ],
       },
       visual: {
-        aria: 'Spreadsheet dengan LinkNotes memandu satu langkah demi satu dan menangkap langkah keliru',
+        aria: 'Spreadsheet dengan MyTaskPilot memandu satu langkah demi satu dan menangkap langkah keliru',
         window: 'Anggaran 2026, sheet Q3',
         task: 'Buat ringkasan pengeluaran bulanan',
         stepLabel: 'Langkah 2 dari 6',
@@ -4399,7 +4399,7 @@ export default {
           {
             k: 'Pemberdayaan',
             t: 'Otak pribadimu',
-            d: 'Unggah dokumenmu sendiri. LinkNotes belajar darinya, memperbarui yang berubah, dan menghapus filenya. Sesimu juga mengajarinya, disamarkan di perangkatmu. Panduannya mengikuti cara kerjamu.',
+            d: 'Unggah dokumenmu sendiri. MyTaskPilot belajar darinya, memperbarui yang berubah, dan menghapus filenya. Sesimu juga mengajarinya, disamarkan di perangkatmu. Panduannya mengikuti cara kerjamu.',
             proof: 'Privat untuk akunmu, selalu',
           },
         ],
@@ -4410,7 +4410,7 @@ export default {
         steps: [
           {
             t: 'Sebutkan tujuannya',
-            d: 'Dengan kata-katamu sendiri. Pemeriksaan singkat memastikan tugasnya sesuai dengan yang LinkNotes ketahui.',
+            d: 'Dengan kata-katamu sendiri. Pemeriksaan singkat memastikan tugasnya sesuai dengan yang MyTaskPilot ketahui.',
           },
           {
             t: 'Dapatkan langkah tepatnya',
@@ -4430,7 +4430,7 @@ export default {
       brain: {
         eyebrow: 'Baru: otak pribadimu',
         h2: 'Ajari sekali. <em>Ia memandu dengan caramu.</em>',
-        p: 'Masukkan catatan, daftar periksa, panduan, dan catatan lama milikmu. LinkNotes belajar darinya, menyimpan yang penting, memperbarui yang berubah, lalu menghapus filenya.',
+        p: 'Masukkan catatan, daftar periksa, panduan, dan catatan lama milikmu. MyTaskPilot belajar darinya, menyimpan yang penting, memperbarui yang berubah, lalu menghapus filenya.',
         steps: [
           {
             t: 'Unggah',
@@ -4506,13 +4506,13 @@ export default {
     },
     how: {
       seo: {
-        title: 'Cara kerja LinkNotes: pemandu di layarmu',
-        description: 'LinkNotes merencanakan tugasmu, menunjukkan langkah berikutnya di aplikasi yang sedang kamu buka, memeriksa hasilnya, memperbaiki langkah keliru, dan terus berjalan sampai pekerjaan selesai. Ia belajar dari dokumen dan sesimu sendiri, secara privat. Begini caranya.',
+        title: 'Cara kerja MyTaskPilot: pemandu di layarmu',
+        description: 'MyTaskPilot merencanakan tugasmu, menunjukkan langkah berikutnya di aplikasi yang sedang kamu buka, memeriksa hasilnya, memperbaiki langkah keliru, dan terus berjalan sampai pekerjaan selesai. Ia belajar dari dokumen dan sesimu sendiri, secara privat. Begini caranya.',
       },
       hero: {
         eyebrow: 'Cara kerja',
         h1: 'Seperti punya orang terbaik di bidangmu <em>di sampingmu.</em>',
-        p: 'Kamu membawa tujuan dan layarmu. LinkNotes membawa rencana, langkah tepat, dan pemeriksaannya, dan ia belajar bagaimana kamu suka sesuatu dikerjakan.',
+        p: 'Kamu membawa tujuan dan layarmu. MyTaskPilot membawa rencana, langkah tepat, dan pemeriksaannya, dan ia belajar bagaimana kamu suka sesuatu dikerjakan.',
       },
       loop: {
         h2: 'Siklus di balik setiap tugas',
@@ -4601,7 +4601,7 @@ export default {
     },
     pricing: {
       seo: {
-        title: 'Paket LinkNotes: Lite, Basic, Advanced, dan Premium',
+        title: 'Paket MyTaskPilot: Lite, Basic, Advanced, dan Premium',
         description: 'Empat paket dengan jam panduan langsung setiap bulan, ditagih per menit yang kamu pakai. Bulanan atau tahunan. Jam tambahan kapan saja, batalkan kapan pun kamu mau.',
       },
       hero: {
@@ -4670,8 +4670,8 @@ export default {
     },
     use: {
       seo: {
-        title: 'Untuk siapa LinkNotes: mahasiswa, pindah karier, freelancer, profesional, dan kreator',
-        description: 'LinkNotes memandu orang yang mengerjakan sendiri pekerjaannya di layarnya sendiri: mahasiswa dan lulusan baru, yang pindah karier, freelancer dan pendiri solo, profesional yang naik level, dan kreator. Lihat tugas terpandu nyata untuk masing-masing.',
+        title: 'Untuk siapa MyTaskPilot: mahasiswa, pindah karier, freelancer, profesional, dan kreator',
+        description: 'MyTaskPilot memandu orang yang mengerjakan sendiri pekerjaannya di layarnya sendiri: mahasiswa dan lulusan baru, yang pindah karier, freelancer dan pendiri solo, profesional yang naik level, dan kreator. Lihat tugas terpandu nyata untuk masing-masing.',
       },
       hero: {
         eyebrow: 'Untuk siapa',
@@ -4739,8 +4739,8 @@ export default {
     },
     faq: {
       seo: {
-        title: 'Pertanyaan tentang LinkNotes, terjawab',
-        description: 'Apa yang LinkNotes lakukan dan tidak lakukan, cara kerja paket dan jam, cara otak pribadimu belajar dan menghapus filemu, cara membatalkan, dan cara layar serta datamu dilindungi.',
+        title: 'Pertanyaan tentang MyTaskPilot, terjawab',
+        description: 'Apa yang MyTaskPilot lakukan dan tidak lakukan, cara kerja paket dan jam, cara otak pribadimu belajar dan menghapus filemu, cara membatalkan, dan cara layar serta datamu dilindungi.',
       },
       hero: {
         eyebrow: 'Pertanyaan',
@@ -4754,7 +4754,7 @@ export default {
           title: 'Yang ia lakukan',
           items: [
             {
-              q: 'Sebenarnya LinkNotes melakukan apa?',
+              q: 'Sebenarnya MyTaskPilot melakukan apa?',
               a: 'Ia memandumu melalui sebuah tugas di layarmu sendiri: merencanakan tugasnya, menunjukkan langkah berikutnya di aplikasi yang sedang kamu buka, memeriksa bahwa langkahnya berhasil, dan terus berjalan sampai tugas selesai.',
             },
             {
@@ -4767,7 +4767,7 @@ export default {
             },
             {
               q: 'Apakah ini asisten chat?',
-              a: 'Tidak juga. Jawaban chat membiarkanmu pergi mengerjakannya sendiri. LinkNotes tetap bersamamu di layar, satu langkah demi satu, dan memastikan selesai.',
+              a: 'Tidak juga. Jawaban chat membiarkanmu pergi mengerjakannya sendiri. MyTaskPilot tetap bersamamu di layar, satu langkah demi satu, dan memastikan selesai.',
             },
             {
               q: 'Apakah ia menganalisis atau menulis dokumenku?',
@@ -4780,7 +4780,7 @@ export default {
           items: [
             {
               q: 'Apa itu otak pribadi?',
-              a: 'Halaman di dasbormu tempat kamu mengunggah dokumenmu sendiri: catatan, daftar periksa, panduan, catatan lama. LinkNotes belajar darinya, dan panduannya memakai apa yang ia pelajari.',
+              a: 'Halaman di dasbormu tempat kamu mengunggah dokumenmu sendiri: catatan, daftar periksa, panduan, catatan lama. MyTaskPilot belajar darinya, dan panduannya memakai apa yang ia pelajari.',
             },
             {
               q: 'Apa yang terjadi pada file yang kuunggah?',
@@ -4868,8 +4868,8 @@ export default {
     },
     security: {
       seo: {
-        title: 'Privasi dan keamanan untuk layarmu: LinkNotes',
-        description: 'Cara LinkNotes melindungimu: nilai sensitif disamarkan di perangkatmu sebelum apa pun dikirim, panduan hanya-baca, dokumen yang diunggah dihapus setelah dipelajari dan tidak pernah bisa diunduh, autentikator di akunmu, log setiap sesi, enkripsi saat tersimpan, dan sesi yang bisa kamu hapus kapan saja.',
+        title: 'Privasi dan keamanan untuk layarmu: MyTaskPilot',
+        description: 'Cara MyTaskPilot melindungimu: nilai sensitif disamarkan di perangkatmu sebelum apa pun dikirim, panduan hanya-baca, dokumen yang diunggah dihapus setelah dipelajari dan tidak pernah bisa diunduh, autentikator di akunmu, log setiap sesi, enkripsi saat tersimpan, dan sesi yang bisa kamu hapus kapan saja.',
       },
       hero: {
         eyebrow: 'Privat sejak dirancang',

@@ -6,7 +6,7 @@
 // language: no company, team, enterprise, organization, SSO, admin or seat
 // wording anywhere here, in any locale.
 //
-// Voice (LinkNotes): energetic, direct, second person, short lines. One person
+// Voice (MyTaskPilot): energetic, direct, second person, short lines. One person
 // becoming the best at their own work, on their own screen. Benefit first,
 // honest claims (it guides and checks; it never clicks or types for you; it
 // helps you do and finish work, it does not analyze documents for you), "many
@@ -56,21 +56,21 @@ export default {
     // ---- Home --------------------------------------------------------------
     home: {
       seo: {
-        title: 'LinkNotes: become the best at your work, step by step on your own screen',
-        description: 'LinkNotes watches your screen and gives you the exact click, command or value for real tasks in the apps you already use. It catches wrong turns, checks each step and learns from your own documents. Plans by the hour, cancel any time.',
+        title: 'MyTaskPilot by LinkNotes: become the best at your work, step by step on your own screen',
+        description: 'MyTaskPilot watches your screen and gives you the exact click, command or value for real tasks in the apps you already use. It catches wrong turns, checks each step and learns from your own documents. Plans by the hour, cancel any time.',
       },
       hero: {
         eyebrow: 'Your guide for real work',
         h1: 'Become the best at your work. <em>Faster.</em>',
-        p: 'Tell LinkNotes what you need to get done. It watches your screen and gives you the exact click, command or value, step by step, in the apps you already use. You do the work. You keep the skill.',
+        p: 'Tell MyTaskPilot what you need to get done. It watches your screen and gives you the exact click, command or value, step by step, in the apps you already use. You do the work. You keep the skill.',
         primary: 'Choose a plan',
         secondary: 'See how it works',
         trust: ['Works in the apps already on your screen', 'Masked on your device before anything is sent', 'Cancel any time'],
       },
-      // The hero visual: a spreadsheet window, the LinkNotes card beside it and
+      // The hero visual: a spreadsheet window, the MyTaskPilot card beside it and
       // one correction toast. The formula is a format sample, not language.
       visual: {
-        aria: 'A spreadsheet with LinkNotes guiding one step at a time and catching a wrong turn',
+        aria: 'A spreadsheet with MyTaskPilot guiding one step at a time and catching a wrong turn',
         window: 'Budget 2026, sheet Q3',
         task: 'Build a monthly expense summary',
         stepLabel: 'Step 2 of 6',
@@ -99,14 +99,14 @@ export default {
         items: [
           { k: 'Productivity', t: 'Finish real tasks faster', d: 'No more hopping between tabs and help articles. The exact next move is on your screen, copy-ready, and each step is checked before you move on.', proof: 'The exact click, command or value' },
           { k: 'Training', t: 'Learn by doing, on your own work', d: 'Every guided task is a lesson in the tool you actually use. Pick the depth, from plain words to the exact flags, and change it mid-task.', proof: 'Your hands, your tools, your skill' },
-          { k: 'Enablement', t: 'Your personal brain', d: 'Upload your own documents. LinkNotes learns from them, refreshes what changed and deletes the files. Your sessions teach it too, masked on your device. The guidance follows your way of working.', proof: 'Private to your account, always' },
+          { k: 'Enablement', t: 'Your personal brain', d: 'Upload your own documents. MyTaskPilot learns from them, refreshes what changed and deletes the files. Your sessions teach it too, masked on your device. The guidance follows your way of working.', proof: 'Private to your account, always' },
         ],
       },
       how: {
         eyebrow: 'How a task goes',
         h2: 'Four moves, <em>repeated until it is done.</em>',
         steps: [
-          { t: 'Say the goal', d: 'In your own words. A quick check makes sure the task fits what LinkNotes knows.' },
+          { t: 'Say the goal', d: 'In your own words. A quick check makes sure the task fits what MyTaskPilot knows.' },
           { t: 'Get the exact move', d: 'The click, the command or the value, in the app you are in, copy-ready.' },
           { t: 'A wrong turn gets caught', d: 'It reads the screen, spots the slip as it happens and shows the fix.' },
           { t: 'Finish with a write-up', d: 'A clean record of what you did, ready to keep, repeat or share.' },
@@ -116,7 +116,7 @@ export default {
       brain: {
         eyebrow: 'New: your personal brain',
         h2: 'Teach it once. <em>It guides you your way.</em>',
-        p: 'Drop in your notes, checklists, playbooks and past write-ups. LinkNotes learns from them, keeps what matters, refreshes what changed, then deletes the files.',
+        p: 'Drop in your notes, checklists, playbooks and past write-ups. MyTaskPilot learns from them, keeps what matters, refreshes what changed, then deletes the files.',
         steps: [
           { t: 'Upload', d: 'Your own documents, from a page in your dashboard.' },
           { t: 'Learn', d: 'It keeps the knowledge, de-duplicated and refreshed when you upload a newer version.' },
@@ -162,13 +162,13 @@ export default {
     // ---- How it works ---------------------------------------------------------
     how: {
       seo: {
-        title: 'How LinkNotes works: the guide on your screen',
-        description: 'LinkNotes plans your task, shows the exact next step in the app you are in, checks that it worked, corrects a wrong turn and keeps going until the job is done. It learns from your own documents and sessions, privately. Here is how.',
+        title: 'How MyTaskPilot works: the guide on your screen',
+        description: 'MyTaskPilot plans your task, shows the exact next step in the app you are in, checks that it worked, corrects a wrong turn and keeps going until the job is done. It learns from your own documents and sessions, privately. Here is how.',
       },
       hero: {
         eyebrow: 'How it works',
         h1: 'Like having the best person in your field <em>beside you.</em>',
-        p: 'You bring the goal and your screen. LinkNotes brings the plan, the exact moves and the checks, and it learns how you like things done.',
+        p: 'You bring the goal and your screen. MyTaskPilot brings the plan, the exact moves and the checks, and it learns how you like things done.',
       },
       loop: {
         h2: 'The loop behind every task',
@@ -208,7 +208,7 @@ export default {
     // ---- Pricing --------------------------------------------------------------
     pricing: {
       seo: {
-        title: 'LinkNotes plans: Lite, Basic, Advanced and Premium',
+        title: 'MyTaskPilot plans: Lite, Basic, Advanced and Premium',
         description: 'Four plans with hours of live guidance every month, billed by the minute you use. Monthly or annual. Extra hours any time, cancel whenever you like.',
       },
       hero: {
@@ -249,8 +249,8 @@ export default {
     // ---- Who it is for (use cases) ----------------------------------------------
     use: {
       seo: {
-        title: 'Who LinkNotes is for: students, career switchers, freelancers, professionals and creators',
-        description: 'LinkNotes guides people who do their own work on their own screen: students and new grads, career switchers, freelancers and solo founders, professionals leveling up, and creators. See a real guided task for each.',
+        title: 'Who MyTaskPilot is for: students, career switchers, freelancers, professionals and creators',
+        description: 'MyTaskPilot guides people who do their own work on their own screen: students and new grads, career switchers, freelancers and solo founders, professionals leveling up, and creators. See a real guided task for each.',
       },
       hero: {
         eyebrow: 'Who it is for',
@@ -306,8 +306,8 @@ export default {
     // ---- FAQ --------------------------------------------------------------------
     faq: {
       seo: {
-        title: 'LinkNotes questions, answered',
-        description: 'What LinkNotes does and does not do, how plans and hours work, how your personal brain learns and deletes your files, how to cancel, and how your screen and data are protected.',
+        title: 'MyTaskPilot questions, answered',
+        description: 'What MyTaskPilot does and does not do, how plans and hours work, how your personal brain learns and deletes your files, how to cancel, and how your screen and data are protected.',
       },
       hero: { eyebrow: 'Questions', h1: 'Short answers to <em>the questions people ask.</em>', p: 'Still unsure? Write to us and a person answers.' },
       searchPh: 'Search the questions',
@@ -316,17 +316,17 @@ export default {
         {
           title: 'What it does',
           items: [
-            { q: 'What does LinkNotes actually do?', a: 'It guides you through a task on your own screen: it plans the task, shows the exact next step in the app you are in, checks that the step worked, and keeps going until the task is done.' },
+            { q: 'What does MyTaskPilot actually do?', a: 'It guides you through a task on your own screen: it plans the task, shows the exact next step in the app you are in, checks that the step worked, and keeps going until the task is done.' },
             { q: 'Does it do the work for me?', a: 'No. It shows the move and checks the result; you make every click. That is on purpose, so you stay in control and learn the tool as you go.' },
             { q: 'Which apps does it work with?', a: 'The apps already on your screen: spreadsheets, design tools, cloud consoles, code, control panels, forms. It reads what is on screen, so nothing needs a plug-in.' },
-            { q: 'Is it a chat assistant?', a: 'Not really. A chat answer leaves you to go and do it. LinkNotes stays with you on the screen, one step at a time, and confirms the finish.' },
+            { q: 'Is it a chat assistant?', a: 'Not really. A chat answer leaves you to go and do it. MyTaskPilot stays with you on the screen, one step at a time, and confirms the finish.' },
             { q: 'Does it analyze or write my documents?', a: 'No. It helps you do and finish work on screen. What it can do is learn from your own documents, so the steps follow your way of working.' },
           ],
         },
         {
           title: 'Your personal brain',
           items: [
-            { q: 'What is the personal brain?', a: 'A page in your dashboard where you upload your own documents: notes, checklists, playbooks, past write-ups. LinkNotes learns from them, and the guidance uses what it learned.' },
+            { q: 'What is the personal brain?', a: 'A page in your dashboard where you upload your own documents: notes, checklists, playbooks, past write-ups. MyTaskPilot learns from them, and the guidance uses what it learned.' },
             { q: 'What happens to the files I upload?', a: 'They are learned from, de-duplicated against what it already knows, and then deleted. They cannot be downloaded back, by you or by anyone else.' },
             { q: 'Can I see what it learned?', a: 'Yes. Your dashboard shows what it learned, and uploading a newer version of a document refreshes it.' },
             { q: 'Does it learn from my sessions too?', a: 'On the desktop app, yes: masked on your device, into your own profile. Only you benefit from what it learns.' },
@@ -365,8 +365,8 @@ export default {
     // ---- Security and privacy -------------------------------------------------------
     security: {
       seo: {
-        title: 'Privacy and security for your screen: LinkNotes',
-        description: 'How LinkNotes protects you: sensitive values masked on your device before anything is sent, read-only guidance, uploaded documents deleted after learning and never downloadable, an authenticator on your account, a log of every session, encryption at rest, and sessions you can delete any time.',
+        title: 'Privacy and security for your screen: MyTaskPilot',
+        description: 'How MyTaskPilot protects you: sensitive values masked on your device before anything is sent, read-only guidance, uploaded documents deleted after learning and never downloadable, an authenticator on your account, a log of every session, encryption at rest, and sessions you can delete any time.',
       },
       hero: {
         eyebrow: 'Private by design',

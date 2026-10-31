@@ -25,7 +25,7 @@ export default function IndivFooter() {
       <style>{CSS}</style>
       <div className="lnf-in">
         <div className="lnf-brand">
-          <a href="/" aria-label={t('indiv.nav.home')}><LinkNotesLogo size={30} idSuffix="lnf" /></a>
+          <a href="/" aria-label={t('indiv.nav.home')}><LinkNotesLogo size={30} idSuffix="lnf" product /></a>
           <p>{t('indiv.footer.tag')}</p>
           <div className="lnf-ctas">
             <a className="lnf-btn" href={START}>{t('indiv.nav.start')} <ArrowRight size={14} aria-hidden="true" className="ln-arrow" /></a>

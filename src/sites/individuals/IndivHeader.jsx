@@ -72,7 +72,7 @@ export default function IndivHeader({ current }) {
     <header className={'lnh' + (folded ? ' folded' : '')} ref={rootRef}>
       <style>{CSS}</style>
       <div className="lnh-in" ref={innerRef}>
-        <a className="lnh-brand" href="/" aria-label={t('indiv.nav.home')}><LinkNotesLogo size={30} idSuffix="lnh" /></a>
+        <a className="lnh-brand" href="/" aria-label={t('indiv.nav.home')}><LinkNotesLogo size={30} idSuffix="lnh" product /></a>
         <nav className={'lnh-links' + (open ? ' open' : '')} id="lnh-menu" aria-label={t('indiv.nav.main')}>
           {INDIV_LINKS.map((l) => (
             <a key={l.key} href={l.href} className={active === l.key ? 'on' : undefined} aria-current={active === l.key ? 'page' : undefined} onClick={() => setOpen(false)}>{t('indiv.nav.' + l.key)}</a>

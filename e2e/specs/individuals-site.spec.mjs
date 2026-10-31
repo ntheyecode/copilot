@@ -18,7 +18,7 @@ const SHARED = ['/workcopilot/terms', '/workcopilot/privacy', '/workcopilot/cont
 const LOGIN = '/workcopilot/login'
 // Fixture values on the visuals (a card, a key, a phone, a formula, column
 // letters), plan and product names: formats, not language.
-const SAMPLE_DATA = ['Lite', 'Basic', 'Advanced', 'Premium', 'Stripe', 'LinkNotes', 'sk_live_51Hq9', '4242 4242 4242 4242', '+1 415 555 0133', 'AES-256-GCM', '=SUM(C2:C40)']
+const SAMPLE_DATA = ['Lite', 'Basic', 'Advanced', 'Premium', 'Stripe', 'LinkNotes', 'MyTaskPilot', 'sk_live_51Hq9', '4242 4242 4242 4242', '+1 415 555 0133', 'AES-256-GCM', '=SUM(C2:C40)']
 const hasSite = (edition) => capsOf(edition).has('individual_site')
 
 async function settle(page, path) {

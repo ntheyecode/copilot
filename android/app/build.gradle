@@ -16,7 +16,7 @@ android {
     }
 
     // One codebase, two products (owner, 2026-10-31): WorkCoPilot for
-    // admireveda.com and LinkNotes for linknotes.com (the individuals product).
+    // admireveda.com and MyTaskPilot by LinkNotes for linknotes.com (individuals).
     // A flavor sets only what differs: the store id, the web origin the shell
     // loads, and the app name; icons for a flavor live in src/<flavor>/res.
     //   gradlew bundleWorkcopilotRelease | bundleLinknotesRelease
@@ -31,11 +31,11 @@ android {
         }
         linknotes {
             dimension "brand"
-            applicationId "com.linknotes.app"
+            applicationId "com.linknotes.mytaskpilot"
             versionCode 1
             versionName "1.0.0"
             buildConfigField "String", "APP_ORIGIN", '"https://linknotes.com"'
-            resValue "string", "app_name", "LinkNotes"
+            resValue "string", "app_name", "MyTaskPilot"
         }
     }
 

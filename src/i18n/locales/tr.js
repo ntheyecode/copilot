@@ -4401,13 +4401,13 @@ export default {
     },
     home: {
       seo: {
-        title: 'LinkNotes: işinde en iyisi ol, kendi ekranında adım adım',
-        description: 'LinkNotes ekranını izler ve zaten kullandığın uygulamalardaki gerçek görevler için tam tıklamayı, komutu veya değeri verir. Yanlış adımları yakalar, her adımı kontrol eder ve kendi belgelerinden öğrenir. Saat bazlı planlar, istediğin zaman iptal.',
+        title: 'MyTaskPilot by LinkNotes: işinde en iyisi ol, kendi ekranında adım adım',
+        description: 'MyTaskPilot ekranını izler ve zaten kullandığın uygulamalardaki gerçek görevler için tam tıklamayı, komutu veya değeri verir. Yanlış adımları yakalar, her adımı kontrol eder ve kendi belgelerinden öğrenir. Saat bazlı planlar, istediğin zaman iptal.',
       },
       hero: {
         eyebrow: 'Gerçek iş için rehberin',
         h1: 'İşinde en iyisi ol. <em>Daha hızlı.</em>',
-        p: "LinkNotes'a ne yapman gerektiğini söyle. Ekranını izler ve zaten kullandığın uygulamalarda tam tıklamayı, komutu veya değeri adım adım verir. İşi sen yaparsın. Beceri sende kalır.",
+        p: "MyTaskPilot'a ne yapman gerektiğini söyle. Ekranını izler ve zaten kullandığın uygulamalarda tam tıklamayı, komutu veya değeri adım adım verir. İşi sen yaparsın. Beceri sende kalır.",
         primary: 'Plan seç',
         secondary: 'Nasıl çalıştığını gör',
         trust: [
@@ -4417,7 +4417,7 @@ export default {
         ],
       },
       visual: {
-        aria: "LinkNotes'un adım adım yol gösterdiği ve bir yanlış adımı yakaladığı bir tablo",
+        aria: "MyTaskPilot'un adım adım yol gösterdiği ve bir yanlış adımı yakaladığı bir tablo",
         window: 'Bütçe 2026, 3. Çeyrek sayfası',
         task: 'Aylık gider özeti oluştur',
         stepLabel: 'Adım 2 / 6',
@@ -4474,7 +4474,7 @@ export default {
           {
             k: 'Yetkinlik',
             t: 'Kişisel beynin',
-            d: 'Kendi belgelerini yükle. LinkNotes onlardan öğrenir, değişenleri günceller ve dosyaları siler. Oturumların da öğretir, cihazında maskelenerek. Rehberlik senin çalışma tarzına uyar.',
+            d: 'Kendi belgelerini yükle. MyTaskPilot onlardan öğrenir, değişenleri günceller ve dosyaları siler. Oturumların da öğretir, cihazında maskelenerek. Rehberlik senin çalışma tarzına uyar.',
             proof: 'Her zaman yalnızca senin hesabına özel',
           },
         ],
@@ -4485,7 +4485,7 @@ export default {
         steps: [
           {
             t: 'Hedefi söyle',
-            d: "Kendi kelimelerinle. Kısa bir kontrol, görevin LinkNotes'un bildikleriyle uyuştuğundan emin olur.",
+            d: "Kendi kelimelerinle. Kısa bir kontrol, görevin MyTaskPilot'un bildikleriyle uyuştuğundan emin olur.",
           },
           {
             t: 'Tam hamleyi al',
@@ -4505,7 +4505,7 @@ export default {
       brain: {
         eyebrow: 'Yeni: kişisel beynin',
         h2: 'Bir kez öğret. <em>Senin tarzında yol göstersin.</em>',
-        p: 'Notlarını, kontrol listelerini, rehberlerini ve eski özetlerini bırak. LinkNotes onlardan öğrenir, önemli olanı tutar, değişeni günceller, sonra dosyaları siler.',
+        p: 'Notlarını, kontrol listelerini, rehberlerini ve eski özetlerini bırak. MyTaskPilot onlardan öğrenir, önemli olanı tutar, değişeni günceller, sonra dosyaları siler.',
         steps: [
           {
             t: 'Yükle',
@@ -4581,13 +4581,13 @@ export default {
     },
     how: {
       seo: {
-        title: 'LinkNotes nasıl çalışır: ekranındaki rehber',
-        description: 'LinkNotes görevini planlar, bulunduğun uygulamada bir sonraki adımı gösterir, işe yaradığını kontrol eder, yanlış adımı düzeltir ve iş bitene kadar devam eder. Kendi belgelerinden ve oturumlarından, gizliliğini koruyarak öğrenir. İşte nasıl.',
+        title: 'MyTaskPilot nasıl çalışır: ekranındaki rehber',
+        description: 'MyTaskPilot görevini planlar, bulunduğun uygulamada bir sonraki adımı gösterir, işe yaradığını kontrol eder, yanlış adımı düzeltir ve iş bitene kadar devam eder. Kendi belgelerinden ve oturumlarından, gizliliğini koruyarak öğrenir. İşte nasıl.',
       },
       hero: {
         eyebrow: 'Nasıl çalışır',
         h1: 'Sanki alanının en iyisi <em>yanı başında.</em>',
-        p: 'Hedefi ve ekranını sen getirirsin. LinkNotes planı, tam hamleleri ve kontrolleri getirir; işleri nasıl sevdiğini de öğrenir.',
+        p: 'Hedefi ve ekranını sen getirirsin. MyTaskPilot planı, tam hamleleri ve kontrolleri getirir; işleri nasıl sevdiğini de öğrenir.',
       },
       loop: {
         h2: 'Her görevin arkasındaki döngü',
@@ -4676,7 +4676,7 @@ export default {
     },
     pricing: {
       seo: {
-        title: 'LinkNotes planları: Lite, Basic, Advanced ve Premium',
+        title: 'MyTaskPilot planları: Lite, Basic, Advanced ve Premium',
         description: 'Her ay saatlerce canlı rehberlik içeren dört plan; kullandığın dakika kadar ödersin. Aylık veya yıllık. İstediğin zaman ek saat, istediğin zaman iptal.',
       },
       hero: {
@@ -4745,8 +4745,8 @@ export default {
     },
     use: {
       seo: {
-        title: 'LinkNotes kimler için: öğrenciler, kariyer değiştirenler, freelancerlar, profesyoneller ve içerik üreticileri',
-        description: 'LinkNotes, işini kendi ekranında kendi yapanlara yol gösterir: öğrenciler ve yeni mezunlar, kariyer değiştirenler, freelancerlar ve solo girişimciler, seviye atlayan profesyoneller ve içerik üreticileri. Her biri için gerçek bir rehberli görev gör.',
+        title: 'MyTaskPilot kimler için: öğrenciler, kariyer değiştirenler, freelancerlar, profesyoneller ve içerik üreticileri',
+        description: 'MyTaskPilot, işini kendi ekranında kendi yapanlara yol gösterir: öğrenciler ve yeni mezunlar, kariyer değiştirenler, freelancerlar ve solo girişimciler, seviye atlayan profesyoneller ve içerik üreticileri. Her biri için gerçek bir rehberli görev gör.',
       },
       hero: {
         eyebrow: 'Kimler için',
@@ -4814,8 +4814,8 @@ export default {
     },
     faq: {
       seo: {
-        title: 'LinkNotes soruları, yanıtlandı',
-        description: 'LinkNotes ne yapar, ne yapmaz; planlar ve saatler nasıl işler; kişisel beynin nasıl öğrenir ve dosyalarını siler; nasıl iptal edilir; ekranın ve verilerin nasıl korunur.',
+        title: 'MyTaskPilot soruları, yanıtlandı',
+        description: 'MyTaskPilot ne yapar, ne yapmaz; planlar ve saatler nasıl işler; kişisel beynin nasıl öğrenir ve dosyalarını siler; nasıl iptal edilir; ekranın ve verilerin nasıl korunur.',
       },
       hero: {
         eyebrow: 'Sorular',
@@ -4829,7 +4829,7 @@ export default {
           title: 'Ne yapar',
           items: [
             {
-              q: 'LinkNotes tam olarak ne yapar?',
+              q: 'MyTaskPilot tam olarak ne yapar?',
               a: 'Kendi ekranında bir görevde sana yol gösterir: görevi planlar, bulunduğun uygulamada bir sonraki adımı gösterir, adımın işe yaradığını kontrol eder ve görev bitene kadar devam eder.',
             },
             {
@@ -4842,7 +4842,7 @@ export default {
             },
             {
               q: 'Bir sohbet asistanı mı?',
-              a: 'Pek sayılmaz. Sohbet yanıtı, gidip yapmayı sana bırakır. LinkNotes ekranda seninle kalır, adım adım, ve bitişi onaylar.',
+              a: 'Pek sayılmaz. Sohbet yanıtı, gidip yapmayı sana bırakır. MyTaskPilot ekranda seninle kalır, adım adım, ve bitişi onaylar.',
             },
             {
               q: 'Belgelerimi analiz ediyor ya da yazıyor mu?',
@@ -4855,7 +4855,7 @@ export default {
           items: [
             {
               q: 'Kişisel beyin nedir?',
-              a: 'Panelinde kendi belgelerini yüklediğin bir sayfa: notlar, kontrol listeleri, rehberler, eski özetler. LinkNotes onlardan öğrenir ve rehberlik öğrendiklerini kullanır.',
+              a: 'Panelinde kendi belgelerini yüklediğin bir sayfa: notlar, kontrol listeleri, rehberler, eski özetler. MyTaskPilot onlardan öğrenir ve rehberlik öğrendiklerini kullanır.',
             },
             {
               q: 'Yüklediğim dosyalara ne olur?',
@@ -4943,8 +4943,8 @@ export default {
     },
     security: {
       seo: {
-        title: 'Ekranın için gizlilik ve güvenlik: LinkNotes',
-        description: 'LinkNotes seni nasıl korur: hassas değerler hiçbir şey gönderilmeden önce cihazında maskelenir, salt okunur rehberlik, yüklenen belgeler öğrenildikten sonra silinir ve asla indirilemez, hesabında doğrulayıcı uygulama, her oturumun kaydı, depoda şifreleme ve istediğin zaman silebileceğin oturumlar.',
+        title: 'Ekranın için gizlilik ve güvenlik: MyTaskPilot',
+        description: 'MyTaskPilot seni nasıl korur: hassas değerler hiçbir şey gönderilmeden önce cihazında maskelenir, salt okunur rehberlik, yüklenen belgeler öğrenildikten sonra silinir ve asla indirilemez, hesabında doğrulayıcı uygulama, her oturumun kaydı, depoda şifreleme ve istediğin zaman silebileceğin oturumlar.',
       },
       hero: {
         eyebrow: 'Tasarım gereği gizli',

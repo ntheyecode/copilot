@@ -6,7 +6,8 @@
 // the source of truth for everything the web console shows.
 const BRANDS = Object.freeze({
   workcopilot: Object.freeze({ id: 'workcopilot', name: 'WorkCoPilot', server: 'https://admireveda.com' }),
-  linknotes: Object.freeze({ id: 'linknotes', name: 'LinkNotes', server: 'https://linknotes.com' }),
+  // MyTaskPilot by LinkNotes: the app is named for the product, served from linknotes.com.
+  linknotes: Object.freeze({ id: 'linknotes', name: 'MyTaskPilot', server: 'https://linknotes.com' }),
 })
 
 function pickBrand({ env = process.env, pkg = safePkg() } = {}) {

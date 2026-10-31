@@ -14,8 +14,8 @@ const MARKERS = [
   ['plan', /PLAN THE WORK/],
   ['ping', /You are a connectivity check/],
   // Brand-neutral: the individuals edition's prompts say LinkNotes (server/brand.js).
-  ['scope', /You are the scoping step of (WorkCoPilot|LinkNotes)/],
-  ['summary', /You are summarizing a (WorkCoPilot|LinkNotes) session/],
+  ['scope', /You are the scoping step of (WorkCoPilot|MyTaskPilot)/],
+  ['summary', /You are summarizing a (WorkCoPilot|MyTaskPilot) session/],
   ['stepRead', /You are reading one recorded step of a guided workflow/],
 ]
 

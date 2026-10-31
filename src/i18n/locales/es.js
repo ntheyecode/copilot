@@ -5518,13 +5518,13 @@ export default {
     },
     home: {
       seo: {
-        title: 'LinkNotes: domina tu trabajo, paso a paso en tu propia pantalla',
-        description: 'LinkNotes lee tu pantalla y te da el clic, el comando o el valor exacto para tareas reales en las apps que ya usas. Detecta los pasos en falso, comprueba cada paso y aprende de tus propios documentos. Planes por horas, cancela cuando quieras.',
+        title: 'MyTaskPilot by LinkNotes: domina tu trabajo, paso a paso en tu propia pantalla',
+        description: 'MyTaskPilot lee tu pantalla y te da el clic, el comando o el valor exacto para tareas reales en las apps que ya usas. Detecta los pasos en falso, comprueba cada paso y aprende de tus propios documentos. Planes por horas, cancela cuando quieras.',
       },
       hero: {
         eyebrow: 'Tu guía para el trabajo real',
         h1: 'Domina tu trabajo. <em>Más rápido.</em>',
-        p: 'Dile a LinkNotes qué necesitas hacer. Lee tu pantalla y te da el clic, el comando o el valor exacto, paso a paso, en las apps que ya usas. Tú haces el trabajo. Tú te quedas con la habilidad.',
+        p: 'Dile a MyTaskPilot qué necesitas hacer. Lee tu pantalla y te da el clic, el comando o el valor exacto, paso a paso, en las apps que ya usas. Tú haces el trabajo. Tú te quedas con la habilidad.',
         primary: 'Elegir un plan',
         secondary: 'Ver cómo funciona',
         trust: [
@@ -5534,7 +5534,7 @@ export default {
         ],
       },
       visual: {
-        aria: 'Una hoja de cálculo con LinkNotes guiando un paso a la vez y detectando un paso en falso',
+        aria: 'Una hoja de cálculo con MyTaskPilot guiando un paso a la vez y detectando un paso en falso',
         window: 'Presupuesto 2026, hoja T3',
         task: 'Crear un resumen mensual de gastos',
         stepLabel: 'Paso 2 de 6',
@@ -5591,7 +5591,7 @@ export default {
           {
             k: 'Conocimiento',
             t: 'Tu cerebro personal',
-            d: 'Sube tus propios documentos. LinkNotes aprende de ellos, actualiza lo que cambió y borra los archivos. Tus sesiones también le enseñan, enmascaradas en tu dispositivo. La guía sigue tu forma de trabajar.',
+            d: 'Sube tus propios documentos. MyTaskPilot aprende de ellos, actualiza lo que cambió y borra los archivos. Tus sesiones también le enseñan, enmascaradas en tu dispositivo. La guía sigue tu forma de trabajar.',
             proof: 'Privado en tu cuenta, siempre',
           },
         ],
@@ -5602,7 +5602,7 @@ export default {
         steps: [
           {
             t: 'Di el objetivo',
-            d: 'Con tus palabras. Una comprobación rápida confirma que la tarea encaja con lo que LinkNotes sabe.',
+            d: 'Con tus palabras. Una comprobación rápida confirma que la tarea encaja con lo que MyTaskPilot sabe.',
           },
           {
             t: 'Recibe el paso exacto',
@@ -5622,7 +5622,7 @@ export default {
       brain: {
         eyebrow: 'Nuevo: tu cerebro personal',
         h2: 'Enséñale una vez. <em>Te guía a tu manera.</em>',
-        p: 'Sube tus notas, listas, guías e informes anteriores. LinkNotes aprende de ellos, conserva lo importante, actualiza lo que cambió y luego borra los archivos.',
+        p: 'Sube tus notas, listas, guías e informes anteriores. MyTaskPilot aprende de ellos, conserva lo importante, actualiza lo que cambió y luego borra los archivos.',
         steps: [
           {
             t: 'Subir',
@@ -5698,13 +5698,13 @@ export default {
     },
     how: {
       seo: {
-        title: 'Cómo funciona LinkNotes: la guía en tu pantalla',
-        description: 'LinkNotes planifica tu tarea, te muestra el siguiente paso exacto en la app en la que estás, comprueba que funcionó, corrige un paso en falso y sigue hasta terminar. Aprende de tus propios documentos y sesiones, en privado. Así funciona.',
+        title: 'Cómo funciona MyTaskPilot: la guía en tu pantalla',
+        description: 'MyTaskPilot planifica tu tarea, te muestra el siguiente paso exacto en la app en la que estás, comprueba que funcionó, corrige un paso en falso y sigue hasta terminar. Aprende de tus propios documentos y sesiones, en privado. Así funciona.',
       },
       hero: {
         eyebrow: 'Cómo funciona',
         h1: 'Como tener a la mejor persona de tu campo <em>a tu lado.</em>',
-        p: 'Tú pones el objetivo y tu pantalla. LinkNotes pone el plan, los pasos exactos y las comprobaciones, y aprende cómo te gusta hacer las cosas.',
+        p: 'Tú pones el objetivo y tu pantalla. MyTaskPilot pone el plan, los pasos exactos y las comprobaciones, y aprende cómo te gusta hacer las cosas.',
       },
       loop: {
         h2: 'El ciclo detrás de cada tarea',
@@ -5793,7 +5793,7 @@ export default {
     },
     pricing: {
       seo: {
-        title: 'Planes de LinkNotes: Lite, Basic, Advanced y Premium',
+        title: 'Planes de MyTaskPilot: Lite, Basic, Advanced y Premium',
         description: 'Cuatro planes con horas de guía en vivo cada mes, cobradas por minuto usado. Mensual o anual. Horas extra cuando quieras, cancela cuando quieras.',
       },
       hero: {
@@ -5862,8 +5862,8 @@ export default {
     },
     use: {
       seo: {
-        title: 'Para quién es LinkNotes: estudiantes, cambios de carrera, freelancers, profesionales y creadores',
-        description: 'LinkNotes guía a quienes hacen su propio trabajo en su propia pantalla: estudiantes y recién graduados, personas que cambian de carrera, freelancers y emprendedores en solitario, profesionales que suben de nivel y creadores. Mira una tarea guiada real para cada perfil.',
+        title: 'Para quién es MyTaskPilot: estudiantes, cambios de carrera, freelancers, profesionales y creadores',
+        description: 'MyTaskPilot guía a quienes hacen su propio trabajo en su propia pantalla: estudiantes y recién graduados, personas que cambian de carrera, freelancers y emprendedores en solitario, profesionales que suben de nivel y creadores. Mira una tarea guiada real para cada perfil.',
       },
       hero: {
         eyebrow: 'Para quién es',
@@ -5931,8 +5931,8 @@ export default {
     },
     faq: {
       seo: {
-        title: 'Preguntas sobre LinkNotes, respondidas',
-        description: 'Qué hace y qué no hace LinkNotes, cómo funcionan los planes y las horas, cómo tu cerebro personal aprende y borra tus archivos, cómo cancelar y cómo se protegen tu pantalla y tus datos.',
+        title: 'Preguntas sobre MyTaskPilot, respondidas',
+        description: 'Qué hace y qué no hace MyTaskPilot, cómo funcionan los planes y las horas, cómo tu cerebro personal aprende y borra tus archivos, cómo cancelar y cómo se protegen tu pantalla y tus datos.',
       },
       hero: {
         eyebrow: 'Preguntas',
@@ -5946,7 +5946,7 @@ export default {
           title: 'Qué hace',
           items: [
             {
-              q: '¿Qué hace LinkNotes exactamente?',
+              q: '¿Qué hace MyTaskPilot exactamente?',
               a: 'Te guía en una tarea en tu propia pantalla: planifica la tarea, te muestra el siguiente paso exacto en la app en la que estás, comprueba que el paso funcionó y sigue hasta que la tarea termina.',
             },
             {
@@ -5959,7 +5959,7 @@ export default {
             },
             {
               q: '¿Es un asistente de chat?',
-              a: 'No del todo. Una respuesta de chat te deja ir a hacerlo por tu cuenta. LinkNotes se queda contigo en la pantalla, un paso a la vez, y confirma que terminaste.',
+              a: 'No del todo. Una respuesta de chat te deja ir a hacerlo por tu cuenta. MyTaskPilot se queda contigo en la pantalla, un paso a la vez, y confirma que terminaste.',
             },
             {
               q: '¿Analiza o escribe mis documentos?',
@@ -5972,7 +5972,7 @@ export default {
           items: [
             {
               q: '¿Qué es el cerebro personal?',
-              a: 'Una página de tu panel donde subes tus propios documentos: notas, listas, guías, informes anteriores. LinkNotes aprende de ellos, y la guía usa lo que aprendió.',
+              a: 'Una página de tu panel donde subes tus propios documentos: notas, listas, guías, informes anteriores. MyTaskPilot aprende de ellos, y la guía usa lo que aprendió.',
             },
             {
               q: '¿Qué pasa con los archivos que subo?',
@@ -6060,8 +6060,8 @@ export default {
     },
     security: {
       seo: {
-        title: 'Privacidad y seguridad de tu pantalla: LinkNotes',
-        description: 'Cómo te protege LinkNotes: valores sensibles enmascarados en tu dispositivo antes de enviar nada, guía de solo lectura, documentos subidos borrados tras aprender y nunca descargables, un autenticador en tu cuenta, un registro de cada sesión, cifrado en reposo y sesiones que puedes borrar cuando quieras.',
+        title: 'Privacidad y seguridad de tu pantalla: MyTaskPilot',
+        description: 'Cómo te protege MyTaskPilot: valores sensibles enmascarados en tu dispositivo antes de enviar nada, guía de solo lectura, documentos subidos borrados tras aprender y nunca descargables, un autenticador en tu cuenta, un registro de cada sesión, cifrado en reposo y sesiones que puedes borrar cuando quieras.',
       },
       hero: {
         eyebrow: 'Privado por diseño',
