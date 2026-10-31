@@ -41,7 +41,9 @@ test('the token is shown once and stored only as a hash', async () => {
   assert.equal(list.data.tokens[0].secret, undefined)
   assert.match(list.data.baseUrl, /\/api\/work\/scim\/v2$/)
   const raw = JSON.stringify(store.listScimTokens(co.id))
-  assert.ok(!raw.includes(TOKEN.split('_').pop()), 'the secret is not in the stored record')
+  // The 43-char secret from the token shape (split('_') would cut it short:
+  // the secret is base64url and may contain '_').
+  assert.ok(!raw.includes(R.TOKEN_RE.exec(TOKEN)[2]), 'the secret is not in the stored record')
 })
 
 test('no token, a wrong token or a malformed token gets 401 in SCIM form', async () => {

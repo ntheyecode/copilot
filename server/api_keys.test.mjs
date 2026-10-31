@@ -45,9 +45,14 @@ test('create returns the secret once; list never carries it; the key resolves to
   assert.equal(key.last4, secret.slice(-4))
   assert.equal(key.status, 'active')
   const listed = JSON.stringify(h.keys.listApiKeys('a1'))
-  assert.ok(!listed.includes(secret.split('_').pop()), 'the secret never appears in a list')
-  assert.ok(!JSON.stringify(h.db.apiKeys).includes(secret.split('_').pop()), 'the secret is never stored')
-  assert.ok(!JSON.stringify(h.audits).includes(secret.split('_').pop()), 'the secret is never audited')
+  // The secret part after the fixed prefix. Not split('_').pop(): the random
+  // part is base64url and may itself contain '_', which left a short fragment
+  // that the list's last4 could match by chance (a flaky failure).
+  const tail = secret.replace(/^wcp_live_[a-f0-9]{16}_/, '')
+  assert.ok(tail.length >= 20, 'the secret has a long random part')
+  assert.ok(!listed.includes(tail), 'the secret never appears in a list')
+  assert.ok(!JSON.stringify(h.db.apiKeys).includes(tail), 'the secret is never stored')
+  assert.ok(!JSON.stringify(h.audits).includes(tail), 'the secret is never audited')
   const r = h.keys.resolveApiKey(secret, { ip: '203.0.113.1' })
   assert.deepEqual(r, { ok: true, principal: { kind: 'api_key', keyId: key.id, companyId: 'cA', scopes: ['brain:query', 'workflows:read'] } })
   assert.ok(!('userId' in r.principal))
