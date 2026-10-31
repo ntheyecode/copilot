@@ -3521,6 +3521,7 @@ export default {
       start: 'Loslegen',
       openMenu: 'Menü öffnen',
       closeMenu: 'Menü schließen',
+      crumbs: 'Pfadnavigation',
       language: 'Sprache',
     },
     footer: {

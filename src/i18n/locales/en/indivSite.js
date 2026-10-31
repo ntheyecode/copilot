@@ -29,6 +29,7 @@ export default {
       start: 'Get started',
       openMenu: 'Open menu',
       closeMenu: 'Close menu',
+      crumbs: 'Breadcrumb',
       language: 'Language',
     },
     footer: {

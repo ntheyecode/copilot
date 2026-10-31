@@ -4407,6 +4407,7 @@ export default {
       start: 'Начать',
       openMenu: 'Открыть меню',
       closeMenu: 'Закрыть меню',
+      crumbs: 'Навигационная цепочка',
       language: 'Язык',
     },
     footer: {

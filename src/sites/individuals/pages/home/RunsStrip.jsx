@@ -1,7 +1,7 @@
 // Home RUNS: where it runs, three tiles (Windows desktop app, Android app,
 // Float on top in the browser) and, across the row below them, the camera
-// card: point a camera at another screen or a machine (items[3], marked New).
-// Strings: indiv.home.runs.*.
+// card on a lavender tint: point a camera at another screen or a machine
+// (items[3], marked New). Strings: indiv.home.runs.*.
 import { Monitor, Smartphone, PictureInPicture2, Camera } from 'lucide-react'
 import { SectionHead } from '../../IndivShell.jsx'
 
@@ -18,15 +18,15 @@ export default function RunsStrip({ t }) {
         <SectionHead t={t} id="lnhm-runs" eyebrow="indiv.home.runs.eyebrow" h2="indiv.home.runs.h2" center />
         <div className="ln-grid c3">
           {tiles.map((r, i) => { const { ic: Ic, tone } = TILES[i]; return (
-            <article className="ln-card lnhm-run" key={r.t} data-reveal style={{ transitionDelay: `${i * 60}ms` }}>
-              <span className={'ln-ic ' + tone}><Ic size={22} aria-hidden /></span>
+            <article className="ln-card hov lnhm-run" key={r.t} data-reveal style={{ transitionDelay: `${i * 60}ms` }}>
+              <span className={'ln-ic ' + tone}><Ic size={24} aria-hidden /></span>
               <h3>{r.t}</h3><p>{r.d}</p>
             </article>
           ) })}
         </div>
         {cam && (
-          <article className="ln-card pop lnhm-cam" data-reveal style={{ transitionDelay: `${TILES.length * 60}ms` }}>
-            <span className="ln-ic amber"><Camera size={22} aria-hidden /></span>
+          <article className="ln-card t-lav lnhm-cam" data-reveal style={{ transitionDelay: `${TILES.length * 60}ms` }}>
+            <span className="ln-ic white"><Camera size={24} aria-hidden /></span>
             <div className="lnhm-cam-body">
               <div className="lnhm-cam-head"><h3>{cam.t}</h3><span className="ln-pill lime">{t('indiv.common.new')}</span></div>
               <p>{cam.d}</p>
@@ -39,14 +39,14 @@ export default function RunsStrip({ t }) {
 }
 
 const CSS = `
-.lnhm-run{text-align:center;display:flex;flex-direction:column;align-items:center;padding:32px 24px}
-.lnhm-run .ln-ic{width:56px;height:56px;border-radius:18px}
-.lnhm-run h3{font-size:19px}
-.lnhm-cam{margin-top:18px;display:flex;gap:20px;align-items:flex-start;padding:28px}
-.lnhm-cam .ln-ic{width:56px;height:56px;border-radius:18px}
+.lnhm-run{text-align:center;display:flex;flex-direction:column;align-items:center;padding:34px 24px}
+.lnhm-run .ln-ic{width:60px;height:60px;border-radius:20px}
+.lnhm-run h3{font-size:20px}
+.lnhm-cam{margin-top:20px;display:flex;gap:22px;align-items:flex-start;padding:32px}
+.lnhm-cam .ln-ic{width:60px;height:60px;border-radius:20px}
 .lnhm-cam-body{min-width:0;flex:1 1 auto}
 .lnhm-cam-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
-.lnhm-cam h3{margin-top:0;font-size:21px;min-width:0}
+.lnhm-cam h3{margin-top:0;font-size:22px;min-width:0}
 .lnhm-cam p{margin-top:8px;font-size:15.5px;max-width:72ch}
-@media (max-width:640px){.lnhm-cam{flex-direction:column;gap:14px;padding:20px}.lnhm-cam h3{font-size:19px}}
+@media (max-width:640px){.lnhm-cam{flex-direction:column;gap:14px;padding:22px}.lnhm-cam h3{font-size:19px}}
 `

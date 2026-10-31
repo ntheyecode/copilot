@@ -6534,6 +6534,7 @@ export default {
       start: '开始使用',
       openMenu: '打开菜单',
       closeMenu: '关闭菜单',
+      crumbs: '面包屑导航',
       language: '语言',
     },
     footer: {

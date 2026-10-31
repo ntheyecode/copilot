@@ -1,5 +1,5 @@
-// Home PRIVACY: three points + the masking visual, and the link to the
-// privacy page. Strings: indiv.home.privacy.*.
+// Home PRIVACY: three points + the masking visual on a lavender stage, and the
+// link to the privacy page. Strings: indiv.home.privacy.*.
 import { ArrowRight, Check } from 'lucide-react'
 import MaskVisual from '../../visuals/MaskVisual.jsx'
 
@@ -15,18 +15,17 @@ export default function PrivacyBand({ t }) {
           <ul className="lnhm-priv">
             {points.map((p) => <li key={p.t}><span className="ln-tick"><Check size={13} aria-hidden /></span><div><b>{p.t}</b><span>{p.d}</span></div></li>)}
           </ul>
-          <a className="ln-btn ghost sm" href="/workcopilot/security">{t('indiv.home.privacy.cta')} <ArrowRight size={14} aria-hidden className="ln-arrow" /></a>
+          <a className="ln-btn link" href="/workcopilot/security">{t('indiv.home.privacy.cta')} <ArrowRight size={15} aria-hidden className="ln-arrow" /></a>
         </div>
-        <div className="ln-band-visual" data-reveal><MaskVisual compact /></div>
+        <div className="ln-band-visual" data-reveal><div className="ln-stage"><MaskVisual compact /></div></div>
       </div>
     </section>
   )
 }
 
 const CSS = `
-.lnhm-priv{list-style:none;margin:24px 0 28px;padding:0;display:flex;flex-direction:column;gap:16px}
+.lnhm-priv{list-style:none;margin:26px 0 28px;padding:0;display:flex;flex-direction:column;gap:18px}
 .lnhm-priv li{display:flex;gap:12px;align-items:flex-start}
-.lnhm-priv .ln-tick{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:7px;background:var(--ln-lime);border:1.5px solid var(--ln-ink);color:var(--ln-ink);flex:0 0 auto;margin-top:2px}
-.lnhm-priv b{display:block;font-size:16.5px;color:var(--ln-ink);letter-spacing:-.01em}
-.lnhm-priv span:not(.ln-tick){display:block;font-size:15px;color:var(--ln-ink-2);margin-top:3px;line-height:1.5}
+.lnhm-priv b{display:block;font-size:17px;color:var(--ln-ink);font-family:var(--ln-display);letter-spacing:-.01em}
+.lnhm-priv span:not(.ln-tick){display:block;font-size:15.5px;color:var(--ln-ink-2);margin-top:3px;line-height:1.55}
 `

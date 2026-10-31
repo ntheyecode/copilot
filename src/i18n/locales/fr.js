@@ -4426,6 +4426,7 @@ export default {
       start: 'Commencer',
       openMenu: 'Ouvrir le menu',
       closeMenu: 'Fermer le menu',
+      crumbs: 'Fil d’Ariane',
       language: 'Langue',
     },
     footer: {

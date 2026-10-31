@@ -5010,6 +5010,7 @@ export default {
       start: '시작하기',
       openMenu: '메뉴 열기',
       closeMenu: '메뉴 닫기',
+      crumbs: '탐색 경로',
       language: '언어',
     },
     footer: {

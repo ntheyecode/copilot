@@ -7166,6 +7166,7 @@ export default {
       start: 'Bắt đầu',
       openMenu: 'Mở menu',
       closeMenu: 'Đóng menu',
+      crumbs: 'Đường dẫn điều hướng',
       language: 'Ngôn ngữ',
     },
     footer: {

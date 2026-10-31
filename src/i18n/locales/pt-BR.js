@@ -4823,6 +4823,7 @@ export default {
       start: 'Começar',
       openMenu: 'Abrir menu',
       closeMenu: 'Fechar menu',
+      crumbs: 'Trilha de navegação',
       language: 'Idioma',
     },
     footer: {

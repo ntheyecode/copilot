@@ -5592,6 +5592,7 @@ export default {
       start: 'Empezar',
       openMenu: 'Abrir menú',
       closeMenu: 'Cerrar menú',
+      crumbs: 'Ruta de navegación',
       language: 'Idioma',
     },
     footer: {

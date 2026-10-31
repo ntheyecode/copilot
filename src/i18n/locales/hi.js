@@ -4261,6 +4261,7 @@ export default {
       start: 'शुरू करें',
       openMenu: 'मेनू खोलें',
       closeMenu: 'मेनू बंद करें',
+      crumbs: 'ब्रेडक्रम्ब नेविगेशन',
       language: 'भाषा',
     },
     footer: {

@@ -2,7 +2,17 @@
 // stylesheet, the header, a <main> landmark and the footer. It also runs the
 // site-wide scroll reveal (src/reveal.js) over the page's [data-reveal] blocks.
 // Pages pass their own small <style> blocks as children.
+//
+// Fonts: the site's display face (Bricolage Grotesque, heavy) and body face
+// (Figtree, regular to bold) are the self-hosted @fontsource files already in
+// the product; main.jsx registers the 400 weights, this chunk adds the weights
+// the site's headings and buttons use. No font request ever leaves the origin.
 import { useEffect, useRef } from 'react'
+import '@fontsource/bricolage-grotesque/700.css'
+import '@fontsource/bricolage-grotesque/800.css'
+import '@fontsource/figtree/500.css'
+import '@fontsource/figtree/600.css'
+import '@fontsource/figtree/700.css'
 import IndivHeader from './IndivHeader.jsx'
 import IndivFooter from './IndivFooter.jsx'
 import { LN_CSS } from './site.css.js'

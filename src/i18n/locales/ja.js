@@ -6561,6 +6561,7 @@ export default {
       start: 'はじめる',
       openMenu: 'メニューを開く',
       closeMenu: 'メニューを閉じる',
+      crumbs: 'パンくずリスト',
       language: '言語',
     },
     footer: {

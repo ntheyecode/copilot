@@ -6833,6 +6833,7 @@ export default {
       start: 'ابدأ الآن',
       openMenu: 'فتح القائمة',
       closeMenu: 'إغلاق القائمة',
+      crumbs: 'مسار التنقل',
       language: 'اللغة',
     },
     footer: {

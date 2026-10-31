@@ -4389,6 +4389,7 @@ export default {
       start: 'Mulai sekarang',
       openMenu: 'Buka menu',
       closeMenu: 'Tutup menu',
+      crumbs: 'Jejak navigasi',
       language: 'Bahasa',
     },
     footer: {

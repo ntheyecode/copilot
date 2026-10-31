@@ -36,10 +36,10 @@ export default function MaskVisual({ compact = false }) {
 
 const CSS = `
 .lnmk{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;width:100%;max-width:620px;margin-inline:auto}
-.lnmk-panel{background:#fff;border:1.5px solid var(--ln-line-2);border-radius:16px;padding:16px;min-width:0}
-.lnmk-panel.after{border-color:var(--ln-ink);box-shadow:6px 6px 0 var(--ln-lime)}
-.lnmk-title{display:flex;align-items:center;gap:6px;font-family:var(--ln-mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ln-ink-3);margin-bottom:12px}
-.lnmk-panel.after .lnmk-title{color:var(--ln-violet-ink)}
+.lnmk-panel{background:#fff;border:1px solid var(--ln-line);border-radius:16px;padding:16px;min-width:0;box-shadow:var(--ln-shadow)}
+.lnmk-panel.after{border-color:transparent;box-shadow:0 0 0 2px var(--ln-violet),var(--ln-shadow-2)}
+.lnmk-title{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--ln-ink-3);margin-bottom:12px}
+.lnmk-panel.after .lnmk-title{color:var(--ln-violet)}
 .lnmk dl{margin:0;display:flex;flex-direction:column;gap:10px}
 .lnmk-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:8px;align-items:center;font-size:13px}
 .lnmk-row dt{color:var(--ln-ink-2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

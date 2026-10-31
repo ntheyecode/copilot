@@ -23,9 +23,9 @@ export default function PlansTeaser({ t, model, loading }) {
 }
 
 const CSS = `
-.lnhm-plans-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:34px;flex-wrap:wrap}
-.lnhm-plans-head>div{max-width:620px}
-.lnhm-plans-head p{margin-top:14px;font-size:17px}
+.lnhm-plans-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:40px;flex-wrap:wrap}
+.lnhm-plans-head>div{max-width:640px}
+.lnhm-plans-head p{margin-top:14px;font-size:17.5px}
 .lnhm-plans-head .ln-btn{flex:0 0 auto;margin-bottom:6px}
 @media (max-width:640px){.lnhm-plans-head .ln-btn{width:100%}}
 `

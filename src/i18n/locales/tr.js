@@ -4456,6 +4456,7 @@ export default {
       start: 'Hemen başla',
       openMenu: 'Menüyü aç',
       closeMenu: 'Menüyü kapat',
+      crumbs: 'Gezinti yolu',
       language: 'Dil',
     },
     footer: {
