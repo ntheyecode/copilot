@@ -39,7 +39,7 @@ test('saas: capability meta, organization offers, and prerendered routes for org
   assert.equal(r.audience, 'organizations')
   assert.ok(r.prerenderedRoutes >= 6, `prerendered ${r.prerenderedRoutes}`)
   const shell = fs.readFileSync(path.join(dir, 'index.html'), 'utf8')
-  assert.match(shell, /<meta name="wcp-capabilities" content="saas_companies,stripe_billing,platform_ai,brain_export,brain_query,public_site"/)
+  assert.match(shell, /<meta name="wcp-capabilities" content="saas_companies,platform_ai,brain_export,brain_query,public_site"/)
   assert.doesNotMatch(shell, /"name":"Lite"|Self-service plans|\$1/)
   assert.match(shell, /"text": "WorkCoPilot is sold to organizations/)
   assert.match(shell, /Hosted for your company/)

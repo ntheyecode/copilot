@@ -13,7 +13,7 @@ const { req, jar } = app
 test('no config reports the all edition with every capability it had, plus individual_plans', async () => {
   const r = await req(jar(), 'GET', '/api/work/edition')
   assert.equal(r.data.edition, 'all')
-  assert.deepEqual(r.data.capabilities, ['solo_signup', 'saas_companies', 'individual_plans', 'stripe_billing', 'platform_ai', 'brain_export', 'brain_query', 'public_site'])
+  assert.deepEqual(r.data.capabilities, ['solo_signup', 'saas_companies', 'individual_plans', 'stripe_billing', 'platform_ai', 'brain_export', 'brain_query', 'public_site', 'social_login'])
 })
 
 test('self sign-up works and the account is offered upgrades as before', async () => {
