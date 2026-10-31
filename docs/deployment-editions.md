@@ -634,7 +634,11 @@ capabilities, and the page source carries the matching
   copy gate prints how many legal strings still mention companies
   (`LEGAL_PENDING`). The DPA footer link is hidden; the page stays reachable
   because the terms link to it.
-- Serves: the marketing site in the individuals wording, personal sign-up,
-  personal plans and checkout, the app for individuals.
+- Serves: the individuals marketing site (`src/sites/individuals/`, capability
+  `individual_site`: home, how it works, pricing, who it is for, FAQ and
+  privacy, at the usual public paths, with the shared legal pages linked),
+  personal sign-up, personal plans and checkout, the app for individuals
+  (dashboard with the billing alert, `/work/billing` with in-app cancel at
+  period end and resume, invoices, the Stripe portal for the payment method).
 - Refuses: every company route family (403, neutral wording) and company
   creation.
