@@ -9384,6 +9384,57 @@ export default {
       security: '安全',
     },
   },
+  edition: {
+    signupClosed: {
+      metaTitle: 'WorkCoPilot 面向组织提供 - AdmireVeda',
+      h1: 'WorkCoPilot 面向组织提供',
+      p: '此处不提供个人注册。要把 WorkCoPilot 引入您的公司，请联系我们，我们会为您的团队完成部署。',
+      member: '您所在的公司已在使用 WorkCoPilot？请用公司账户登录，或向公司管理员申请访问权限。',
+      talk: '联系我们',
+      signIn: '登录',
+    },
+    orgPlans: {
+      popular: '最多选择',
+      cta: '联系我们',
+      note: '每个方案都包含每台设备上的数据保护、公司策略和审计日志。价格按贵公司情况报价。',
+      hosted: {
+        name: '公司托管版',
+        price: '按公司规模，按人计价',
+        lead: '在我们的托管服务上为贵公司开通，签约当天即可使用。',
+        p1: '公司控制台、单点登录，以及由您启用并锁定的公司策略',
+        p2: '由公司管理员分配的引导小时池',
+        p3: 'Company Brain 与教授工作流程，仅贵公司私有',
+      },
+      managed: {
+        name: '托管私有云',
+        price: '按需报价',
+        lead: '在您自己的云中，由我们为您运维的专属部署。',
+        p1: '数据留在您自己的云数据库中',
+        p2: '由我们为您运维和更新',
+        p3: '使用我们的 AI，按实际用量计费',
+      },
+      onprem: {
+        name: '本地部署',
+        price: '按需提供',
+        lead: '安装在您自己的服务器上，完全由您掌控。',
+        p1: '使用您自己的 AI 提供商密钥运行',
+        p2: '通过安装许可证激活',
+        p3: '您自己的数据库，您自己的网络',
+      },
+    },
+    validate: {
+      talk: '聊聊您团队的需求',
+      plans: '查看组织方案',
+    },
+    app: {
+      noPlanTitle: '此账户尚无方案',
+      noPlanBody: '此处不销售个人方案。您的访问权限由公司授予：请让公司管理员将您添加进来。',
+      noPlanTalk: '联系我们',
+    },
+    login: {
+      orgOnly: '第一次用 WorkCoPilot？它面向组织提供。<a>联系我们</a>。',
+    },
+  },
   enterprisePage: {
     art: {
       sop: 'SOP',

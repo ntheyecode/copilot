@@ -117,4 +117,17 @@ export default deepMerge(en, {
       improve: 'To improve WorkCoPilot, skills and content you add may be used in de-identified form to enhance the service. Your personal data is stripped on your device first. Company accounts are exempt: company knowledge stays private. <a>Learn more</a>.',
     },
   },
+  // Edition-only surfaces (en/editionPages.js): the British spelling of the
+  // keys that differ; the rest inherits the US English.
+  edition: {
+    signupClosed: {
+      metaTitle: 'WorkCoPilot is for organisations - AdmireVeda',
+      h1: 'WorkCoPilot is for organisations',
+    },
+    orgPlans: {
+      onprem: { p2: 'Activated by a licence on the installation' },
+    },
+    validate: { plans: 'See plans for organisations' },
+    login: { orgOnly: 'New to WorkCoPilot? It is for organisations. <a>Talk to us</a>.' },
+  },
 })

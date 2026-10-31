@@ -9568,6 +9568,57 @@ export default {
       security: 'Segurança',
     },
   },
+  edition: {
+    signupClosed: {
+      metaTitle: 'WorkCoPilot é para organizações - AdmireVeda',
+      h1: 'WorkCoPilot é para organizações',
+      p: 'O cadastro pessoal não está disponível aqui. Para levar o WorkCoPilot à sua empresa, fale conosco e nós configuramos a sua equipe.',
+      member: 'Já faz parte de uma empresa que usa o WorkCoPilot? Entre com a sua conta da empresa ou peça acesso ao administrador da sua empresa.',
+      talk: 'Fale conosco',
+      signIn: 'Entrar',
+    },
+    orgPlans: {
+      popular: 'Mais escolhido',
+      cta: 'Fale conosco',
+      note: 'Todo plano inclui proteção de dados em cada dispositivo, política da empresa e logs de auditoria. Os preços são cotados para a sua empresa.',
+      hosted: {
+        name: 'Hospedado para a sua empresa',
+        price: 'Preço por pessoa, conforme o tamanho da empresa',
+        lead: 'Sua empresa no nosso serviço hospedado, pronta no dia em que você assina.',
+        p1: 'Console da empresa, login único e política da empresa que você ativa e bloqueia',
+        p2: 'Um pool de horas guiadas que o administrador da sua empresa distribui',
+        p3: 'Company Brain e fluxos de trabalho ensinados, privados para a sua empresa',
+      },
+      managed: {
+        name: 'Nuvem privada gerenciada',
+        price: 'Cotação sob consulta',
+        lead: 'Uma instalação dedicada que operamos para você na sua própria nuvem.',
+        p1: 'Seus dados ficam no seu próprio banco de dados na nuvem',
+        p2: 'Nós operamos e atualizamos tudo para você',
+        p3: 'Nossa IA, cobrada pelo uso que você faz',
+      },
+      onprem: {
+        name: 'On-premises',
+        price: 'Disponível sob consulta',
+        lead: 'Instalado nos seus próprios servidores, sob o seu controle.',
+        p1: 'Roda com as suas próprias chaves de provedor de IA',
+        p2: 'Ativado por uma licença na instalação',
+        p3: 'Seu próprio banco de dados e sua própria rede',
+      },
+    },
+    validate: {
+      talk: 'Fale conosco sobre a sua equipe',
+      plans: 'Ver planos para organizações',
+    },
+    app: {
+      noPlanTitle: 'Esta conta ainda não tem um plano',
+      noPlanBody: 'Planos pessoais não são vendidos aqui. Seu acesso vem da sua empresa: peça ao administrador da sua empresa para adicionar você.',
+      noPlanTalk: 'Fale conosco',
+    },
+    login: {
+      orgOnly: 'Novo no WorkCoPilot? Ele é para organizações. <a>Fale conosco</a>.',
+    },
+  },
   enterprisePage: {
     art: {
       sop: 'SOP',

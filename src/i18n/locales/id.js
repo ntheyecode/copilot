@@ -9540,6 +9540,57 @@ export default {
       security: 'Keamanan',
     },
   },
+  edition: {
+    signupClosed: {
+      metaTitle: 'WorkCoPilot untuk organisasi - AdmireVeda',
+      h1: 'WorkCoPilot untuk organisasi',
+      p: 'Pendaftaran pribadi tidak tersedia di sini. Untuk membawa WorkCoPilot ke perusahaan Anda, hubungi kami dan kami akan menyiapkan tim Anda.',
+      member: 'Sudah bergabung dengan perusahaan yang memakai WorkCoPilot? Masuk dengan akun perusahaan Anda, atau minta akses ke administrator perusahaan Anda.',
+      talk: 'Hubungi kami',
+      signIn: 'Masuk',
+    },
+    orgPlans: {
+      popular: 'Paling banyak dipilih',
+      cta: 'Hubungi kami',
+      note: 'Setiap paket mencakup perlindungan data di setiap perangkat, kebijakan perusahaan, dan log audit. Harga ditawarkan khusus untuk perusahaan Anda.',
+      hosted: {
+        name: 'Dihosting untuk perusahaan Anda',
+        price: 'Harga per orang menurut ukuran perusahaan',
+        lead: 'Perusahaan Anda di layanan hosting kami, siap pada hari Anda menandatangani.',
+        p1: 'Konsol perusahaan, single sign-on, dan kebijakan perusahaan yang Anda aktifkan dan kunci',
+        p2: 'Pool jam panduan yang dibagikan oleh administrator perusahaan Anda',
+        p3: 'Company Brain dan alur kerja yang diajarkan, privat untuk perusahaan Anda',
+      },
+      managed: {
+        name: 'Cloud privat terkelola',
+        price: 'Penawaran berdasarkan permintaan',
+        lead: 'Instalasi khusus yang kami jalankan untuk Anda di cloud Anda sendiri.',
+        p1: 'Data Anda tetap di basis data cloud Anda sendiri',
+        p2: 'Kami yang mengoperasikan dan memperbaruinya untuk Anda',
+        p3: 'AI kami, ditagih sesuai pemakaian Anda',
+      },
+      onprem: {
+        name: 'On-premise',
+        price: 'Tersedia berdasarkan permintaan',
+        lead: 'Dipasang di server Anda sendiri, sepenuhnya dalam kendali Anda.',
+        p1: 'Berjalan dengan kunci penyedia AI Anda sendiri',
+        p2: 'Diaktifkan dengan lisensi pada instalasi',
+        p3: 'Basis data Anda sendiri dan jaringan Anda sendiri',
+      },
+    },
+    validate: {
+      talk: 'Bicarakan tim Anda dengan kami',
+      plans: 'Lihat paket untuk organisasi',
+    },
+    app: {
+      noPlanTitle: 'Akun ini belum memiliki paket',
+      noPlanBody: 'Paket pribadi tidak dijual di sini. Akses Anda berasal dari perusahaan Anda: minta administrator perusahaan Anda untuk menambahkan Anda.',
+      noPlanTalk: 'Hubungi kami',
+    },
+    login: {
+      orgOnly: 'Baru di WorkCoPilot? WorkCoPilot ditujukan untuk organisasi. <a>Hubungi kami</a>.',
+    },
+  },
   enterprisePage: {
     art: {
       sop: 'SOP',

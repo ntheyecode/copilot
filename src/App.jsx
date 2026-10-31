@@ -29,6 +29,8 @@ import WorkContact from './pages/WorkContact.jsx'
 import AffiliatePage from './pages/AffiliatePage.jsx'
 import WorkSetPassword from './pages/WorkSetPassword.jsx'
 import OnboardingPage from './pages/onboarding/OnboardingPage.jsx'   // subscribe: create account -> verify -> pay -> welcome
+import SignupClosed from './pages/onboarding/SignupClosed.jsx'         // where personal sign-up is off: who it is for + talk to us / sign in
+import EditionRoute from './edition/EditionRoute.jsx'                  // capability gate per route (src/edition/surfaces.js)
 // Signed-in app + admin consoles are code-split: public marketing/SEO visitors
 // never download them, which keeps the initial bundle (and LCP) small.
 // The signed-in app is a shared shell (WorkAppLayout) with per-route pages under
@@ -124,18 +126,21 @@ export default function App() {
       <Route path="/workcopilot" element={<WorkLogin />} />
       <Route path="/workcopilot/login" element={<WorkLogin />} />
       {/* Subscribe onboarding (public; the server state picks the step, the URL mirrors it). */}
-      <Route path="/workcopilot/signup" element={<OnboardingPage />} />
-      <Route path="/workcopilot/signup/:step" element={<OnboardingPage />} />
+      <Route path="/workcopilot/signup" element={<EditionRoute needs="soloSignup" fallback={<SignupClosed />}><OnboardingPage /></EditionRoute>} />
+      <Route path="/workcopilot/signup/:step" element={<EditionRoute needs="soloSignup" fallback={<SignupClosed />}><OnboardingPage /></EditionRoute>} />
       <Route path="/workcopilot/use-cases" element={<WorkUseCases />} />
       <Route path="/workcopilot/security" element={<WorkSecurity />} />
       {/* Enterprise features: the full list, linked from the main page + nav. */}
-      <Route path="/workcopilot/enterprise" element={<WorkEnterprise />} />
-      <Route path="/enterprise" element={<WorkEnterprise />} />
+      <Route path="/workcopilot/enterprise" element={<EditionRoute needs="companies"><WorkEnterprise /></EditionRoute>} />
+      <Route path="/enterprise" element={<EditionRoute needs="companies"><WorkEnterprise /></EditionRoute>} />
       {/* Public legal pages (plain-language disclosures, same light design as /security). */}
       <Route path="/workcopilot/privacy" element={<WorkPrivacy />} />
       <Route path="/workcopilot/disclaimer" element={<WorkDisclaimer />} />
       <Route path="/workcopilot/terms" element={<WorkTerms />} />
       <Route path="/workcopilot/acceptable-use" element={<WorkAcceptableUse />} />
+      {/* The DPA stays reachable on every edition: the terms page links to it
+          (legal text per audience is an owner decision); only the footer link
+          is hidden where there are no company tenants. */}
       <Route path="/workcopilot/dpa" element={<WorkDPA />} />
       <Route path="/workcopilot/refund" element={<WorkRefund />} />
       {/* Added compliance pages (global standard): cookie policy, subprocessors, accessibility. */}
@@ -179,13 +184,14 @@ export default function App() {
           <Route path="projects/:id" element={<ProjectView />} />
           {/* Enterprise: the Worker queue (assigned tasks), the project manager's
               projects + one managed project, the senior PM roll-up, GRC oversight. */}
-          <Route path="queue" element={<QueuePage />} />
-          <Route path="pm" element={<PmDashboard />} />
-          <Route path="pm/:id" element={<PmProjectView />} />
-          <Route path="srpm" element={<SrPmDashboard />} />
-          <Route path="grc" element={<GrcDashboard />} />
-          <Route path="templates" element={<TemplatesPage />} />
-          <Route path="templates/:id" element={<TemplateRollup />} />
+          {/* Company-only surfaces: an edition with no company tenants sends them home. */}
+          <Route path="queue" element={<EditionRoute needs="companies" to="/work"><QueuePage /></EditionRoute>} />
+          <Route path="pm" element={<EditionRoute needs="companies" to="/work"><PmDashboard /></EditionRoute>} />
+          <Route path="pm/:id" element={<EditionRoute needs="companies" to="/work"><PmProjectView /></EditionRoute>} />
+          <Route path="srpm" element={<EditionRoute needs="companies" to="/work"><SrPmDashboard /></EditionRoute>} />
+          <Route path="grc" element={<EditionRoute needs="companies" to="/work"><GrcDashboard /></EditionRoute>} />
+          <Route path="templates" element={<EditionRoute needs="companies" to="/work"><TemplatesPage /></EditionRoute>} />
+          <Route path="templates/:id" element={<EditionRoute needs="companies" to="/work"><TemplateRollup /></EditionRoute>} />
           <Route path="session/:id" element={<Guiding />} />
         </Route>
         {/* Chrome-free buddy window the desktop shell loads (workcopilot/main.js). */}
@@ -195,14 +201,14 @@ export default function App() {
         {/* Separate admin console (own module + /api/work/admin/*). Self-gates on admin. */}
         <Route path="/work/admin" element={<WorkAdmin />} />
         {/* Company-admin console (own-company scope, /api/work/* + /api/work/team/*). Self-gates on company_admin. */}
-        <Route path="/work/company" element={<WorkCompanyAdmin />} />
-        <Route path="/work/exec" element={<WorkExec />} />
-        <Route path="/work/teach" element={<TeachStudio />} />
-        <Route path="/work/workflow-issues" element={<WorkflowIssues />} />
+        <Route path="/work/company" element={<EditionRoute needs="companies" to="/work"><WorkCompanyAdmin /></EditionRoute>} />
+        <Route path="/work/exec" element={<EditionRoute needs="companies" to="/work"><WorkExec /></EditionRoute>} />
+        <Route path="/work/teach" element={<EditionRoute needs="companies" to="/work"><TeachStudio /></EditionRoute>} />
+        <Route path="/work/workflow-issues" element={<EditionRoute needs="companies" to="/work"><WorkflowIssues /></EditionRoute>} />
         {/* Launch link from a company's own app: redeems the fragment token, then
             starts the workflow and opens /work/session/:id. Self-gates on the
             session (parks the token through the sign-in hop when needed). */}
-        <Route path="/work/launch" element={<LaunchPage />} />
+        <Route path="/work/launch" element={<EditionRoute needs="companies" to="/work"><LaunchPage /></EditionRoute>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

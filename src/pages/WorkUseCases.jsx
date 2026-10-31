@@ -11,6 +11,8 @@ import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in t
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the use-cases page too
 import GuideShowcase from '../components/GuideShowcase.jsx'   // pick a field, watch the guide console on that work
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
+import { useEditionView } from '../edition/useCaps.js'   // edition: where "start" leads (sign-up, or the sales conversation)
+import { startPath } from '../edition/surfaces.js'
 import { useT } from '../i18n/index.jsx'                   // localized <title>/description (seo.* keys) + useCases.* / notChat.*
 import { revealOnScroll } from '../reveal.js'              // the ONE scroll-reveal mechanism for the site
 
@@ -47,6 +49,7 @@ const CASE_META = [
 ]
 
 export default function WorkUseCases() {
+  const ed = useEditionView()
   const nav = useNavigate()
   const rootRef = useRef(null)
   const t = useT()
@@ -57,7 +60,7 @@ export default function WorkUseCases() {
   })
   // Scroll reveals: the shared site mechanism (src/reveal.js).
   useEffect(() => revealOnScroll(rootRef.current, (el) => el.classList.add('in')), [])
-  const go = () => nav('/workcopilot')
+  const go = () => nav(startPath(ed))
 
   // Each case: a short category label (eyebrow + chip), a result-led outcome
   // headline, ONE benefit line, the real jobs it covers, and a light guided

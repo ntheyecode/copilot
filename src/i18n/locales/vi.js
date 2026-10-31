@@ -9544,6 +9544,57 @@ export default {
       security: 'Bảo mật',
     },
   },
+  edition: {
+    signupClosed: {
+      metaTitle: 'WorkCoPilot dành cho tổ chức - AdmireVeda',
+      h1: 'WorkCoPilot dành cho tổ chức',
+      p: 'Không có đăng ký cá nhân ở đây. Để đưa WorkCoPilot về công ty bạn, hãy trao đổi với chúng tôi và chúng tôi sẽ thiết lập cho đội ngũ của bạn.',
+      member: 'Bạn đang làm tại một công ty dùng WorkCoPilot? Đăng nhập bằng tài khoản công ty, hoặc nhờ quản trị viên công ty cấp quyền truy cập.',
+      talk: 'Trao đổi với chúng tôi',
+      signIn: 'Đăng nhập',
+    },
+    orgPlans: {
+      popular: 'Được chọn nhiều nhất',
+      cta: 'Trao đổi với chúng tôi',
+      note: 'Mọi gói đều bao gồm bảo vệ dữ liệu trên từng thiết bị, chính sách công ty và nhật ký kiểm toán. Giá được báo riêng cho công ty bạn.',
+      hosted: {
+        name: 'Lưu trữ cho công ty bạn',
+        price: 'Tính theo người, theo quy mô công ty',
+        lead: 'Công ty bạn trên dịch vụ do chúng tôi lưu trữ, sẵn sàng ngay ngày bạn ký.',
+        p1: 'Bảng điều khiển công ty, đăng nhập một lần và chính sách công ty do bạn kích hoạt và khóa',
+        p2: 'Một quỹ giờ hướng dẫn do quản trị viên công ty bạn phân bổ',
+        p3: 'Company Brain và dạy quy trình, riêng tư cho công ty bạn',
+      },
+      managed: {
+        name: 'Đám mây riêng được quản lý',
+        price: 'Báo giá theo yêu cầu',
+        lead: 'Một bản cài đặt riêng mà chúng tôi vận hành cho bạn trên đám mây của chính bạn.',
+        p1: 'Dữ liệu của bạn ở lại trên cơ sở dữ liệu đám mây của chính bạn',
+        p2: 'Chúng tôi vận hành và cập nhật thay bạn',
+        p3: 'AI của chúng tôi, tính phí theo mức bạn thực dùng',
+      },
+      onprem: {
+        name: 'Cài đặt tại chỗ',
+        price: 'Có theo yêu cầu',
+        lead: 'Cài đặt trên máy chủ của chính bạn, dưới quyền kiểm soát của bạn.',
+        p1: 'Chạy bằng khóa nhà cung cấp AI của chính bạn',
+        p2: 'Kích hoạt bằng giấy phép trên bản cài đặt',
+        p3: 'Cơ sở dữ liệu riêng và mạng riêng của bạn',
+      },
+    },
+    validate: {
+      talk: 'Trao đổi với chúng tôi về đội ngũ của bạn',
+      plans: 'Xem các gói cho tổ chức',
+    },
+    app: {
+      noPlanTitle: 'Tài khoản này chưa có gói nào',
+      noPlanBody: 'Gói cá nhân không được bán ở đây. Quyền truy cập của bạn đến từ công ty: hãy nhờ quản trị viên công ty thêm bạn vào.',
+      noPlanTalk: 'Trao đổi với chúng tôi',
+    },
+    login: {
+      orgOnly: 'Mới dùng WorkCoPilot? Sản phẩm này dành cho tổ chức. <a>Trao đổi với chúng tôi</a>.',
+    },
+  },
   enterprisePage: {
     art: {
       sop: 'SOP',

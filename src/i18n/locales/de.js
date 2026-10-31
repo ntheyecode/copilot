@@ -9561,6 +9561,57 @@ export default {
       security: 'Sicherheit',
     },
   },
+  edition: {
+    signupClosed: {
+      metaTitle: 'WorkCoPilot ist für Organisationen - AdmireVeda',
+      h1: 'WorkCoPilot ist für Organisationen',
+      p: 'Eine persönliche Registrierung ist hier nicht möglich. Um WorkCoPilot in Ihr Unternehmen zu bringen, sprechen Sie mit uns, und wir richten Ihr Team ein.',
+      member: 'Sie gehören bereits zu einem Unternehmen, das WorkCoPilot nutzt? Melden Sie sich mit Ihrem Unternehmenskonto an oder bitten Sie Ihren Unternehmensadministrator um Zugang.',
+      talk: 'Sprechen Sie mit uns',
+      signIn: 'Anmelden',
+    },
+    orgPlans: {
+      popular: 'Am häufigsten gewählt',
+      cta: 'Sprechen Sie mit uns',
+      note: 'Jeder Tarif enthält Datenschutz auf jedem Gerät, Unternehmensrichtlinie und Prüfprotokolle. Die Preise erhalten Sie als Angebot für Ihr Unternehmen.',
+      hosted: {
+        name: 'Gehostet für Ihr Unternehmen',
+        price: 'Preis pro Person nach Unternehmensgröße',
+        lead: 'Ihr Unternehmen auf unserem gehosteten Dienst, einsatzbereit am Tag der Unterschrift.',
+        p1: 'Unternehmenskonsole, Single Sign-on und Unternehmensrichtlinie, die Sie scharfschalten und sperren',
+        p2: 'Ein Pool geführter Stunden, den Ihr Unternehmensadministrator verteilt',
+        p3: 'Company Brain und beigebrachte Workflows, privat für Ihr Unternehmen',
+      },
+      managed: {
+        name: 'Verwaltete Private Cloud',
+        price: 'Angebot auf Anfrage',
+        lead: 'Eine dedizierte Installation, die wir für Sie in Ihrer eigenen Cloud betreiben.',
+        p1: 'Ihre Daten bleiben in Ihrer eigenen Cloud-Datenbank',
+        p2: 'Wir betreiben und aktualisieren sie für Sie',
+        p3: 'Unsere KI, abgerechnet nach Ihrer tatsächlichen Nutzung',
+      },
+      onprem: {
+        name: 'On-Premises',
+        price: 'Auf Anfrage verfügbar',
+        lead: 'Installiert auf Ihren eigenen Servern, unter Ihrer eigenen Kontrolle.',
+        p1: 'Läuft mit Ihren eigenen KI-Anbieterschlüsseln',
+        p2: 'Aktiviert durch eine Lizenz auf der Installation',
+        p3: 'Ihre eigene Datenbank und Ihr eigenes Netzwerk',
+      },
+    },
+    validate: {
+      talk: 'Sprechen Sie mit uns über Ihr Team',
+      plans: 'Tarife für Organisationen ansehen',
+    },
+    app: {
+      noPlanTitle: 'Dieses Konto hat noch keinen Tarif',
+      noPlanBody: 'Persönliche Tarife werden hier nicht verkauft. Ihr Zugang kommt von Ihrem Unternehmen: Bitten Sie Ihren Unternehmensadministrator, Sie hinzuzufügen.',
+      noPlanTalk: 'Sprechen Sie mit uns',
+    },
+    login: {
+      orgOnly: 'Neu bei WorkCoPilot? Es ist für Organisationen. <a>Sprechen Sie mit uns</a>.',
+    },
+  },
   enterprisePage: {
     art: {
       sop: 'SOP',

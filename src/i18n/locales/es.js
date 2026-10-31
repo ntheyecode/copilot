@@ -9574,6 +9574,57 @@ export default {
       security: 'Seguridad',
     },
   },
+  edition: {
+    signupClosed: {
+      metaTitle: 'WorkCoPilot es para organizaciones - AdmireVeda',
+      h1: 'WorkCoPilot es para organizaciones',
+      p: 'El registro personal no está disponible aquí. Para llevar WorkCoPilot a tu empresa, habla con nosotros y pondremos en marcha a tu equipo.',
+      member: '¿Ya formas parte de una empresa que usa WorkCoPilot? Inicia sesión con tu cuenta de empresa o pide acceso al administrador de tu empresa.',
+      talk: 'Habla con nosotros',
+      signIn: 'Iniciar sesión',
+    },
+    orgPlans: {
+      popular: 'El más elegido',
+      cta: 'Habla con nosotros',
+      note: 'Todos los planes incluyen protección de datos en cada dispositivo, política de empresa y registros de auditoría. Los precios se presupuestan para tu empresa.',
+      hosted: {
+        name: 'Alojado para tu empresa',
+        price: 'Precio por persona según el tamaño de la empresa',
+        lead: 'Tu empresa en nuestro servicio alojado, lista el mismo día en que firmas.',
+        p1: 'Consola de empresa, inicio de sesión único y política de empresa que tú activas y bloqueas',
+        p2: 'Una bolsa de horas guiadas que el administrador de tu empresa reparte',
+        p3: 'Company Brain y flujos de trabajo enseñados, privados para tu empresa',
+      },
+      managed: {
+        name: 'Nube privada gestionada',
+        price: 'Presupuesto a petición',
+        lead: 'Una instalación dedicada que operamos para ti en tu propia nube.',
+        p1: 'Tus datos se quedan en tu propia base de datos en la nube',
+        p2: 'Nosotros la operamos y la actualizamos por ti',
+        p3: 'Nuestra IA, facturada según el uso que hagas',
+      },
+      onprem: {
+        name: 'En tus instalaciones',
+        price: 'Disponible a petición',
+        lead: 'Instalado en tus propios servidores, bajo tu propio control.',
+        p1: 'Funciona con tus propias claves de proveedor de IA',
+        p2: 'Se activa con una licencia en la instalación',
+        p3: 'Tu propia base de datos y tu propia red',
+      },
+    },
+    validate: {
+      talk: 'Habla con nosotros sobre tu equipo',
+      plans: 'Ver planes para organizaciones',
+    },
+    app: {
+      noPlanTitle: 'Esta cuenta aún no tiene plan',
+      noPlanBody: 'Aquí no se venden planes personales. Tu acceso viene de tu empresa: pide al administrador de tu empresa que te añada.',
+      noPlanTalk: 'Habla con nosotros',
+    },
+    login: {
+      orgOnly: '¿Nuevo en WorkCoPilot? Es para organizaciones. <a>Habla con nosotros</a>.',
+    },
+  },
   enterprisePage: {
     art: {
       sop: 'SOP',

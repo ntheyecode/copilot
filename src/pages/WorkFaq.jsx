@@ -23,6 +23,8 @@ import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium
 import useSeo, { useJsonLd } from '../useSeo.js'   // per-route title/description/canonical (WEB-01) + safe JSON-LD
 import { useT } from '../i18n/index.jsx'           // every visible string reads from the catalog (faqPage.* + seo.faq.*)
 import enFaq from '../i18n/locales/en/faqPage.js'  // the ENGLISH partial: anchors + question count derive from it (stable across translations)
+import { useEditionView } from '../edition/useCaps.js'
+import { shows, startPath } from '../edition/surfaces.js'      // edition: which questions and links an edition shows
 
 const SUPPORT = 'support@admireveda.com'           // product help, billing
 const LEGAL = 'support@admireveda.com'            // privacy, legal, security
@@ -105,17 +107,25 @@ const NUMBERED = GROUPS.map((g) => {
 })
 let _n = 0
 for (const g of NUMBERED) for (const it of g.items) it.num = String(++_n).padStart(2, '0')
-const TOTAL = _n
+
+// Questions that only make sense on some editions (group.index -> what they
+// need, src/edition/surfaces.js), and the links that point at company-only
+// pages. Hidden questions keep their numbers, so shared anchors never move.
+const QUESTION_NEEDS = {
+  'pricing.1': 'individualPlans', 'pricing.2': 'individualPlans', 'pricing.3': 'individualPlans', 'pricing.4': 'individualPlans',
+  'pricing.5': 'companies', 'who.2': 'companies', 'compliance.3': 'companies', 'compliance.4': 'companies',
+}
+const linkNeeds = (href) => (/\/workcopilot\/(enterprise|dpa)\b|subject=WorkCoPilot%20Enterprise/.test(String(href || '')) ? 'companies' : null)
 const ALL_IDS = NUMBERED.flatMap((g) => g.items.map((it) => it.id))
 
 // Resolve the skeleton against the active locale: titles, questions, answers,
 // details and chip labels, with the contact addresses filled in. The same data
 // drives the visible Q&As AND the FAQPage JSON-LD, so they can never drift.
-function localize(t) {
+function localize(t, ed) {
   return NUMBERED.map((g) => ({
     ...g,
     title: t(`faqPage.groups.${g.id}.title`),
-    items: g.items.map((it) => {
+    items: g.items.filter((it) => shows(ed, QUESTION_NEEDS[`${g.id}.${it.i}`])).map((it) => {
       // d and links are optional per question: only read the keys the English
       // source defines (hasD / hasLinks), so no "missing key" noise in dev.
       const base = `faqPage.groups.${g.id}.items.${it.i}`
@@ -125,7 +135,7 @@ function localize(t) {
         q: t(`${base}.q`, CONTACT_VARS),
         a: t(`${base}.a`, CONTACT_VARS),
         d: it.hasD ? t(`${base}.d`, CONTACT_VARS) : undefined,
-        links: Array.isArray(labels) ? labels.map((label, j) => ({ label, href: it.hrefs[j] })) : [],
+        links: Array.isArray(labels) ? labels.map((label, j) => ({ label, href: it.hrefs[j] })).filter((l) => shows(ed, linkNeeds(l.href))) : [],
       }
     }),
   }))
@@ -169,7 +179,8 @@ export default function WorkFaq() {
   })
   // The localized Q&As (per active language) and the FAQPage structured data
   // built from the SAME data, injected safely (textContent, no HTML sink).
-  const all = useMemo(() => localize(t), [t])
+  const ed = useEditionView()
+  const all = useMemo(() => localize(t, ed).filter((g) => g.items.length), [t, ed.companies, ed.individualPlans])   // eslint-disable-line react-hooks/exhaustive-deps
   const faqLd = useMemo(() => faqJsonLd(all), [all])
   useJsonLd(faqLd)
   const glance = t('faqPage.glance')
@@ -188,8 +199,11 @@ export default function WorkFaq() {
     if (n.has(id)) n.delete(id); else n.add(id)
     return n
   }), [])
-  const allOpen = open.size >= TOTAL
-  const toggleAll = () => setOpen(allOpen ? new Set() : new Set(ALL_IDS))
+  // Counts and expand-all cover the questions this edition shows.
+  const shownIds = useMemo(() => all.flatMap((g) => g.items.map((it) => it.id)), [all])
+  const total = shownIds.length
+  const allOpen = open.size >= total
+  const toggleAll = () => setOpen(allOpen ? new Set() : new Set(shownIds))
 
   const needle = query.trim().toLowerCase()
   const groups = useMemo(() => {
@@ -213,7 +227,7 @@ export default function WorkFaq() {
             <label htmlFor="wfq-q" className="wfq-sr">{t('faqPage.searchLabel')}</label>
             <Search size={16} aria-hidden="true" />
             <input id="wfq-q" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('faqPage.searchPlaceholder')} autoComplete="off" />
-            <output className="wfq-count" htmlFor="wfq-q" aria-live="polite">{shown} / {TOTAL}</output>
+            <output className="wfq-count" htmlFor="wfq-q" aria-live="polite">{shown} / {total}</output>
           </form>
         </section>
 
@@ -307,7 +321,7 @@ export default function WorkFaq() {
               <p>{t('faqPage.ctaP', CONTACT_VARS)}</p>
             </div>
             <div className="wfq-cta-btns">
-              <button className="wfq-btn" onClick={() => nav('/workcopilot')}>{t('faqPage.getStarted')} <ArrowRight size={15} aria-hidden="true" /></button>
+              <button className="wfq-btn" onClick={() => nav(startPath(ed))}>{t('faqPage.getStarted')} <ArrowRight size={15} aria-hidden="true" /></button>
               <a className="wfq-btn alt" href="/demo">{t('faqPage.demoBtn')}</a>
               <a className="wfq-btn alt" href={'mailto:' + SUPPORT + '?subject=WorkCoPilot%20question'}><Mail size={15} aria-hidden="true" /> {t('faqPage.emailSupport')}</a>
             </div>

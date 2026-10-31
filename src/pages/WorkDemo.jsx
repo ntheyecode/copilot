@@ -8,6 +8,8 @@ import CopyChip from '../components/CopyChip.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the demo page too
 import GuideShowcase from '../components/GuideShowcase.jsx'   // "watch it in your field": the shared guide console per field
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
+import { useEditionView } from '../edition/useCaps.js'   // edition: where "start" leads (sign-up, or the sales conversation)
+import { startPath } from '../edition/surfaces.js'
 import { useT } from '../i18n/index.jsx'                   // localized <title>/description (seo.* keys) + demo.* strings
 
 // WorkCoPilot - scripted 60-second demo (admireveda.com/demo).
@@ -70,6 +72,7 @@ const CAP_META = [
 // motion honors prefers-reduced-motion, and the faint step counter / terminal
 // header inks were raised to AA contrast.
 export default function WorkDemo() {
+  const ed = useEditionView()
   const nav = useNavigate()
   const t = useT()
   useSeo({
@@ -80,7 +83,7 @@ export default function WorkDemo() {
 
   // Fonts are self-hosted and loaded globally in src/main.jsx.
 
-  const start = () => nav('/workcopilot')
+  const start = () => nav(startPath(ed))
   const caps = t('demoPage.caps')   // [{ t, d }] in CAP_META order
 
   return (

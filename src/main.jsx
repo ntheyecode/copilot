@@ -22,6 +22,7 @@ import App from './App.jsx'
 import { ThemeProvider } from './theme.jsx'
 import { AuthProvider } from './auth.jsx'
 import { LocaleProvider, preloadActiveLocale } from './i18n/index.jsx'   // language (16 locales, RTL for Arabic); outermost so every surface can read it
+import { confirmCaps } from './edition/active.js'   // deployment-edition capabilities: stamped into the page, confirmed with the server
 
 function mount() {
   ReactDOM.createRoot(document.getElementById('root')).render(
@@ -46,6 +47,10 @@ function mount() {
 // after a short budget rather than leaving the splash up indefinitely - the
 // LocaleProvider re-renders when the dictionary lands (SUPREME RULE VIII: degrade
 // gracefully, never a stuck screen). The HTML splash covers this brief window.
+// The capabilities are already known from the page stamp (src/edition/active.js);
+// the server's confirmation runs alongside the first paint, never before it.
+confirmCaps()
+
 const LOCALE_PRELOAD_BUDGET_MS = 1200
 Promise.race([
   preloadActiveLocale(),

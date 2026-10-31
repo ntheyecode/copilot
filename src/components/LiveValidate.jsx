@@ -37,6 +37,7 @@ import { countryOptions, countryNameEn } from '../shared/countries.js'   // the 
 import RichText from './RichText.jsx'                       // the ONE inline renderer (bold, code, keys, links), shared with the guiding console
 import { StepLink, CmdBlock } from './StepBlocks.jsx'       // the ONE step link / terminal renderer, shared with the guiding console
 import { hrefForUrl, looksLikeClickPath } from '../shared/links.js'
+import { useEditionView } from '../edition/useCaps.js'   // edition: company field only where companies exist; plan pick only where personal plans are sold
 
 // The validator is a lead-capture widget for PUBLIC web visitors only. Inside the
 // desktop app or the mobile app the person is already a user, so it must never
@@ -216,6 +217,7 @@ const money = (n) => (n == null ? '' : `$${Number(n) % 1 ? Number(n).toFixed(2) 
 export default function LiveValidate({ toPricing = defaultToPricing, theme = 'light', source = 'site' }) {
   if (isInApp()) return null   // hide the lead widget inside the desktop/mobile app
   const { t, locale } = useLocale()   // `locale` is reactive: the country names re-sort when the visitor switches language
+  const ed = useEditionView()
   const [open, setOpen] = useState(false)
   const [lead, setLead] = useState(loadLead)          // null until captured this session
   // 'ask' -> ('lead' once per session) -> 'reveal'
@@ -440,7 +442,7 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
     if (!EMAIL_RE.test(v.email)) errs.email = t('widgets.validate.validEmail')
     if (v.phone.replace(/\D/g, '').length < 7) errs.phone = t('widgets.validate.validPhone')
     if (!v.country) errs.country = t('widgets.validate.validCountry')
-    if (!v.company) errs.company = t('widgets.validate.required')
+    if (ed.companies && !v.company) errs.company = t('widgets.validate.required')
     if (Object.keys(errs).length) { setFerr(errs); setFtop(''); return }
     setFbusy(true); setFtop('')
     try {
@@ -590,7 +592,7 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
                   {field('email', t('widgets.validate.workEmail'), { type: 'email', placeholder: t('widgets.validate.workEmailPh'), autoComplete: 'email' })}
                   {field('phone', t('widgets.validate.phone'), { type: 'tel', placeholder: t('widgets.validate.phonePh'), half: true, autoComplete: 'tel' })}
                   {selectField('country', t('widgets.validate.country'), countries, { placeholder: t('widgets.validate.countryPh'), half: true, autoComplete: 'country' })}
-                  {field('company', t('widgets.validate.company'), { placeholder: t('widgets.validate.companyPh'), autoComplete: 'organization' })}
+                  {ed.companies && field('company', t('widgets.validate.company'), { placeholder: t('widgets.validate.companyPh'), autoComplete: 'organization' })}
                 </div>
                 <button type="submit" className="lv-submit" disabled={fbusy}>
                   {fbusy ? <><Loader2 size={16} className="lv-spin" /> {t('widgets.validate.saving')}</> : <>{t('widgets.validate.reveal')} <ArrowRight size={16} className="lv-arrow" /></>}
@@ -739,6 +741,7 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
                               <li><Footprints size={13} /> {t('widgets.validate.promise2')}</li>
                               <li><BadgeCheck size={13} /> {t('widgets.validate.promise3')}</li>
                             </ul>
+                            {ed.individualPlans ? (<>
                             <div className="lv-plan">
                               <span className="lv-plan-rib">{t('widgets.validate.recommended')}</span>
                               <span className="lv-plan-n">{PLAN_NAMES[recPlan]}</span>
@@ -754,6 +757,13 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
                               <button type="button" className="lv-compare" onClick={() => toPricing('')}>{t('widgets.validate.comparePlans')}</button>
                             </div>
                             <p className="lv-trust"><span><Check size={12} /> {t('widgets.validate.trustCancel')}</span><span><Lock size={12} /> {t('widgets.validate.trustStripe')}</span></p>
+                            </>) : (
+                              // Organizations only: no personal plan to pick; the next step is the sales conversation.
+                              <div className="lv-cta-btns">
+                                <a className="lv-start" href="/workcopilot/contact">{t('edition.validate.talk')} <ArrowRight size={16} className="lv-arrow" /></a>
+                                <a className="lv-compare" href="/workcopilot/pricing">{t('edition.validate.plans')}</a>
+                              </div>
+                            )}
                           </div>
                         )}
                       </>
@@ -763,7 +773,7 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
                 </div>
                 <div className="wm-cov-input lv-again">
                   <button type="button" className="wm-cov-clear" onClick={tryAnother} disabled={busy}><RotateCcw size={15} /> {t('widgets.validate.tryAnother')}</button>
-                  {phase === 'done' && showCta && (
+                  {phase === 'done' && showCta && ed.individualPlans && (
                     <button type="button" className="lv-again-go" onClick={() => toPricing(recPlan)}>{t('widgets.validate.startWith', { plan: PLAN_NAMES[recPlan] })} <ArrowRight size={15} className="lv-arrow" /></button>
                   )}
                 </div>
