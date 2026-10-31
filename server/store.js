@@ -2890,6 +2890,9 @@ export function setUserCompany(userId, companyId, companyRole, workFlow) {
   const role = companyId ? normalizeCompanyRole(companyRole) : null
   // Moving into (or re-roling within) a company takes a seat like any other path.
   if (companyId) assertSeatAvailable(companyId, role, u.tier, u.id)
+  // A role an identity provider managed belongs to the company that mapped it;
+  // a move to another company (or out of one) starts unmanaged.
+  if (String(u.companyId || '') !== String(companyId || '')) u.scimRoleManaged = null
   u.companyId = companyId || null
   u.companyRole = role
   // Work flow (worker / independent / mixed) only applies inside a company.
@@ -5407,6 +5410,7 @@ export function removeCompanyMember(adminCompanyId, targetUserId, { reason = '',
   emitStoreEvent('work_member_removed', { userId: u.id, companyName: _coName })
   u.companyId = null
   u.companyRole = null
+  u.scimRoleManaged = null   // the identity provider's management ends with the membership
   bumpSessionEpoch(u.id)
   // Accountable removal: who did it, to whom, and why (platform-wide rule -
   // every destructive action is logged with a captured reason).

@@ -210,6 +210,19 @@ test('removing a mapping releases the people it managed', async () => {
   assert.equal(edit.status, 200, 'no longer managed, so editable again')
 })
 
+test('leaving the company ends identity-provider management; a later move in starts unmanaged', async () => {
+  const kim = store.createManagedUser({ username: 'kim', password: PASS, email: 'kim@roles.test', companyId: co.id, companyRole: 'member' })
+  const r = await scim('PATCH', `/Groups/${trainerGroup}`, patch([{ op: 'add', path: 'members', value: [{ value: kim.id }] }]))
+  assert.equal(r.status, 200)
+  assert.deepEqual(store.getUser(kim.id).scimRoleManaged.grants, ['trainer'])
+  // (The console route refuses roster changes on a locked license; the store's
+  // one removal path is what it calls.)
+  store.removeCompanyMember(co.id, kim.id, { reason: 'left the team', byUserId: admin.id })
+  assert.equal(store.getUser(kim.id).scimRoleManaged, null)
+  store.setUserCompany(kim.id, other.id, 'member')
+  assert.equal(store.listCompanyUsers(other.id).find((u) => u.id === kim.id).idpManaged, null)
+})
+
 test('mappings are company-scoped', async () => {
   const mine = (await req(adminJar, 'GET', '/api/work/company/scim/role-mappings')).data
   const theirs = await req(otherJar, 'GET', '/api/work/company/scim/role-mappings')
