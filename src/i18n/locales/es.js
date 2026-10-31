@@ -588,6 +588,7 @@ export default {
     trust: 'Confianza',
     securityData: 'Seguridad y protección de datos',
     enterpriseFeatures: 'Funciones para empresas',
+    companyBrain: 'Company Brain',
     benchmark: 'Prueba de precisión',
     legal: 'Legal',
     privacy: 'Política de privacidad',
@@ -14310,6 +14311,214 @@ export default {
         title: 'Algo salió mal',
         body: 'WorkCoPilot no pudo abrir el flujo de trabajo. Inténtalo de nuevo o pide un enlace nuevo a la app de tu empresa.',
       },
+    },
+  },
+  companyBrainPage: {
+    seo: {
+      title: 'Company Brain - WorkCoPilot de AdmireVeda',
+      description: 'El Company Brain es el conocimiento privado de tu empresa dentro de WorkCoPilot: tus documentos, los flujos de trabajo grabados por tus formadores y las tareas que tu gente termina, convertidos en una guía que sigue tus propias aplicaciones, manuales y costumbres. Cifrado por empresa, gestionado por tu administrador, nunca compartido.',
+    },
+    hero: {
+      eyebrow: 'Company Brain',
+      h1: 'Una guía que sabe <hl>cómo trabaja tu empresa.</hl>',
+      sub: 'El Company Brain es el conocimiento privado de tu empresa dentro de WorkCoPilot. Convierte tus documentos, los flujos de trabajo grabados por tus formadores y las tareas que tu gente termina en una guía que sigue tus propias aplicaciones, manuales y costumbres.',
+      cta: 'Habla con nosotros',
+      ctaHow: 'Ver cómo funciona',
+      proofAria: 'De un vistazo',
+      proof: [
+        'Privado para tu empresa, sellado con su propia clave',
+        'Cada paso que sale de él nombra su fuente',
+        'Tu administrador ve, gestiona y borra lo que se guarda',
+        'Nunca se usa para entrenar un modelo compartido',
+      ],
+      card: {
+        aria: 'Ilustración: un paso guiado en la pantalla de una persona, con el documento de la empresa del que procede y la etiqueta «Privado para tu empresa»',
+        app: 'Tarea guiada',
+        step: 'Paso 3 de 7',
+        title: 'Pon el grupo de asignación en Platform-Ops y elige la plantilla CHG-STD-07.',
+        from: 'De tu manual de cambios, sección 3.2',
+        check: 'Comprobado en pantalla antes del siguiente paso',
+        private: 'Privado para tu empresa',
+      },
+    },
+    learn: {
+      eyebrow: 'Cómo aprende',
+      h2: 'Tres fuentes. Un solo brain, <hl>solo tuyo.</hl>',
+      lead: 'El brain crece con lo que tu empresa ya tiene y con el trabajo que tu gente hace cada día. Nada se escribe dos veces.',
+      sources: [
+        {
+          t: 'Tus documentos',
+          d: 'Procedimientos, manuales, guías de aplicaciones y políticas se convierten en pasajes limpios y consultables. Cada pasaje conserva el nombre de su documento para que un paso pueda citarlo.',
+          chips: ['Limpiado antes de guardarse', 'Citado por su nombre', 'Se puede quitar uno a uno'],
+        },
+        {
+          t: 'Los flujos de trabajo grabados por tus formadores',
+          d: 'Tu administrador concede el rol de formador. Un formador graba cómo se hace una tarea en vuestra propia aplicación y la publica; toda la empresa la recibe como flujo de trabajo guiado.',
+          chips: [
+            'Borrador, publicar, retirar',
+            'Grabaciones selladas por empresa',
+            'Rol de formador concedido por tu administrador',
+          ],
+        },
+        {
+          t: 'Las tareas que tu gente termina',
+          d: 'Cuando alguien termina una tarea guiada limpiamente, con cada paso confirmado, el brain guarda el patrón anonimizado. La siguiente persona con la misma tarea parte de ahí.',
+          chips: ['Solo tareas terminadas por completo', 'Sin nombres ni números', 'Guardado solo para tu empresa'],
+        },
+      ],
+      note: 'Un flujo de trabajo publicado por un formador siempre va primero. Un patrón aprendido completa donde ningún formador ha grabado todavía.',
+    },
+    use: {
+      eyebrow: 'Cómo se usa',
+      h2: 'Cada paso con tus palabras, <hl>en tus aplicaciones.</hl>',
+      lead: 'Cuando una persona empieza una tarea, la guía busca primero en tu Company Brain y construye los pasos con lo que encuentra allí.',
+      cards: [
+        {
+          t: 'Anclado en tus propias aplicaciones',
+          d: 'Los pasos usan los nombres de tus sistemas, tus campos y tu cadena de aprobación, sacados de tus documentos y flujos de trabajo. No es un tutorial genérico.',
+        },
+        {
+          t: 'La fuente se nombra',
+          d: 'Un paso que sale de tu conocimiento dice de qué documento o flujo de trabajo procede, para que la gente pueda comprobarlo y confiar en él.',
+        },
+        {
+          t: 'Menos preguntas, más precisión',
+          d: 'Cuantos más documentos añadan tus administradores, más flujos graben tus formadores y más tareas termine tu gente, más específica se vuelve la guía.',
+        },
+        {
+          t: 'Espacios de conocimiento',
+          d: 'Tu administrador agrupa los aprendizajes de la empresa en espacios como Cierre financiero o Alta de clientes. Cada persona elige el espacio que encaja con la tarea que empieza.',
+        },
+        {
+          t: 'Honesto cuando no tiene nada',
+          d: 'Si el brain no tiene nada sobre una tarea, o está bloqueado, la guía lo dice y sigue con conocimiento general. Nunca finge.',
+        },
+        {
+          t: 'Solo lectura, como siempre',
+          d: 'El Company Brain cambia lo que dice la guía, nunca lo que hace. WorkCoPilot sigue sin hacer clic, escribir ni ejecutar nada por nadie.',
+        },
+      ],
+    },
+    how: {
+      eyebrow: 'Cómo funciona',
+      h2: 'De tu conocimiento al siguiente paso en pantalla.',
+      lead: 'Cuatro fases y un ciclo que se cierra cada vez que una tarea se termina bien.',
+      art: {
+        aria: 'Diagrama: los documentos, los flujos de trabajo grabados y las tareas terminadas se enmascaran en el dispositivo, se sellan en tu Company Brain cifrado y aparecen como un paso con su fuente en la pantalla de una persona; las tareas bien terminadas vuelven al brain',
+        docs: 'Documentos',
+        workflows: 'Flujos grabados',
+        finished: 'Tareas terminadas',
+        masked: 'Enmascarado en el dispositivo',
+        brain: 'Tu brain cifrado',
+        step: 'Un paso con su fuente',
+        loop: 'Las tareas bien terminadas vuelven',
+      },
+      steps: [
+        {
+          t: 'Reunir',
+          d: 'Documentos, las grabaciones de tus formadores y las tareas que tu gente termina limpiamente.',
+        },
+        {
+          t: 'Enmascarar',
+          d: 'Los valores sensibles se enmascaran en el dispositivo según la política de tu empresa; los pasajes se limpian de nuevo antes de guardarse.',
+        },
+        {
+          t: 'Sellar',
+          d: 'Todo se sella con la clave propia de tu empresa. Solo se abren los pocos pasajes que devuelve una búsqueda.',
+        },
+        {
+          t: 'Guiar',
+          d: 'El siguiente paso aparece en la pantalla de la persona, con tus palabras y con su fuente nombrada.',
+        },
+      ],
+    },
+    control: {
+      eyebrow: 'Control y privacidad',
+      h2: 'El conocimiento de tu empresa <hl>sigue siendo tuyo.</hl>',
+      lead: 'El Company Brain pertenece a una sola empresa, está sellado con la clave de esa empresa y lo gestiona tu administrador.',
+      items: [
+        {
+          t: 'Solo tu empresa, nunca compartido',
+          d: 'El brain de cada empresa se guarda por separado bajo su propia clave. Nada pasa a otra empresa y nada entrena un modelo compartido.',
+        },
+        {
+          t: 'Cifrado en reposo',
+          d: 'Pasajes, vectores e índice se sellan con AES-256-GCM. Un archivo manipulado o con la clave equivocada provoca un error en lugar de un brain vacío.',
+        },
+        {
+          t: 'Tu administrador lo gestiona',
+          d: 'La consola de empresa lista cada fuente con su tamaño y estado. Quitar una, o borrarlo todo, exige un motivo y queda en el registro de auditoría.',
+        },
+        {
+          t: 'Brain privado, tu frase de acceso',
+          d: 'Activa el cifrado privado y el brain queda sellado bajo una frase de acceso que solo tu empresa conoce, con una frase de recuperación que se muestra una sola vez. Bloquéalo, ábrelo para tu equipo, cambia la frase, y se vuelve a bloquear con un temporizador.',
+        },
+        {
+          t: 'Enmascarado en el dispositivo',
+          d: 'Los valores sensibles en la pantalla y en el texto de una persona se enmascaran en su dispositivo según la política de tu empresa antes de enviar nada.',
+        },
+        {
+          t: 'Descarga para directivos',
+          d: 'Los directivos descargan el Company Brain como un único archivo cifrado bajo una frase de acceso que ellos definen. En el servicio alojado, ver o sustituir esa frase pide un código reciente del autenticador.',
+        },
+        {
+          t: 'Una puerta de solo lectura para tus propias herramientas',
+          d: 'Tu administrador puede emitir claves API de empresa con un permiso de búsqueda de solo lectura, para que tus propios sistemas consulten el brain. Las claves se muestran una vez, se pueden revocar y llevan listas de IP permitidas, caducidad y límites de uso. Ninguna clave puede escribir en el brain, exportarlo ni borrarlo.',
+        },
+        {
+          t: 'Lo dice cuando está bloqueado',
+          d: 'Mientras un brain privado está bloqueado, no se sirve nada y la guía le dice a la persona que trabaja sin el conocimiento de la empresa. Sin recurrir a nada en silencio.',
+        },
+      ],
+    },
+    leaders: {
+      eyebrow: 'Para administradores y directivos',
+      h2: 'Lo que ven los líderes.',
+      lead: 'Los líderes ven la forma del brain y el trabajo que sostiene, nunca la sesión en bruto de un compañero.',
+      items: [
+        {
+          t: 'Qué contiene',
+          d: 'La consola de empresa lista cada fuente con sus pasajes, tamaño, estado y última actualización.',
+        },
+        {
+          t: 'Quién grabó qué',
+          d: 'Los flujos de trabajo de los formadores aparecen como borrador, publicados o retirados, con versiones, para que sepas por qué se guía a tu gente.',
+        },
+        {
+          t: 'La foto de productividad',
+          d: 'El panel de dirección muestra tareas, tiempo y proyectos de toda la empresa, con una vista orientativa del tiempo ahorrado, y se exporta a PDF, imagen o CSV.',
+        },
+        {
+          t: 'Un registro de auditoría',
+          d: 'Cada eliminación de contenido del brain y cada descarga del archivo quedan registradas con quién, qué y cuándo.',
+        },
+      ],
+    },
+    final: {
+      h2: 'Dale a tu gente una guía que conoce tu empresa.',
+      p: 'Habla con nosotros sobre tu despliegue, tus documentos y tus formadores. Un responsable asignado, un DPA y opciones en tus propios servidores bajo petición.',
+      cta: 'Habla con nosotros',
+      ctaEnterprise: 'Ver todos los controles enterprise',
+    },
+    home: {
+      eyebrow: 'Company Brain',
+      h2: 'Un brain que conoce <em>tu</em> empresa.',
+      sub: 'Tus documentos, los flujos de trabajo grabados por tus formadores y las tareas que tu gente termina, convertidos en guía dentro de tus propias aplicaciones.',
+      points: [
+        {
+          t: 'Anclado en tus propios manuales',
+          d: 'Los pasos usan tus sistemas, tus campos y tus aprobaciones, y nombran la fuente de la que salen.',
+        },
+        {
+          t: 'Más preciso cuanto más lo usas',
+          d: 'Cada tarea bien terminada y cada flujo publicado hacen la siguiente tarea más específica.',
+        },
+        {
+          t: 'Privado para tu empresa',
+          d: 'Sellado con tu propia clave, gestionado por tu administrador, nunca compartido ni usado para entrenar un modelo compartido.',
+        },
+      ],
+      cta: 'Conoce el Company Brain',
     },
   },
 }

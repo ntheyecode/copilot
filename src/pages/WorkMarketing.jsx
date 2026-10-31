@@ -29,6 +29,7 @@ import { useAuth } from '../auth.jsx'
 import { api } from '../api.js'
 import OrgPlans from '../components/OrgPlans.jsx'   // organizations-only plans, where personal plans are not sold
 import CameraReadSection from '../components/camera_read/CameraReadSection.jsx'   // where screen sharing is not an option: the camera reads the panel
+import CompanyBrainSection from '../components/company_brain/CompanyBrainSection.jsx'   // the Company Brain in three benefit points, linking to its full page
 import { useEditionView } from '../edition/useCaps.js'
 import { CONTACT_PATH } from '../edition/surfaces.js'
 import useSeo from '../useSeo.js'
@@ -468,6 +469,11 @@ export default function WorkMarketing() {
           renders where companies exist, since the company administrator turns
           camera reading on. Copy: home.camera. */}
       {ed.companies && <CameraReadSection className="wm-sec" />}
+
+      {/* COMPANY BRAIN - the company's private knowledge, three benefit points
+          and the flow visual, linking to /workcopilot/company-brain. Its own
+          module (src/components/company_brain); copy: companyBrainPage.home. */}
+      {ed.companies && <CompanyBrainSection className="wm-sec" />}
 
       {/* EVERYWHERE - platforms, languages, personalization: three shared
           WorkCards. The language chips are the locale registry's endonyms

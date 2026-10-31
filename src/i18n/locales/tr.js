@@ -965,6 +965,7 @@ export default {
     trust: 'Güven',
     securityData: 'Güvenlik ve veri koruma',
     enterpriseFeatures: 'Kurumsal özellikler',
+    companyBrain: 'Company Brain',
     benchmark: 'Doğruluk testi',
     legal: 'Yasal',
     privacy: 'Gizlilik Politikası',
@@ -14284,6 +14285,210 @@ export default {
         title: 'Bir şeyler ters gitti',
         body: 'WorkCoPilot iş akışını açamadı. Tekrar deneyin ya da şirket uygulamanızdan yeni bir bağlantı isteyin.',
       },
+    },
+  },
+  companyBrainPage: {
+    seo: {
+      title: "Company Brain - AdmireVeda'dan WorkCoPilot",
+      description: 'Company Brain, şirketinizin WorkCoPilot içindeki özel bilgi birikimidir: belgeleriniz, eğitmenlerinizin kaydettiği iş akışları ve ekibinizin tamamladığı görevler, kendi uygulamalarınızı, kılavuzlarınızı ve alışkanlıklarınızı izleyen bir rehberliğe dönüşür. Şirket başına şifrelenir, yöneticiniz tarafından yönetilir, asla paylaşılmaz.',
+    },
+    hero: {
+      eyebrow: 'Company Brain',
+      h1: '<hl>Şirketinizin nasıl çalıştığını</hl> bilen rehberlik.',
+      sub: 'Company Brain, şirketinizin WorkCoPilot içindeki özel bilgi birikimidir. Belgelerinizi, eğitmenlerinizin kaydettiği iş akışlarını ve ekibinizin tamamladığı görevleri, kendi uygulamalarınızı, kılavuzlarınızı ve alışkanlıklarınızı izleyen bir rehberliğe dönüştürür.',
+      cta: 'Bizimle görüşün',
+      ctaHow: 'Nasıl çalıştığını görün',
+      proofAria: 'Bir bakışta',
+      proof: [
+        'Şirketinize özel, kendi anahtarıyla mühürlü',
+        'Ondan gelen her adım kaynağını söyler',
+        'Yöneticiniz saklananı görür, düzenler ve siler',
+        'Ortak bir modeli eğitmek için asla kullanılmaz',
+      ],
+      card: {
+        aria: 'Çizim: bir kişinin ekranındaki rehberli bir adım, geldiği şirket belgesi ve «Şirketinize özel» rozeti',
+        app: 'Rehberli görev',
+        step: 'Adım 3 / 7',
+        title: 'Atama grubunu Platform-Ops yapın, ardından CHG-STD-07 şablonunu seçin.',
+        from: 'Değişiklik kılavuzunuzdan, bölüm 3.2',
+        check: 'Sonraki adımdan önce ekranda doğrulandı',
+        private: 'Şirketinize özel',
+      },
+    },
+    learn: {
+      eyebrow: 'Nasıl öğrenir',
+      h2: 'Üç kaynak. Tek bir brain, <hl>yalnızca sizin.</hl>',
+      lead: 'Brain, şirketinizin zaten sahip olduklarından ve ekibinizin her gün yaptığı işten büyür. Hiçbir şey iki kez yazılmaz.',
+      sources: [
+        {
+          t: 'Belgeleriniz',
+          d: 'Prosedürler, kılavuzlar, uygulama rehberleri ve politikalar temizlenmiş, aranabilir parçalara dönüşür. Her parça, bir adımın ona atıf yapabilmesi için geldiği belgenin adını korur.',
+          chips: ['Saklanmadan önce temizlenir', 'Adıyla atıf yapılır', 'Tek tek kaldırılabilir'],
+        },
+        {
+          t: 'Eğitmenlerinizin kaydettiği iş akışları',
+          d: 'Yöneticiniz eğitmen rolünü verir. Bir eğitmen, bir görevin kendi uygulamanızda nasıl yapıldığını kaydeder ve yayımlar; şirketteki herkes onu rehberli iş akışı olarak alır.',
+          chips: ['Taslak, yayımla, geri çek', 'Kayıtlar şirket başına mühürlü', 'Eğitmen rolünü yöneticiniz verir'],
+        },
+        {
+          t: 'Ekibinizin tamamladığı görevler',
+          d: 'Biri rehberli bir görevi her adımı onaylayarak temiz biçimde tamamladığında brain, kimliksizleştirilmiş kalıbı saklar. Aynı görevi alan bir sonraki kişi oradan başlar.',
+          chips: ['Yalnızca tamamen bitmiş görevler', 'İsimler ve numaralar kaldırılır', 'Yalnızca şirketiniz için saklanır'],
+        },
+      ],
+      note: 'Bir eğitmenin yayımladığı iş akışı her zaman önce gelir. Öğrenilmiş kalıp, henüz hiçbir eğitmenin kayıt yapmadığı yerde devreye girer.',
+    },
+    use: {
+      eyebrow: 'Nasıl kullanılır',
+      h2: 'Her adım sizin sözlerinizle, <hl>sizin uygulamalarınızda.</hl>',
+      lead: "Bir kişi göreve başladığında rehber önce Company Brain'inizde arar ve adımları orada bulduklarından oluşturur.",
+      cards: [
+        {
+          t: 'Kendi uygulamalarınıza dayanır',
+          d: 'Adımlar, belgelerinizden ve iş akışlarınızdan alınan sistem adlarınızı, alanlarınızı ve onay zincirinizi kullanır. Genel bir kılavuz değil.',
+        },
+        {
+          t: 'Kaynak belirtilir',
+          d: 'Bilginizden gelen bir adım, hangi belgeden ya da iş akışından geldiğini söyler; böylece ekibiniz kontrol edebilir ve güvenebilir.',
+        },
+        {
+          t: 'Daha az soru, daha yüksek isabet',
+          d: 'Yöneticileriniz ne kadar çok belge ekler, eğitmenleriniz ne kadar çok iş akışı kaydeder ve ekibiniz ne kadar çok görev tamamlarsa rehberlik o kadar özgülleşir.',
+        },
+        {
+          t: 'Bilgi alanları',
+          d: 'Yöneticiniz şirket öğrenimlerini Finansal kapanış veya Müşteri alıştırma gibi alanlarda gruplar. Herkes başladığı göreve uyan alanı seçer.',
+        },
+        {
+          t: 'Elinde bir şey yokken dürüst',
+          d: "Brain'de görevle ilgili bir şey yoksa ya da kilitliyse rehber bunu söyler ve genel bilgiyle devam eder. Asla varmış gibi yapmaz.",
+        },
+        {
+          t: 'Her zamanki gibi salt okunur',
+          d: 'Company Brain rehberin ne söylediğini değiştirir, ne yaptığını asla. WorkCoPilot yine kimsenin yerine tıklamaz, yazmaz, hiçbir şey çalıştırmaz.',
+        },
+      ],
+    },
+    how: {
+      eyebrow: 'Nasıl çalışır',
+      h2: 'Bilginizden ekrandaki bir sonraki adıma.',
+      lead: 'Dört aşama ve bir görev her iyi tamamlandığında kapanan bir döngü.',
+      art: {
+        aria: "Şema: belgeler, kaydedilen iş akışları ve tamamlanan görevler cihazda maskelenir, şifreli Company Brain'inizde mühürlenir ve bir kişinin ekranında kaynağı belirtilen bir adım olarak görünür; temiz tamamlamalar brain'e geri akar",
+        docs: 'Belgeler',
+        workflows: 'Kayıtlı iş akışları',
+        finished: 'Tamamlanan görevler',
+        masked: 'Cihazda maskelendi',
+        brain: "Şifreli brain'iniz",
+        step: 'Ekranda kaynaklı bir adım',
+        loop: 'Temiz tamamlamalar geri akar',
+      },
+      steps: [
+        {
+          t: 'Topla',
+          d: 'Belgeler, eğitmenlerinizin kayıtları ve ekibinizin temiz tamamlamaları.',
+        },
+        {
+          t: 'Maskele',
+          d: 'Hassas değerler şirket politikanıza göre cihazda maskelenir; parçalar saklanmadan önce yeniden temizlenir.',
+        },
+        {
+          t: 'Mühürle',
+          d: 'Her şey şirketinizin kendi anahtarıyla mühürlenir. Yalnızca bir aramanın döndürdüğü birkaç parça açılır.',
+        },
+        {
+          t: 'Yönlendir',
+          d: 'Sonraki adım kişinin ekranında, sizin sözlerinizle ve kaynağı belirtilerek görünür.',
+        },
+      ],
+    },
+    control: {
+      eyebrow: 'Denetim ve gizlilik',
+      h2: 'Şirketinizin bilgisi <hl>şirketinizde kalır.</hl>',
+      lead: 'Company Brain tek bir şirkete aittir, o şirketin kendi anahtarıyla mühürlenir ve yöneticiniz tarafından yönetilir.',
+      items: [
+        {
+          t: 'Şirkete özel, asla paylaşılmaz',
+          d: "Her şirketin brain'i kendi anahtarı altında ayrı saklanır. Hiçbir şey başka bir şirkete geçmez ve hiçbir şey ortak bir modeli eğitmez.",
+        },
+        {
+          t: 'Beklemede şifreli',
+          d: 'Parçalar, vektörler ve dizin AES-256-GCM ile mühürlenir. Kurcalanmış ya da yanlış anahtarlı bir dosya boş bir brain yerine hata verir.',
+        },
+        {
+          t: 'Yöneticiniz düzenler',
+          d: 'Şirket konsolu her kaynağı boyutu ve durumuyla listeler. Birini kaldırmak ya da hepsini silmek gerekçe ister ve denetim kaydına geçer.',
+        },
+        {
+          t: 'Özel brain, sizin parolanız',
+          d: 'Özel şifrelemeyi açın; brain yalnızca şirketinizin bildiği bir parola ifadesiyle mühürlenir ve bir kez gösterilen bir kurtarma ifadesi verilir. Kilitleyin, ekibiniz için açın, parolayı değiştirin; bir zamanlayıcıyla yeniden kilitlenir.',
+        },
+        {
+          t: 'Cihazda maskelenir',
+          d: 'Bir kişinin ekranındaki ve metnindeki hassas değerler, bir şey gönderilmeden önce şirket politikanıza göre kendi cihazında maskelenir.',
+        },
+        {
+          t: 'Yöneticiler için indirme',
+          d: "Üst yöneticiler Company Brain'i kendi belirledikleri bir parola ifadesiyle tek bir şifreli arşiv olarak indirir. Barındırılan hizmette bu parolayı görmek ya da değiştirmek yeni bir doğrulayıcı kodu ister.",
+        },
+        {
+          t: 'Kendi araçlarınız için salt okunur bir kapı',
+          d: "Yöneticiniz, kendi sistemlerinizin brain'i sorgulayabilmesi için salt okunur arama kapsamlı şirket API anahtarları verebilir. Anahtarlar bir kez gösterilir, iptal edilebilir; IP izin listesi, son kullanma ve hız sınırı taşır. Hiçbir anahtar brain'e yazamaz, onu dışa aktaramaz ya da silemez.",
+        },
+        {
+          t: 'Kilitliyken bunu söyler',
+          d: 'Özel bir brain kilitliyken hiçbir şey sunulmaz ve rehberlik kişiye şirket bilgisi olmadan çalıştığını söyler. Sessizce geri çekilme yok.',
+        },
+      ],
+    },
+    leaders: {
+      eyebrow: 'Yöneticiler ve üst yönetim için',
+      h2: 'Liderler ne görür.',
+      lead: "Liderler brain'in biçimini ve desteklediği işi görür; bir çalışma arkadaşının ham oturumunu asla.",
+      items: [
+        {
+          t: 'İçinde ne var',
+          d: 'Şirket konsolu her kaynağı parçaları, boyutu, durumu ve son güncellemesiyle listeler.',
+        },
+        {
+          t: 'Kim neyi kaydetti',
+          d: 'Eğitmenlerin iş akışları taslak, yayımlanmış ya da geri çekilmiş olarak sürümleriyle görünür; böylece ekibinize neyin rehberlik ettiğini bilirsiniz.',
+        },
+        {
+          t: 'Verimlilik tablosu',
+          d: 'Üst yönetim panosu şirket genelinde görevleri, süreyi ve projeleri, kazanılan sürenin örnek bir görünümüyle gösterir; PDF, görsel ya da CSV olarak dışa aktarılır.',
+        },
+        {
+          t: 'Bir denetim kaydı',
+          d: 'Brain içeriğinden her kaldırma ve arşivin her indirilmesi kim, ne ve ne zaman bilgisiyle kaydedilir.',
+        },
+      ],
+    },
+    final: {
+      h2: 'Ekibinize şirketinizi tanıyan bir rehber verin.',
+      p: 'Dağıtımınızı, belgelerinizi ve eğitmenlerinizi bizimle konuşun. Atanmış bir sorumlu, DPA ve talep üzerine kurum içi seçenekler.',
+      cta: 'Bizimle görüşün',
+      ctaEnterprise: 'Tüm kurumsal denetimleri görün',
+    },
+    home: {
+      eyebrow: 'Company Brain',
+      h2: '<em>Sizin</em> şirketinizi tanıyan bir brain.',
+      sub: 'Belgeleriniz, eğitmenlerinizin kaydettiği iş akışları ve ekibinizin tamamladığı görevler, kendi uygulamalarınızda rehberliğe dönüşür.',
+      points: [
+        {
+          t: 'Kendi kılavuzlarınıza dayanır',
+          d: 'Adımlar sistemlerinizi, alanlarınızı ve onaylarınızı kullanır ve geldikleri kaynağı belirtir.',
+        },
+        {
+          t: 'Kullandıkça keskinleşir',
+          d: 'Her temiz tamamlama ve her yayımlanan iş akışı bir sonraki görevi daha özgül yapar.',
+        },
+        {
+          t: 'Şirketinize özel',
+          d: 'Kendi anahtarınızla mühürlü, yöneticiniz tarafından yönetilir, asla paylaşılmaz ve ortak bir modeli eğitmek için asla kullanılmaz.',
+        },
+      ],
+      cta: 'Company Brain hakkında bilgi alın',
     },
   },
 }

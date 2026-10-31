@@ -965,6 +965,7 @@ export default {
     trust: 'Kepercayaan',
     securityData: 'Keamanan dan perlindungan data',
     enterpriseFeatures: 'Fitur perusahaan',
+    companyBrain: 'Company Brain',
     benchmark: 'Uji akurasi',
     legal: 'Hukum',
     privacy: 'Kebijakan Privasi',
@@ -14288,6 +14289,210 @@ export default {
         title: 'Terjadi kesalahan',
         body: 'WorkCoPilot tidak dapat membuka alur kerja. Coba lagi, atau minta tautan baru dari aplikasi perusahaan Anda.',
       },
+    },
+  },
+  companyBrainPage: {
+    seo: {
+      title: 'Company Brain - WorkCoPilot dari AdmireVeda',
+      description: 'Company Brain adalah pengetahuan privat perusahaan Anda di dalam WorkCoPilot: dokumen Anda, alur kerja yang direkam pelatih Anda, dan tugas yang diselesaikan tim Anda, diubah menjadi panduan yang mengikuti aplikasi, playbook, dan kebiasaan perusahaan Anda sendiri. Dienkripsi per perusahaan, dikelola admin Anda, tidak pernah dibagikan.',
+    },
+    hero: {
+      eyebrow: 'Company Brain',
+      h1: 'Panduan yang tahu <hl>cara kerja perusahaan Anda.</hl>',
+      sub: 'Company Brain adalah pengetahuan privat perusahaan Anda di dalam WorkCoPilot. Ia mengubah dokumen Anda, alur kerja yang direkam pelatih Anda, dan tugas yang diselesaikan tim Anda menjadi panduan yang mengikuti aplikasi, playbook, dan kebiasaan perusahaan Anda sendiri.',
+      cta: 'Hubungi kami',
+      ctaHow: 'Lihat cara kerjanya',
+      proofAria: 'Sekilas',
+      proof: [
+        'Privat untuk perusahaan Anda, disegel dengan kuncinya sendiri',
+        'Setiap langkah darinya menyebutkan sumbernya',
+        'Admin Anda melihat, mengelola, dan menghapus yang tersimpan',
+        'Tidak pernah dipakai untuk melatih model bersama',
+      ],
+      card: {
+        aria: 'Ilustrasi: satu langkah terpandu di layar seseorang, dengan dokumen perusahaan asalnya dan lencana "Privat untuk perusahaan Anda"',
+        app: 'Tugas terpandu',
+        step: 'Langkah 3 dari 7',
+        title: 'Atur grup penugasan ke Platform-Ops, lalu pilih templat CHG-STD-07.',
+        from: 'Dari playbook perubahan Anda, bagian 3.2',
+        check: 'Diperiksa di layar sebelum langkah berikutnya',
+        private: 'Privat untuk perusahaan Anda',
+      },
+    },
+    learn: {
+      eyebrow: 'Cara belajarnya',
+      h2: 'Tiga sumber. Satu brain, <hl>milik Anda sendiri.</hl>',
+      lead: 'Brain tumbuh dari apa yang sudah dimiliki perusahaan Anda dan dari pekerjaan yang dilakukan tim Anda setiap hari. Tidak ada yang diketik dua kali.',
+      sources: [
+        {
+          t: 'Dokumen Anda',
+          d: 'SOP, playbook, panduan aplikasi, dan kebijakan menjadi potongan teks yang sudah dibersihkan dan bisa dicari. Setiap potongan menyimpan nama dokumen asalnya, sehingga sebuah langkah bisa mengutipnya.',
+          chips: ['Dibersihkan sebelum disimpan', 'Dikutip dengan nama', 'Bisa dihapus satu per satu'],
+        },
+        {
+          t: 'Alur kerja yang direkam pelatih Anda',
+          d: 'Admin Anda memberikan peran pelatih. Pelatih merekam cara sebuah tugas dikerjakan di aplikasi Anda sendiri lalu menerbitkannya; semua orang di perusahaan menerimanya sebagai alur kerja terpandu.',
+          chips: ['Draf, terbitkan, tarik', 'Rekaman disegel per perusahaan', 'Peran pelatih diberikan admin Anda'],
+        },
+        {
+          t: 'Tugas yang diselesaikan tim Anda',
+          d: 'Saat seseorang menyelesaikan tugas terpandu dengan bersih, setiap langkah dikonfirmasi, brain menyimpan polanya tanpa identitas. Orang berikutnya dengan tugas yang sama mulai dari situ.',
+          chips: ['Hanya tugas yang selesai penuh', 'Nama dan nomor dihapus', 'Disimpan hanya untuk perusahaan Anda'],
+        },
+      ],
+      note: 'Alur kerja yang diterbitkan pelatih selalu didahulukan. Pola yang dipelajari mengisi tempat yang belum direkam pelatih mana pun.',
+    },
+    use: {
+      eyebrow: 'Cara pakainya',
+      h2: 'Setiap langkah dengan kata-kata Anda, <hl>di aplikasi Anda.</hl>',
+      lead: 'Saat seseorang memulai tugas, pemandu mencari dulu di Company Brain Anda dan menyusun langkah dari apa yang ditemukannya di sana.',
+      cards: [
+        {
+          t: 'Berpijak pada aplikasi Anda sendiri',
+          d: 'Langkah memakai nama sistem Anda, kolom Anda, dan rantai persetujuan Anda, diambil dari dokumen dan alur kerja Anda. Bukan panduan umum.',
+        },
+        {
+          t: 'Sumbernya disebutkan',
+          d: 'Langkah yang diambil dari pengetahuan Anda menyebutkan dokumen atau alur kerja asalnya, sehingga orang bisa memeriksa dan memercayainya.',
+        },
+        {
+          t: 'Lebih sedikit pertanyaan, lebih akurat',
+          d: 'Makin banyak dokumen yang ditambahkan admin, makin banyak alur kerja yang direkam pelatih, dan makin banyak tugas yang diselesaikan tim, makin spesifik panduannya.',
+        },
+        {
+          t: 'Ruang pengetahuan',
+          d: 'Admin Anda mengelompokkan pembelajaran perusahaan ke dalam ruang seperti Tutup buku keuangan atau Onboarding pelanggan. Orang memilih ruang yang cocok dengan tugas yang mereka mulai.',
+        },
+        {
+          t: 'Jujur saat tidak punya apa-apa',
+          d: 'Jika brain tidak punya apa pun tentang sebuah tugas, atau sedang terkunci, pemandu mengatakannya dan melanjutkan dengan pengetahuan umum. Ia tidak pernah berpura-pura.',
+        },
+        {
+          t: 'Hanya-baca, seperti biasa',
+          d: 'Company Brain mengubah apa yang dikatakan pemandu, bukan apa yang dilakukannya. WorkCoPilot tetap tidak pernah mengklik, mengetik, atau menjalankan apa pun untuk siapa pun.',
+        },
+      ],
+    },
+    how: {
+      eyebrow: 'Cara kerjanya',
+      h2: 'Dari pengetahuan Anda ke langkah berikutnya di layar.',
+      lead: 'Empat tahap, dan satu siklus yang tertutup setiap kali sebuah tugas selesai dengan baik.',
+      art: {
+        aria: 'Diagram: dokumen, alur kerja yang direkam, dan tugas yang selesai disamarkan di perangkat, disegel di Company Brain terenkripsi Anda, lalu muncul sebagai langkah bersumber di layar seseorang; penyelesaian yang bersih mengalir kembali ke brain',
+        docs: 'Dokumen',
+        workflows: 'Alur kerja terekam',
+        finished: 'Tugas selesai',
+        masked: 'Disamarkan di perangkat',
+        brain: 'Brain terenkripsi Anda',
+        step: 'Langkah bersumber di layar',
+        loop: 'Penyelesaian bersih mengalir kembali',
+      },
+      steps: [
+        {
+          t: 'Kumpulkan',
+          d: 'Dokumen, rekaman pelatih Anda, dan penyelesaian bersih dari tim Anda.',
+        },
+        {
+          t: 'Samarkan',
+          d: 'Nilai sensitif disamarkan di perangkat sesuai kebijakan perusahaan Anda; potongan teks dibersihkan lagi sebelum disimpan.',
+        },
+        {
+          t: 'Segel',
+          d: 'Semuanya disegel dengan kunci milik perusahaan Anda. Hanya beberapa potongan yang dikembalikan pencarian yang pernah dibuka.',
+        },
+        {
+          t: 'Pandu',
+          d: 'Langkah berikutnya muncul di layar orang itu, dengan kata-kata Anda dan sumber yang disebutkan.',
+        },
+      ],
+    },
+    control: {
+      eyebrow: 'Kendali dan privasi',
+      h2: 'Pengetahuan perusahaan Anda <hl>tetap milik perusahaan Anda.</hl>',
+      lead: 'Company Brain terikat pada satu perusahaan, disegel dengan kunci perusahaan itu sendiri, dan dikelola admin Anda.',
+      items: [
+        {
+          t: 'Terbatas pada perusahaan, tidak pernah dibagikan',
+          d: 'Brain setiap perusahaan disimpan terpisah di bawah kuncinya sendiri. Tidak ada yang berpindah ke perusahaan lain, dan tidak ada yang melatih model bersama.',
+        },
+        {
+          t: 'Terenkripsi saat disimpan',
+          d: 'Potongan teks, vektor, dan indeks disegel dengan AES-256-GCM. Berkas yang diubah atau salah kunci memunculkan galat, bukan brain kosong.',
+        },
+        {
+          t: 'Admin Anda mengelolanya',
+          d: 'Konsol perusahaan mencantumkan setiap sumber dengan ukuran dan statusnya. Menghapus satu, atau membersihkan semuanya, butuh alasan dan tercatat di jejak audit.',
+        },
+        {
+          t: 'Brain privat, frasa sandi Anda',
+          d: 'Aktifkan enkripsi privat dan brain disegel dengan frasa sandi yang hanya dipegang perusahaan Anda, dengan frasa pemulihan yang ditampilkan sekali. Kunci, buka untuk tim Anda, ganti frasa sandinya, dan ia terkunci lagi lewat pewaktu.',
+        },
+        {
+          t: 'Disamarkan di perangkat',
+          d: 'Nilai sensitif di layar dan teks seseorang disamarkan di perangkatnya sesuai kebijakan perusahaan Anda sebelum apa pun dikirim.',
+        },
+        {
+          t: 'Unduhan untuk eksekutif',
+          d: 'Eksekutif mengunduh Company Brain sebagai satu arsip terenkripsi dengan frasa sandi yang mereka tetapkan. Di layanan yang di-hosting, melihat atau mengganti frasa sandi itu meminta kode autentikator terbaru.',
+        },
+        {
+          t: 'Pintu hanya-baca untuk alat Anda sendiri',
+          d: 'Admin Anda bisa menerbitkan kunci API perusahaan dengan cakupan pencarian hanya-baca, agar sistem Anda sendiri bisa menanyai brain. Kunci ditampilkan sekali, bisa dicabut, dan membawa daftar IP yang diizinkan, masa berlaku, dan batas laju. Tidak ada kunci yang bisa menulis ke, mengekspor, atau menghapus brain.',
+        },
+        {
+          t: 'Memberi tahu saat terkunci',
+          d: 'Selama brain privat terkunci, tidak ada yang disajikan dan panduan memberi tahu orang itu bahwa ia bekerja tanpa pengetahuan perusahaan. Tidak ada fallback diam-diam.',
+        },
+      ],
+    },
+    leaders: {
+      eyebrow: 'Untuk admin dan eksekutif',
+      h2: 'Apa yang dilihat pemimpin.',
+      lead: 'Pemimpin melihat bentuk brain dan pekerjaan yang ditopangnya, tidak pernah sesi mentah seorang rekan.',
+      items: [
+        {
+          t: 'Apa isinya',
+          d: 'Konsol perusahaan mencantumkan setiap sumber dengan potongan teks, ukuran, status, dan pembaruan terakhirnya.',
+        },
+        {
+          t: 'Siapa merekam apa',
+          d: 'Alur kerja pelatih tampil sebagai draf, terbit, atau ditarik, dengan versinya, sehingga Anda tahu apa yang memandu tim Anda.',
+        },
+        {
+          t: 'Gambaran produktivitas',
+          d: 'Dasbor eksekutif menampilkan tugas, waktu, dan proyek di seluruh perusahaan, dengan gambaran ilustratif waktu yang dihemat, dan bisa diekspor ke PDF, gambar, atau CSV.',
+        },
+        {
+          t: 'Jejak audit',
+          d: 'Setiap penghapusan isi brain dan setiap unduhan arsip dicatat dengan siapa, apa, dan kapan.',
+        },
+      ],
+    },
+    final: {
+      h2: 'Beri tim Anda pemandu yang mengenal perusahaan Anda.',
+      p: 'Bicarakan dengan kami tentang peluncuran, dokumen, dan pelatih Anda. Penanggung jawab khusus, DPA, dan opsi on-premise atas permintaan.',
+      cta: 'Hubungi kami',
+      ctaEnterprise: 'Lihat semua kendali enterprise',
+    },
+    home: {
+      eyebrow: 'Company Brain',
+      h2: 'Brain yang mengenal perusahaan <em>Anda</em>.',
+      sub: 'Dokumen Anda, alur kerja yang direkam pelatih Anda, dan tugas yang diselesaikan tim Anda, diubah menjadi panduan di aplikasi Anda sendiri.',
+      points: [
+        {
+          t: 'Berpijak pada playbook Anda sendiri',
+          d: 'Langkah memakai sistem Anda, kolom Anda, dan persetujuan Anda, serta menyebutkan sumber asalnya.',
+        },
+        {
+          t: 'Makin tajam makin sering dipakai',
+          d: 'Setiap penyelesaian bersih dan setiap alur kerja yang terbit membuat tugas berikutnya lebih spesifik.',
+        },
+        {
+          t: 'Privat untuk perusahaan Anda',
+          d: 'Disegel dengan kunci Anda sendiri, dikelola admin Anda, tidak pernah dibagikan dan tidak pernah dipakai untuk melatih model bersama.',
+        },
+      ],
+      cta: 'Pelajari Company Brain',
     },
   },
 }

@@ -965,6 +965,7 @@ export default {
     trust: 'Vertrauen',
     securityData: 'Sicherheit und Datenschutz',
     enterpriseFeatures: 'Funktionen für Unternehmen',
+    companyBrain: 'Company Brain',
     benchmark: 'Genauigkeits-Benchmark',
     legal: 'Rechtliches',
     privacy: 'Datenschutzerklärung',
@@ -14297,6 +14298,214 @@ export default {
         title: 'Etwas ist schiefgelaufen',
         body: 'WorkCoPilot konnte den Workflow nicht öffnen. Versuchen Sie es erneut oder fordern Sie in Ihrer Unternehmens-App einen neuen Link an.',
       },
+    },
+  },
+  companyBrainPage: {
+    seo: {
+      title: 'Company Brain - WorkCoPilot von AdmireVeda',
+      description: 'Das Company Brain ist das private Wissen Ihres Unternehmens in WorkCoPilot: Ihre Dokumente, die aufgezeichneten Workflows Ihrer Trainer und die Aufgaben, die Ihre Leute abschließen, werden zu Anleitungen, die Ihren eigenen Apps, Playbooks und Gepflogenheiten folgen. Pro Unternehmen verschlüsselt, vom Admin gepflegt, nie geteilt.',
+    },
+    hero: {
+      eyebrow: 'Company Brain',
+      h1: 'Anleitung, die weiß, <hl>wie Ihr Unternehmen arbeitet.</hl>',
+      sub: 'Das Company Brain ist das private Wissen Ihres Unternehmens in WorkCoPilot. Es macht aus Ihren Dokumenten, den aufgezeichneten Workflows Ihrer Trainer und den Aufgaben, die Ihre Leute abschließen, Anleitungen, die Ihren eigenen Apps, Playbooks und Gepflogenheiten folgen.',
+      cta: 'Sprechen Sie mit uns',
+      ctaHow: 'So funktioniert es',
+      proofAria: 'Auf einen Blick',
+      proof: [
+        'Privat für Ihr Unternehmen, mit eigenem Schlüssel versiegelt',
+        'Jeder Schritt daraus nennt seine Quelle',
+        'Ihr Admin sieht, pflegt und löscht, was gespeichert ist',
+        'Wird nie zum Trainieren eines geteilten Modells verwendet',
+      ],
+      card: {
+        aria: 'Illustration: ein geführter Schritt auf dem Bildschirm einer Person, mit dem Unternehmensdokument, aus dem er stammt, und dem Hinweis „Privat für Ihr Unternehmen“',
+        app: 'Geführte Aufgabe',
+        step: 'Schritt 3 von 7',
+        title: 'Zuweisungsgruppe auf Platform-Ops setzen, dann Vorlage CHG-STD-07 wählen.',
+        from: 'Aus Ihrem Change-Playbook, Abschnitt 3.2',
+        check: 'Vor dem nächsten Schritt am Bildschirm geprüft',
+        private: 'Privat für Ihr Unternehmen',
+      },
+    },
+    learn: {
+      eyebrow: 'So lernt es',
+      h2: 'Drei Quellen. Ein Brain, <hl>nur Ihres.</hl>',
+      lead: 'Das Brain wächst aus dem, was Ihr Unternehmen schon hat, und aus der Arbeit, die Ihre Leute jeden Tag erledigen. Nichts wird zweimal eingetippt.',
+      sources: [
+        {
+          t: 'Ihre Dokumente',
+          d: 'SOPs, Playbooks, App-Anleitungen und Richtlinien werden zu bereinigten, durchsuchbaren Passagen. Jede Passage behält den Namen ihres Dokuments, damit ein Schritt sie zitieren kann.',
+          chips: ['Vor dem Speichern bereinigt', 'Namentlich zitiert', 'Einzeln entfernbar'],
+        },
+        {
+          t: 'Die aufgezeichneten Workflows Ihrer Trainer',
+          d: 'Ihr Admin vergibt die Trainer-Rolle. Ein Trainer zeichnet auf, wie eine Aufgabe in Ihrer eigenen App erledigt wird, und veröffentlicht sie; alle im Unternehmen bekommen sie dann als geführten Workflow.',
+          chips: [
+            'Entwurf, veröffentlichen, zurückziehen',
+            'Aufnahmen pro Unternehmen versiegelt',
+            'Trainer-Rolle vom Admin vergeben',
+          ],
+        },
+        {
+          t: 'Die Aufgaben, die Ihre Leute abschließen',
+          d: 'Schließt jemand eine geführte Aufgabe sauber ab, jeder Schritt bestätigt, behält das Brain das anonymisierte Muster. Die nächste Person mit derselben Aufgabe startet damit.',
+          chips: ['Nur vollständig abgeschlossene Aufgaben', 'Namen und Nummern entfernt', 'Nur für Ihr Unternehmen'],
+        },
+      ],
+      note: 'Ein von einem Trainer veröffentlichter Workflow hat immer Vorrang. Ein gelerntes Muster springt ein, wo noch kein Trainer etwas aufgezeichnet hat.',
+    },
+    use: {
+      eyebrow: 'So wird es genutzt',
+      h2: 'Jeder Schritt in Ihren Worten, <hl>in Ihren Apps.</hl>',
+      lead: 'Startet jemand eine Aufgabe, durchsucht der Guide zuerst Ihr Company Brain und baut die Schritte aus dem, was er dort findet.',
+      cards: [
+        {
+          t: 'Verankert in Ihren eigenen Apps',
+          d: 'Schritte nutzen Ihre Systemnamen, Ihre Felder und Ihre Freigabekette, direkt aus Ihren Dokumenten und Workflows. Keine allgemeine Anleitung.',
+        },
+        {
+          t: 'Die Quelle wird genannt',
+          d: 'Ein Schritt aus Ihrem Wissen sagt, aus welchem Dokument oder Workflow er stammt, damit Ihre Leute ihn prüfen können und ihm vertrauen.',
+        },
+        {
+          t: 'Weniger Rückfragen, mehr Treffsicherheit',
+          d: 'Je mehr Dokumente Ihre Admins hinzufügen, je mehr Workflows Ihre Trainer aufzeichnen und je mehr Aufgaben Ihre Leute abschließen, desto präziser wird die Anleitung.',
+        },
+        {
+          t: 'Wissensbereiche',
+          d: 'Ihr Admin gruppiert Unternehmenswissen in Bereiche wie Monatsabschluss oder Kunden-Onboarding. Ihre Leute wählen den Bereich, der zur Aufgabe passt.',
+        },
+        {
+          t: 'Ehrlich, wenn es nichts hat',
+          d: 'Hat das Brain nichts zur Aufgabe oder ist es gesperrt, sagt der Guide das und macht mit allgemeinem Wissen weiter. Er tut nie so, als ob.',
+        },
+        {
+          t: 'Nur lesend, wie immer',
+          d: 'Das Company Brain ändert, was der Guide sagt, nie, was er tut. WorkCoPilot klickt, tippt oder führt weiterhin für niemanden etwas aus.',
+        },
+      ],
+    },
+    how: {
+      eyebrow: 'So funktioniert es',
+      h2: 'Von Ihrem Wissen zum nächsten Schritt am Bildschirm.',
+      lead: 'Vier Stufen und eine Schleife, die sich jedes Mal schließt, wenn eine Aufgabe gut abgeschlossen wird.',
+      art: {
+        aria: 'Diagramm: Dokumente, aufgezeichnete Workflows und abgeschlossene Aufgaben werden auf dem Gerät maskiert, im verschlüsselten Company Brain versiegelt und erscheinen als zitierter Schritt auf dem Bildschirm einer Person; saubere Abschlüsse fließen zurück ins Brain',
+        docs: 'Dokumente',
+        workflows: 'Aufgezeichnete Workflows',
+        finished: 'Abgeschlossene Aufgaben',
+        masked: 'Auf dem Gerät maskiert',
+        brain: 'Ihr verschlüsseltes Brain',
+        step: 'Ein zitierter Schritt',
+        loop: 'Saubere Abschlüsse fließen zurück',
+      },
+      steps: [
+        {
+          t: 'Sammeln',
+          d: 'Dokumente, die Aufnahmen Ihrer Trainer und die sauberen Abschlüsse Ihrer Leute.',
+        },
+        {
+          t: 'Maskieren',
+          d: 'Sensible Werte werden nach Ihrer Unternehmensrichtlinie auf dem Gerät maskiert; Passagen werden vor dem Speichern erneut bereinigt.',
+        },
+        {
+          t: 'Versiegeln',
+          d: 'Alles wird mit dem eigenen Schlüssel Ihres Unternehmens versiegelt. Nur die wenigen Passagen, die eine Suche liefert, werden je geöffnet.',
+        },
+        {
+          t: 'Anleiten',
+          d: 'Der nächste Schritt erscheint auf dem Bildschirm der Person, in Ihren Worten, mit genannter Quelle.',
+        },
+      ],
+    },
+    control: {
+      eyebrow: 'Kontrolle und Datenschutz',
+      h2: 'Das Wissen Ihres Unternehmens <hl>bleibt Ihres.</hl>',
+      lead: 'Das Company Brain gehört zu genau einem Unternehmen, ist mit dessen eigenem Schlüssel versiegelt und wird von Ihrem Admin gepflegt.',
+      items: [
+        {
+          t: 'Nur Ihr Unternehmen, nie geteilt',
+          d: 'Das Brain jedes Unternehmens wird getrennt unter eigenem Schlüssel gespeichert. Nichts gelangt zu einem anderen Unternehmen, und nichts trainiert ein geteiltes Modell.',
+        },
+        {
+          t: 'Verschlüsselt gespeichert',
+          d: 'Passagen, Vektoren und Index sind mit AES-256-GCM versiegelt. Eine manipulierte oder falsch verschlüsselte Datei löst einen Fehler aus statt ein leeres Brain.',
+        },
+        {
+          t: 'Ihr Admin pflegt es',
+          d: 'Die Unternehmenskonsole listet jede Quelle mit Größe und Status. Eine entfernen oder alles löschen braucht einen Grund und landet im Audit-Protokoll.',
+        },
+        {
+          t: 'Privates Brain, Ihre Passphrase',
+          d: 'Mit privater Verschlüsselung ist das Brain unter einer Passphrase versiegelt, die nur Ihr Unternehmen kennt, mit einer einmal angezeigten Wiederherstellungsphrase. Sperren, für Ihr Team öffnen, Passphrase ändern, und nach Ablauf eines Timers sperrt es sich wieder.',
+        },
+        {
+          t: 'Auf dem Gerät maskiert',
+          d: 'Sensible Werte auf dem Bildschirm und im Text einer Person werden nach Ihrer Unternehmensrichtlinie auf ihrem Gerät maskiert, bevor etwas gesendet wird.',
+        },
+        {
+          t: 'Download für die Geschäftsleitung',
+          d: 'Führungskräfte laden das Company Brain als ein verschlüsseltes Archiv unter einer selbst gesetzten Passphrase herunter. Im gehosteten Dienst verlangt das Anzeigen oder Ersetzen dieser Passphrase einen frischen Authenticator-Code.',
+        },
+        {
+          t: 'Eine Lesetür für Ihre eigenen Tools',
+          d: 'Ihr Admin kann Unternehmens-API-Schlüssel mit reinem Lese-Suchrecht ausgeben, damit Ihre eigenen Systeme das Brain abfragen. Schlüssel werden einmal angezeigt, lassen sich widerrufen und tragen IP-Freigabelisten, Ablaufdatum und Ratenlimits. Kein Schlüssel kann das Brain beschreiben, exportieren oder löschen.',
+        },
+        {
+          t: 'Sagt es, wenn es gesperrt ist',
+          d: 'Solange ein privates Brain gesperrt ist, wird nichts ausgeliefert, und die Anleitung sagt der Person, dass sie ohne Unternehmenswissen arbeitet. Kein stilles Ausweichen.',
+        },
+      ],
+    },
+    leaders: {
+      eyebrow: 'Für Admins und Führungskräfte',
+      h2: 'Was Führungskräfte sehen.',
+      lead: 'Führungskräfte sehen die Form des Brains und die Arbeit, die es trägt, nie die Rohsitzung einer Kollegin oder eines Kollegen.',
+      items: [
+        {
+          t: 'Was drin ist',
+          d: 'Die Unternehmenskonsole listet jede Quelle mit Passagen, Größe, Status und letzter Aktualisierung.',
+        },
+        {
+          t: 'Wer was aufgezeichnet hat',
+          d: 'Workflows der Trainer erscheinen als Entwurf, veröffentlicht oder zurückgezogen, mit Versionen, damit Sie wissen, wovon Ihre Leute geführt werden.',
+        },
+        {
+          t: 'Das Produktivitätsbild',
+          d: 'Das Dashboard für die Geschäftsleitung zeigt Aufgaben, Zeit und Projekte im ganzen Unternehmen, mit einer beispielhaften Sicht auf gesparte Zeit, exportierbar als PDF, Bild oder CSV.',
+        },
+        {
+          t: 'Ein Audit-Protokoll',
+          d: 'Jedes Entfernen von Brain-Inhalten und jeder Download des Archivs wird mit wer, was und wann protokolliert.',
+        },
+      ],
+    },
+    final: {
+      h2: 'Geben Sie Ihren Leuten einen Guide, der Ihr Unternehmen kennt.',
+      p: 'Sprechen Sie mit uns über Ihre Einführung, Ihre Dokumente und Ihre Trainer. Fester Ansprechpartner, AVV und On-Prem-Optionen auf Anfrage.',
+      cta: 'Sprechen Sie mit uns',
+      ctaEnterprise: 'Alle Enterprise-Kontrollen ansehen',
+    },
+    home: {
+      eyebrow: 'Company Brain',
+      h2: 'Ein Brain, das <em>Ihr</em> Unternehmen kennt.',
+      sub: 'Ihre Dokumente, die aufgezeichneten Workflows Ihrer Trainer und die Aufgaben, die Ihre Leute abschließen, werden zu Anleitungen in Ihren eigenen Apps.',
+      points: [
+        {
+          t: 'Verankert in Ihren eigenen Playbooks',
+          d: 'Schritte nutzen Ihre Systeme, Ihre Felder und Ihre Freigaben und nennen die Quelle, aus der sie stammen.',
+        },
+        {
+          t: 'Schärfer, je mehr Sie es nutzen',
+          d: 'Jeder saubere Abschluss und jeder veröffentlichte Workflow macht die nächste Aufgabe präziser.',
+        },
+        {
+          t: 'Privat für Ihr Unternehmen',
+          d: 'Mit Ihrem eigenen Schlüssel versiegelt, von Ihrem Admin gepflegt, nie geteilt und nie zum Trainieren eines geteilten Modells verwendet.',
+        },
+      ],
+      cta: 'Mehr zum Company Brain',
     },
   },
 }

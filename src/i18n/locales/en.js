@@ -884,6 +884,7 @@ export default {
     trust: 'Trust',
     securityData: 'Security & data protection',
     enterpriseFeatures: 'Enterprise features',
+    companyBrain: 'Company Brain',
     benchmark: 'Accuracy benchmark',
     legal: 'Legal',
     privacy: 'Privacy Policy',

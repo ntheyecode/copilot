@@ -965,6 +965,7 @@ export default {
     trust: 'Tin cậy',
     securityData: 'Bảo mật và bảo vệ dữ liệu',
     enterpriseFeatures: 'Tính năng doanh nghiệp',
+    companyBrain: 'Company Brain',
     benchmark: 'Kiểm tra độ chính xác',
     legal: 'Pháp lý',
     privacy: 'Chính sách bảo mật',
@@ -14288,6 +14289,210 @@ export default {
         title: 'Đã có lỗi xảy ra',
         body: 'WorkCoPilot không mở được quy trình. Thử lại, hoặc yêu cầu ứng dụng công ty cấp liên kết mới.',
       },
+    },
+  },
+  companyBrainPage: {
+    seo: {
+      title: 'Company Brain - WorkCoPilot của AdmireVeda',
+      description: 'Company Brain là kho tri thức riêng của công ty bạn bên trong WorkCoPilot: tài liệu của bạn, các quy trình do huấn luyện viên của bạn ghi lại và những công việc đội ngũ của bạn hoàn thành, được chuyển thành hướng dẫn bám sát ứng dụng, cẩm nang và cách làm của chính công ty bạn. Mã hóa theo từng công ty, do quản trị viên của bạn quản lý, không bao giờ chia sẻ.',
+    },
+    hero: {
+      eyebrow: 'Company Brain',
+      h1: 'Hướng dẫn hiểu rõ <hl>cách công ty bạn vận hành.</hl>',
+      sub: 'Company Brain là kho tri thức riêng của công ty bạn bên trong WorkCoPilot. Nó biến tài liệu của bạn, các quy trình do huấn luyện viên ghi lại và những công việc đội ngũ hoàn thành thành hướng dẫn bám sát ứng dụng, cẩm nang và cách làm của chính công ty bạn.',
+      cta: 'Trao đổi với chúng tôi',
+      ctaHow: 'Xem cách hoạt động',
+      proofAria: 'Tóm tắt',
+      proof: [
+        'Riêng cho công ty bạn, niêm phong bằng khóa của chính công ty',
+        'Mỗi bước lấy từ đó đều nêu rõ nguồn',
+        'Quản trị viên của bạn xem, quản lý và xóa những gì được lưu',
+        'Không bao giờ dùng để huấn luyện mô hình dùng chung',
+      ],
+      card: {
+        aria: 'Minh họa: một bước hướng dẫn trên màn hình của một người, kèm tài liệu công ty mà bước đó lấy ra và nhãn “Riêng cho công ty bạn”',
+        app: 'Công việc có hướng dẫn',
+        step: 'Bước 3 / 7',
+        title: 'Đặt nhóm phân công là Platform-Ops, rồi chọn mẫu CHG-STD-07.',
+        from: 'Từ cẩm nang thay đổi của bạn, mục 3.2',
+        check: 'Đã kiểm tra trên màn hình trước bước tiếp theo',
+        private: 'Riêng cho công ty bạn',
+      },
+    },
+    learn: {
+      eyebrow: 'Cách nó học',
+      h2: 'Ba nguồn. Một brain, <hl>của riêng bạn.</hl>',
+      lead: 'Brain lớn lên từ những gì công ty bạn đã có và từ công việc đội ngũ của bạn làm mỗi ngày. Không có gì phải nhập hai lần.',
+      sources: [
+        {
+          t: 'Tài liệu của bạn',
+          d: 'Quy trình chuẩn, cẩm nang, hướng dẫn ứng dụng và chính sách trở thành các đoạn đã được làm sạch và có thể tìm kiếm. Mỗi đoạn giữ tên tài liệu gốc để một bước có thể trích dẫn.',
+          chips: ['Làm sạch trước khi lưu', 'Trích dẫn theo tên', 'Gỡ bỏ từng mục được'],
+        },
+        {
+          t: 'Quy trình do huấn luyện viên của bạn ghi lại',
+          d: 'Quản trị viên cấp vai trò huấn luyện viên. Huấn luyện viên ghi lại cách thực hiện một công việc trong chính ứng dụng của bạn rồi xuất bản; mọi người trong công ty nhận nó như một quy trình có hướng dẫn.',
+          chips: ['Nháp, xuất bản, thu hồi', 'Bản ghi niêm phong theo công ty', 'Vai trò huấn luyện viên do quản trị viên cấp'],
+        },
+        {
+          t: 'Công việc đội ngũ của bạn hoàn thành',
+          d: 'Khi ai đó hoàn thành gọn gàng một công việc có hướng dẫn, mọi bước đều được xác nhận, brain giữ lại khuôn mẫu đã ẩn danh. Người tiếp theo có cùng công việc bắt đầu từ đó.',
+          chips: ['Chỉ công việc hoàn thành trọn vẹn', 'Đã bỏ tên và số', 'Chỉ lưu cho công ty bạn'],
+        },
+      ],
+      note: 'Quy trình do huấn luyện viên xuất bản luôn được ưu tiên. Khuôn mẫu đã học chỉ lấp vào chỗ chưa có huấn luyện viên nào ghi lại.',
+    },
+    use: {
+      eyebrow: 'Cách nó được dùng',
+      h2: 'Mỗi bước bằng ngôn ngữ của bạn, <hl>trong ứng dụng của bạn.</hl>',
+      lead: 'Khi một người bắt đầu công việc, trợ lý tìm trong Company Brain của bạn trước và dựng các bước từ những gì tìm thấy ở đó.',
+      cards: [
+        {
+          t: 'Bám sát ứng dụng của chính bạn',
+          d: 'Các bước dùng tên hệ thống, trường dữ liệu và chuỗi phê duyệt của bạn, lấy từ tài liệu và quy trình của bạn. Không phải hướng dẫn chung chung.',
+        },
+        {
+          t: 'Nguồn được nêu rõ',
+          d: 'Một bước lấy từ tri thức của bạn cho biết nó đến từ tài liệu hay quy trình nào, để mọi người có thể kiểm tra và tin tưởng.',
+        },
+        {
+          t: 'Ít câu hỏi hơn, chính xác hơn',
+          d: 'Quản trị viên thêm càng nhiều tài liệu, huấn luyện viên ghi càng nhiều quy trình và đội ngũ hoàn thành càng nhiều công việc, hướng dẫn càng cụ thể.',
+        },
+        {
+          t: 'Không gian tri thức',
+          d: 'Quản trị viên nhóm các bài học của công ty thành không gian như Khóa sổ tài chính hay Tiếp nhận khách hàng. Mọi người chọn không gian phù hợp với công việc đang bắt đầu.',
+        },
+        {
+          t: 'Thẳng thắn khi không có gì',
+          d: 'Nếu brain không có gì về công việc đó, hoặc đang bị khóa, trợ lý nói rõ và tiếp tục bằng kiến thức chung. Không bao giờ giả vờ.',
+        },
+        {
+          t: 'Chỉ đọc, như mọi khi',
+          d: 'Company Brain thay đổi những gì trợ lý nói, không bao giờ thay đổi những gì nó làm. WorkCoPilot vẫn không bao giờ nhấp, gõ hay chạy bất cứ thứ gì thay ai.',
+        },
+      ],
+    },
+    how: {
+      eyebrow: 'Cách hoạt động',
+      h2: 'Từ tri thức của bạn đến bước tiếp theo trên màn hình.',
+      lead: 'Bốn giai đoạn và một vòng lặp khép lại mỗi khi một công việc được hoàn thành tốt.',
+      art: {
+        aria: 'Sơ đồ: tài liệu, quy trình đã ghi và công việc đã hoàn thành được che trên thiết bị, niêm phong trong Company Brain đã mã hóa của bạn, rồi hiện lên như một bước có nguồn trên màn hình của một người; những lần hoàn thành gọn gàng chảy ngược về brain',
+        docs: 'Tài liệu',
+        workflows: 'Quy trình đã ghi',
+        finished: 'Công việc đã xong',
+        masked: 'Che trên thiết bị',
+        brain: 'Brain mã hóa của bạn',
+        step: 'Một bước có nguồn',
+        loop: 'Hoàn thành gọn gàng chảy ngược về',
+      },
+      steps: [
+        {
+          t: 'Thu thập',
+          d: 'Tài liệu, bản ghi của huấn luyện viên và những lần hoàn thành gọn gàng của đội ngũ.',
+        },
+        {
+          t: 'Che',
+          d: 'Giá trị nhạy cảm được che trên thiết bị theo chính sách công ty; các đoạn được làm sạch lần nữa trước khi lưu.',
+        },
+        {
+          t: 'Niêm phong',
+          d: 'Mọi thứ được niêm phong bằng khóa riêng của công ty bạn. Chỉ vài đoạn mà một lần tìm kiếm trả về mới được mở.',
+        },
+        {
+          t: 'Hướng dẫn',
+          d: 'Bước tiếp theo hiện trên màn hình của người đó, bằng ngôn ngữ của bạn, kèm nguồn được nêu rõ.',
+        },
+      ],
+    },
+    control: {
+      eyebrow: 'Kiểm soát và quyền riêng tư',
+      h2: 'Tri thức của công ty bạn <hl>vẫn là của công ty bạn.</hl>',
+      lead: 'Company Brain thuộc về một công ty duy nhất, niêm phong bằng khóa của chính công ty đó và do quản trị viên của bạn quản lý.',
+      items: [
+        {
+          t: 'Riêng từng công ty, không bao giờ chia sẻ',
+          d: 'Brain của mỗi công ty được lưu riêng dưới khóa của chính nó. Không gì chuyển sang công ty khác, và không gì huấn luyện mô hình dùng chung.',
+        },
+        {
+          t: 'Mã hóa khi lưu trữ',
+          d: 'Đoạn, vector và chỉ mục được niêm phong bằng AES-256-GCM. Tệp bị can thiệp hoặc sai khóa sẽ báo lỗi thay vì trả về brain trống.',
+        },
+        {
+          t: 'Quản trị viên của bạn quản lý',
+          d: 'Bảng điều khiển công ty liệt kê mọi nguồn với dung lượng và trạng thái. Gỡ một nguồn, hay xóa tất cả, đều cần lý do và được ghi vào nhật ký kiểm toán.',
+        },
+        {
+          t: 'Brain riêng, cụm mật khẩu của bạn',
+          d: 'Bật mã hóa riêng và brain được niêm phong bằng cụm mật khẩu chỉ công ty bạn nắm giữ, kèm cụm từ khôi phục hiển thị một lần. Khóa lại, mở cho đội ngũ, đổi cụm mật khẩu, và nó tự khóa lại theo hẹn giờ.',
+        },
+        {
+          t: 'Che trên thiết bị',
+          d: 'Giá trị nhạy cảm trên màn hình và trong văn bản của một người được che ngay trên thiết bị của họ theo chính sách công ty trước khi gửi đi bất cứ thứ gì.',
+        },
+        {
+          t: 'Tải về dành cho lãnh đạo',
+          d: 'Lãnh đạo tải Company Brain về dưới dạng một kho lưu trữ mã hóa với cụm mật khẩu do họ đặt. Trên dịch vụ lưu trữ, xem hoặc thay cụm mật khẩu đó cần mã xác thực mới.',
+        },
+        {
+          t: 'Cánh cửa chỉ đọc cho công cụ của bạn',
+          d: 'Quản trị viên có thể cấp khóa API công ty với phạm vi tìm kiếm chỉ đọc, để hệ thống của bạn truy vấn brain. Khóa chỉ hiển thị một lần, có thể thu hồi, và đi kèm danh sách IP cho phép, hạn dùng và giới hạn tần suất. Không khóa nào có thể ghi vào, xuất hay xóa brain.',
+        },
+        {
+          t: 'Nói rõ khi đang khóa',
+          d: 'Khi brain riêng đang khóa, không gì được cung cấp và hướng dẫn cho người dùng biết họ đang làm việc mà không có tri thức công ty. Không âm thầm chuyển hướng.',
+        },
+      ],
+    },
+    leaders: {
+      eyebrow: 'Dành cho quản trị viên và lãnh đạo',
+      h2: 'Lãnh đạo nhìn thấy gì.',
+      lead: 'Lãnh đạo thấy hình hài của brain và công việc nó hỗ trợ, không bao giờ thấy phiên làm việc thô của đồng nghiệp.',
+      items: [
+        {
+          t: 'Bên trong có gì',
+          d: 'Bảng điều khiển công ty liệt kê mọi nguồn với số đoạn, dung lượng, trạng thái và lần cập nhật gần nhất.',
+        },
+        {
+          t: 'Ai đã ghi gì',
+          d: 'Quy trình của huấn luyện viên hiện ở trạng thái nháp, đã xuất bản hoặc đã thu hồi, kèm phiên bản, để bạn biết đội ngũ đang được hướng dẫn theo gì.',
+        },
+        {
+          t: 'Bức tranh năng suất',
+          d: 'Bảng điều khiển lãnh đạo hiển thị công việc, thời gian và dự án toàn công ty, kèm góc nhìn minh họa về thời gian tiết kiệm, xuất ra PDF, ảnh hoặc CSV.',
+        },
+        {
+          t: 'Nhật ký kiểm toán',
+          d: 'Mỗi lần gỡ nội dung brain và mỗi lần tải kho lưu trữ đều được ghi lại: ai, gì và khi nào.',
+        },
+      ],
+    },
+    final: {
+      h2: 'Trao cho đội ngũ một trợ lý hiểu rõ công ty bạn.',
+      p: 'Trao đổi với chúng tôi về kế hoạch triển khai, tài liệu và huấn luyện viên của bạn. Người phụ trách riêng, DPA và tùy chọn triển khai tại chỗ theo yêu cầu.',
+      cta: 'Trao đổi với chúng tôi',
+      ctaEnterprise: 'Xem mọi kiểm soát dành cho doanh nghiệp',
+    },
+    home: {
+      eyebrow: 'Company Brain',
+      h2: 'Một brain hiểu rõ công ty <em>của bạn</em>.',
+      sub: 'Tài liệu của bạn, quy trình do huấn luyện viên ghi lại và công việc đội ngũ hoàn thành, được chuyển thành hướng dẫn ngay trong ứng dụng của bạn.',
+      points: [
+        {
+          t: 'Bám sát cẩm nang của chính bạn',
+          d: 'Các bước dùng hệ thống, trường dữ liệu và phê duyệt của bạn, và nêu rõ nguồn gốc.',
+        },
+        {
+          t: 'Càng dùng càng sắc',
+          d: 'Mỗi lần hoàn thành gọn gàng và mỗi quy trình xuất bản làm công việc tiếp theo cụ thể hơn.',
+        },
+        {
+          t: 'Riêng cho công ty bạn',
+          d: 'Niêm phong bằng khóa của chính bạn, do quản trị viên quản lý, không bao giờ chia sẻ và không bao giờ dùng để huấn luyện mô hình dùng chung.',
+        },
+      ],
+      cta: 'Tìm hiểu về Company Brain',
     },
   },
 }

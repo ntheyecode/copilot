@@ -6,7 +6,7 @@ import { test, expect } from '../support/fixtures.mjs'
 import { capsOf } from '../support/editions.mjs'
 
 const PRICE = /(\$|US\$|€|£|₹)\s?\d|\d\s?(\$|€|£|₹)|per user per month|USD\b/i
-const PAGES = ['/', '/workcopilot/use-cases', '/workcopilot/how-it-works', '/workcopilot/security', '/workcopilot/faq', '/workcopilot/enterprise', '/workcopilot/contact', '/workcopilot/fields', '/workcopilot/benchmark']
+const PAGES = ['/', '/workcopilot/use-cases', '/workcopilot/how-it-works', '/workcopilot/security', '/workcopilot/faq', '/workcopilot/enterprise', '/workcopilot/company-brain', '/workcopilot/contact', '/workcopilot/fields', '/workcopilot/benchmark']
 
 test('the organization site shows no price anywhere and sends pricing to sales', async ({ as, edition }) => {
   const { context } = await as.context()

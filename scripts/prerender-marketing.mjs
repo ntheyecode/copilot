@@ -222,6 +222,31 @@ route({
   ],
 })
 
+// The Company Brain page: organizations only (route needs companies), so the
+// individuals audience skips it (scripts/audience_seo.mjs). Title and
+// description come from the page's own catalog keys (companyBrainPage.seo);
+// the crawler copy below mirrors the page's English wording.
+route({
+  path: '/workcopilot/company-brain',
+  label: 'Company Brain',
+  source: 'WorkCompanyBrain.jsx',
+  title: en.companyBrainPage.seo.title,
+  description: en.companyBrainPage.seo.description,
+  h1: 'Guidance that knows how your company works.',
+  lede: [
+    'The Company Brain is your company\'s private knowledge inside WorkCoPilot. It turns your documents, your trainers\' recorded workflows and the tasks your people finish into guidance that follows your own apps, playbooks and conventions.',
+  ],
+  points: [
+    'Three sources: your documents become scrubbed, searchable passages that cite their source; your trainers record and publish guided workflows; the tasks your people finish cleanly are kept as de-identified patterns for the next person.',
+    'Every step in your words, in your apps: steps use your system names, fields and approval chain, name the document or workflow they came from, and get more specific the more your team uses it.',
+    'Private to your company: stored separately under your company\'s own key, encrypted at rest, never shared with another company and never used to train a shared model.',
+    'Your admin curates it: every source listed with its size and status; removing one or clearing everything needs a reason and lands in the audit trail; knowledge spaces group company learnings.',
+    'Private brain with your passphrase: sealed under a passphrase only your company holds, a recovery phrase shown once, lock and open it for your team, and it re-locks on a timer.',
+    'Executives download the Company Brain as one encrypted archive under a passphrase they set; on the hosted service, viewing or replacing it asks for a fresh authenticator code.',
+    'Read-only by design: the Company Brain changes what the guide says, never what it does. WorkCoPilot never clicks, types or runs anything for anyone.',
+  ],
+})
+
 route({
   path: '/workcopilot/faq',
   label: 'FAQ',
@@ -364,6 +389,7 @@ const I18N_KEY = {
   '/workcopilot/pricing': 'seo.pricing',
   '/workcopilot/faq': 'seo.faq',
   '/workcopilot/security': 'securityPage.seo',
+  '/workcopilot/company-brain': 'companyBrainPage.seo',
 }
 
 // An individuals-site route's copy comes from the same table the page reads;

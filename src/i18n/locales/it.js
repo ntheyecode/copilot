@@ -588,6 +588,7 @@ export default {
     trust: 'Fiducia',
     securityData: 'Sicurezza e protezione dei dati',
     enterpriseFeatures: 'Funzioni per aziende',
+    companyBrain: 'Company Brain',
     benchmark: 'Test di accuratezza',
     legal: 'Note legali',
     privacy: 'Informativa sulla privacy',
@@ -14310,6 +14311,214 @@ export default {
         title: 'Qualcosa è andato storto',
         body: 'WorkCoPilot non è riuscito ad aprire il flusso di lavoro. Riprova, oppure chiedi un nuovo link all\'app della tua azienda.',
       },
+    },
+  },
+  companyBrainPage: {
+    seo: {
+      title: 'Company Brain - WorkCoPilot di AdmireVeda',
+      description: 'Il Company Brain è la conoscenza privata della tua azienda dentro WorkCoPilot: i tuoi documenti, i flussi di lavoro registrati dai tuoi formatori e le attività che le tue persone portano a termine, trasformati in una guida che segue le tue applicazioni, i tuoi playbook e le tue consuetudini. Cifrato per azienda, curato dal tuo amministratore, mai condiviso.',
+    },
+    hero: {
+      eyebrow: 'Company Brain',
+      h1: 'Una guida che sa <hl>come lavora la tua azienda.</hl>',
+      sub: 'Il Company Brain è la conoscenza privata della tua azienda dentro WorkCoPilot. Trasforma i tuoi documenti, i flussi di lavoro registrati dai tuoi formatori e le attività che le tue persone portano a termine in una guida che segue le tue applicazioni, i tuoi playbook e le tue consuetudini.',
+      cta: 'Parliamone',
+      ctaHow: 'Guarda come funziona',
+      proofAria: 'In sintesi',
+      proof: [
+        'Privato per la tua azienda, sigillato con la sua chiave',
+        'Ogni passo che ne deriva indica la fonte',
+        'Il tuo amministratore vede, cura e cancella ciò che è archiviato',
+        'Mai usato per addestrare un modello condiviso',
+      ],
+      card: {
+        aria: 'Illustrazione: un passo guidato sullo schermo di una persona, con il documento aziendale da cui proviene e il badge «Privato per la tua azienda»',
+        app: 'Attività guidata',
+        step: 'Passo 3 di 7',
+        title: 'Imposta il gruppo di assegnazione su Platform-Ops, poi scegli il modello CHG-STD-07.',
+        from: 'Dal tuo playbook dei cambiamenti, sezione 3.2',
+        check: 'Verificato a schermo prima del passo successivo',
+        private: 'Privato per la tua azienda',
+      },
+    },
+    learn: {
+      eyebrow: 'Come impara',
+      h2: 'Tre fonti. Un solo brain, <hl>soltanto tuo.</hl>',
+      lead: 'Il brain cresce da ciò che la tua azienda ha già e dal lavoro che le tue persone fanno ogni giorno. Niente viene digitato due volte.',
+      sources: [
+        {
+          t: 'I tuoi documenti',
+          d: 'Procedure, playbook, guide alle applicazioni e policy diventano passaggi ripuliti e ricercabili. Ogni passaggio conserva il nome del documento da cui proviene, così un passo può citarlo.',
+          chips: ["Ripulito prima dell'archiviazione", 'Citato per nome', 'Rimovibile uno alla volta'],
+        },
+        {
+          t: 'I flussi di lavoro registrati dai tuoi formatori',
+          d: "Il tuo amministratore assegna il ruolo di formatore. Un formatore registra come si svolge un'attività nella vostra applicazione e la pubblica; tutta l'azienda la riceve come flusso di lavoro guidato.",
+          chips: [
+            'Bozza, pubblicazione, ritiro',
+            'Registrazioni sigillate per azienda',
+            'Ruolo di formatore assegnato dal tuo amministratore',
+          ],
+        },
+        {
+          t: 'Le attività che le tue persone completano',
+          d: "Quando qualcuno completa un'attività guidata in modo pulito, con ogni passo confermato, il brain conserva lo schema anonimizzato. La persona successiva con la stessa attività parte da lì.",
+          chips: ['Solo attività completate del tutto', 'Nomi e numeri rimossi', 'Conservato solo per la tua azienda'],
+        },
+      ],
+      note: 'Un flusso di lavoro pubblicato da un formatore ha sempre la precedenza. Uno schema appreso interviene dove nessun formatore ha ancora registrato.',
+    },
+    use: {
+      eyebrow: 'Come si usa',
+      h2: 'Ogni passo con le tue parole, <hl>nelle tue applicazioni.</hl>',
+      lead: "Quando una persona avvia un'attività, la guida cerca prima nel tuo Company Brain e costruisce i passi da ciò che vi trova.",
+      cards: [
+        {
+          t: 'Radicato nelle tue applicazioni',
+          d: 'I passi usano i nomi dei tuoi sistemi, i tuoi campi e la tua catena di approvazione, presi dai tuoi documenti e flussi di lavoro. Non un tutorial generico.',
+        },
+        {
+          t: 'La fonte è indicata',
+          d: 'Un passo tratto dalla tua conoscenza dice da quale documento o flusso di lavoro proviene, così le persone possono verificarlo e fidarsi.',
+        },
+        {
+          t: 'Meno domande, più precisione',
+          d: 'Più documenti aggiungono i tuoi amministratori, più flussi registrano i tuoi formatori e più attività completano le tue persone, più la guida diventa specifica.',
+        },
+        {
+          t: 'Spazi di conoscenza',
+          d: "Il tuo amministratore raggruppa gli apprendimenti aziendali in spazi come Chiusura contabile o Onboarding clienti. Ognuno sceglie lo spazio adatto all'attività che sta avviando.",
+        },
+        {
+          t: 'Onesto quando non ha nulla',
+          d: "Se il brain non ha nulla su un'attività, o è bloccato, la guida lo dice e prosegue con la conoscenza generale. Non finge mai.",
+        },
+        {
+          t: 'In sola lettura, come sempre',
+          d: 'Il Company Brain cambia ciò che la guida dice, mai ciò che fa. WorkCoPilot continua a non cliccare, digitare o eseguire nulla al posto di nessuno.',
+        },
+      ],
+    },
+    how: {
+      eyebrow: 'Come funziona',
+      h2: 'Dalla tua conoscenza al passo successivo sullo schermo.',
+      lead: "Quattro fasi e un ciclo che si chiude ogni volta che un'attività viene completata bene.",
+      art: {
+        aria: 'Diagramma: documenti, flussi di lavoro registrati e attività completate vengono mascherati sul dispositivo, sigillati nel tuo Company Brain cifrato e compaiono come passo con fonte sullo schermo di una persona; i completamenti puliti tornano nel brain',
+        docs: 'Documenti',
+        workflows: 'Flussi registrati',
+        finished: 'Attività completate',
+        masked: 'Mascherato sul dispositivo',
+        brain: 'Il tuo brain cifrato',
+        step: 'Un passo con la fonte',
+        loop: 'I completamenti puliti tornano indietro',
+      },
+      steps: [
+        {
+          t: 'Raccogliere',
+          d: 'Documenti, le registrazioni dei tuoi formatori e i completamenti puliti delle tue persone.',
+        },
+        {
+          t: 'Mascherare',
+          d: "I valori sensibili vengono mascherati sul dispositivo secondo la policy aziendale; i passaggi vengono ripuliti di nuovo prima dell'archiviazione.",
+        },
+        {
+          t: 'Sigillare',
+          d: 'Tutto è sigillato con la chiave della tua azienda. Solo i pochi passaggi restituiti da una ricerca vengono mai aperti.',
+        },
+        {
+          t: 'Guidare',
+          d: 'Il passo successivo compare sullo schermo della persona, con le tue parole e con la fonte indicata.',
+        },
+      ],
+    },
+    control: {
+      eyebrow: 'Controllo e privacy',
+      h2: 'La conoscenza della tua azienda <hl>resta tua.</hl>',
+      lead: "Il Company Brain appartiene a una sola azienda, è sigillato con la chiave di quell'azienda ed è curato dal tuo amministratore.",
+      items: [
+        {
+          t: 'Solo la tua azienda, mai condiviso',
+          d: "Il brain di ogni azienda è archiviato separatamente sotto la propria chiave. Nulla passa a un'altra azienda e nulla addestra un modello condiviso.",
+        },
+        {
+          t: 'Cifrato a riposo',
+          d: 'Passaggi, vettori e indice sono sigillati con AES-256-GCM. Un file manomesso o con la chiave sbagliata genera un errore invece di un brain vuoto.',
+        },
+        {
+          t: 'Il tuo amministratore lo cura',
+          d: 'La console aziendale elenca ogni fonte con dimensione e stato. Rimuoverne una, o cancellare tutto, richiede un motivo e finisce nel registro di audit.',
+        },
+        {
+          t: 'Brain privato, la tua passphrase',
+          d: 'Attiva la cifratura privata e il brain è sigillato sotto una passphrase che solo la tua azienda conosce, con una frase di recupero mostrata una sola volta. Bloccalo, aprilo per il tuo team, cambia la passphrase, e si richiude da solo dopo un timer.',
+        },
+        {
+          t: 'Mascherato sul dispositivo',
+          d: 'I valori sensibili sullo schermo e nel testo di una persona vengono mascherati sul suo dispositivo secondo la policy aziendale prima di qualsiasi invio.',
+        },
+        {
+          t: 'Download per i dirigenti',
+          d: "I dirigenti scaricano il Company Brain come un unico archivio cifrato sotto una passphrase che impostano loro. Sul servizio ospitato, visualizzare o sostituire quella passphrase richiede un codice recente dell'app di autenticazione.",
+        },
+        {
+          t: 'Una porta in sola lettura per i tuoi strumenti',
+          d: 'Il tuo amministratore può emettere chiavi API aziendali con un permesso di ricerca in sola lettura, così i tuoi sistemi possono interrogare il brain. Le chiavi si vedono una volta sola, si possono revocare e portano liste di IP consentiti, scadenza e limiti di frequenza. Nessuna chiave può scrivere nel brain, esportarlo o cancellarlo.',
+        },
+        {
+          t: 'Lo dice quando è bloccato',
+          d: 'Finché un brain privato è bloccato, nulla viene servito e la guida dice alla persona che sta lavorando senza la conoscenza aziendale. Nessun ripiego silenzioso.',
+        },
+      ],
+    },
+    leaders: {
+      eyebrow: 'Per amministratori e dirigenti',
+      h2: 'Cosa vedono i responsabili.',
+      lead: 'I responsabili vedono la forma del brain e il lavoro che sostiene, mai la sessione grezza di un collega.',
+      items: [
+        {
+          t: 'Cosa contiene',
+          d: 'La console aziendale elenca ogni fonte con passaggi, dimensione, stato e ultimo aggiornamento.',
+        },
+        {
+          t: 'Chi ha registrato cosa',
+          d: 'I flussi di lavoro dei formatori compaiono come bozza, pubblicati o ritirati, con le versioni, così sai da cosa vengono guidate le tue persone.',
+        },
+        {
+          t: 'Il quadro della produttività',
+          d: "La dashboard direzionale mostra attività, tempo e progetti di tutta l'azienda, con una vista indicativa del tempo risparmiato, esportabile in PDF, immagine o CSV.",
+        },
+        {
+          t: 'Un registro di audit',
+          d: "Ogni rimozione di contenuti dal brain e ogni download dell'archivio vengono registrati con chi, cosa e quando.",
+        },
+      ],
+    },
+    final: {
+      h2: 'Dai alle tue persone una guida che conosce la tua azienda.',
+      p: 'Parliamo del tuo rollout, dei tuoi documenti e dei tuoi formatori. Un referente dedicato, un DPA e opzioni on-premise su richiesta.',
+      cta: 'Parliamone',
+      ctaEnterprise: 'Vedi tutti i controlli enterprise',
+    },
+    home: {
+      eyebrow: 'Company Brain',
+      h2: 'Un brain che conosce la <em>tua</em> azienda.',
+      sub: 'I tuoi documenti, i flussi di lavoro registrati dai tuoi formatori e le attività che le tue persone completano, trasformati in guida dentro le tue applicazioni.',
+      points: [
+        {
+          t: 'Radicato nei tuoi playbook',
+          d: 'I passi usano i tuoi sistemi, i tuoi campi e le tue approvazioni, e indicano la fonte da cui provengono.',
+        },
+        {
+          t: 'Più preciso quanto più lo usi',
+          d: "Ogni completamento pulito e ogni flusso pubblicato rendono l'attività successiva più specifica.",
+        },
+        {
+          t: 'Privato per la tua azienda',
+          d: 'Sigillato con la tua chiave, curato dal tuo amministratore, mai condiviso e mai usato per addestrare un modello condiviso.',
+        },
+      ],
+      cta: 'Scopri il Company Brain',
     },
   },
 }

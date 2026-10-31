@@ -25,6 +25,7 @@ import IndivFooter from '../sites/individuals/IndivFooter.jsx'   // the individu
 const GROUPS = [
   { key: 'product', links: [
     ['nav.how', '/workcopilot/how-it-works'], ['nav.use', '/workcopilot/use-cases'], ['nav.fields', '/workcopilot/fields'],
+    ['footer.companyBrain', '/workcopilot/company-brain', 'companies'],
     ['nav.pricing', '/workcopilot/pricing', 'individualPlans'], ['nav.faq', '/workcopilot/faq'], ['footer.demo', '/demo'],
   ] },
   { key: 'trust', links: [

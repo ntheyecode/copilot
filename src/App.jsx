@@ -11,6 +11,7 @@ import WorkLogin from './pages/WorkLogin.jsx'
 import WorkUseCases from './pages/WorkUseCases.jsx'
 import WorkSecurity from './pages/WorkSecurity.jsx'
 import WorkEnterprise from './pages/WorkEnterprise.jsx'
+import WorkCompanyBrain from './pages/WorkCompanyBrain.jsx'   // the Company Brain page (organizations only, like /enterprise)
 import WorkPrivacy from './pages/WorkPrivacy.jsx'
 import WorkDisclaimer from './pages/WorkDisclaimer.jsx'
 import WorkTerms from './pages/WorkTerms.jsx'
@@ -148,6 +149,8 @@ export default function App() {
       {/* Enterprise features: the full list, linked from the main page + nav. */}
       <Route path="/workcopilot/enterprise" element={<EditionRoute needs="companies"><WorkEnterprise /></EditionRoute>} />
       <Route path="/enterprise" element={<EditionRoute needs="companies"><WorkEnterprise /></EditionRoute>} />
+      {/* The Company Brain: the company's private knowledge, linked from the home section + footer. */}
+      <Route path="/workcopilot/company-brain" element={<EditionRoute needs="companies"><WorkCompanyBrain /></EditionRoute>} />
       {/* Public legal pages (plain-language disclosures, same light design as /security). */}
       <Route path="/workcopilot/privacy" element={<WorkPrivacy />} />
       <Route path="/workcopilot/disclaimer" element={<WorkDisclaimer />} />

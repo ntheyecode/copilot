@@ -60,7 +60,11 @@ export const INDIVIDUALS_BANNED_LOCAL = {
 // app for a person). Operator consoles (superAdmin, *Admin) are not here: they
 // are AdmireVeda's own staff tools, not something a customer reads.
 const PUBLIC = ['nav', 'footer', 'common', 'seo', 'home', 'login', 'pricing', 'rel', 'residency', 'widgets', 'guide', 'how', 'notChat',
-  'fieldsPage', 'howItWorks', 'faqPage', 'securityPage', 'contactPage', 'useCases', 'demoPage', 'benchmarkPage', 'edition', 'demo', 'enterprise']
+  'fieldsPage', 'howItWorks', 'faqPage', 'securityPage', 'contactPage', 'useCases', 'demoPage', 'benchmarkPage', 'edition', 'demo', 'enterprise',
+  // /workcopilot/company-brain + the home page's Company Brain section: the
+  // organizations audience reads it (scanned for personal-plan wording); the
+  // individuals edition never renders it (HIDDEN.individuals below).
+  'companyBrainPage']
 // The individuals site (src/sites/individuals/, capability individual_site):
 // rendered for individuals only (an organizations edition never serves it), so
 // its namespace is scanned for that audience alone. Its whole namespace, in
@@ -153,6 +157,8 @@ export const HIDDEN = {
     ...Object.fromEntries(COMPANY_MEMBER_ONLY.map((k) => [k, 'hidden surface: rendered only for company members, company admins or platform staff'])),
     'nav.enterprise': 'SiteHeader: the Enterprise link needs companies',
     'footer.enterpriseFeatures': 'SiteFooter: needs companies',
+    'footer.companyBrain': 'SiteFooter: the Company Brain link needs companies',
+    'companyBrainPage': 'the /workcopilot/company-brain route needs companies (EditionRoute), and the home section renders only where companies exist',
     'footer.dpa': 'SiteFooter: the DPA link needs companies',
     'home.roi': 'WorkMarketing: the #enterprise section needs companies',
     'home.enterprise': 'WorkMarketing: the enterprise chips live in the #enterprise section',

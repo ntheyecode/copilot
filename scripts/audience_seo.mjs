@@ -56,6 +56,7 @@ export const AUDIENCE_ROUTES = {
     '/workcopilot/pricing': { skip: true },   // no published prices: the page redirects to contact
   },
   individuals: {
+    '/workcopilot/company-brain': { skip: true },   // route needs companies: the individuals edition redirects it
     '/workcopilot': {
       lede: [
         'AdmireVeda\'s WorkCoPilot sits beside you and guides any task, step by step, all the way to done.',

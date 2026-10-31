@@ -38,6 +38,7 @@ const ROUTES = [
   { loc: '/workcopilot/fields',          changefreq: 'monthly', priority: '0.8' },
   { loc: '/workcopilot/security',        changefreq: 'monthly', priority: '0.8' },
   { loc: '/workcopilot/enterprise',      changefreq: 'monthly', priority: '0.7' },
+  { loc: '/workcopilot/company-brain',   changefreq: 'monthly', priority: '0.7' },
   // no /workcopilot/pricing: admireveda.com publishes no prices (it redirects to contact)
   { loc: '/workcopilot/benchmark',       changefreq: 'monthly', priority: '0.6' },
   { loc: '/workcopilot/faq',             changefreq: 'monthly', priority: '0.7' },
