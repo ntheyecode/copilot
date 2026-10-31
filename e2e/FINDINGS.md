@@ -46,3 +46,34 @@ cannot come back unnoticed even when the E2E suite is not run.
 - **Root cause:** every standalone console (Teach studio, Workflow issues, executive, company, admin) re-checked `/api/work/me` on its own and treated "nobody signed in" like "signed in without access", each in its own way. Only the `/work` shell redirected to sign-in.
 - **Fix:** one route-level `src/components/RequireSignIn.jsx` (reads the app-wide auth context) wraps the `/work` shell and every standalone console in `src/App.jsx` and sends a signed-out visitor to `/workcopilot`. `/work/launch` stays outside on purpose (it parks the launch token first), as do the desktop buddy and full-guide windows (they say "sign in on the main window").
 - **Regression gate:** `src/theme/product_scope.test.mjs` (every console inside `RequireSignIn`, launch/buddy/guide outside) and the two E2E tests above.
+
+## 6. Two tabs on one workflow draft: the stale save silently erased the newer one
+
+- **Scenario:** `specs/invented.spec.mjs` › two tabs editing the same draft (API) and two tabs in the browser.
+- **Symptom:** tab A saved a rewritten step; tab B, still showing the older copy, saved an unrelated change and the server applied B's whole (stale) step list over A's work, with no warning. Same for a co-author, or an incident step adopted into the draft while the trainer had it open.
+- **Root cause:** `PATCH /api/work/workflows/:id` replaced the step list with no version check (last write wins). `version` is the release number inside a workflow group, not a lock.
+- **Fix:** the editor sends `baseUpdatedAt` (the `updatedAt` it loaded); `workflows_store.updateWorkflow` refuses a save whose base is not the current version with 409 and the code `WORKFLOW_CHANGED`, and the wizard says so in the reader's language (`teach.wizard.errChanged`, 14 locales) and keeps the trainer's form. The wizard moves its base forward after each of its own saves and after each step-read response (a read stores its suggestion on the draft), so its own reader never trips the check. A caller that sends no base (integration use) keeps the old behaviour. `sendWorkError` now passes a deliberate 4xx error's machine `code` to the client (it used to drop it, which sibling sessions had flagged too).
+- **Regression gate:** `server/workflows_store.test.mjs` (stale refused, current applies, no base unchanged) and the two E2E tests; the record + read-steps E2E still passes.
+
+## 7. About 120 more English strings the build gate could not see
+
+- **Scenario:** follow-up of #3: a probe of the gate's blind spots across `src/`.
+- **Symptom:** English on translated screens in the guided console's answer card ("Continue guiding", "Continue with the updated plan", "Back to step 2."), the destructive-command warning, the reading strip, compose and result cards (Copy, Download, confidence bands), the download menu, guide level options, policy and security notes, the full-screen guide, the overlay title bar, the sign-up agreement sentence and others.
+- **Root cause:** `scripts/check-hardcoded-strings.mjs` only saw JSX text between two tags and literal `title`/`aria-label`/`placeholder`/`alt` attributes.
+- **Fix:** the gate gained four rules (JSX text next to an expression, template-literal attributes, English defaults or literals for label-like props and fields, English prose in strings) that skip code by shape, never by allowlisting text, with a built-in self-test fixture; no allowlist entry was added. Every literal it found was keyed (122 keys) and translated into the 14 full locales; agreement lists use `Intl.ListFormat`. Planner context text that is data, not copy, moved to `src/pages/work/plannerContext.js` unchanged.
+- **Left as is (needs a server change):** `DestructiveGate` wraps a free-text reason from `server/work.js` (11 fixed English phrases); the sentence around it is keyed. Sending a reason code would let those phrases be translated too.
+- **Regression gate:** the hardened gate in `npm run prebuild` (with its self-test), plus `specs/i18n.spec.mjs`.
+
+## 8. A unit test that failed on the 31st of the month
+
+- **Scenario:** `npm test` run at UTC midnight into Oct 31.
+- **Symptom:** `server/plan_allowance.test.mjs` › month end: carry forward ... failed only on the 31st.
+- **Root cause:** the test built "last month" with `setUTCMonth(month - 1)` on today's date; on the 31st that overflows into the current month. The product's own period math starts from day 1 and is not affected.
+- **Fix:** the test sets day 1 before stepping back a month.
+
+## 9. Two unit tests that failed by chance
+
+- **Scenario:** repeated `npm test` runs during this work.
+- **Symptom:** `server/api_v1_http.test.mjs` failed now and then: "secret never listed" and the tenant-isolation leak check ("14").
+- **Root cause:** both checked a short fragment as a raw substring of a JSON body. The API key secret is base64url and can contain `_`, so `split('_').pop()` sometimes returned a 1 to 3 character tail; company B's workflow id is a short number ("14") that a timestamp can contain.
+- **Fix:** the test extracts the whole secret with the key's format, and matches B's id as an `"id":"..."` value. 8 of 8 repeated runs green.

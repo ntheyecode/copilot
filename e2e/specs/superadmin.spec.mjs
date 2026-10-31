@@ -31,7 +31,9 @@ test('the superadmin finds companies and users in the console', async ({ as, see
 
 test('every AI call is booked to whoever made it in the usage ledger', async ({ as, seed, edition, server }) => {
   const caps = capsOf(edition)
-  const user = caps.has('saas_companies') ? (await seed.company({ personas: ['member'] })).users.member : await seed.solo()
+  let user, holder
+  if (caps.has('saas_companies')) { const co = await seed.company({ personas: ['member'] }); user = co.users.member; holder = `c:${co.companyId}` }
+  else { user = await seed.solo(); holder = `u:${user.id}` }
   const api = await as.api(user)
   const s = await api.post('/api/work/sessions', { title: 'Ledger check', goal: 'Build the monthly expense summary' })
   expect(s.status).toBe(200)
@@ -39,17 +41,16 @@ test('every AI call is booked to whoever made it in the usage ledger', async ({ 
   expect(plan.status, JSON.stringify(plan.data)).toBe(200)
   expect((await server.ctl('ai.calls', { kind: 'plan' })).length).toBeGreaterThan(0)
 
+  // This test's own holder (company or solo account), never another test's row.
   const sa = await as.api(SUPERADMIN)
-  await expect.poll(async () => {
-    const r = await sa.get('/api/work/admin/ai-usage')
-    const rows = r.data.usage || []
-    const mine = rows.find((x) => (user.companyId ? x.companyId === user.companyId : x.holder && String(x.holder).includes(user.id))) || rows.find((x) => x.calls > 0)
-    return mine ? mine.calls : 0
-  }, { timeout: 15_000 }).toBeGreaterThan(0)
-  const rows = (await sa.get('/api/work/admin/ai-usage')).data.usage
-  const row = rows.find((x) => x.calls > 0)
+  const mine = async () => ((await sa.get('/api/work/admin/ai-usage')).data.usage || []).find((x) => x.holder === holder)
+  await expect.poll(async () => ((await mine()) || {}).calls || 0, { timeout: 15_000 }).toBeGreaterThan(0)
+  const row = await mine()
   expect(row.inTokens + row.outTokens, 'token counts come from the provider response').toBeGreaterThan(0)
-  expect(Object.keys(row.byKind || {})).toContain('plan')
+  // Booked against the model that actually answered (the provider saw it), not
+  // the one configured: planning runs on the stronger model by design.
+  const ran = (await server.ctl('ai.calls', { kind: 'plan' })).at(-1).model
+  expect((row.byModel || []).map((m) => m.model), 'booked against the model that ran').toContain(ran)
 })
 
 test('superadmin routes refuse everyone else', async ({ as, seed, edition }) => {
