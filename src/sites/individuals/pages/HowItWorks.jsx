@@ -5,13 +5,14 @@ import IndivShell, { SectionHead } from '../IndivShell.jsx'
 import LoopVisual from '../visuals/LoopVisual.jsx'
 import { START } from '../IndivHeader.jsx'
 import useSeo from '../../../useSeo.js'
+import { indivSeo } from '../seo_pages.js'   // the one SEO table the prerender reads too
 import { useT } from '../../../i18n/index.jsx'
 
 const ICONS = [Terminal, Play, Wrench, AppWindow, FileText, FileCheck2, BookOpen, MonitorSmartphone]
 
 export default function HowItWorks() {
   const t = useT()
-  useSeo({ title: t('indiv.how.seo.title'), description: t('indiv.how.seo.description'), path: '/workcopilot/how-it-works' })
+  useSeo(indivSeo(t, 'how'))
   const cards = t('indiv.how.cards') || []
   const levels = t('indiv.how.depth.levels') || []
   return (

@@ -7,6 +7,7 @@ import { ArrowRight, ChevronDown, Search, Mail } from 'lucide-react'
 import IndivShell from '../IndivShell.jsx'
 import { START } from '../IndivHeader.jsx'
 import useSeo, { useJsonLd } from '../../../useSeo.js'
+import { indivSeo } from '../seo_pages.js'   // the one SEO table the prerender reads too
 import { useT } from '../../../i18n/index.jsx'
 import en from '../../../i18n/locales/en/indivSite.js'
 import { SUPPORT_CONTACT } from '../../../components/LegalPage.jsx'
@@ -17,7 +18,7 @@ const ANCHORS = EN_GROUPS.map((g) => g.items.map((it) => slug(it.q)))
 
 export default function Faq() {
   const t = useT()
-  useSeo({ title: t('indiv.faq.seo.title'), description: t('indiv.faq.seo.description'), path: '/workcopilot/faq' })
+  useSeo(indivSeo(t, 'faq'))
   const groups = t('indiv.faq.groups') || []
   const [q, setQ] = useState('')
   const [open, setOpen] = useState(() => (typeof window !== 'undefined' && window.location.hash ? window.location.hash.slice(1) : ''))

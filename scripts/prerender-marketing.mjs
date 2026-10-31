@@ -40,16 +40,21 @@
 //                                                    scripts/audience_seo.mjs. Omitted = the base copy.
 //   node scripts/prerender-marketing.mjs --origin https://example.com
 //                                                    canonical / hreflang / JSON-LD origin (default admireveda.com)
-// build/spa_stamp.js runs this with --audience/--origin when it stamps an edition's SPA.
+//   node scripts/prerender-marketing.mjs --individual-site
+//                                                    the edition serves the individuals site (capability
+//                                                    individual_site): its pages' routes take their title,
+//                                                    description, heading and text from the pages' own source,
+//                                                    src/sites/individuals/seo_pages.js over the `indiv` namespace.
+// build/spa_stamp.js runs this with --audience/--origin (and --individual-site) when it stamps an edition's SPA.
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { LOCALES } from '../src/i18n/locales.js'   // single source for hreflang tags + ?lang codes
-import enBase from '../src/i18n/locales/en.js'      // source of truth for localized marketing meta (seo.*, login.meta)
 import enFields from '../src/i18n/locales/en/fieldsPage.js'   // the Fields roster (fieldsPage.families) - what WorkFields.jsx renders
-import { mergeOverlay } from '../src/i18n/overlay_merge.js'
 import { COPY_AUDIENCES } from '../server/edition_registry.js'
 import { routeFor } from './audience_seo.mjs'
+import { loadEnCatalog, lookup } from './en_catalog.mjs'
+import { INDIV_SEO_PAGES, indivPrerender } from '../src/sites/individuals/seo_pages.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const argv = process.argv.slice(2)
@@ -63,11 +68,11 @@ const AUDIENCE = valueOf('--audience') || null
 if (AUDIENCE && !COPY_AUDIENCES.includes(AUDIENCE)) { console.error(`prerender: unknown --audience "${AUDIENCE}" (one of: ${COPY_AUDIENCES.join(', ')})`); process.exit(1) }
 const ORIGIN = String(valueOf('--origin') || 'https://admireveda.com').replace(/\/+$/, '')
 if (!/^https?:\/\/[^/\s]+$/.test(ORIGIN)) { console.error(`prerender: --origin must be a bare origin like https://example.com (got "${ORIGIN}")`); process.exit(1) }
-// The audience's English overlay over the base catalog: the same merge the SPA
-// runs at load (src/i18n/overlay.js), so the prerendered meta matches the page.
-const en = AUDIENCE
-  ? mergeOverlay(enBase, (await import(`../src/i18n/overlays/${AUDIENCE}/en.js`)).default || {})
-  : enBase
+const INDIVIDUAL_SITE = flag('--individual-site')
+// The English catalog the SPA builds at load (base + partials, then the
+// audience's overlay; scripts/en_catalog.mjs), so the prerendered meta matches
+// the page.
+const en = await loadEnCatalog(AUDIENCE)
 const MARKER = '<!-- prerendered-by: scripts/prerender-marketing.mjs (prerender-lite, audit IP-16) -->'
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -236,6 +241,25 @@ route({
   ],
 })
 
+// ---- the individuals site -------------------------------------------------------
+// Where the edition serves the individuals site, its pages replace the
+// organization pages at the same paths, so their routes are rebuilt from the
+// pages' own source (seo_pages.js over the `indiv` namespace), never from the
+// literals above or the audience overrides in audience_seo.mjs. The home page
+// ("/") is the shell itself; build/spa_stamp.js stamps its title from the same
+// table. The sign-in and Fields pages are not part of that site and keep their
+// routes.
+if (INDIVIDUAL_SITE) {
+  const t = lookup(en)
+  for (const p of INDIV_SEO_PAGES) {
+    if (p.path === '/') continue
+    const r = { ...indivPrerender(t, p.page), indivPage: p.page }
+    const at = R.findIndex((x) => x.path === p.path)
+    if (at >= 0) R[at] = r
+    else R.push(r)
+  }
+}
+
 // ---- templating ---------------------------------------------------------------
 function jsonLd(r) {
   const url = ORIGIN + r.path
@@ -340,9 +364,28 @@ const I18N_KEY = {
   '/workcopilot/faq': 'seo.faq',
 }
 
+// An individuals-site route's copy comes from the same table the page reads;
+// the check confirms the page still sets its SEO through that table (the page
+// file is found through SitePage.jsx's own page list).
+const SITE_DIR = path.join(ROOT, 'src', 'sites', 'individuals')
+function indivPageFile(page) {
+  try {
+    const sp = fs.readFileSync(path.join(SITE_DIR, 'SitePage.jsx'), 'utf8')
+    const m = new RegExp(`\\b${page}: lazy\\(\\(\\) => import\\('\\./pages/(\\w+)\\.jsx'\\)\\)`).exec(sp)
+    return m ? path.join(SITE_DIR, 'pages', `${m[1]}.jsx`) : null
+  } catch { return null }
+}
+
 function checkCopy() {
   const warnings = []
   for (const r of R) {
+    if (r.indivPage) {
+      const f = indivPageFile(r.indivPage)
+      let src = ''
+      try { src = f ? fs.readFileSync(f, 'utf8') : '' } catch { /* reported below */ }
+      if (!src.includes(`useSeo(indivSeo(t, '${r.indivPage}'))`)) warnings.push(`${r.path}: the individuals page "${r.indivPage}" no longer sets its SEO with indivSeo() (src/sites/individuals/seo_pages.js)`)
+      continue
+    }
     let src = ''
     try { src = fs.readFileSync(path.join(SRC_PAGES, r.source), 'utf8') } catch { warnings.push(`${r.path}: cannot read ${r.source}`); continue }
     const key = I18N_KEY[r.path]

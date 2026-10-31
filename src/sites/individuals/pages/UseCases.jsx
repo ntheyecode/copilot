@@ -6,6 +6,7 @@ import { ArrowRight, Briefcase, GraduationCap, Search, Store, Compass, Target, M
 import IndivShell from '../IndivShell.jsx'
 import { START } from '../IndivHeader.jsx'
 import useSeo from '../../../useSeo.js'
+import { indivSeo } from '../seo_pages.js'   // the one SEO table the prerender reads too
 import { useT } from '../../../i18n/index.jsx'
 
 const IDS = ['freelancers', 'students', 'job-seekers', 'solo-businesses', 'career-switchers']
@@ -13,7 +14,7 @@ const ICONS = [Briefcase, GraduationCap, Search, Store, Compass]
 
 export default function UseCases() {
   const t = useT()
-  useSeo({ title: t('indiv.use.seo.title'), description: t('indiv.use.seo.description'), path: '/workcopilot/use-cases' })
+  useSeo(indivSeo(t, 'use'))
   const cases = t('indiv.use.cases') || []
   const L = t('indiv.use.labels') || {}
   return (

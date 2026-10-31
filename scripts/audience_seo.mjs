@@ -46,6 +46,10 @@ export const AUDIENCE_SHELL = {
 
 // Prerendered route copy per audience: { [routePath]: { lede?, points? } }.
 // Any of label, h1, lede, points replaces the base route's value.
+// These describe the organization pages read with the audience's overlay.
+// Where an edition serves the individuals site (capability individual_site),
+// that site's pages replace those routes wholesale with their own copy
+// (src/sites/individuals/seo_pages.js), so nothing here speaks for them.
 export const AUDIENCE_ROUTES = {
   organizations: {
     '/workcopilot': {
