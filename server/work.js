@@ -18,6 +18,7 @@
 // stronger model is used only for planning and the on-demand "what is this".
 // ===========================================================================
 import { scrubGuidance } from './ai_language.js'
+import { goalTokens, unicodeWords } from './goal_tokens.js'
 import { methodAnchorFor } from './method_anchors.js'
 import { validateSpec, describeSpecForAI } from './compute_spec.js'
 import {
@@ -2091,15 +2092,8 @@ const WORKFLOW_APP_STOPWORDS = new Set([
   'admin', 'console', 'dashboard', 'portal', 'the', 'app', 'application', 'web',
   'site', 'website', 'panel', 'ui', 'page', 'pages', 'settings', 'management',
 ])
-// Filler words carried by almost any goal; dropped so only the task-bearing
-// tokens remain for signature matching.
-const WORKFLOW_GOAL_STOPWORDS = new Set([
-  'a', 'an', 'the', 'my', 'our', 'your', 'their', 'his', 'her', 'its', 'for',
-  'to', 'of', 'in', 'on', 'at', 'with', 'and', 'or', 'but', 'from', 'by',
-  'into', 'as', 'is', 'are', 'be', 'this', 'that', 'these', 'those', 'i', 'we',
-  'you', 'they', 'it', 'me', 'us', 'them', 'do', 'does', 'please', 'can', 'how',
-  'want', 'wants', 'need', 'needs', 'using', 'use',
-])
+// Filler words carried by almost any goal (per language) live with the
+// tokenizer in goal_tokens.js, so only the task-bearing tokens remain.
 
 // De-identify a prose string DEFENSIVELY (emails, long digit runs) before it
 // enters a shared/platform record. This is belt-and-suspenders only: the store
@@ -2119,9 +2113,9 @@ function capText(v, n) { return deidentifyText(v).slice(0, n) }
 // Both the stored app and the query app pass through this, so the comparison is
 // symmetric (SUPREME RULE II - one normalizer, no drift).
 function normalizeApp(v) {
-  return String(v || '')
-    .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/)
-    .filter((w) => w && !WORKFLOW_APP_STOPWORDS.has(w)).join(' ').trim()
+  // Unicode-aware words, so an app named in any script keeps its name (was
+  // [a-z0-9] only: "freee会計" or "Сбербанк" normalized to nothing).
+  return unicodeWords(v).filter((w) => !WORKFLOW_APP_STOPWORDS.has(w)).join(' ').trim()
 }
 
 // Deterministic, simple goal signature (no AI): lowercase, strip emails/URLs,
@@ -2130,22 +2124,11 @@ function normalizeApp(v) {
 // "accounts"->"account". Similar goals collapse to the SAME ordered token set.
 // Returns { sig, tokens } - sig is the readable normalized phrase, tokens feeds
 // the matcher and the stored goalTokens.
+// Any script: goal_tokens.js segments CJK and Thai into words (Intl.Segmenter,
+// character bigrams as the fallback), drops per-language function words, and
+// keeps ASCII behavior exactly as it was.
 export function workflowGoalSignature(goal) {
-  const words = String(goal || '')
-    .toLowerCase()
-    .replace(/[\w.+-]+@[\w.-]+\.\w{2,}/g, ' ')   // drop emails
-    .replace(/https?:\/\/\S+/g, ' ')             // drop URLs
-    .replace(/['’]s\b/g, '')                // strip possessive 's
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim().split(/\s+/).filter(Boolean)
-  const tokens = []
-  for (let w of words) {
-    if (w.length < 2) continue                   // stray single chars (e.g. the "x" from "2024.x")
-    if (/^v?\d+$/.test(w)) continue              // pure number, year, or v<n> - a volatile specific
-    if (WORKFLOW_GOAL_STOPWORDS.has(w)) continue
-    if (w.length > 3 && w.endsWith('s') && !w.endsWith('ss')) w = w.slice(0, -1)  // light singular
-    if (!tokens.includes(w)) tokens.push(w)      // dedupe, keep first-appearance order
-  }
+  const tokens = goalTokens(goal)
   return { sig: tokens.join(' '), tokens }
 }
 
@@ -2309,7 +2292,7 @@ function workflowEnvCompat(q, c) {
   const qe = q || {}, ce = c || {}
   const signals = []
   let compatible = true
-  const normJur = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, '')
+  const normJur = (x) => unicodeWords(x).join('')
   const qj = normJur(qe.jurisdiction), cj = normJur(ce.jurisdiction)
   if (qj && cj) { if (qj === cj) signals.push(1); else { signals.push(0); compatible = false } }
   const norm = (list) => (Array.isArray(list) ? list : (list ? [list] : [])).map(normalizeApp).filter(Boolean)
@@ -2339,7 +2322,9 @@ function workflowEnvCompat(q, c) {
 export function matchWorkflowTemplate(goal, app, environment, templates) {
   const list = Array.isArray(templates) ? templates : []
   if (!list.length) return { template: null, score: 0, tier: 'none' }
-  const qTokens = workflowGoalSignature(goal).tokens
+  // goal: text, or tokens already made by workflowGoalSignature (re-tokenizing
+  // joined tokens is not stable for CJK bigrams).
+  const qTokens = Array.isArray(goal) ? goal : workflowGoalSignature(goal).tokens
   let best = null
   for (const t of list) {
     if (!t) continue
@@ -2378,5 +2363,5 @@ export function pickWorkflowTemplate(session, templates) {
     manual: manualFromScope(scope),
     conventions: scope,
   }
-  return matchWorkflowTemplate(s.goal || '', app, environment, Array.isArray(templates) ? templates : [])
+  return matchWorkflowTemplate(Array.isArray(s.goalTokens) ? s.goalTokens : (s.goal || ''), app, environment, Array.isArray(templates) ? templates : [])
 }
