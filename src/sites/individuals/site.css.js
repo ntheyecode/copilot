@@ -102,7 +102,10 @@ export const IV_CSS = `
 .iv-band.flip>.iv-band-visual{order:-1}
 .iv-band-visual{min-width:0}
 /* final CTA */
-.iv-final{border-radius:28px;background:linear-gradient(135deg,var(--iv-ink) 0%,#223047 100%);color:#eef0f6;padding:56px 32px;text-align:center;position:relative;overflow:hidden}
+/* the one dark band on every page, in both themes (fixed navy, not the ink token) */
+.iv-final{border-radius:28px;background:linear-gradient(135deg,#17202e 0%,#223047 100%);color:#eef0f6;padding:56px 32px;text-align:center;position:relative;overflow:hidden}
+[data-theme='dark'] .iv-final{border:1px solid var(--iv-line)}
+@media (prefers-color-scheme:dark){.iv:not([data-theme='light']) .iv-final{border:1px solid var(--iv-line)}}
 .iv-final::before{content:"";position:absolute;inset:auto -10% -60% -10%;height:70%;background:radial-gradient(closest-side,rgba(140,245,196,.28),transparent 70%);pointer-events:none}
 .iv-final h2{color:#fff}
 .iv-final h2 em{color:#fff;background:linear-gradient(transparent 58%,rgba(140,245,196,.35) 58%,rgba(140,245,196,.35) 92%,transparent 92%)}

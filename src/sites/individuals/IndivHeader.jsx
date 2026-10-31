@@ -12,6 +12,7 @@ import { ArrowRight, Menu, X } from 'lucide-react'
 import AdmireVedaLogo from '../../components/AdmireVedaLogo.jsx'
 import LanguageMenu from '../../components/LanguageMenu.jsx'
 import { useT, useLocale } from '../../i18n/index.jsx'
+import { useDark } from './useDark.js'   // the lockup's inline ink must follow the site theme
 
 export const INDIV_LINKS = [
   { key: 'how', href: '/workcopilot/how-it-works' },
@@ -33,6 +34,7 @@ function currentFromPath() {
 export default function IndivHeader({ current }) {
   const t = useT()
   const { locale } = useLocale()
+  const dark = useDark()
   const [open, setOpen] = useState(false)
   const [folded, setFolded] = useState(false)
   const rootRef = useRef(null)
@@ -79,7 +81,7 @@ export default function IndivHeader({ current }) {
     <header className={'ivh' + (folded ? ' folded' : '')} ref={rootRef}>
       <style>{CSS}</style>
       <div className="ivh-in" ref={innerRef}>
-        <a className="ivh-brand" href="/" aria-label={t('indiv.nav.home')}><AdmireVedaLogo size={26} idSuffix="ivh" /></a>
+        <a className="ivh-brand" href="/" aria-label={t('indiv.nav.home')}><AdmireVedaLogo size={26} idSuffix="ivh" onDark={dark} /></a>
         <nav className={'ivh-links' + (open ? ' open' : '')} id="ivh-menu" aria-label={t('indiv.nav.main')}>
           {INDIV_LINKS.map((l) => (
             <a key={l.key} href={l.href} className={active === l.key ? 'on' : undefined} aria-current={active === l.key ? 'page' : undefined} onClick={() => setOpen(false)}>{t('indiv.nav.' + l.key)}</a>
