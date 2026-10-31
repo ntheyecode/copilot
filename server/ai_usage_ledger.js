@@ -29,7 +29,10 @@ export function createAiUsageLedger(ctx) {
   // entries: reported usage entries for one or more calls; estimatedUsd: the
   // text-length estimate the caller made for calls whose provider sent no usage.
   // estimateKeySource: whose key the estimated part ran on (platform / company / user).
-  function recordAiUsage({ companyId = null, userId = null, kind = 'other', entries = [], estimatedUsd = 0, estimateKeySource = 'unknown' } = {}) {
+  // apiKeyId: the company API key a /api/v1 request authenticated with (kind
+  // 'api'); its share is kept per key in byApiKey, so the spend of each
+  // integration is visible. A key id, never a person.
+  function recordAiUsage({ companyId = null, userId = null, kind = 'other', apiKeyId = null, entries = [], estimatedUsd = 0, estimateKeySource = 'unknown' } = {}) {
     if (!entries.length && !(estimatedUsd > 0)) return null
     const s = summarizeUsage(entries)
     const est = Math.max(0, Number(estimatedUsd) || 0)
@@ -42,9 +45,10 @@ export function createAiUsageLedger(ctx) {
       holder, companyId: companyId || null, month,
       calls: 0, actualCalls: 0, estimatedCalls: 0, unpricedCalls: 0,
       inTokens: 0, outTokens: 0, cachedTokens: 0, audioSeconds: 0,
-      actualUsd: 0, estimatedUsd: 0, byModel: {}, byKind: {}, byKeySource: {},
+      actualUsd: 0, estimatedUsd: 0, byModel: {}, byKind: {}, byKeySource: {}, byApiKey: {},
     })
     if (!r.byKeySource) r.byKeySource = {}
+    if (!r.byApiKey) r.byApiKey = {}
     r.calls += s.calls; r.actualCalls += s.actualCalls; r.estimatedCalls += s.estimatedCalls; r.unpricedCalls += s.unpricedCalls
     r.inTokens += s.inTokens; r.outTokens += s.outTokens; r.cachedTokens += s.cachedTokens; r.audioSeconds += s.audioSeconds
     r.actualUsd += s.usd
@@ -65,6 +69,11 @@ export function createAiUsageLedger(ctx) {
     const kk = String(kind || 'other').slice(0, 40)
     const bk = r.byKind[kk] || (r.byKind[kk] = { calls: 0, usd: 0 })
     bk.calls += s.calls; bk.usd += s.usd + est
+    if (apiKeyId) {
+      const ak = String(apiKeyId).slice(0, 64)
+      const a = r.byApiKey[ak] || (r.byApiKey[ak] = { calls: 0, usd: 0 })
+      a.calls += s.calls; a.usd += s.usd + est
+    }
     const months = Object.keys(byHolder).sort()
     for (const old of months.slice(0, Math.max(0, months.length - MAX_MONTHS))) delete byHolder[old]
     ctx.persistSoon()
@@ -83,6 +92,7 @@ export function createAiUsageLedger(ctx) {
     actualUsd: Number(r.actualUsd.toFixed(6)), estimatedUsd: Number(r.estimatedUsd.toFixed(6)),
     totalUsd: Number((r.actualUsd + r.estimatedUsd).toFixed(6)),
     actualShare: r.calls ? Number((r.actualCalls / r.calls).toFixed(4)) : null,
+    byApiKey: Object.fromEntries(Object.entries(r.byApiKey || {}).map(([k, v]) => [k, { calls: v.calls, usd: Number(v.usd.toFixed(6)) }])),
     byModel: Object.values(r.byModel).map((m) => ({ ...m, usd: Number(m.usd.toFixed(6)) })).sort((a, b) => b.usd - a.usd),
     }
   }
