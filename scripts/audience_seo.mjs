@@ -12,16 +12,25 @@
 //
 // Copy rules: honest (no claim the product cannot back), no em-dashes, no
 // provider or model names. The individuals copy carries no company wording.
+import { BANDS, MIN_USERS, orgPlan } from '../server/org_pricing.js'
+
+// Prices from the ONE registry (server/org_pricing.js), never typed here.
+const usd = (n) => `$${n}`
+const lowest = (p) => (p.flat != null ? p.flat : Math.min(...Object.values(p.rates)))
+const bands = (p) => BANDS.map((b) => `${usd(p.rates[b.id])} for ${b.min.toLocaleString('en-US')}${b.max == null ? '+' : `-${b.max.toLocaleString('en-US')}`} users`).join(', ')
+const HOSTED = orgPlan('hosted')
+const MANAGED = orgPlan('managed')
+const PRIVATE = orgPlan('private')
 
 export const AUDIENCE_SHELL = {
   organizations: {
     offers: [
-      { '@type': 'Offer', name: 'Hosted for your company', category: 'subscription', description: 'WorkCoPilot for your whole organization on our hosted service: company console, single sign-on, company policy and a guided-hours pool. Priced per user by company size; talk to us for a quote.' },
-      { '@type': 'Offer', name: 'Managed private cloud', category: 'subscription', description: 'A dedicated installation we run in your own cloud, on your database. Talk to us for a quote.' },
-      { '@type': 'Offer', name: 'On-premises', category: 'subscription', description: 'Installed on your own servers with your own AI keys and an offline license. Available on request.' },
+      { '@type': 'Offer', name: 'Hosted by AdmireVeda', category: 'subscription', priceCurrency: 'USD', price: String(lowest(HOSTED)), description: `WorkCoPilot for your whole organization on our hosted service, AI included: company console, single sign-on, SCIM provisioning, company policy and a guided-hours pool. Per user per month: ${bands(HOSTED)}. Minimum ${MIN_USERS} users; talk to us.` },
+      { '@type': 'Offer', name: 'Managed by AdmireVeda', category: 'subscription', priceCurrency: 'USD', price: String(lowest(MANAGED)), description: `We run WorkCoPilot for you, connected to your own database. ${usd(MANAGED.flat)} per user per month plus AI at actual usage. Minimum ${MIN_USERS} users; talk to us.` },
+      { '@type': 'Offer', name: 'Private instance', category: 'subscription', priceCurrency: 'USD', price: String(lowest(PRIVATE)), description: `WorkCoPilot in your own cloud on your own AI keys. Per user per month: ${bands(PRIVATE)}. Minimum ${MIN_USERS} users; talk to us.` },
     ],
-    costAnswer: 'WorkCoPilot is sold to organizations: hosted for your company, as a managed private cloud, or on your own servers. Pricing depends on the number of people and the deployment you choose. Talk to us for a quote.',
-    noscriptPlans: 'Plans for organizations: hosted for your company, managed private cloud, or on-premises. <a href="/workcopilot/contact">Talk to us</a> · <a href="/workcopilot">Sign in to WorkCoPilot</a> · <a href="/workcopilot/use-cases">See the use cases</a>.',
+    costAnswer: `WorkCoPilot is sold to organizations, per user per month with a ${MIN_USERS}-user minimum: hosted by AdmireVeda from ${usd(lowest(HOSTED))}, managed by AdmireVeda at ${usd(MANAGED.flat)} plus AI at usage, or a private instance in your own cloud from ${usd(lowest(PRIVATE))}. Your company size sets the rate for every user. Talk to us.`,
+    noscriptPlans: 'Plans for organizations: hosted by AdmireVeda, managed by AdmireVeda, or a private instance. <a href="/workcopilot/contact">Talk to us</a> · <a href="/workcopilot">Sign in to WorkCoPilot</a> · <a href="/workcopilot/use-cases">See the use cases</a>.',
   },
   individuals: {
     offers: [
@@ -49,13 +58,13 @@ export const AUDIENCE_ROUTES = {
     '/workcopilot/pricing': {
       h1: 'Plans for organizations. Real guided time.',
       lede: [
-        'WorkCoPilot is sold to organizations, priced per person by company size, with a guided-hours pool your company administrator shares out.',
-        'Talk to us for a quote. Security and privacy are built into every deployment, never sold as an upgrade.',
+        `WorkCoPilot is sold to organizations, per user per month with a ${MIN_USERS}-user minimum, with a guided-hours pool your company administrator shares out.`,
+        'Talk to us. Security and privacy are built into every deployment, never sold as an upgrade.',
       ],
       points: [
-        'Hosted for your company: company console, single sign-on, company policy, a guided-hours pool and a DPA.',
-        'Managed private cloud: a dedicated installation we run in your own cloud, on your database.',
-        'On-premises: installed on your own servers with your own AI keys, available on request.',
+        `Hosted by AdmireVeda, AI included: ${bands(HOSTED)}.`,
+        `Managed by AdmireVeda, on your own database: ${usd(MANAGED.flat)} per user per month plus AI at actual usage.`,
+        `Private instance in your own cloud, on your own AI keys: ${bands(PRIVATE)}.`,
         'Company Brain and teach workflows: your own know-how, kept private to your company and used in every guided step.',
       ],
     },

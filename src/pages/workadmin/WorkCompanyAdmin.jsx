@@ -13,7 +13,7 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import {
   LayoutDashboard, Users, ShieldCheck, Cpu, LifeBuoy, ListChecks, Settings as SettingsIcon,
   Loader2, ShieldAlert, LogOut, Plus, Trash2, Check, Info, KeyRound, Lock, AlertTriangle,
-  Building2, UserCog, RefreshCw, Receipt, Copy, Clock, Mail, ChevronDown, ChevronRight,
+  Building2, UserCog, RefreshCw, Receipt, Copy, Clock, Mail,
   FileText, Download, Activity, Globe, Upload, Brain, X, Blocks, Camera, BookOpen, Gauge,
   Network, Briefcase, Code2,
 } from 'lucide-react'
@@ -39,8 +39,10 @@ import { Meter, VIZ_CSS } from './sections/_viz.jsx'
 import { AiSourceChoice, AI_SOURCE_CHOICE_CSS } from './sections/AiSourceChoice.jsx'
 import { aiSetupOf } from '../../shared/ai_source_options.js'
 import { COMPANY_ROLE_OPTIONS, WORK_FLOW_OPTIONS, normalizeFlow, GRANT_OPTIONS, canGrantTrainer, hasTrainerGrant } from '../../shared/work_roles_options.js'
-import * as SSO from '../../shared/sso_guide.js'
-import { OIDC_PROVIDER_LABELS as SSO_PROVIDER_LABELS, OIDC_PROVIDER_IDS as SSO_PROVIDER_ORDER } from '../../shared/oidc_providers.js'
+// Single sign-on setup (OIDC, SAML, SCIM) and Billing (contract, pool,
+// invoices) are their own modules (owner rule: no monolith files).
+import SsoSetup from './sections/SsoSetup.jsx'
+import CompanyBilling from './sections/CompanyBilling.jsx'
 
 // Destructive confirms use the shared promise-style useReasonModal from
 // sections/_shared.jsx (single source - SUPREME RULE II; the local copy was deleted).
@@ -51,11 +53,8 @@ const TIERS = [{ id: 'basic', name: 'Basic' }, { id: 'advanced', name: 'Advanced
 // one place and every select, badge and the app shell agree (SUPREME RULE II).
 // Plan names Basic/Advanced/Premium are brand terms and stay literal.
 const ROLE_LABEL = Object.fromEntries(COMPANY_ROLE_OPTIONS.map((o) => [o.id, o.labelKey]))
-// OIDC provider labels + order come from the single registry (src/shared/
-// oidc_providers.js), imported above as SSO_PROVIDER_LABELS / SSO_PROVIDER_ORDER.
 const fmtDate = (s) => { if (!s) return '-'; const d = new Date(s); return isNaN(d) ? '-' : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) }
 const fmtDT = (s) => { try { return new Date(s).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) } catch { return '' } }
-const money = (n) => `$${(Number(n) || 0).toFixed(2)}`
 const fmtMins = (secs) => { const m = Math.round((Number(secs) || 0) / 60); if (m < 60) return `${m}m`; const h = Math.floor(m / 60); const r = m % 60; return r ? `${h}h ${r}m` : `${h}h` }
 
 // Small inline help: an info icon with a native tooltip. Keeps each control
@@ -850,195 +849,6 @@ function TeamSection({ meId, onCompany }) {
 // ===========================================================================
 // SSO
 // ===========================================================================
-function CopyField({ value }) {
-  const t = useT()
-  const [copied, setCopied] = useState(false)
-  const copy = async () => { try { await navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 1800) } catch { /* clipboard blocked */ } }
-  return (
-    <span className="wca-copy">
-      <code className="wka-mono">{value}</code>
-      <button type="button" className="wka-btn sm ghost" onClick={copy} title={t('companyAdmin.common.copy')}>{copied ? <Check size={12} /> : <Copy size={12} />}</button>
-    </span>
-  )
-}
-
-function SsoSection({ company }) {
-  const t = useT()
-  const [state, setState] = useState({ loading: true, error: null, sso: null })
-  // The shared guide describes just-in-time provisioning, which only applies in
-  // AUTO mode. Most companies are invite-only (explicit), so say so up front or
-  // the admin will wait for accounts that never appear.
-  const inviteOnly = !company || company.ssoProvisioning !== 'auto'
-  const [form, setForm] = useState({ provider: 'google', issuer: '', clientId: '', clientSecret: '', domain: '' })
-  const [editing, setEditing] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [saveErr, setSaveErr] = useState(null)
-  const [guideOpen, setGuideOpen] = useState(true)
-  const callbackUrl = typeof window !== 'undefined' ? `${window.location.origin}${SSO.SSO_CALLBACK_PATH}` : SSO.SSO_CALLBACK_URL
-
-  const formFromSso = (s) => ({ provider: (s && s.provider) || 'google', issuer: (s && s.issuer) || '', clientId: (s && s.clientId) || '', clientSecret: '', domain: (s && s.domain) || '' })
-
-  const load = useCallback(() => {
-    setState((s) => ({ ...s, loading: true, error: null }))
-    api.workCompanyGetSso()
-      .then((r) => { const s = r.sso || null; setState({ loading: false, error: null, sso: s }); setForm((f) => ({ ...f, ...formFromSso(s) })); setEditing(!(s && s.connected)) })   // connected -> start on the record; not connected -> open the form
-      .catch((error) => setState({ loading: false, error, sso: null }))
-  }, [])
-  useEffect(() => { load() }, [load])
-
-  const save = async () => {
-    setSaving(true); setSaveErr(null); setSaved(false)
-    try { await api.workCompanySetSso(form); setSaved(true); setForm((f) => ({ ...f, clientSecret: '' })); setEditing(false); setTimeout(() => setSaved(false), 2500); load() }
-    catch (error) { setSaveErr(error) } finally { setSaving(false) }
-  }
-  const cancel = () => { setForm(formFromSso(state.sso)); setSaveErr(null); setSaved(false); setEditing(false) }
-
-  if (state.loading) return <Loading label={t('companyAdmin.sso.loading')} />
-  if (state.error) return <ErrorBox error={state.error} onRetry={load} />
-  const connected = state.sso && state.sso.connected
-  const guide = (SSO.SSO_PROVIDERS || []).find((p) => p.id === form.provider) || null
-  const issuerHint = guide ? guide.issuer : 'https://your-identity-provider/...'
-
-  return (
-    <div>
-      {/* Owner confusion 2026-10-27: the provider list (Google, Microsoft, ...)
-          read like the public social sign-in buttons. Say up front what this is. */}
-      <div className="wka-note"><Info size={14} /> {t('companyAdmin.sso.notSocial')}</div>
-      <div className="wka-note"><Info size={14} /> {t('companyAdmin.sso.registerCallback')} <CopyField value={callbackUrl} /></div>
-      <div className="wka-note" style={{ color: inviteOnly ? 'var(--wka-amber)' : undefined }}><Lock size={14} />
-        {/* .wka-note is a flex row: rich text with inline <b> must sit in ONE
-            child, or each text run becomes its own flex item and the sentence
-            stacks into a column (seen 2026-10-27 at 1280px). */}
-        <span style={{ minWidth: 0 }}>{inviteOnly
-          ? <>{t.rich('companyAdmin.sso.inviteNote')}</>
-          : <>{t.rich('companyAdmin.sso.openPre')}{state.sso && state.sso.domain ? <b>@{state.sso.domain}</b> : t('companyAdmin.sso.yourEmailDomain')}{t('companyAdmin.sso.openPost')}</>}</span>
-      </div>
-      <div className="wka-panel">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-          <h2 style={{ margin: 0 }}>{connected ? t('companyAdmin.sso.isConnected') : t('companyAdmin.sso.connect')} {connected ? <span className="wka-badge active" style={{ marginLeft: 6 }}>{SSO_PROVIDER_LABELS[state.sso.provider] || state.sso.provider}</span> : null}</h2>
-          {!editing ? <EditToggle editing={editing} onEdit={() => { setForm(formFromSso(state.sso)); setEditing(true); setSaveErr(null) }} /> : null}
-        </div>
-        <p className="desc">{t('companyAdmin.sso.desc')}</p>
-        {!editing ? (
-          <>
-            <div className="wka-record">
-              <RecRow label={t('companyAdmin.sso.provider')} value={SSO_PROVIDER_LABELS[state.sso && state.sso.provider] || (state.sso && state.sso.provider) || '-'} />
-              <RecRow label={t('companyAdmin.sso.emailDomain')} value={(state.sso && state.sso.domain) || '-'} />
-              <RecRow label={t('companyAdmin.sso.issuerUrl')} value={(state.sso && state.sso.issuer) || '-'} />
-              <RecRow label={t('companyAdmin.sso.clientId')} value={(state.sso && state.sso.clientId) || '-'} />
-              <RecRow label={t('companyAdmin.sso.clientSecret')} value={state.sso && state.sso.connected ? t('companyAdmin.sso.secretSet') : t('companyAdmin.sso.secretNotSet')} />
-            </div>
-            {saveErr ? <div style={{ marginTop: 12 }}><ErrorBox error={saveErr} /></div> : null}
-            <SavedTag show={saved} />
-          </>
-        ) : (
-          <>
-            <div className="wka-formgrid">
-              <div className="wka-field"><label>{t('companyAdmin.sso.provider')}</label>
-                <select className="wka-select" value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })}>
-                  {SSO_PROVIDER_ORDER.map((id) => <option key={id} value={id}>{SSO_PROVIDER_LABELS[id]}</option>)}
-                </select>
-              </div>
-              <div className="wka-field"><label>{t('companyAdmin.sso.emailDomain')} <Help text={t('companyAdmin.sso.emailDomainHelp')} /></label><input className="wka-input" value={form.domain} placeholder="acme.com" onChange={(e) => setForm({ ...form, domain: e.target.value })} /></div>
-              <div className="wka-field"><label>{t('companyAdmin.sso.issuerUrl')} <Help text={guide ? guide.issuerNote : t('companyAdmin.sso.issuerHelpFallback')} /></label><input className="wka-input" value={form.issuer} placeholder={issuerHint} onChange={(e) => setForm({ ...form, issuer: e.target.value })} /></div>
-              <div className="wka-field"><label>{t('companyAdmin.sso.clientId')}</label><input className="wka-input" value={form.clientId} placeholder={t('companyAdmin.sso.fromProvider')} onChange={(e) => setForm({ ...form, clientId: e.target.value })} /></div>
-              <div className="wka-field"><label>{t('companyAdmin.sso.clientSecret')} <Help text={t('companyAdmin.sso.clientSecretHelp')} /></label><input className="wka-input" type="password" value={form.clientSecret} placeholder={connected ? t('companyAdmin.sso.leaveBlankKeep') : t('companyAdmin.sso.fromProvider')} autoComplete="new-password" onChange={(e) => setForm({ ...form, clientSecret: e.target.value })} /></div>
-            </div>
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <button type="button" className="wka-btn primary" disabled={saving} onClick={save}>{saving ? <Spinning /> : <ShieldCheck size={14} />} {t('companyAdmin.sso.save')}</button>
-              {connected ? <button type="button" className="wka-btn ghost" disabled={saving} onClick={cancel}><X size={14} /> {t('companyAdmin.common.cancel')}</button> : null}
-              <SavedTag show={saved} />
-            </div>
-            {saveErr ? <div style={{ marginTop: 12 }}><ErrorBox error={saveErr} /></div> : null}
-          </>
-        )}
-      </div>
-
-      <div className="wka-panel">
-        <button type="button" className="wca-guide-head" onClick={() => setGuideOpen((v) => !v)}>
-          {guideOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-          <h2 style={{ margin: 0 }}>{t('companyAdmin.sso.setupGuide')}{guide ? t('companyAdmin.sso.setupGuideFor', { name: guide.name }) : ''}</h2>
-        </button>
-        {guideOpen && (
-          <div className="wca-guide">
-            {(SSO.SSO_OVERVIEW || []).map((t, i) => <p key={i} className="desc">{t}</p>)}
-
-            <h3>{SSO.SSO_ROLES.title}</h3>
-            <ul className="wca-guide-list">{SSO.SSO_ROLES.points.map(([t, d], i) => <li key={i}><b>{t}.</b> {d}</li>)}</ul>
-
-            <h3>{t('companyAdmin.sso.registerRedirect')}</h3>
-            {(SSO.SSO_REDIRECT_NOTE || []).map((txt, i) => <p key={i} className="desc">{txt}</p>)}
-            <CopyField value={callbackUrl} />
-
-            {guide ? (
-              <>
-                <h3>{t('companyAdmin.sso.stepByStepIn', { name: guide.name })}</h3>
-                <p className="desc">{t('companyAdmin.sso.console')} <a href={guide.console} target="_blank" rel="noreferrer">{guide.console}</a>{t('companyAdmin.sso.issuerToEnter')} <code className="wka-mono">{guide.issuer}</code>. {guide.issuerNote}</p>
-                <ol className="wca-guide-steps">{guide.steps.map(([txt, d], i) => <li key={i}><b>{txt}.</b> {d}</li>)}</ol>
-                <div className="wca-scenario"><b>{guide.scenario.title}</b><p>{guide.scenario.body}</p></div>
-              </>
-            ) : (
-              <>
-                <h3>{t('companyAdmin.sso.stepByStep')}</h3>
-                <p className="desc">{t('companyAdmin.sso.stepByStepDesc')}</p>
-              </>
-            )}
-
-            <h3>{SSO.SSO_USER_SIGNIN.title}</h3>
-            <ol className="wca-guide-steps">{SSO.SSO_USER_SIGNIN.steps.map((t, i) => <li key={i}>{t}</li>)}</ol>
-
-            <h3>{SSO.SSO_TROUBLESHOOTING.title}</h3>
-            <ul className="wca-guide-list">{SSO.SSO_TROUBLESHOOTING.points.map(([t, d], i) => <li key={i}><b>{t}.</b> {d}</li>)}</ul>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// Company-admin read-only billing statement.
-function BillingSection() {
-  const t = useT()
-  const [state, setState] = useState({ loading: true, error: null, bill: null })
-  const load = useCallback(() => {
-    setState((s) => ({ ...s, loading: true, error: null }))
-    api.workTeamBilling().then((bill) => setState({ loading: false, error: null, bill })).catch((error) => setState({ loading: false, error, bill: null }))
-  }, [])
-  useEffect(() => { load() }, [load])
-  if (state.loading) return <Loading label={t('companyAdmin.billing.loading')} />
-  if (state.error) return <ErrorBox error={state.error} onRetry={load} />
-  const b = state.bill || {}
-  const lines = [...(b.seatLines || []), ...(b.ledger || [])]
-  const cur = (b.currency || 'usd').toUpperCase()
-  return (
-    <div>
-      <div className="wka-note"><Info size={14} /> {t('companyAdmin.billing.note')}</div>
-      <div className="wka-panel">
-        <h2>{t('companyAdmin.billing.statementFor', { name: b.name })}</h2>
-        {!lines.length ? <EmptyState title={t('companyAdmin.billing.noCharges')} detail={t('companyAdmin.billing.noChargesDetail')} />
-          : (
-            <div className="wka-table-wrap">
-              <table className="wka-table">
-                <thead><tr><th>{t('companyAdmin.billing.thDescription')}</th><th style={{ textAlign: 'right' }}>{t('companyAdmin.billing.thQty')}</th><th style={{ textAlign: 'right' }}>{t('companyAdmin.billing.thUnit')}</th><th style={{ textAlign: 'right' }}>{t('companyAdmin.billing.thAmount')}</th></tr></thead>
-                <tbody>
-                  {lines.map((l, i) => (
-                    <tr key={l.id || i}><td>{l.description || l.type}</td><td style={{ textAlign: 'right' }}>{l.qty != null ? l.qty : ''}</td><td style={{ textAlign: 'right' }}>{l.unitAmount != null ? money(l.unitAmount) : ''}</td><td style={{ textAlign: 'right' }}>{money(l.amount)}</td></tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr><td colSpan={3} style={{ textAlign: 'right', color: 'var(--wka-muted)' }}>{t('companyAdmin.billing.recurring')}</td><td style={{ textAlign: 'right' }}>{money(b.recurringTotal)}</td></tr>
-                  <tr><td colSpan={3} style={{ textAlign: 'right', color: 'var(--wka-muted)' }}>{t('companyAdmin.billing.extras')}</td><td style={{ textAlign: 'right' }}>{money(b.extrasTotal)}</td></tr>
-                  <tr><td colSpan={3} style={{ textAlign: 'right', fontWeight: 700 }}>{t('companyAdmin.billing.total', { cur })}</td><td style={{ textAlign: 'right', fontWeight: 700 }}>{money(b.total)}</td></tr>
-                </tfoot>
-              </table>
-            </div>
-          )}
-      </div>
-    </div>
-  )
-}
-
 // ===========================================================================
 // AI keys
 // ===========================================================================
@@ -1858,7 +1668,10 @@ function SettingsSection({ viewer, company, onProfile }) {
 // ===========================================================================
 export default function WorkCompanyAdmin() {
   const t = useT()
-  const [active, setActive] = useState('overview')
+  // ?section=<id> opens that section (the SSO test sign-in lands on ?section=sso).
+  const [active, setActive] = useState(() => {
+    try { const want = new URLSearchParams(window.location.search).get('section'); return SECTIONS.some((s) => s.id === want) ? want : 'overview' } catch { return 'overview' }
+  })
   const [gate, setGate] = useState('loading') // loading | ready | denied | superadmin | signedout | error
   const [viewer, setViewer] = useState(null)
   const [company, setCompany] = useState(null)
@@ -1913,9 +1726,9 @@ export default function WorkCompanyAdmin() {
       case 'usage': return <UsageLimits />
       case 'depth': return <GuidanceDepth onOpen={setActive} />
       case 'customers': return <Customers />
-      case 'sso': return <SsoSection company={company} />
+      case 'sso': return <SsoSetup company={company} />
       case 'ai': return <AiSection />
-      case 'billing': return <BillingSection />
+      case 'billing': return <CompanyBilling onOpen={setActive} />
       case 'governance': return (<><ReportShotsCard company={company} onCompany={setCompany} /><GovernanceSection companyId={viewer && viewer.companyId} /></>)
       case 'brain': return (<><KbSpaces /><CompanyBrain /></>)
       case 'brainsecurity': return <BrainSecurity />
@@ -1976,15 +1789,6 @@ const WCA_CSS = `
 .wca-kv > div { display:flex; flex-direction:column; gap:3px; }
 .wca-kv span { font-size:11px; color:var(--wka-faint); text-transform:uppercase; letter-spacing:0.6px; }
 .wca-kv b { font-size:14px; color:var(--wka-text); font-weight:600; }
-.wca-copy { display:inline-flex; align-items:center; gap:8px; vertical-align:middle; }
-.wca-copy code { word-break:break-all; }
-.wca-guide-head { display:flex; align-items:center; gap:8px; background:none; border:none; cursor:pointer; font:inherit; color:var(--wka-text); padding:0; width:100%; text-align:left; }
-.wca-guide-head svg { color:var(--wka-accent); flex:none; }
-.wca-guide { margin-top:14px; }
-.wca-guide h3 { font-size:13.5px; font-weight:700; color:var(--wka-text); margin:18px 0 8px; }
-.wca-guide-list, .wca-guide-steps { margin:0 0 6px; padding-left:20px; display:flex; flex-direction:column; gap:7px; }
-.wca-guide-list li, .wca-guide-steps li { font-size:13px; color:var(--wka-muted); line-height:1.55; }
-.wca-guide-list li b, .wca-guide-steps li b { color:var(--wka-text); }
 .wca-scenario { margin-top:12px; padding:12px 14px; border:1px solid var(--wka-line); border-radius:10px; background:var(--wka-bg-2); }
 .wca-scenario b { font-size:13px; color:var(--wka-text); }
 .wca-scenario p { font-size:12.5px; color:var(--wka-muted); margin:5px 0 0; line-height:1.55; }

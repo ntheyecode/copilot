@@ -12,12 +12,14 @@ import SocialMark from '../../components/SocialMark.jsx'
 import PlanSummary from './PlanSummary.jsx'
 import PasswordField from './PasswordField.jsx'
 import { saveIntent, intentQuery } from './planIntent.js'
+import { useEditionView } from '../../edition/useCaps.js'   // social buttons only where the edition offers social sign-in
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 const SOCIAL = ['google', 'microsoft']
 
 export default function CreateAccountStep({ state, intent, onIntent, onState, socialError = '' }) {
   const t = useT()
+  const { socialLogin } = useEditionView()
   const [email, setEmail] = useState('')
   const [pw, setPw] = useState('')
   const [agree, setAgree] = useState(false)
@@ -56,7 +58,7 @@ export default function CreateAccountStep({ state, intent, onIntent, onState, so
     <>
       <PlanSummary state={state} intent={intent} onIntent={onIntent} onState={onState} hasAccount={false} />
 
-      <div className="ob-social">
+      {socialLogin ? <><div className="ob-social">
         {SOCIAL.map((id) => {
           const on = providers[id] === true
           return (
@@ -67,7 +69,7 @@ export default function CreateAccountStep({ state, intent, onIntent, onState, so
         })}
       </div>
 
-      <div className="ob-or" role="separator" aria-label={t('onboarding.account.or')}><span>{t('onboarding.account.or')}</span></div>
+      <div className="ob-or" role="separator" aria-label={t('onboarding.account.or')}><span>{t('onboarding.account.or')}</span></div></> : null}
 
       <form className="ob-form" onSubmit={submit} noValidate aria-busy={busy}>
         <div className="ob-field">

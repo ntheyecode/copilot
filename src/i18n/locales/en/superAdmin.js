@@ -10,6 +10,7 @@ export default {
     nav: {
       overview: 'Overview',
       companies: 'Companies',
+      invoices: 'Invoices',
       notifications: 'Notifications',
       governance: 'Governance',
       users: 'Users',
@@ -38,6 +39,7 @@ export default {
     sections: {
       overview: { title: 'Overview', sub: 'WorkCoPilot at a glance.' },
       companies: { title: 'Companies', sub: 'Tenancy: companies, company admins, users and redaction policy.' },
+      invoices: { title: 'Invoices', sub: 'Company contracts and the invoices AdmireVeda issues. No card payment.' },
       notifications: { title: 'Notifications', sub: 'Enterprise alerts: companies nearing their pool, and additional-hours requests to review.' },
       governance: { title: 'Data governance', sub: 'Per-company DLP policy: what leaves the device, block words, compliance frameworks, arm & lock.' },
       users: { title: 'Users', sub: 'Tiers, balances and granted hours.' },
@@ -86,6 +88,8 @@ export default {
 
     // Nav footer note.
     navFoot: 'WorkCoPilot - a separate product surface. Changes here do not touch the interview admin.',
+    // Overview note naming the sections this service does not offer (server/admin_sections.js).
+    notOffered: 'Not part of this service, so not shown: {list}.',
 
     // Appearance panel (per-user accent picker host).
     appearancePanel: {

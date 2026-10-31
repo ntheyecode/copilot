@@ -543,6 +543,18 @@ export const api = {
   // Company admin: read / set SSO for their own company (secret is write-only).
   workCompanyGetSso: () => req('GET', '/api/work/company/sso'),
   workCompanySetSso: (cfg) => req('POST', '/api/work/company/sso', cfg || {}),
+  // Company admin: SAML, SCIM and the test sign-in (server/sso_admin_routes.js).
+  workCompanySsoOverview: () => req('GET', '/api/work/company/sso/overview'),
+  workCompanySamlParse: (body) => req('POST', '/api/work/company/sso/saml/parse', body || {}),
+  workCompanySetSaml: (cfg) => req('POST', '/api/work/company/sso/saml', cfg || {}),
+  workCompanyClearSaml: () => req('DELETE', '/api/work/company/sso/saml'),
+  workCompanySsoTestResult: () => req('GET', '/api/work/company/sso/test-result'),
+  workCompanyScimTokens: () => req('GET', '/api/work/company/scim/tokens'),
+  workCompanyCreateScimToken: (body) => req('POST', '/api/work/company/scim/tokens', body || {}),
+  workCompanyRevokeScimToken: (id) => req('DELETE', `/api/work/company/scim/tokens/${encodeURIComponent(id)}`),
+  // Company admin: contract, pool and the invoices AdmireVeda issued (server/b2b_routes.js).
+  workCompanyBilling: () => req('GET', '/api/work/company/billing'),
+  workCompanyInvoicePdfUrl: (id) => `/api/work/company/invoices/${encodeURIComponent(id)}.pdf`,
   // superadmin WorkCoPilot config
   workAdminGetPlatformAi: () => req('GET', '/api/work/admin/platform-ai'),
   workAdminSetPlatformAi: (allowed) => req('POST', '/api/work/admin/platform-ai', { allowed }),

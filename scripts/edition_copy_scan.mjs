@@ -30,7 +30,11 @@ export const OVERLAY_DIR = path.resolve(LOCALE_DIR, '..', 'overlays')
 // company wording at all"). Word-bounded, case-insensitive.
 export const INDIVIDUALS_BANNED = /\b(compan(y|ies|y's)|teams?|team's|teammates?|enterprises?|organi[sz]ations?|orgs?|SSO|single sign-on|governance|admin console|administrators?|admins?|executives?|trainers?|project managers?|seats?|seat pools?|tenants?|B2B|employees?|workforce|colleagues?|Company Brain|signed DPA|Data Processing Addendum)\b/i
 // Personal-plan wording an organizations-only edition never shows.
-export const ORGANIZATIONS_BANNED = /\b(free (account|trial|plan|tier)|free to (sign up|try|create|start)|sign up (for )?free|start free|create (a |your )?(free )?account|pick a plan|choose a plan|self-service plans?|upgrade|buy (top-up )?hours|top-up)\b/i
+// 2026-10-30 (owner): the organizations site never mentions personal plans,
+// buying hours, individual subscriptions, social sign-in or a credit card
+// (companies are invoiced under contract; company accounts never use social
+// sign-in).
+export const ORGANIZATIONS_BANNED = /\b(free (account|trial|plan|tier)|free to (sign up|try|create|start)|sign up (for )?free|start free|create (a |your )?(free )?account|pick a plan|choose a plan|self-service plans?|upgrade|buy (top-up |more |extra )?hours|top-ups?|personal (plans?|subscriptions?|accounts?)|individual (plans?|subscriptions?)|subscribe|credit cards?|debit cards?|card payments?|pay(ing)? by card|card on file|Stripe|social sign-?in|sign in with (Google|Microsoft|Facebook)|continue with (Google|Microsoft|Facebook))\b/i
 
 // The same rule in each language, for the strings an individuals overlay
 // writes (the base strings it does not override are covered by key parity
@@ -201,6 +205,14 @@ export const HIDDEN = {
     'workStart.docsCapFull': 'personal plan document cap', 'workStart.qUpgrade': 'needs canUpgrade',
     'helpPage.time.buyItems': 'Help.jsx renders the top-up lines only for a personal account where personal plans are sold (the rest of the time section applies to everyone and is scanned)',
     'usage.outIndividual': 'personal account only', 'usage.lowNote': 'personal account only',
+    // 2026-10-30: no card and no social sign-in on the organizations site.
+    'login.social': 'WorkLogin: the social sign-in tab needs social_login (off here; company accounts never use it)',
+    'home.pricing.trustStripe': 'WorkMarketing / WorkPricing: the personal plan cards need individual_plans',
+    'widgets.validate.trustStripe': 'LiveValidate: plan card needs individual_plans',
+    // Work content: the apps and tasks people are guided through on their own
+    // screens (a payment provider is something a person may integrate at work).
+    'home.marquee': 'work content: apps and tasks people work in',
+    'useCases.cases.1.guide': 'work content: a demo task (adding payment webhooks to an app)',
   },
 }
 

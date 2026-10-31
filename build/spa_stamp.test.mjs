@@ -40,9 +40,11 @@ test('saas: capability meta, organization offers, and prerendered routes for org
   assert.ok(r.prerenderedRoutes >= 6, `prerendered ${r.prerenderedRoutes}`)
   const shell = fs.readFileSync(path.join(dir, 'index.html'), 'utf8')
   assert.match(shell, /<meta name="wcp-capabilities" content="saas_companies,platform_ai,brain_export,brain_query,public_site"/)
-  assert.doesNotMatch(shell, /"name":"Lite"|Self-service plans|\$1/)
+  // No personal plan, and the organization prices come from server/org_pricing.js.
+  assert.doesNotMatch(shell, /"name":"(Lite|Basic|Advanced|Premium)"|Self-service plans/)
   assert.match(shell, /"text": "WorkCoPilot is sold to organizations/)
-  assert.match(shell, /Hosted for your company/)
+  assert.match(shell, /Hosted by AdmireVeda/)
+  assert.match(shell, /\$199 for 100-1,000 users/)
   const login = fs.readFileSync(path.join(dir, 'workcopilot', 'index.html'), 'utf8')
   assert.match(login, /wcp-capabilities/)
   assert.doesNotMatch(login, /free to sign up/i)
