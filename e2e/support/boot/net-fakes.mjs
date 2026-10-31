@@ -23,7 +23,11 @@ function isLoopback(host) {
   return h === 'localhost' || h === '127.0.0.1' || h === '::1' || h.endsWith('.localhost')
 }
 
-export function installNetFakes({ aiHosts, aiPort, hookPort }) {
+// The Stripe SDK's host: swapped for the fake Stripe (fake-stripe.mjs) over
+// plain http, so the product's real SDK, config and signature checks run.
+export const STRIPE_HOST = 'api.stripe.com'
+
+export function installNetFakes({ aiHosts, aiPort, hookPort, stripePort = 0 }) {
   const hosts = new Set(aiHosts.map((h) => h.toLowerCase()))
   const realFetch = globalThis.fetch
 
@@ -75,6 +79,18 @@ export function installNetFakes({ aiHosts, aiPort, hookPort }) {
     if (host === FAKE_HOOK_HOST) {
       const { lookup, agent, ...rest } = opts
       return http.request({ ...rest, protocol: 'http:', hostname: '127.0.0.1', port: hookPort, path: `${url.pathname}${url.search}` }, cb)
+    }
+    if (host === STRIPE_HOST && stripePort) {
+      const { lookup, agent, host: _h, hostname: _hn, ciphers, ...rest } = opts
+      const req = http.request({ ...rest, protocol: 'http:', hostname: '127.0.0.1', port: stripePort, path: `${url.pathname}${url.search}` }, cb)
+      // The Stripe SDK writes its body only after the TLS handshake
+      // ('secureConnect'); a plain socket never fires it, so it is raised here
+      // right after 'connect' (our listener is registered before the SDK's).
+      req.once('socket', (socket) => {
+        if (socket.connecting) socket.once('connect', () => socket.emit('secureConnect'))
+        else process.nextTick(() => socket.emit('secureConnect'))
+      })
+      return req
     }
     if (isLoopback(host)) return realHttpsRequest.call(https, urlOrOpts, optsOrCb, maybeCb)
     blocked.push({ via: 'https.request', host, path: url.pathname, at: new Date().toISOString() })

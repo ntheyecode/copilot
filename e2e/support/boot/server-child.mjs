@@ -10,6 +10,7 @@ import { installClock } from './clock.mjs'
 import { installNetFakes } from './net-fakes.mjs'
 import { startFakeAi } from './fake-ai.mjs'
 import { startWebhookReceiver } from './webhook-receiver.mjs'
+import { startFakeStripe } from './fake-stripe.mjs'
 
 installClock()
 
@@ -17,7 +18,10 @@ const { PROVIDERS } = await import('../../../server/ai.js')
 const aiHosts = Object.values(PROVIDERS).flatMap((p) => [new URL(p.base).hostname, ...(p.altHosts || [])])
 const fakeAi = await startFakeAi()
 const receiver = await startWebhookReceiver()
-installNetFakes({ aiHosts, aiPort: fakeAi.port, hookPort: receiver.port })
+// The fake Stripe always runs; it only answers when a test's server carries
+// Stripe keys (the product makes no Stripe call otherwise).
+const fakeStripe = await startFakeStripe()
+installNetFakes({ aiHosts, aiPort: fakeAi.port, hookPort: receiver.port, stripePort: fakeStripe.port })
 
 const index = await import('../../../server/index.js')
 const store = await import('../../../server/store.js')
@@ -25,7 +29,7 @@ const srv = await index.start()
 const port = srv.address().port
 
 const { makeCtl } = await import('./ctl.mjs')
-const ctl = makeCtl({ store, fakeAi, receiver, srv })
+const ctl = makeCtl({ store, fakeAi, receiver, srv, fakeStripe })
 
 process.on('message', async (m) => {
   if (!m || m.type !== 'ctl') return
@@ -39,4 +43,4 @@ process.on('message', async (m) => {
 })
 process.on('disconnect', () => process.exit(0))
 
-process.send({ type: 'ready', port, aiPort: fakeAi.port, hookPort: receiver.port, edition: process.env.WORK_EDITION })
+process.send({ type: 'ready', port, aiPort: fakeAi.port, hookPort: receiver.port, stripePort: fakeStripe.port, edition: process.env.WORK_EDITION })
