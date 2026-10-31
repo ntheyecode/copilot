@@ -21,9 +21,21 @@ const MAP = [
 
 const TYPES = { '.js': 'application/javascript', '.wasm': 'application/wasm', '.map': 'application/json' }
 
+const EXTERNAL = /^https?:\/\/(?!127\.0\.0\.1[:/]|localhost[:/])/
+
 export async function guardBrowserEgress(context) {
   const blocked = []
-  await context.route(/^https?:\/\/(?!127\.0\.0\.1[:/]|localhost[:/])/, async (route) => {
+  // context.route() does not see requests that come from a redirect, so a
+  // redirect to a real third-party host would slip past it. Every request the
+  // browser issues is also checked here (redirect hops included); one that is
+  // external and not one of the locally served MAP entries fails the test.
+  context.on('request', (req) => {
+    const url = req.url()
+    if (!req.redirectedFrom() || !EXTERNAL.test(url)) return
+    if (MAP.some(([re]) => re.test(url))) return
+    blocked.push(`${url} (reached through a redirect from ${req.redirectedFrom().url()})`)
+  })
+  await context.route(EXTERNAL, async (route) => {
     const url = route.request().url()
     for (const [re, fileOf] of MAP) {
       const m = url.match(re)
