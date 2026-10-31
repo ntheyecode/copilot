@@ -24,6 +24,7 @@ import { sendTemplateAsync, sendOwnerSubscriptionAlertAsync } from './emails.js'
 // builder + one activation function, so webhook and confirm never drift.
 import { PLANS, mapStatus, planFromSub, periodEndIso, cycleFromSub, subscriptionCheckoutParams, applyCheckoutSession } from './billing_checkout.js'
 import { caps, stripeOffReason, stripeOffCode, individualPlanRefusal } from './edition.js'
+import { stripeClientOptions } from './stripe_endpoint.js'
 // Where Stripe sends the customer back. Fixed to the public site by default; an
 // operator can override it for a staging host via WORK_PUBLIC_URL.
 const SITE = (process.env.WORK_PUBLIC_URL || 'https://admireveda.com').replace(/\/+$/, '')
@@ -124,7 +125,7 @@ async function getStripe(secret) {
     const mod = await import('stripe')
     const Stripe = mod.default || mod
     _pkgTried = true; _pkgOk = true
-    _stripe = new Stripe(secret)
+    _stripe = new Stripe(secret, stripeClientOptions())   // {} = api.stripe.com (stripe_endpoint.js)
     _stripeKey = secret
   } catch (e) {
     _pkgTried = true; _pkgOk = false; _stripe = null; _stripeKey = null
