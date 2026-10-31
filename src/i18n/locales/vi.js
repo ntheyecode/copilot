@@ -5952,6 +5952,7 @@ export default {
       finance: 'Tài chính',
       subscribers: 'Người đăng ký',
       cancelled: 'Đã hủy',
+      'subscription-health': 'Sức khỏe thuê bao',
       email: 'Cài đặt SMTP',
       'email-templates': 'Mẫu email',
       ai: 'Cấu hình AI',
@@ -6006,6 +6007,10 @@ export default {
       cancelled: {
         title: 'Người đăng ký đã hủy',
         sub: 'Các thuê bao đã rời bỏ: ai đã hủy, khi nào, vì sao, và tổng doanh thu họ mang lại trước khi rời đi.',
+      },
+      'subscription-health': {
+        title: 'Sức khỏe thuê bao',
+        sub: 'Mảng khách hàng cá nhân trong nháy mắt: MRR theo gói, dùng thử, thanh toán thất bại, gói sắp kết thúc, tỷ lệ rời bỏ 30 ngày, và Stripe đã nối hay chưa.',
       },
       email: {
         title: 'Cài đặt SMTP (Email / SES)',
@@ -6828,6 +6833,614 @@ export default {
       deleteConfirm: 'Xóa sự cố',
     },
   },
+  indiv: {
+    nav: {
+      main: 'Điều hướng chính',
+      home: 'Trang chủ',
+      how: 'Cách hoạt động',
+      pricing: 'Bảng giá',
+      use: 'Dành cho ai',
+      faq: 'Hỏi đáp',
+      security: 'Quyền riêng tư',
+      signIn: 'Đăng nhập',
+      start: 'Chọn gói',
+      openMenu: 'Mở menu',
+      closeMenu: 'Đóng menu',
+      language: 'Ngôn ngữ',
+    },
+    footer: {
+      aria: 'Chân trang',
+      tag: 'Một người dẫn đường bên cạnh cho công việc bạn tự làm trên màn hình của mình. Từng bước một, cho đến khi xong.',
+      explore: 'Khám phá',
+      account: 'Tài khoản của bạn',
+      legal: 'Pháp lý',
+      help: 'Trợ giúp',
+      support: 'Viết cho bộ phận hỗ trợ',
+      demo: 'Xem bản demo',
+      fields: 'Các lĩnh vực quen thuộc',
+      contact: 'Liên hệ',
+      accessibility: 'Khả năng tiếp cận',
+      cookiePrefs: 'Tùy chọn cookie',
+      made: 'WorkCoPilot do AdmireVeda phát triển.',
+      note: 'Thanh toán được xử lý bởi Stripe. Thông tin thẻ của bạn không bao giờ đến máy chủ của chúng tôi.',
+    },
+    common: {
+      choosePlan: 'Chọn gói',
+      seePlans: 'Xem các gói',
+      signIn: 'Đăng nhập',
+      seeHow: 'Xem cách hoạt động',
+      demo: 'Xem demo 60 giây',
+      start: 'Bắt đầu với {plan}',
+      perMonth: '/tháng',
+      readMore: 'Đọc thêm',
+      new: 'Mới',
+    },
+    home: {
+      seo: {
+        title: 'WorkCoPilot: hướng dẫn từng bước cho công việc trên màn hình của bạn',
+        description: 'Nói với WorkCoPilot việc bạn cần làm. Nó quan sát màn hình, chỉ chính xác cú nhấp hoặc lệnh tiếp theo, bắt lỗi sai và xác nhận khi xong. Gói tính theo giờ, hủy bất cứ lúc nào.',
+      },
+      hero: {
+        eyebrow: 'Dành cho người tự làm việc của mình',
+        h1: 'Hoàn thành việc ngay trên màn hình. <em>Với một người dẫn đường ngay bên cạnh.</em>',
+        p: 'Nói việc bạn cần làm. WorkCoPilot quan sát màn hình, chỉ chính xác cú nhấp hoặc lệnh tiếp theo, bắt lỗi sai và xác nhận khi xong.',
+        primary: 'Chọn gói',
+        secondary: 'Xem cách hoạt động',
+        trust: [
+          'Hoạt động trong các ứng dụng đã có trên màn hình',
+          'Thông tin nhạy cảm được che trên thiết bị của bạn',
+          'Hủy bất cứ lúc nào, không ràng buộc',
+        ],
+      },
+      visual: {
+        aria: 'Một màn hình nơi WorkCoPilot dẫn từng bước',
+        window: 'Ứng dụng kế toán của bạn',
+        task: 'Gửi hóa đơn đầu tiên với logo của tôi',
+        stepLabel: 'Bước 3 / 7',
+        step: 'Mở Cài đặt, rồi Mẫu hóa đơn. Chọn mẫu có logo của bạn.',
+        checked: 'Đã kiểm tra: mẫu đã được lưu',
+        next: 'Bước tiếp theo',
+        watching: 'Đang quan sát màn hình',
+      },
+      who: {
+        eyebrow: 'Làm cho ngày làm việc của bạn',
+        h2: 'Một người dẫn đường cho mọi việc bạn tự làm.',
+        cta: 'Xem dành cho ai',
+        cards: [
+          {
+            t: 'Người làm tự do',
+            d: 'Hóa đơn, cổng khách hàng, công cụ mới: đúng ngay từ đầu, không mất cả ngày trong bài viết trợ giúp.',
+          },
+          {
+            t: 'Sinh viên',
+            d: 'Cài phần mềm môn học cần và làm bài tập, mỗi bước đều được kiểm tra.',
+          },
+          {
+            t: 'Người tìm việc',
+            d: 'Hồ sơ năng lực, đơn ứng tuyển, công cụ trong tin tuyển dụng: học ngay khi dùng.',
+          },
+          {
+            t: 'Người kinh doanh một mình',
+            d: 'Cửa hàng, sổ sách, lịch đặt chỗ của bạn: mọi thiết lập được dẫn đến cùng trên màn hình của bạn.',
+          },
+          {
+            t: 'Người đổi nghề',
+            d: 'Bước vào công cụ của một lĩnh vực mới với người bên cạnh hiểu rõ chúng.',
+          },
+        ],
+      },
+      how: {
+        eyebrow: 'Một việc được dẫn diễn ra thế nào',
+        h2: 'Bốn bước, lặp lại cho đến khi xong.',
+        steps: [
+          {
+            t: 'Nói mục tiêu',
+            d: 'Bằng lời của bạn. Một kiểm tra 30 giây đảm bảo việc phù hợp với những gì bạn biết.',
+          },
+          {
+            t: 'Nhận chính xác bước tiếp theo',
+            d: 'Cú nhấp, lệnh hay cài đặt, trong ứng dụng bạn đang mở, sẵn sàng để sao chép.',
+          },
+          {
+            t: 'Lỗi sai được bắt',
+            d: 'Nó quan sát màn hình, phát hiện sơ suất ngay lập tức và chỉ cách sửa.',
+          },
+          {
+            t: 'Kết thúc với bản ghi',
+            d: 'Một bản tóm tắt gọn gàng việc bạn đã làm, có hình ảnh, để giữ lại hoặc làm lại.',
+          },
+        ],
+        honest: 'Nó dẫn đường và kiểm tra. Nó không bao giờ nhấp thay bạn: tay bạn vẫn trên vô lăng.',
+      },
+      hours: {
+        eyebrow: 'Gói tính theo giờ',
+        h2: 'Trả cho thời gian được dẫn, <em>theo từng phút bạn dùng.</em>',
+        p: 'Mỗi gói gồm số giờ hướng dẫn trực tiếp mỗi tháng, tính theo phút bạn dùng. Tháng bận? Thêm một giờ bất cứ khi nào cần.',
+        cta: 'So sánh các gói',
+        live: 'Giá hiện tại',
+      },
+      privacy: {
+        eyebrow: 'Riêng tư từ thiết kế',
+        h2: 'Màn hình của bạn vẫn là của bạn.',
+        points: [
+          {
+            t: 'Che trước khi rời đi',
+            d: 'Số thẻ, khóa và thông tin cá nhân được bôi đen trên thiết bị của bạn trước khi gửi bất cứ thứ gì.',
+          },
+          {
+            t: 'Chỉ đọc',
+            d: 'Nó chỉ bước đi và kiểm tra kết quả. Không bao giờ thay đổi tài khoản hay tệp của bạn.',
+          },
+          {
+            t: 'Bạn xóa khi muốn',
+            d: 'Mỗi phiên là của bạn. Xóa bất kỳ phiên nào, bất cứ lúc nào.',
+          },
+        ],
+        cta: 'Dữ liệu của bạn được xử lý thế nào',
+      },
+      final: {
+        h2: 'Bắt đầu việc tiếp theo với người dẫn đường bên cạnh.',
+        p: 'Chọn gói, đăng nhập bằng Google, Microsoft, Facebook hoặc email, và bắt đầu trong vài phút.',
+        primary: 'Chọn gói',
+        secondary: 'Đăng nhập',
+      },
+    },
+    how: {
+      seo: {
+        title: 'WorkCoPilot hoạt động thế nào: người dẫn đường trên màn hình của bạn',
+        description: 'WorkCoPilot lập kế hoạch cho việc của bạn, chỉ chính xác bước tiếp theo trong ứng dụng bạn đang mở, kiểm tra bước đó đã đúng, sửa lỗi sai và tiếp tục cho đến khi xong việc. Đây là cách.',
+      },
+      hero: {
+        eyebrow: 'Cách hoạt động',
+        h1: 'Như có đúng người <em>bên cạnh bạn, mọi lúc.</em>',
+        p: 'Bạn mang đến mục tiêu và màn hình. WorkCoPilot mang đến kế hoạch, các bước chính xác và việc kiểm tra.',
+      },
+      loop: {
+        h2: 'Vòng lặp sau mỗi việc',
+        aria: 'Mỗi việc diễn ra thế nào: lập kế hoạch, hỏi, dẫn, quan sát, sửa, lặp lại cho đến khi xong',
+        rows: [
+          {
+            k: 'Lập kế hoạch',
+            v: 'toàn bộ việc được lên kế hoạch trước bước đầu tiên',
+          },
+          {
+            k: 'Hỏi',
+            v: 'một câu hỏi nhanh khi cần thêm từ bạn',
+          },
+          {
+            k: 'Dẫn',
+            v: 'bước tiếp theo chính xác, trên màn hình của bạn',
+          },
+          {
+            k: 'Quan sát',
+            v: 'kiểm tra mỗi bước thực sự đã đúng',
+          },
+          {
+            k: 'Sửa',
+            v: 'sửa lỗi sai ngay khi nó xảy ra',
+          },
+        ],
+        again: 'lặp lại cho đến khi việc hoàn thành',
+      },
+      gridH2: 'Nó làm gì cho bạn',
+      cards: [
+        {
+          t: 'Cách làm chính xác, mọi lúc',
+          d: 'Cú nhấp, lệnh hay cài đặt chính xác, sẵn sàng sao chép, theo cách đã được chứng minh.',
+        },
+        {
+          t: 'Bắt đầu từ con số không',
+          d: 'Mở đúng trang, giúp bạn đăng nhập và đưa bạn đến đúng chỗ.',
+        },
+        {
+          t: 'Bắt và sửa lỗi',
+          d: 'Phát hiện lỗi sai ngay lập tức và chỉ cách sửa, kể cả khi một nút đã đổi chỗ.',
+        },
+        {
+          t: 'Mọi ứng dụng trên màn hình',
+          d: 'Ứng dụng web, ứng dụng máy tính và công cụ riêng của bạn: nó đọc bất cứ thứ gì trên màn hình.',
+        },
+        {
+          t: 'Dựa trên ghi chú của bạn',
+          d: 'Ở Advanced và Premium, tải lên tài liệu tham khảo và các bước sẽ theo đó.',
+        },
+        {
+          t: 'Bản ghi bạn giữ lại',
+          d: 'Kết thúc với bản tóm tắt gọn gàng, nhiều hình ảnh về việc bạn đã làm, để giữ hoặc làm lại.',
+        },
+        {
+          t: 'Dạy nó cách của bạn',
+          d: 'Dán một danh sách kiểm tra hoặc quy trình và phần hướng dẫn sẽ theo công cụ và thuật ngữ của bạn.',
+        },
+        {
+          t: 'Máy tính, web và điện thoại',
+          d: 'Một lớp phủ trên máy tính, trình duyệt không cần cài gì, hoặc camera điện thoại.',
+        },
+      ],
+      depth: {
+        h2: 'Đơn giản hay kỹ thuật tùy bạn',
+        p: 'Chọn độ sâu của mỗi bước, từ ngôn ngữ đơn giản đến các tham số chính xác. Đổi bất cứ lúc nào, kể cả giữa chừng.',
+        levels: [
+          'Đơn giản',
+          'Có dẫn',
+          'Kỹ thuật',
+        ],
+      },
+      honest: {
+        h2: 'Nó là gì, và không phải là gì',
+        is: [
+          'Một người dẫn đường quan sát màn hình và chỉ bước tiếp theo',
+          'Một người kiểm tra xác nhận mỗi bước đã đúng',
+          'Một bản ghi việc bạn đã làm, có hình ảnh',
+        ],
+        not: [
+          'Không phải khung chat mà bạn phải tự làm theo câu trả lời',
+          'Không phải tự động hóa nhấp thay bạn',
+          'Không phải công cụ phân tích tài liệu: nó giúp bạn làm và hoàn thành công việc',
+        ],
+      },
+      cta: {
+        h2: 'Thử ở việc tiếp theo của bạn.',
+        p: 'Các gói bắt đầu nhỏ và lớn dần cùng tháng của bạn. Hủy bất cứ lúc nào.',
+      },
+    },
+    pricing: {
+      seo: {
+        title: 'Các gói WorkCoPilot: Lite, Basic, Advanced và Premium',
+        description: 'Bốn gói với số giờ hướng dẫn trực tiếp mỗi tháng, tính theo phút bạn dùng. Theo tháng hoặc theo năm. Thêm giờ bất cứ lúc nào, hủy khi bạn muốn.',
+      },
+      hero: {
+        eyebrow: 'Bảng giá',
+        h1: 'Gói đơn giản. <em>Thời gian được dẫn thực sự.</em>',
+        p: 'Chọn gói theo số giờ hướng dẫn tháng của bạn cần. Quyền riêng tư và che dữ liệu có trong mọi gói, không bao giờ là phụ phí.',
+      },
+      toggle: {
+        aria: 'Chu kỳ thanh toán',
+        monthly: 'Hàng tháng',
+        annual: 'Hàng năm',
+        save: 'tiết kiệm 20%',
+      },
+      popular: 'Được chọn nhiều nhất',
+      recommended: 'Đề xuất cho bạn',
+      hoursHero: '{hours} giờ',
+      hoursSub: 'thời gian được dẫn mỗi tháng',
+      perMonthLong: 'mỗi tháng',
+      secure: 'Thanh toán an toàn với Stripe',
+      includedH2: 'Có trong mọi gói',
+      included: [
+        'Từng bước, từ đầu đến cuối, kiểm tra trong khi làm',
+        'Lệnh, cú nhấp và liên kết chính xác, sẵn sàng sao chép',
+        'Hoạt động trong các ứng dụng đã có trên màn hình',
+        'Thông tin nhạy cảm được che trên thiết bị của bạn',
+        'Bản ghi bằng văn bản cho mỗi việc, có hình ảnh',
+      ],
+      tiersH2: 'Những gì tăng theo gói của bạn',
+      tiers: [
+        {
+          t: 'Số giờ được dẫn',
+          d: 'Từ vài việc mỗi tháng đến một người dẫn đường bên cạnh gần như mỗi ngày làm việc.',
+        },
+        {
+          t: 'Tài liệu của riêng bạn',
+          d: 'Advanced và Premium đọc ghi chú tham khảo của bạn để các bước theo cách làm việc của bạn.',
+        },
+        {
+          t: 'Hình ảnh tạo sẵn và dự án',
+          d: 'Premium thêm sơ đồ và ví dụ, biến một mục tiêu lớn thành bản đồ các việc được dẫn.',
+        },
+      ],
+      notesH2: 'Nên biết',
+      notes: [
+        {
+          t: 'Theo phút',
+          d: 'Dùng số giờ của bạn vài phút mỗi lần trong tháng. Không bao giờ làm tròn lên giờ.',
+        },
+        {
+          t: 'Thêm thời gian',
+          d: 'Tháng bận? Thêm một giờ bất cứ khi nào cần. Thời gian đã mua không bao giờ hết hạn.',
+        },
+        {
+          t: 'Hủy bất cứ lúc nào',
+          d: 'Theo tháng hoặc theo năm, không ràng buộc. Hủy trong tài khoản; bạn giữ quyền truy cập đến hết kỳ đã trả.',
+        },
+        {
+          t: 'Đổi gói',
+          d: 'Nâng lên bất cứ lúc nào với phí tính theo tỷ lệ. Hạ xuống ở lần gia hạn tiếp theo.',
+        },
+      ],
+      fine: 'Giá và quyền lợi cuối cùng được xác nhận khi thanh toán. Có thể có thuế tùy khu vực.',
+      refund: 'Chính sách hoàn tiền',
+      cta: {
+        h2: 'Chọn gói và bắt đầu hôm nay.',
+        p: 'Đăng nhập bằng Google, Microsoft, Facebook hoặc email. Bạn được dẫn trong vài phút.',
+      },
+    },
+    use: {
+      seo: {
+        title: 'WorkCoPilot dành cho ai: người làm tự do, sinh viên, người tìm việc và hơn thế',
+        description: 'WorkCoPilot dẫn đường cho người tự làm việc của mình trên màn hình của mình: người làm tự do, sinh viên, người tìm việc, người kinh doanh một mình và người đổi nghề. Xem một việc được dẫn trông thế nào với từng nhóm.',
+      },
+      hero: {
+        eyebrow: 'Dành cho ai',
+        h1: 'Cho công việc bạn làm <em>một mình.</em>',
+        p: 'Chọn ngày giống ngày của bạn. Mỗi ngày cho thấy một việc thật, kiểu bước bạn nhận được, và khoảnh khắc người dẫn đường bắt được sơ suất.',
+        chipsAria: 'Chuyển đến một nhóm',
+      },
+      labels: {
+        goal: 'Mục tiêu',
+        step: 'Một bước bạn nhận',
+        catches: 'Nó bắt được gì',
+        done: 'Xong khi',
+      },
+      cases: [
+        {
+          tag: 'Người làm tự do',
+          h2: 'Giao việc như một studio một người.',
+          d: 'Cổng khách hàng, hóa đơn, hợp đồng, công cụ thiết kế và dự án mới: thiết lập và dùng đúng, không mất cả ngày trong bài viết trợ giúp.',
+          goal: 'Gửi hóa đơn đầu tiên có logo và thanh toán trực tuyến',
+          step: 'Mở Cài đặt, rồi Thanh toán, và kết nối tài khoản của bạn. Huy hiệu xanh xác nhận đã hoạt động.',
+          catches: 'Thuế suất để ở mức 0 trước khi bạn nhấn Gửi.',
+          done: 'hóa đơn được gửi và liên kết thanh toán mở ra.',
+        },
+        {
+          tag: 'Sinh viên',
+          h2: 'Cài công cụ trước, rồi làm việc.',
+          d: 'Phần mềm môn học yêu cầu, đã cài và cấu hình, và bài tập được làm từng bước có kiểm tra.',
+          goal: 'Cài công cụ dữ liệu cho môn học và chạy notebook đầu tiên',
+          step: 'Tạo môi trường mới tên course, rồi cài ba gói liệt kê trong đề cương.',
+          catches: 'Notebook chạy sai môi trường nên lệnh import thất bại.',
+          done: 'notebook đầu tiên chạy từ đầu đến cuối không lỗi.',
+        },
+        {
+          tag: 'Người tìm việc',
+          h2: 'Học công cụ trong tin tuyển dụng ngay khi dùng.',
+          d: 'Trang hồ sơ năng lực, theo dõi đơn ứng tuyển, công cụ tin tuyển dụng yêu cầu: học thực hành với người dẫn đường hiểu rõ chúng.',
+          goal: 'Đăng trang hồ sơ năng lực lên tên miền riêng',
+          step: 'Trong cài đặt tên miền, thêm hai bản ghi DNS hiển thị ở đây, đúng như đã viết.',
+          catches: 'Một bản ghi dán thiếu dấu chấm cuối, nên trang không bao giờ phân giải được.',
+          done: 'tên miền của bạn mở trang qua kết nối an toàn.',
+        },
+        {
+          tag: 'Người kinh doanh một mình',
+          h2: 'Tự vận hành cửa hàng, sổ sách và lịch đặt chỗ.',
+          d: 'Cửa hàng trực tuyến, kế toán, trang đặt chỗ, danh sách email: mọi thiết lập được dẫn đến cùng trên màn hình của bạn.',
+          goal: 'Tạo trang đặt chỗ có thu tiền cọc',
+          step: 'Bật Yêu cầu đặt cọc, đặt 20 phần trăm và chọn thời hạn hủy.',
+          catches: 'Múi giờ để mặc định, nên khung giờ hiển thị sai.',
+          done: 'một lượt đặt thử thu được tiền cọc và vào lịch của bạn.',
+        },
+        {
+          tag: 'Người đổi nghề',
+          h2: 'Bước vào lĩnh vực mới với người hiểu rõ công cụ.',
+          d: 'Bảng điều khiển đám mây, bảng tính, ứng dụng thiết kế hay mã: các bước chính xác, giải thích ở độ sâu bạn chọn, trong nhiều lĩnh vực.',
+          goal: 'Triển khai ứng dụng web đầu tiên lên một nhà cung cấp đám mây',
+          step: 'Tạo ứng dụng, chọn gói nhỏ nhất, rồi dán lệnh build từ dự án của bạn vào đây.',
+          catches: 'Khóa bí mật bị đưa vào kho mã trước lần push đầu tiên.',
+          done: 'ứng dụng mở ở địa chỉ công khai và khóa được lưu dưới dạng bí mật.',
+        },
+      ],
+      cta: {
+        h2: 'Ngày của bạn giống một trong số này.',
+        p: 'Chọn gói và mang đến việc đầu tiên. Bạn được dẫn trong vài phút.',
+      },
+    },
+    faq: {
+      seo: {
+        title: 'Câu hỏi về WorkCoPilot, đã có trả lời',
+        description: 'WorkCoPilot làm gì và không làm gì, gói và giờ hoạt động thế nào, cách hủy, và màn hình cùng dữ liệu của bạn được bảo vệ ra sao. Câu trả lời ngắn và thẳng.',
+      },
+      hero: {
+        eyebrow: 'Câu hỏi',
+        h1: 'Câu trả lời ngắn cho <em>những câu hỏi mọi người hay hỏi.</em>',
+        p: 'Vẫn chưa chắc? Viết cho chúng tôi, sẽ có người trả lời.',
+      },
+      searchPh: 'Tìm trong câu hỏi',
+      noMatch: 'Không có câu hỏi nào khớp. Thử từ khác, hoặc viết cho chúng tôi.',
+      groups: [
+        {
+          title: 'Nó làm gì',
+          items: [
+            {
+              q: 'WorkCoPilot thực sự làm gì?',
+              a: 'Nó dẫn bạn qua một việc trên màn hình của bạn: lập kế hoạch cho việc, chỉ chính xác bước tiếp theo trong ứng dụng bạn đang mở, kiểm tra bước đó đã đúng, và tiếp tục cho đến khi xong.',
+            },
+            {
+              q: 'Nó có làm việc thay tôi không?',
+              a: 'Không. Nó chỉ bước đi và kiểm tra kết quả; mỗi cú nhấp là của bạn. Đó là cố ý, để bạn giữ quyền kiểm soát và học công cụ trong khi làm.',
+            },
+            {
+              q: 'Nó hoạt động với ứng dụng nào?',
+              a: 'Mọi ứng dụng trên màn hình: ứng dụng web, ứng dụng máy tính và công cụ riêng của bạn. Nó đọc những gì trên màn hình, nên không cần plugin.',
+            },
+            {
+              q: 'Đây có phải trợ lý chat không?',
+              a: 'Không hẳn. Câu trả lời chat để bạn tự đi làm. WorkCoPilot ở lại với bạn trên màn hình, từng bước một, và xác nhận khi xong.',
+            },
+            {
+              q: 'Nó có phân tích hay viết tài liệu của tôi không?',
+              a: 'Không. Nó giúp bạn làm và hoàn thành việc trên màn hình. Ở Advanced và Premium bạn có thể tải lên ghi chú tham khảo để các bước theo cách làm việc của bạn.',
+            },
+          ],
+        },
+        {
+          title: 'Gói và thanh toán',
+          items: [
+            {
+              q: 'Số giờ hoạt động thế nào?',
+              a: 'Mỗi gói gồm số giờ được dẫn mỗi tháng, tính theo phút bạn dùng. Không gì bị làm tròn lên giờ. Trang giá hiển thị con số hiện tại.',
+            },
+            {
+              q: 'Tôi có thể mua thêm thời gian không?',
+              a: 'Có. Thêm một giờ bất cứ khi nào cần từ tài khoản. Thời gian đã mua không bao giờ hết hạn.',
+            },
+            {
+              q: 'Tôi có thể đổi gói không?',
+              a: 'Bất cứ lúc nào. Nâng lên áp dụng ngay với phí tính theo tỷ lệ. Hạ xuống có hiệu lực ở lần gia hạn tiếp theo, để bạn giữ những gì đã trả.',
+            },
+            {
+              q: 'Làm sao để hủy?',
+              a: 'Từ tài khoản, hai cú nhấp. Bạn giữ quyền truy cập đến hết kỳ đã trả, và có thể tiếp tục trước đó chỉ bằng một cú nhấp.',
+            },
+            {
+              q: 'Nếu thanh toán thất bại thì sao?',
+              a: 'Bạn nhận email và thông báo trong tài khoản với nút cập nhật thẻ. Gói vẫn là của bạn trong khi bạn xử lý.',
+            },
+            {
+              q: 'Có thanh toán theo năm không?',
+              a: 'Nơi có, trang giá hiển thị giá năm có giảm. Bạn có thể chuyển giữa theo tháng và theo năm từ tài khoản.',
+            },
+          ],
+        },
+        {
+          title: 'Quyền riêng tư và an toàn',
+          items: [
+            {
+              q: 'Những gì rời khỏi thiết bị của tôi?',
+              a: 'Khung hình màn hình thu nhỏ với các dòng nhạy cảm đã bôi đen, và văn bản của bạn với giá trị nhạy cảm đã thay bằng mã thế. Giá trị thật ở lại trên thiết bị của bạn.',
+            },
+            {
+              q: 'Nó có thể thay đổi tài khoản hay tệp của tôi không?',
+              a: 'Không. Nó chỉ đọc. Nó chỉ bước đi và kiểm tra kết quả; không bao giờ hành động trong ứng dụng của bạn.',
+            },
+            {
+              q: 'Tôi có thể xóa những gì nó lưu không?',
+              a: 'Có. Mỗi phiên là của bạn. Xóa bất kỳ phiên nào, bất cứ lúc nào, từ tài khoản.',
+            },
+            {
+              q: 'Các bạn có lưu thẻ của tôi không?',
+              a: 'Không. Thanh toán và thông tin thẻ do Stripe xử lý. Chúng tôi không bao giờ thấy hay lưu số thẻ của bạn.',
+            },
+          ],
+        },
+        {
+          title: 'Bắt đầu',
+          items: [
+            {
+              q: 'Tôi bắt đầu thế nào?',
+              a: 'Chọn gói, đăng nhập bằng Google, Microsoft, Facebook hoặc email, và mang đến việc đầu tiên. Bạn được dẫn trong vài phút.',
+            },
+            {
+              q: 'Tôi có cần cài gì không?',
+              a: 'Không. Nó chạy trong trình duyệt. Cũng có lớp phủ máy tính và ứng dụng điện thoại nếu bạn thích.',
+            },
+            {
+              q: 'Tôi có thể thử trước không?',
+              a: 'Xem demo 60 giây để thấy một việc được dẫn từ đầu đến cuối. Các gói bắt đầu nhỏ, và bạn có thể hủy bất cứ lúc nào.',
+            },
+          ],
+        },
+      ],
+      cta: {
+        h2: 'Chưa tìm thấy câu trả lời?',
+        p: 'Viết cho chúng tôi. Mỗi tin nhắn đều có người đọc.',
+        write: 'Viết cho bộ phận hỗ trợ',
+      },
+    },
+    security: {
+      seo: {
+        title: 'Quyền riêng tư và an toàn cho màn hình của bạn: WorkCoPilot',
+        description: 'WorkCoPilot bảo vệ bạn thế nào: giá trị nhạy cảm được che trên thiết bị trước khi gửi, hướng dẫn chỉ đọc, xác thực hai lớp cho tài khoản, nhật ký mỗi phiên, mã hóa khi lưu trữ, và phiên bạn có thể xóa bất cứ lúc nào.',
+      },
+      hero: {
+        eyebrow: 'Riêng tư từ thiết kế',
+        h1: 'Bí mật của bạn <em>không bao giờ rời khỏi thiết bị.</em>',
+        p: 'Thông tin nhạy cảm được che ngay trên thiết bị của bạn trước khi gửi bất cứ thứ gì. Người dẫn đường thấy hình dạng của việc, không bao giờ thấy bí mật.',
+      },
+      visual: {
+        aria: 'Một biểu mẫu trước và sau khi che: số thẻ, khóa và số điện thoại bị bôi đen',
+        before: 'Những gì trên màn hình của bạn',
+        after: 'Những gì rời khỏi thiết bị',
+        fields: [
+          'Thẻ đã lưu',
+          'Khóa API',
+          'Điện thoại',
+          'Gói',
+        ],
+        masked: 'đã che',
+      },
+      guaranteesAria: 'Những gì được bảo vệ',
+      guarantees: [
+        {
+          t: 'Che trên thiết bị của bạn',
+          d: 'Số thẻ, khóa và thông tin cá nhân được bôi đen trong ảnh chụp màn hình và thay bằng mã thế trong văn bản trước khi gửi.',
+        },
+        {
+          t: 'Luôn chỉ đọc',
+          d: 'Nó chỉ bước đi và kiểm tra kết quả. Không bao giờ thay đổi tài khoản, tệp hay cài đặt của bạn.',
+        },
+        {
+          t: 'Mã được kiểm tra trước khi chạy',
+          d: 'Mọi lệnh hay mã nó gợi ý đều được kiểm tra trước với các vấn đề đã biết.',
+        },
+        {
+          t: 'Xác thực hai lớp cho tài khoản',
+          d: 'Mật khẩu, đăng nhập Google, Microsoft hoặc Facebook đều qua cùng một lớp xác thực thứ hai.',
+        },
+        {
+          t: 'Nhật ký cho mỗi phiên',
+          d: 'Những gì đã gửi, đã đọc từ màn hình, đã kiểm tra và gắn cờ. Bạn có thể đọc.',
+        },
+        {
+          t: 'Mã hóa khi lưu trữ',
+          d: 'Khóa, bí mật và ảnh chụp báo cáo được lưu đều mã hóa bằng AES-256-GCM.',
+        },
+      ],
+      handling: {
+        h2: 'Dữ liệu của bạn được xử lý thế nào',
+        sub: 'Những gì sản phẩm làm hôm nay. Lời lẽ rõ ràng, không chữ nhỏ.',
+        groups: [
+          {
+            title: 'Những gì rời khỏi thiết bị',
+            items: [
+              'Khung hình màn hình thu nhỏ, dòng nhạy cảm đã bôi đen',
+              'Văn bản của bạn, giá trị nhạy cảm đã thay bằng mã thế',
+              'Văn bản từ ghi chú tham khảo bạn chọn đính kèm, không bao giờ là tệp',
+            ],
+          },
+          {
+            title: 'Những gì chúng tôi lưu',
+            items: [
+              'Một báo cáo mỗi phiên, với ảnh mốc đã che (bạn có thể tắt)',
+              'Một nhật ký mỗi phiên, ghi lại những gì đã gửi',
+              'Lịch sử phiên của bạn, để mở lại và xem',
+            ],
+          },
+          {
+            title: 'Những gì không bao giờ lưu',
+            items: [
+              'Tài liệu gốc của bạn',
+              'Khung hình màn hình thô',
+              'Giá trị nhạy cảm thật: người dẫn đường không bao giờ thấy',
+            ],
+          },
+        ],
+      },
+      control: {
+        h2: 'Bạn giữ quyền kiểm soát',
+        points: [
+          {
+            t: 'Xóa bất cứ lúc nào',
+            d: 'Mỗi phiên là của bạn. Xóa một, hoặc tất cả, bất cứ khi nào bạn muốn.',
+          },
+          {
+            t: 'Thêm quy tắc riêng',
+            d: 'Thêm từ và mẫu của riêng bạn để che, bên cạnh các bộ phát hiện có sẵn.',
+          },
+          {
+            t: 'Thanh toán qua Stripe',
+            d: 'Thông tin thẻ được xử lý tại Stripe. Chúng tôi không bao giờ thấy hay lưu số thẻ của bạn.',
+          },
+        ],
+      },
+      contact: {
+        h2: 'Phát hiện lỗ hổng bảo mật?',
+        p: 'Viết đến support@admireveda.com. Hãy cho chúng tôi thời gian xác nhận và sửa trước khi bạn công bố; nghiên cứu thiện chí luôn được hoan nghênh.',
+        write: 'Viết cho chúng tôi',
+        legal: 'Chính sách quyền riêng tư',
+        terms: 'Điều khoản',
+      },
+    },
+  },
   workDashboard: {
     cobrand: {
       aria: '{company}, vận hành bởi WorkCoPilot',
@@ -7525,6 +8138,8 @@ export default {
       helpTip: 'Trợ giúp và hướng dẫn',
       howto: 'Hướng dẫn',
       support: 'Hỗ trợ',
+      billing: 'Thanh toán',
+      billingTip: 'Gói, phương thức thanh toán và hóa đơn của bạn',
       team: 'Nhóm',
       exec: 'Bảng điều khiển điều hành',
       teach: 'Studio Đào tạo',
@@ -8354,6 +8969,29 @@ export default {
       fine: 'Việc hủy được hoàn tất trên cổng Stripe an toàn, nơi bạn có thể xác nhận và xem ngày kết thúc chính xác của mình.',
       keep: 'Giữ gói của tôi',
       continue: 'Tiếp tục hủy',
+    },
+    lifecycle: {
+      reasonLabel: 'Cho chúng tôi biết lý do (không bắt buộc)',
+      reasonPh: 'Một hai dòng giúp chúng tôi tốt hơn',
+      fine: 'Gói của bạn kết thúc vào cuối kỳ, không có khoản thu mới. Đổi ý trước đó thì tiếp tục chỉ bằng một cú nhấp.',
+      confirmCancel: 'Hủy vào cuối kỳ',
+      resume: 'Tiếp tục gói của tôi',
+      errCancel: 'Hiện chưa thể hủy gói của bạn. Thử lại hoặc viết cho bộ phận hỗ trợ.',
+      errResume: 'Hiện chưa thể tiếp tục gói của bạn. Thử lại hoặc viết cho bộ phận hỗ trợ.',
+    },
+    alert: {
+      pastDueTitle: 'Lần thanh toán gần nhất không thành công',
+      pastDueBody: 'Cập nhật phương thức thanh toán để giữ gói. Phần hướng dẫn tạm dừng cho đến khi thanh toán thành công.',
+      pastDueCta: 'Cập nhật phương thức thanh toán',
+      endingTitle: 'Gói của bạn kết thúc vào {date}',
+      endingBody: 'Bạn giữ toàn bộ quyền truy cập đến lúc đó. Tiếp tục bất cứ lúc nào trước ngày đó để duy trì gia hạn.',
+      endingCta: 'Tiếp tục gói',
+      pendingTitle: 'Chuyển sang {plan} vào {date}',
+      pendingBody: 'Bạn giữ gói hiện tại và số giờ của nó đến lúc đó. Hôm nay không thu phí.',
+    },
+    page: {
+      title: 'Thanh toán',
+      sub: 'Gói, phương thức thanh toán và hóa đơn của bạn.',
     },
   },
   buddyPage: {
@@ -12082,6 +12720,72 @@ export default {
       caption: 'Màn hình của bạn có thể hơi khác, chẳng hạn như hiển thị dữ liệu của chính bạn.',
       missing: 'Không thể tải ảnh chụp màn hình cho bước này.',
     },
+  },
+  subHealthAdmin: {
+    loading: 'Đang tải sức khỏe thuê bao',
+    refresh: 'Làm mới',
+    window: '{days} ngày qua',
+    asOf: 'Tính đến {time}',
+    tiles: {
+      mrr: 'Doanh thu định kỳ hàng tháng',
+      mrrFoot: '{arr} một năm với tốc độ này',
+      active: 'Thuê bao trả phí',
+      activeFoot: '{trialing} đang dùng thử',
+      pastDue: 'Thanh toán thất bại',
+      pastDueFoot: 'tài khoản đang quá hạn',
+      ending: 'Gói sắp kết thúc',
+      endingFoot: 'hủy vào cuối kỳ, vẫn đang hoạt động',
+      churn: 'Rời bỏ',
+      churnFoot: '{canceled} trên {start} đã hủy',
+      newSubs: 'Thuê bao mới',
+      newSubsFoot: 'bắt đầu trong kỳ',
+    },
+    byPlan: {
+      h3: 'MRR theo gói',
+      plan: 'Gói',
+      subscribers: 'Thuê bao',
+      annual: 'Theo năm',
+      mrr: 'MRR',
+      share: 'Tỷ trọng',
+    },
+    payments: {
+      h3: 'Dòng tiền trong kỳ',
+      paid: 'Thanh toán',
+      refunds: 'Hoàn tiền',
+      net: 'Ròng',
+    },
+    stripe: {
+      h3: 'Stripe',
+      keys: 'Khóa bí mật',
+      webhook: 'Bí mật webhook',
+      annual: 'Giá theo năm',
+      mode: 'Chế độ',
+      on: 'Đã đặt',
+      off: 'Thiếu',
+      fix: 'Đặt trong mục Thanh toán',
+      ready: 'Thanh toán, gia hạn và cổng quản lý đã được nối.',
+      notReady: 'Chừng nào khóa và bí mật webhook chưa được đặt, không gói nào mua được và không lần gia hạn nào về.',
+    },
+    ending: {
+      h3: 'Sắp kết thúc',
+      empty: 'Không có gói nào được đặt kết thúc.',
+      user: 'Người dùng',
+      plan: 'Gói',
+      endsAt: 'Kết thúc',
+      reason: 'Lý do',
+      noReason: 'Không nêu lý do',
+    },
+    pastDueList: {
+      h3: 'Quá hạn',
+      empty: 'Mọi lần gia hạn đều thành công.',
+      user: 'Người dùng',
+      plan: 'Gói',
+      since: 'Đăng ký từ',
+      periodEnd: 'Cuối kỳ',
+      open: 'Mở trong Thuê bao',
+    },
+    viewOnlyNote: 'Sức khỏe thuê bao hiển thị với superadmin và vai trò kế toán.',
+    unavailable: 'Sức khỏe thuê bao chưa khả dụng trên máy chủ này.',
   },
   subprocessorsPage: {
     seo: {

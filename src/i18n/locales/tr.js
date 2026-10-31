@@ -4218,6 +4218,614 @@ export default {
       deleteConfirm: 'Olayı sil',
     },
   },
+  indiv: {
+    nav: {
+      main: 'Ana gezinme',
+      home: 'Ana sayfa',
+      how: 'Nasıl çalışır',
+      pricing: 'Fiyatlar',
+      use: 'Kimler için',
+      faq: 'SSS',
+      security: 'Gizlilik',
+      signIn: 'Giriş yap',
+      start: 'Plan seç',
+      openMenu: 'Menüyü aç',
+      closeMenu: 'Menüyü kapat',
+      language: 'Dil',
+    },
+    footer: {
+      aria: 'Site alt bilgisi',
+      tag: 'Kendi ekranınızda yaptığınız işler için yanınızda bir rehber. Adım adım, bitene kadar.',
+      explore: 'Keşfet',
+      account: 'Hesabınız',
+      legal: 'Yasal',
+      help: 'Yardım',
+      support: 'Desteğe yazın',
+      demo: 'Demoyu izle',
+      fields: 'Bildiği alanlar',
+      contact: 'İletişim',
+      accessibility: 'Erişilebilirlik',
+      cookiePrefs: 'Çerez tercihleri',
+      made: 'WorkCoPilot, AdmireVeda tarafından yapılır.',
+      note: 'Ödemeler Stripe üzerinden işlenir. Kart bilgileriniz sunucularımıza asla ulaşmaz.',
+    },
+    common: {
+      choosePlan: 'Plan seç',
+      seePlans: 'Planları gör',
+      signIn: 'Giriş yap',
+      seeHow: 'Nasıl çalıştığını gör',
+      demo: '60 saniyelik demoyu izle',
+      start: '{plan} ile başla',
+      perMonth: '/ay',
+      readMore: 'Daha fazla',
+      new: 'Yeni',
+    },
+    home: {
+      seo: {
+        title: 'WorkCoPilot: ekranınızdaki işler için adım adım rehber',
+        description: 'WorkCoPilot\'a ne yapmanız gerektiğini söyleyin. Ekranınızı izler, bir sonraki tıklamayı ya da komutu tam olarak gösterir, yanlış bir adımı yakalar ve bittiğini onaylar. Saat bazlı planlar, istediğiniz zaman iptal.',
+      },
+      hero: {
+        eyebrow: 'İşini kendi yapanlar için',
+        h1: 'Ekranınızdaki işi bitirin. <em>Hemen yanınızda bir rehberle.</em>',
+        p: 'Ne yapmanız gerektiğini söyleyin. WorkCoPilot ekranınızı izler, bir sonraki tıklamayı ya da komutu tam olarak gösterir, yanlış bir adımı yakalar ve bittiğini onaylar.',
+        primary: 'Plan seç',
+        secondary: 'Nasıl çalıştığını gör',
+        trust: [
+          'Zaten ekranınızda olan uygulamalarda çalışır',
+          'Hassas bilgiler cihazınızda maskelenir',
+          'İstediğiniz zaman iptal, sözleşme yok',
+        ],
+      },
+      visual: {
+        aria: 'WorkCoPilot\'un adım adım yol gösterdiği bir ekran',
+        window: 'Muhasebe uygulamanız',
+        task: 'Kendi logomla ilk faturamı göndermek',
+        stepLabel: 'Adım 3 / 7',
+        step: 'Ayarlar\'ı, sonra Fatura şablonları\'nı açın. Logonuzu gösteren şablonu seçin.',
+        checked: 'Doğrulandı: şablon kaydedildi',
+        next: 'Sonraki adım',
+        watching: 'Ekranınızı izliyor',
+      },
+      who: {
+        eyebrow: 'Sizin gününüz için',
+        h2: 'Tek başınıza yaptığınız her iş için tek rehber.',
+        cta: 'Kimler için olduğunu gör',
+        cards: [
+          {
+            t: 'Serbest çalışanlar',
+            d: 'Faturalar, müşteri portalları, yeni araçlar: yardım yazılarında bir gün kaybetmeden ilk seferde doğru.',
+          },
+          {
+            t: 'Öğrenciler',
+            d: 'Dersinizin istediği yazılımı kurun ve ödevi, her adımı doğrulanarak ilerletin.',
+          },
+          {
+            t: 'İş arayanlar',
+            d: 'Portfolyolar, başvurular, ilanda geçen araçlar: kullanırken öğrenin.',
+          },
+          {
+            t: 'Tek kişilik işler',
+            d: 'Dükkânınız, defterleriniz, randevularınız: her kurulum ekranınızda sonuna kadar yönlendirilir.',
+          },
+          {
+            t: 'Kariyer değiştirenler',
+            d: 'Yeni bir alanın araçlarına, onları bilen biri yanınızdayken girin.',
+          },
+        ],
+      },
+      how: {
+        eyebrow: 'Rehberli bir iş nasıl ilerler',
+        h2: 'Dört hamle, bitene kadar tekrar.',
+        steps: [
+          {
+            t: 'Hedefi söyleyin',
+            d: 'Kendi sözcüklerinizle. 30 saniyelik bir kontrol, işin bildiklerinize uyduğundan emin olur.',
+          },
+          {
+            t: 'Tam olarak sonraki hamleyi alın',
+            d: 'Tıklama, komut ya da ayar; bulunduğunuz uygulamada, kopyalamaya hazır.',
+          },
+          {
+            t: 'Yanlış adım yakalanır',
+            d: 'Ekranı izler, hatayı anında fark eder ve düzeltmeyi gösterir.',
+          },
+          {
+            t: 'Bir kayıtla bitirin',
+            d: 'Yaptıklarınızın görsellerle temiz bir özeti; saklamak ya da tekrarlamak için.',
+          },
+        ],
+        honest: 'Yol gösterir ve kontrol eder. Sizin yerinize asla tıklamaz; direksiyon sizde kalır.',
+      },
+      hours: {
+        eyebrow: 'Saat bazlı planlar',
+        h2: 'Rehberli zaman için ödeyin, <em>kullandığınız dakika kadar.</em>',
+        p: 'Her plan, aylık canlı rehberlik saatleri içerir; kullandığınız dakika üzerinden hesaplanır. Yoğun bir ay mı? İhtiyaç duyduğunuzda bir saat ekleyin.',
+        cta: 'Planları karşılaştır',
+        live: 'Güncel fiyatlar',
+      },
+      privacy: {
+        eyebrow: 'Tasarımı gereği gizli',
+        h2: 'Ekranınız sizin kalır.',
+        points: [
+          {
+            t: 'Gönderilmeden önce maskelenir',
+            d: 'Kart numaraları, anahtarlar ve kişisel bilgiler, herhangi bir şey gönderilmeden önce cihazınızda karartılır.',
+          },
+          {
+            t: 'Salt okunur',
+            d: 'Hamleyi gösterir ve sonucu kontrol eder. Hesaplarınızı ya da dosyalarınızı asla değiştirmez.',
+          },
+          {
+            t: 'Silmek size kalmış',
+            d: 'Her oturum sizindir. İstediğinizi istediğiniz zaman silin.',
+          },
+        ],
+        cta: 'Verileriniz nasıl işlenir',
+      },
+      final: {
+        h2: 'Bir sonraki işinize yanınızda bir rehberle başlayın.',
+        p: 'Bir plan seçin, Google, Microsoft, Facebook ya da e-postanızla giriş yapın ve dakikalar içinde başlayın.',
+        primary: 'Plan seç',
+        secondary: 'Giriş yap',
+      },
+    },
+    how: {
+      seo: {
+        title: 'WorkCoPilot nasıl çalışır: ekranınızdaki rehber',
+        description: 'WorkCoPilot işinizi planlar, bulunduğunuz uygulamada bir sonraki adımı tam olarak gösterir, işe yaradığını kontrol eder, yanlış adımı düzeltir ve iş bitene kadar devam eder. İşte nasıl.',
+      },
+      hero: {
+        eyebrow: 'Nasıl çalışır',
+        h1: 'Doğru kişi her seferinde <em>yanınızdaymış gibi.</em>',
+        p: 'Siz hedefi ve ekranınızı getirirsiniz. WorkCoPilot planı, tam hamleleri ve kontrolleri getirir.',
+      },
+      loop: {
+        h2: 'Her işin arkasındaki döngü',
+        aria: 'Her iş nasıl ilerler: planla, sor, yönlendir, izle, düzelt; iş bitene kadar tekrarlanır',
+        rows: [
+          {
+            k: 'Planla',
+            v: 'ilk adımdan önce işin tamamı planlanır',
+          },
+          {
+            k: 'Sor',
+            v: 'sizden daha fazlasına ihtiyaç duyduğunda kısa bir soru',
+          },
+          {
+            k: 'Yönlendir',
+            v: 'ekranınızda tam olarak sonraki adım',
+          },
+          {
+            k: 'İzle',
+            v: 'her adımın gerçekten işe yaradığını kontrol eder',
+          },
+          {
+            k: 'Düzelt',
+            v: 'yanlış bir adımı olduğu anda düzeltir',
+          },
+        ],
+        again: 'iş bitene kadar tekrarlanır',
+      },
+      gridH2: 'Sizin için ne yapar',
+      cards: [
+        {
+          t: 'Tam olarak nasıl, her seferinde',
+          d: 'Kesin tıklama, komut ya da ayar; kopyalamaya hazır, kanıtlanmış yoldan.',
+        },
+        {
+          t: 'Sıfırdan başlar',
+          d: 'Doğru sayfayı açar, giriş yapmanızı sağlar ve sizi tam noktaya götürür.',
+        },
+        {
+          t: 'Hataları yakalar ve düzeltir',
+          d: 'Yanlış adımı anında fark eder ve bir düğme yer değiştirmiş olsa bile düzeltmeyi gösterir.',
+        },
+        {
+          t: 'Ekranınızdaki her uygulama',
+          d: 'Web uygulamaları, masaüstü programları ve kendi araçlarınız: ekranda ne varsa okur.',
+        },
+        {
+          t: 'Kendi notlarınıza dayanır',
+          d: 'Advanced ve Premium\'da referans belgelerinizi yükleyin, adımlar onları izlesin.',
+        },
+        {
+          t: 'Sizde kalan bir kayıt',
+          d: 'Yaptıklarınızın görsellerle dolu temiz bir özetiyle bitirin; saklayın ya da tekrarlayın.',
+        },
+        {
+          t: 'Kendi yolunuzu öğretin',
+          d: 'Bir kontrol listesi ya da yönerge yapıştırın; rehberlik sizin araçlarınızı ve terimlerinizi izlesin.',
+        },
+        {
+          t: 'Masaüstü, web ve telefon',
+          d: 'Masaüstünde bir katman, kurulum gerektirmeyen tarayıcı ya da telefonunuzun kamerası.',
+        },
+      ],
+      depth: {
+        h2: 'İstediğiniz kadar basit ya da teknik',
+        p: 'Her adımın derinliğini seçin: sade dilden tam parametrelere. İstediğiniz zaman, işin ortasında bile değiştirin.',
+        levels: [
+          'Sade',
+          'Rehberli',
+          'Teknik',
+        ],
+      },
+      honest: {
+        h2: 'Ne olduğu ve ne olmadığı',
+        is: [
+          'Ekranınızı izleyen ve sonraki hamleyi gösteren bir rehber',
+          'Her adımın işe yaradığını onaylayan bir denetleyici',
+          'Yaptıklarınızın görsellerle kaydı',
+        ],
+        not: [
+          'Cevabını sonra kendinizin uygulaması gereken bir sohbet kutusu değil',
+          'Sizin yerinize tıklayan bir otomasyon değil',
+          'Belge analiz aracı değil: işi yapmanıza ve bitirmenize yardım eder',
+        ],
+      },
+      cta: {
+        h2: 'Bir sonraki işinizde deneyin.',
+        p: 'Planlar küçük başlar ve ayınızla büyür. İstediğiniz zaman iptal edin.',
+      },
+    },
+    pricing: {
+      seo: {
+        title: 'WorkCoPilot planları: Lite, Basic, Advanced ve Premium',
+        description: 'Her ay canlı rehberlik saatleri içeren dört plan; kullandığınız dakika üzerinden hesaplanır. Aylık ya da yıllık. İstediğiniz zaman ek saat, istediğiniz zaman iptal.',
+      },
+      hero: {
+        eyebrow: 'Fiyatlar',
+        h1: 'Sade planlar. <em>Gerçek rehberli zaman.</em>',
+        p: 'Planı, ayınızın ihtiyaç duyduğu rehberlik saatine göre seçin. Gizlilik ve maskeleme her planda var, asla ek ücret değil.',
+      },
+      toggle: {
+        aria: 'Faturalama dönemi',
+        monthly: 'Aylık',
+        annual: 'Yıllık',
+        save: '%20 tasarruf',
+      },
+      popular: 'En çok seçilen',
+      recommended: 'Size önerilen',
+      hoursHero: '{hours} saat',
+      hoursSub: 'aylık rehberli zaman',
+      perMonthLong: 'aylık',
+      secure: 'Stripe ile güvenli ödeme',
+      includedH2: 'Her planda dahil',
+      included: [
+        'Baştan sona adım adım, ilerledikçe doğrulanır',
+        'Tam komutlar, tıklamalar ve bağlantılar, kopyalamaya hazır',
+        'Zaten ekranınızda olan uygulamalarda çalışır',
+        'Hassas bilgiler cihazınızda maskelenir',
+        'Her işin görsellerle yazılı kaydı',
+      ],
+      tiersH2: 'Planınızla birlikte büyüyenler',
+      tiers: [
+        {
+          t: 'Rehberli zaman saatleri',
+          d: 'Ayda birkaç işten, neredeyse her iş günü yanınızda bir rehbere.',
+        },
+        {
+          t: 'Kendi belgeleriniz',
+          d: 'Advanced ve Premium referans notlarınızı okur; adımlar sizin çalışma biçiminizi izler.',
+        },
+        {
+          t: 'Üretilen görseller ve projeler',
+          d: 'Premium şemalar ve örnekler ekler, büyük bir hedefi rehberli işlerden oluşan bir haritaya dönüştürür.',
+        },
+      ],
+      notesH2: 'Bilmekte fayda var',
+      notes: [
+        {
+          t: 'Dakika bazlı',
+          d: 'Saatlerinizi ay boyunca birkaç dakika birkaç dakika harcayın. Asla saate yuvarlanmaz.',
+        },
+        {
+          t: 'Ek zaman',
+          d: 'Yoğun bir ay mı? İhtiyaç duyduğunuzda bir saat ekleyin. Satın alınan zamanın süresi dolmaz.',
+        },
+        {
+          t: 'İstediğiniz zaman iptal',
+          d: 'Aylık ya da yıllık, sözleşme yok. Hesabınızdan iptal edin; ödediğiniz dönemin sonuna kadar erişiminiz sürer.',
+        },
+        {
+          t: 'Plan değiştirme',
+          d: 'İstediğiniz zaman orantılı ücretle yükseltin. Bir sonraki yenilemede düşürün.',
+        },
+      ],
+      fine: 'Kesin fiyatlar ve haklar ödeme sırasında onaylanır. Konumunuza göre vergi uygulanabilir.',
+      refund: 'İade politikası',
+      cta: {
+        h2: 'Bir plan seçin ve bugün başlayın.',
+        p: 'Google, Microsoft, Facebook ya da e-postanızla giriş yapın. Dakikalar içinde yönlendirilirsiniz.',
+      },
+    },
+    use: {
+      seo: {
+        title: 'WorkCoPilot kimler için: serbest çalışanlar, öğrenciler, iş arayanlar ve daha fazlası',
+        description: 'WorkCoPilot, işini kendi ekranında kendi yapanlara yol gösterir: serbest çalışanlar, öğrenciler, iş arayanlar, tek kişilik işler ve kariyer değiştirenler. Her biri için rehberli bir işin nasıl göründüğünü görün.',
+      },
+      hero: {
+        eyebrow: 'Kimler için',
+        h1: '<em>Tek başınıza</em> yaptığınız işler için.',
+        p: 'Sizinkine benzeyen günü seçin. Her biri gerçek bir iş, alacağınız adım türünü ve rehberin bir hatayı yakaladığı anı gösterir.',
+        chipsAria: 'Bir gruba git',
+      },
+      labels: {
+        goal: 'Hedef',
+        step: 'Alacağınız bir adım',
+        catches: 'Ne yakalar',
+        done: 'Ne zaman biter',
+      },
+      cases: [
+        {
+          tag: 'Serbest çalışanlar',
+          h2: 'Tek kişilik bir stüdyo gibi teslim edin.',
+          d: 'Müşteri portalları, faturalama, sözleşmeler, yeni tasarım ve proje araçları: yardım yazılarında bir gün kaybetmeden doğru kurulup kullanılır.',
+          goal: 'Logomla ve çevrimiçi ödemeyle ilk faturamı göndermek',
+          step: 'Ayarlar\'ı, sonra Ödemeler\'i açın ve hesabınızı bağlayın. Yeşil rozet aktif olduğunu onaylar.',
+          catches: 'Gönder\'e basmadan önce sıfırda bırakılmış bir vergi oranı.',
+          done: 'fatura gönderilir ve ödeme bağlantısı açılır.',
+        },
+        {
+          tag: 'Öğrenciler',
+          h2: 'Önce araçları kurun, sonra işi yapın.',
+          d: 'Dersinizin beklediği yazılım kurulu ve ayarlı, ödev de her adımı doğrulanarak tamamlanmış.',
+          goal: 'Dersimin veri araçlarını kurup ilk not defterini çalıştırmak',
+          step: 'course adında yeni bir ortam oluşturun, ardından ders programınızda listelenen üç paketi kurun.',
+          catches: 'Yanlış ortamda çalışan bir not defteri; bu yüzden içe aktarma başarısız olur.',
+          done: 'ilk not defteri baştan sona hatasız çalışır.',
+        },
+        {
+          tag: 'İş arayanlar',
+          h2: 'İlandaki araçları kullanırken öğrenin.',
+          d: 'Portfolyo siteleri, başvuru takipçileri, bir ilanın beklediği araçlar: onları bilen bir rehberle uygulayarak öğrenin.',
+          goal: 'Portfolyo sitemi kendi alan adımda yayınlamak',
+          step: 'Alan adı ayarlarınızda, burada gösterilen iki DNS kaydını tam olarak yazıldığı gibi ekleyin.',
+          catches: 'Sondaki nokta eksik yapıştırılmış bir kayıt; site hiç açılmaz.',
+          done: 'alan adınız siteyi güvenli bir bağlantıyla açar.',
+        },
+        {
+          tag: 'Tek kişilik işler',
+          h2: 'Dükkânı, defterleri ve randevuları kendiniz yürütün.',
+          d: 'Çevrimiçi mağaza, muhasebe, randevu sayfaları, e-posta listeleri: her kurulum kendi ekranınızda sonuna kadar yönlendirilir.',
+          goal: 'Kapora alan bir randevu sayfası kurmak',
+          step: 'Kapora iste\'yi açın, yüzde 20 olarak ayarlayın ve iptal süresini seçin.',
+          catches: 'Varsayılanda bırakılmış bir saat dilimi; slotlar yanlış saatlerde görünür.',
+          done: 'deneme randevusu kapora alır ve takviminize düşer.',
+        },
+        {
+          tag: 'Kariyer değiştirenler',
+          h2: 'Yeni bir alana araçları bilen biriyle girin.',
+          d: 'Bulut konsolları, tablolar, tasarım uygulamaları ya da kod: tam hamleler, seçtiğiniz derinlikte açıklanmış, pek çok alanda.',
+          goal: 'İlk web uygulamamı bir bulut sağlayıcısına dağıtmak',
+          step: 'Uygulamayı oluşturun, en küçük planı seçin, sonra projenizdeki derleme komutunu buraya yapıştırın.',
+          catches: 'İlk push\'tan önce depoya işlenmiş gizli bir anahtar.',
+          done: 'uygulama genel adresinde açılır ve anahtar gizli olarak saklanır.',
+        },
+      ],
+      cta: {
+        h2: 'Gününüz bunlardan birine benziyor.',
+        p: 'Bir plan seçin ve ilk işinizi getirin. Dakikalar içinde yönlendirilirsiniz.',
+      },
+    },
+    faq: {
+      seo: {
+        title: 'WorkCoPilot hakkında sorular, yanıtlanmış',
+        description: 'WorkCoPilot ne yapar, ne yapmaz; planlar ve saatler nasıl işler; nasıl iptal edilir; ekranınız ve verileriniz nasıl korunur. Kısa, net yanıtlar.',
+      },
+      hero: {
+        eyebrow: 'Sorular',
+        h1: '<em>Sık sorulan sorulara</em> kısa yanıtlar.',
+        p: 'Hâlâ emin değil misiniz? Bize yazın, bir insan yanıtlar.',
+      },
+      searchPh: 'Sorularda ara',
+      noMatch: 'Eşleşen soru yok. Başka bir sözcük deneyin ya da bize yazın.',
+      groups: [
+        {
+          title: 'Ne yapar',
+          items: [
+            {
+              q: 'WorkCoPilot gerçekte ne yapar?',
+              a: 'Kendi ekranınızda bir iş boyunca size yol gösterir: işi planlar, bulunduğunuz uygulamada bir sonraki adımı tam olarak gösterir, adımın işe yaradığını kontrol eder ve iş bitene kadar devam eder.',
+            },
+            {
+              q: 'İşi benim yerime yapar mı?',
+              a: 'Hayır. Hamleyi gösterir ve sonucu kontrol eder; her tıklamayı siz yaparsınız. Bu bilinçli bir tercih: kontrol sizde kalır ve aracı yolda öğrenirsiniz.',
+            },
+            {
+              q: 'Hangi uygulamalarla çalışır?',
+              a: 'Ekranınızdaki her uygulamayla: web uygulamaları, masaüstü programları ve kendi araçlarınız. Ekranda ne varsa okur, bu yüzden hiçbir şey eklenti gerektirmez.',
+            },
+            {
+              q: 'Bir sohbet asistanı mı?',
+              a: 'Pek sayılmaz. Bir sohbet yanıtı sizi gidip yapmaya bırakır. WorkCoPilot ekranda sizinle kalır, adım adım, ve bittiğini onaylar.',
+            },
+            {
+              q: 'Belgelerimi analiz eder ya da yazar mı?',
+              a: 'Hayır. Ekranda işi yapmanıza ve bitirmenize yardım eder. Advanced ve Premium\'da kendi referans notlarınızı yükleyebilirsiniz; adımlar sizin çalışma biçiminizi izler.',
+            },
+          ],
+        },
+        {
+          title: 'Planlar ve faturalama',
+          items: [
+            {
+              q: 'Saatler nasıl işler?',
+              a: 'Her plan aylık rehberli zaman saatleri içerir; kullandığınız dakika üzerinden hesaplanır. Hiçbir şey saate yuvarlanmaz. Güncel rakamlar fiyat sayfasında.',
+            },
+            {
+              q: 'Daha fazla zaman satın alabilir miyim?',
+              a: 'Evet. Hesabınızdan ihtiyaç duyduğunuzda bir saat ekleyin. Satın alınan zamanın süresi dolmaz.',
+            },
+            {
+              q: 'Plan değiştirebilir miyim?',
+              a: 'İstediğiniz zaman. Yükseltme orantılı ücretle hemen uygulanır. Düşürme bir sonraki yenilemede geçerli olur; böylece ödediğinizi korursunuz.',
+            },
+            {
+              q: 'Nasıl iptal ederim?',
+              a: 'Hesabınızdan, iki tıklamayla. Ödediğiniz dönemin sonuna kadar erişiminiz sürer ve o tarihten önce tek tıklamayla devam ettirebilirsiniz.',
+            },
+            {
+              q: 'Bir ödeme başarısız olursa ne olur?',
+              a: 'Kartınızı güncellemek için bir düğmeyle birlikte bir e-posta ve hesabınızda bir uyarı alırsınız. Siz düzeltirken planınız sizin kalır.',
+            },
+            {
+              q: 'Yıllık faturalama var mı?',
+              a: 'Olduğu yerde fiyat sayfası indirimli yıllık fiyatı gösterir. Aylık ve yıllık arasında hesabınızdan geçiş yapabilirsiniz.',
+            },
+          ],
+        },
+        {
+          title: 'Gizlilik ve güvenlik',
+          items: [
+            {
+              q: 'Cihazımdan ne çıkar?',
+              a: 'Hassas satırları çoktan karartılmış küçültülmüş ekran kareleri ve hassas değerleri belirteçlerle değiştirilmiş metniniz. Gerçek değerler cihazınızda kalır.',
+            },
+            {
+              q: 'Hesaplarımı ya da dosyalarımı değiştirebilir mi?',
+              a: 'Hayır. Salt okunurdur. Adımı gösterir ve sonucu kontrol eder; uygulamalarınızda asla eylem yapmaz.',
+            },
+            {
+              q: 'Sakladıklarını silebilir miyim?',
+              a: 'Evet. Her oturum sizindir. Hesabınızdan istediğinizi istediğiniz zaman silin.',
+            },
+            {
+              q: 'Kartımı saklıyor musunuz?',
+              a: 'Hayır. Ödeme ve kart bilgileri Stripe tarafından işlenir. Kart numaranızı asla görmez ve saklamayız.',
+            },
+          ],
+        },
+        {
+          title: 'Başlarken',
+          items: [
+            {
+              q: 'Nasıl başlarım?',
+              a: 'Bir plan seçin, Google, Microsoft, Facebook ya da e-postanızla giriş yapın ve ilk işinizi getirin. Dakikalar içinde yönlendirilirsiniz.',
+            },
+            {
+              q: 'Bir şey kurmam gerekiyor mu?',
+              a: 'Hayır. Tarayıcıda çalışır. Tercih ederseniz bir masaüstü katmanı ve bir telefon uygulaması da var.',
+            },
+            {
+              q: 'Önce deneyebilir miyim?',
+              a: 'Rehberli bir işi baştan sona görmek için 60 saniyelik demoyu izleyin. Planlar küçük başlar ve istediğiniz zaman iptal edebilirsiniz.',
+            },
+          ],
+        },
+      ],
+      cta: {
+        h2: 'Yanıtınızı bulamadınız mı?',
+        p: 'Bize yazın. Her mesajı bir insan okur.',
+        write: 'Desteğe yazın',
+      },
+    },
+    security: {
+      seo: {
+        title: 'Ekranınız için gizlilik ve güvenlik: WorkCoPilot',
+        description: 'WorkCoPilot sizi nasıl korur: hassas değerler gönderilmeden önce cihazınızda maskelenir, salt okunur rehberlik, hesabınızda doğrulayıcı, her oturumun kaydı, beklemede şifreleme ve istediğiniz zaman silebileceğiniz oturumlar.',
+      },
+      hero: {
+        eyebrow: 'Tasarımı gereği gizli',
+        h1: 'Sırlarınız <em>cihazınızdan asla çıkmaz.</em>',
+        p: 'Hassas bilgiler, herhangi bir şey gönderilmeden önce kendi cihazınızda maskelenir. Rehber işinizin şeklini görür, sırları asla.',
+      },
+      visual: {
+        aria: 'Maskeleme öncesi ve sonrası bir form: kart numarası, anahtar ve telefon karartılmış',
+        before: 'Ekranınızda olan',
+        after: 'Cihazınızdan çıkan',
+        fields: [
+          'Kayıtlı kart',
+          'API anahtarı',
+          'Telefon',
+          'Plan',
+        ],
+        masked: 'maskelendi',
+      },
+      guaranteesAria: 'Neler korunur',
+      guarantees: [
+        {
+          t: 'Cihazınızda maskelenir',
+          d: 'Kart numaraları, anahtarlar ve kişisel bilgiler ekran görüntülerinde karartılır ve metinde belirteçlerle değiştirilir, sonra gönderilir.',
+        },
+        {
+          t: 'Her zaman salt okunur',
+          d: 'Hamleyi gösterir ve sonucu kontrol eder. Hesaplarınızı, dosyalarınızı ya da ayarlarınızı asla değiştirmez.',
+        },
+        {
+          t: 'Kod çalıştırmadan önce kontrol edilir',
+          d: 'Önerdiği her komut ya da kod önce bilinen sorunlara karşı kontrol edilir.',
+        },
+        {
+          t: 'Hesabınızda doğrulayıcı',
+          d: 'Şifre, Google, Microsoft ya da Facebook girişi; hepsi aynı ikinci faktörden geçer.',
+        },
+        {
+          t: 'Her oturumun kaydı',
+          d: 'Ne gönderildi, ekranınızdan ne okundu, ne kontrol edilip işaretlendi. Okumak size kalmış.',
+        },
+        {
+          t: 'Beklemede şifreli',
+          d: 'Saklanan anahtarlar, sırlar ve rapor ekran görüntüleri AES-256-GCM ile şifrelenir.',
+        },
+      ],
+      handling: {
+        h2: 'Verileriniz nasıl işlenir',
+        sub: 'Ürünün bugün yaptıkları. Açık sözlerle, küçük yazı yok.',
+        groups: [
+          {
+            title: 'Cihazınızdan çıkanlar',
+            items: [
+              'Küçültülmüş ekran kareleri, hassas satırlar çoktan karartılmış',
+              'Metniniz, hassas değerler çoktan belirteçlerle değiştirilmiş',
+              'Eklemeyi seçtiğiniz referans notlarının metni, dosyanın kendisi asla',
+            ],
+          },
+          {
+            title: 'Sakladıklarımız',
+            items: [
+              'Oturum başına bir rapor, maskelenmiş aşama görselleriyle (kapatabilirsiniz)',
+              'Oturum başına bir kayıt, ne gönderildiğini tutar',
+              'Oturum geçmişiniz, yeniden açıp inceleyebilmeniz için',
+            ],
+          },
+          {
+            title: 'Asla saklanmayanlar',
+            items: [
+              'Özgün belgeleriniz',
+              'Ham ekran kareleri',
+              'Gerçek hassas değerler: rehber onları asla görmez',
+            ],
+          },
+        ],
+      },
+      control: {
+        h2: 'Kontrol sizde kalır',
+        points: [
+          {
+            t: 'İstediğiniz zaman silin',
+            d: 'Her oturum sizindir. Birini ya da hepsini, istediğiniz zaman silin.',
+          },
+          {
+            t: 'Kendi kurallarınızı ekleyin',
+            d: 'Yerleşik algılayıcıların üstüne, maskelenecek kendi sözcük ve kalıplarınızı ekleyin.',
+          },
+          {
+            t: 'Ödemeler Stripe ile',
+            d: 'Kart bilgileri Stripe\'ta işlenir. Kart numaranızı asla görmez ve saklamayız.',
+          },
+        ],
+      },
+      contact: {
+        h2: 'Bir güvenlik açığı mı buldunuz?',
+        p: 'support@admireveda.com adresine yazın. Yayınlamadan önce doğrulayıp düzeltmemiz için bize zaman tanıyın; iyi niyetli araştırmalar memnuniyetle karşılanır.',
+        write: 'Bize yazın',
+        legal: 'Gizlilik politikası',
+        terms: 'Koşullar',
+      },
+    },
+  },
   leadsAdmin: {
     loadingLeads: 'Potansiyel müşteriler yükleniyor',
     source: {
@@ -4783,6 +5391,7 @@ export default {
       finance: 'Finans',
       subscribers: 'Aboneler',
       cancelled: 'İptal edenler',
+      'subscription-health': 'Abonelik sağlığı',
       email: 'SMTP Ayarları',
       'email-templates': 'E-posta Şablonları',
       ai: 'Yapay zeka yapılandırması',
@@ -4837,6 +5446,10 @@ export default {
       cancelled: {
         title: 'İptal eden aboneler',
         sub: 'Kaybedilen abonelikler: kim, ne zaman, neden iptal etti ve ayrılmadan önce getirdikleri yaşam boyu gelir.',
+      },
+      'subscription-health': {
+        title: 'Abonelik sağlığı',
+        sub: 'Bireysel müşteri işine tek bakış: plana göre MRR, denemeler, başarısız ödemeler, bitecek planlar, 30 günlük kayıp ve Stripe\'ın bağlı olup olmadığı.',
       },
       email: {
         title: 'SMTP Ayarları (E-posta / SES)',
@@ -7529,6 +8142,8 @@ export default {
       helpTip: 'Yardım ve rehberler',
       howto: 'Rehberler',
       support: 'Destek',
+      billing: 'Faturalama',
+      billingTip: 'Planınız, ödeme yönteminiz ve faturalarınız',
       team: 'Ekip',
       exec: 'Yönetici panosu',
       teach: 'Eğitim stüdyosu',
@@ -8358,6 +8973,29 @@ export default {
       fine: 'İptal işlemi, onaylayıp kesin bitiş tarihinizi görebileceğiniz güvenli Stripe portalında tamamlanır.',
       keep: 'Planımı sürdür',
       continue: 'İptale devam et',
+    },
+    lifecycle: {
+      reasonLabel: 'Nedenini söyleyin (isteğe bağlı)',
+      reasonPh: 'Bir iki satır daha iyi olmamıza yardım eder',
+      fine: 'Planınız dönem sonunda, yeni bir ücret olmadan biter. Daha önce fikrinizi değiştirirseniz tek tıklamayla devam ettirin.',
+      confirmCancel: 'Dönem sonunda iptal et',
+      resume: 'Planımı devam ettir',
+      errCancel: 'Planınız şu anda iptal edilemedi. Tekrar deneyin ya da desteğe yazın.',
+      errResume: 'Planınız şu anda devam ettirilemedi. Tekrar deneyin ya da desteğe yazın.',
+    },
+    alert: {
+      pastDueTitle: 'Son ödemeniz gerçekleşmedi',
+      pastDueBody: 'Planınızı korumak için ödeme yönteminizi güncelleyin. Ödeme gerçekleşene kadar rehberlik duraklar.',
+      pastDueCta: 'Ödeme yöntemini güncelle',
+      endingTitle: 'Planınız {date} tarihinde bitiyor',
+      endingBody: 'O zamana kadar tam erişiminiz sürer. Yenilemeye devam etmek için o tarihten önce istediğiniz zaman devam ettirin.',
+      endingCta: 'Planı devam ettir',
+      pendingTitle: '{date} tarihinde {plan} planına geçiş',
+      pendingBody: 'O zamana kadar mevcut planınız ve saatleri sizde kalır. Bugün hiçbir ücret alınmaz.',
+    },
+    page: {
+      title: 'Faturalama',
+      sub: 'Planınız, ödeme yönteminiz ve faturalarınız.',
     },
   },
   buddyPage: {
@@ -12086,6 +12724,72 @@ export default {
       caption: 'Ekranınız biraz farklı görünebilir, örneğin kendi verileriniz yer alabilir.',
       missing: 'Bu adımın ekran görüntüsü yüklenemedi.',
     },
+  },
+  subHealthAdmin: {
+    loading: 'Abonelik sağlığı yükleniyor',
+    refresh: 'Yenile',
+    window: 'Son {days} gün',
+    asOf: '{time} itibarıyla',
+    tiles: {
+      mrr: 'Aylık yinelenen gelir',
+      mrrFoot: 'Bu hızla yılda {arr}',
+      active: 'Ödeme yapan aboneler',
+      activeFoot: '{trialing} deneme sürecinde',
+      pastDue: 'Başarısız ödemeler',
+      pastDueFoot: 'şu anda ödemesi gecikmiş hesaplar',
+      ending: 'Bitecek planlar',
+      endingFoot: 'dönem sonunda iptal, hâlâ aktif',
+      churn: 'Kayıp',
+      churnFoot: '{start} aboneden {canceled} iptal etti',
+      newSubs: 'Yeni aboneler',
+      newSubsFoot: 'bu dönemde başladı',
+    },
+    byPlan: {
+      h3: 'Plana göre MRR',
+      plan: 'Plan',
+      subscribers: 'Aboneler',
+      annual: 'Yıllık',
+      mrr: 'MRR',
+      share: 'Pay',
+    },
+    payments: {
+      h3: 'Dönemdeki para akışı',
+      paid: 'Ödemeler',
+      refunds: 'İadeler',
+      net: 'Net',
+    },
+    stripe: {
+      h3: 'Stripe',
+      keys: 'Gizli anahtar',
+      webhook: 'Webhook gizli anahtarı',
+      annual: 'Yıllık fiyatlar',
+      mode: 'Mod',
+      on: 'Ayarlı',
+      off: 'Eksik',
+      fix: 'Faturalama\'da ayarlayın',
+      ready: 'Ödeme, yenilemeler ve portal bağlı.',
+      notReady: 'Anahtar ve webhook gizli anahtarı ayarlanana kadar hiçbir plan satın alınamaz ve hiçbir yenileme gelmez.',
+    },
+    ending: {
+      h3: 'Yakında bitecekler',
+      empty: 'Bitmesi planlanan plan yok.',
+      user: 'Kullanıcı',
+      plan: 'Plan',
+      endsAt: 'Bitiş',
+      reason: 'Neden',
+      noReason: 'Neden belirtilmedi',
+    },
+    pastDueList: {
+      h3: 'Ödemesi gecikenler',
+      empty: 'Tüm yenilemeler gerçekleşti.',
+      user: 'Kullanıcı',
+      plan: 'Plan',
+      since: 'Abonelik başlangıcı',
+      periodEnd: 'Dönem sonu',
+      open: 'Aboneler\'de aç',
+    },
+    viewOnlyNote: 'Abonelik sağlığını süper yöneticiler ve muhasebe rolü görür.',
+    unavailable: 'Abonelik sağlığı bu sunucuda henüz kullanılamıyor.',
   },
   subprocessorsPage: {
     seo: {
