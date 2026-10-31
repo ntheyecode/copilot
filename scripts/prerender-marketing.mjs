@@ -33,12 +33,23 @@
 //   node scripts/prerender-marketing.mjs --clean      delete files this script generated
 //   node scripts/prerender-marketing.mjs --strict     exit 1 if any copy-drift warning
 //   node scripts/prerender-marketing.mjs --dist <dir> operate on another dist dir (tests)
+//   node scripts/prerender-marketing.mjs --audience <organizations|individuals>
+//                                                    the copy for one edition audience (copyAudience
+//                                                    in server/edition_registry.js): seo/login meta from
+//                                                    that audience's en overlay, lede/points from
+//                                                    scripts/audience_seo.mjs. Omitted = the base copy.
+//   node scripts/prerender-marketing.mjs --origin https://example.com
+//                                                    canonical / hreflang / JSON-LD origin (default admireveda.com)
+// build/spa_stamp.js runs this with --audience/--origin when it stamps an edition's SPA.
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { LOCALES } from '../src/i18n/locales.js'   // single source for hreflang tags + ?lang codes
-import en from '../src/i18n/locales/en.js'          // source of truth for localized marketing meta (seo.*, login.meta)
+import enBase from '../src/i18n/locales/en.js'      // source of truth for localized marketing meta (seo.*, login.meta)
 import enFields from '../src/i18n/locales/en/fieldsPage.js'   // the Fields roster (fieldsPage.families) - what WorkFields.jsx renders
+import { mergeOverlay } from '../src/i18n/overlay_merge.js'
+import { COPY_AUDIENCES } from '../server/edition_registry.js'
+import { routeFor } from './audience_seo.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const argv = process.argv.slice(2)
@@ -47,7 +58,16 @@ const distArg = argv.indexOf('--dist')
 const DIST = distArg >= 0 ? path.resolve(argv[distArg + 1]) : path.join(ROOT, 'dist')
 const SRC_PAGES = path.join(ROOT, 'src', 'pages')
 
-const ORIGIN = 'https://admireveda.com'
+const valueOf = (n) => { const i = argv.indexOf(n); return i >= 0 ? argv[i + 1] : undefined }
+const AUDIENCE = valueOf('--audience') || null
+if (AUDIENCE && !COPY_AUDIENCES.includes(AUDIENCE)) { console.error(`prerender: unknown --audience "${AUDIENCE}" (one of: ${COPY_AUDIENCES.join(', ')})`); process.exit(1) }
+const ORIGIN = String(valueOf('--origin') || 'https://admireveda.com').replace(/\/+$/, '')
+if (!/^https?:\/\/[^/\s]+$/.test(ORIGIN)) { console.error(`prerender: --origin must be a bare origin like https://example.com (got "${ORIGIN}")`); process.exit(1) }
+// The audience's English overlay over the base catalog: the same merge the SPA
+// runs at load (src/i18n/overlay.js), so the prerendered meta matches the page.
+const en = AUDIENCE
+  ? mergeOverlay(enBase, (await import(`../src/i18n/overlays/${AUDIENCE}/en.js`)).default || {})
+  : enBase
 const MARKER = '<!-- prerendered-by: scripts/prerender-marketing.mjs (prerender-lite, audit IP-16) -->'
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -71,7 +91,7 @@ const FIELDS = readFields()
 // ---- the routes -------------------------------------------------------------
 // label: short link text for the sibling-page nav. `source`: page file used by --check.
 const R = []
-const route = (r) => R.push(r)
+const route = (r) => R.push(routeFor(r, AUDIENCE))
 
 route({
   path: '/workcopilot',
@@ -293,7 +313,11 @@ function render(template, r) {
   // The shell's <noscript> repeats the HOME copy; on these pages that would
   // contradict the route, and the content block below already serves no-JS users.
   h = swap(h, /\s*<noscript>[\s\S]*?<\/noscript>/, '', '<noscript> block')
-  h = swap(h, /<div id="root"><\/div>/, `<div id="root">\n    ${seoBlock(r)}\n    </div>`, 'empty <div id="root"></div>')
+  // #root holds the first-paint splash (#wc-splash, a fixed full-screen
+  // spinner) since the splash landed in index.html; on a prerendered page the
+  // content block takes its place, or the splash would cover the copy for a
+  // visitor without JavaScript. An empty #root (older shell) still matches.
+  h = swap(h, /<div id="root">(?:\s*<div id="wc-splash"[^>]*>\s*<i><\/i>\s*<\/div>\s*)?<\/div>/, `<div id="root">\n    ${seoBlock(r)}\n    </div>`, '<div id="root"> (empty, or holding only the #wc-splash spinner)')
   return h.replace(/<!doctype html>/i, (m) => `${m}\n${MARKER}`)
 }
 

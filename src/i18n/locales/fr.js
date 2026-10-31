@@ -9291,6 +9291,57 @@ export default {
       security: 'Sécurité',
     },
   },
+  edition: {
+    signupClosed: {
+      metaTitle: 'WorkCoPilot est conçu pour les organisations - AdmireVeda',
+      h1: 'WorkCoPilot est conçu pour les organisations',
+      p: 'L\'inscription personnelle n\'est pas disponible ici. Pour apporter WorkCoPilot à votre entreprise, parlez-nous et nous mettrons votre équipe en place.',
+      member: 'Vous faites déjà partie d\'une entreprise qui utilise WorkCoPilot ? Connectez-vous avec votre compte d\'entreprise, ou demandez l\'accès à l\'administrateur de votre entreprise.',
+      talk: 'Parlez-nous',
+      signIn: 'Se connecter',
+    },
+    orgPlans: {
+      popular: 'Le plus choisi',
+      cta: 'Parlez-nous',
+      note: 'Chaque offre inclut la protection des données sur chaque appareil, la politique d\'entreprise et les journaux d\'audit. Les prix sont établis sur devis pour votre entreprise.',
+      hosted: {
+        name: 'Hébergé pour votre entreprise',
+        price: 'Prix par personne selon la taille de l\'entreprise',
+        lead: 'Votre entreprise sur notre service hébergé, prête le jour de la signature.',
+        p1: 'Console d\'entreprise, connexion unique et politique d\'entreprise que vous activez et verrouillez',
+        p2: 'Un pool d\'heures guidées que l\'administrateur de votre entreprise répartit',
+        p3: 'Company Brain et workflows enseignés, privés pour votre entreprise',
+      },
+      managed: {
+        name: 'Cloud privé géré',
+        price: 'Sur devis',
+        lead: 'Une installation dédiée que nous exploitons pour vous dans votre propre cloud.',
+        p1: 'Vos données restent dans votre propre base de données cloud',
+        p2: 'Nous l\'exploitons et la mettons à jour pour vous',
+        p3: 'Notre IA, facturée selon votre utilisation réelle',
+      },
+      onprem: {
+        name: 'Sur site',
+        price: 'Disponible sur demande',
+        lead: 'Installé sur vos propres serveurs, sous votre propre contrôle.',
+        p1: 'Fonctionne avec vos propres clés de fournisseur d\'IA',
+        p2: 'Activé par une licence sur l\'installation',
+        p3: 'Votre propre base de données et votre propre réseau',
+      },
+    },
+    validate: {
+      talk: 'Parlez-nous de votre équipe',
+      plans: 'Voir les offres pour les organisations',
+    },
+    app: {
+      noPlanTitle: 'Ce compte n\'a pas encore d\'offre',
+      noPlanBody: 'Les offres personnelles ne sont pas vendues ici. Votre accès vient de votre entreprise : demandez à l\'administrateur de votre entreprise de vous ajouter.',
+      noPlanTalk: 'Parlez-nous',
+    },
+    login: {
+      orgOnly: 'Nouveau sur WorkCoPilot ? Il est conçu pour les organisations. <a>Parlez-nous</a>.',
+    },
+  },
   enterprisePage: {
     art: {
       sop: 'SOP',

@@ -9,7 +9,7 @@
     "dev:api": "node --watch server/index.js",
     "check:jsx-imports": "node scripts/check-jsx-imports.mjs",
     "check:locale-integrity": "node scripts/check-locale-integrity.mjs",
-    "prebuild": "node scripts/check-jsx-imports.mjs && node scripts/check-css-page-wildcards.mjs && node scripts/check-cssjs-backticks.mjs && node scripts/check-locale-integrity.mjs && node scripts/check-locale-parity.mjs && node scripts/check-hardcoded-strings.mjs && node scripts/check-mounted-ref-effects.mjs",
+    "prebuild": "node scripts/check-jsx-imports.mjs && node scripts/check-css-page-wildcards.mjs && node scripts/check-cssjs-backticks.mjs && node scripts/check-locale-integrity.mjs && node scripts/check-locale-parity.mjs && node scripts/check-hardcoded-strings.mjs && node scripts/check-mounted-ref-effects.mjs && node scripts/check-edition-copy.mjs",
     "build": "vite build",
     "build:harden": "vite build --mode harden",
     "build:harden:max": "vite build --mode hardenmax",
@@ -20,6 +20,7 @@
     "db:import": "node server/storage/cli.js import",
     "db:export": "node server/storage/cli.js export",
     "compose": "node build/compose.mjs",
+    "stamp:spa": "node build/stamp_spa.mjs",
     "start": "npm run build && node server/index.js"
   },
   "dependencies": {

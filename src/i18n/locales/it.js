@@ -9291,6 +9291,57 @@ export default {
       security: 'Sicurezza',
     },
   },
+  edition: {
+    signupClosed: {
+      metaTitle: 'WorkCoPilot è per le organizzazioni - AdmireVeda',
+      h1: 'WorkCoPilot è per le organizzazioni',
+      p: 'La registrazione personale non è disponibile qui. Per portare WorkCoPilot nella tua azienda, parla con noi e configureremo il tuo team.',
+      member: 'Fai già parte di un\'azienda che usa WorkCoPilot? Accedi con il tuo account aziendale, oppure chiedi l\'accesso all\'amministratore della tua azienda.',
+      talk: 'Parla con noi',
+      signIn: 'Accedi',
+    },
+    orgPlans: {
+      popular: 'Il più scelto',
+      cta: 'Parla con noi',
+      note: 'Ogni piano include la protezione dei dati su ogni dispositivo, la policy aziendale e i log di audit. I prezzi sono quotati per la tua azienda.',
+      hosted: {
+        name: 'In hosting per la tua azienda',
+        price: 'Prezzo per persona in base alla dimensione dell\'azienda',
+        lead: 'La tua azienda sul nostro servizio in hosting, pronta il giorno stesso della firma.',
+        p1: 'Console aziendale, single sign-on e policy aziendale che attivi e blocchi',
+        p2: 'Un pool di ore guidate che l\'amministratore della tua azienda distribuisce',
+        p3: 'Company Brain e flussi di lavoro insegnati, privati per la tua azienda',
+      },
+      managed: {
+        name: 'Cloud privato gestito',
+        price: 'Quotazione su richiesta',
+        lead: 'Un\'installazione dedicata che gestiamo per te nel tuo cloud.',
+        p1: 'I tuoi dati restano nel tuo database cloud',
+        p2: 'La gestiamo e la aggiorniamo noi per te',
+        p3: 'La nostra IA, fatturata in base all\'uso effettivo',
+      },
+      onprem: {
+        name: 'On-premise',
+        price: 'Disponibile su richiesta',
+        lead: 'Installato sui tuoi server, sotto il tuo controllo.',
+        p1: 'Funziona con le tue chiavi del fornitore di IA',
+        p2: 'Attivato da una licenza sull\'installazione',
+        p3: 'Il tuo database e la tua rete',
+      },
+    },
+    validate: {
+      talk: 'Parla con noi del tuo team',
+      plans: 'Vedi i piani per le organizzazioni',
+    },
+    app: {
+      noPlanTitle: 'Questo account non ha ancora un piano',
+      noPlanBody: 'I piani personali non sono in vendita qui. Il tuo accesso arriva dalla tua azienda: chiedi all\'amministratore della tua azienda di aggiungerti.',
+      noPlanTalk: 'Parla con noi',
+    },
+    login: {
+      orgOnly: 'Nuovo su WorkCoPilot? È per le organizzazioni. <a>Parla con noi</a>.',
+    },
+  },
   enterprisePage: {
     art: {
       sop: 'SOP',

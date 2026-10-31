@@ -20,7 +20,8 @@ test('no config means the all edition, which keeps every capability the product 
   assert.equal(resolveEditionId('  SaaS '), 'saas')
   // Pinned on purpose: this is today's product. Changing `all` changes what an
   // unconfigured server does, so it must be a deliberate edit of this list too.
-  assert.deepEqual(makeCaps('all').list(), ['solo_signup', 'saas_companies', 'stripe_billing', 'platform_ai', 'brain_export', 'brain_query', 'public_site'])
+  // individual_plans (2026-10-30) names what `all` already did: sell personal plans.
+  assert.deepEqual(makeCaps('all').list(), ['solo_signup', 'saas_companies', 'individual_plans', 'stripe_billing', 'platform_ai', 'brain_export', 'brain_query', 'public_site'])
 })
 
 test('an unknown edition or capability fails loudly, never reads as off', () => {
@@ -119,7 +120,7 @@ function codeFiles(dirs, { skip = () => false } = {}) {
 // purpose); the HTTP harness is the one test helper that sets WORK_EDITION.
 // The registry, the resolver, and the edition plumbing (start an edition,
 // compose an edition) are the only places that handle edition ids by design.
-const REGISTRY_FILES = new Set(['server/edition_registry.js', 'server/edition.js', 'editions/profile.js', 'editions/start.mjs', 'build/compose.js', 'build/compose.mjs'])
+const REGISTRY_FILES = new Set(['server/edition_registry.js', 'server/edition.js', 'editions/profile.js', 'editions/start.mjs', 'build/compose.js', 'build/compose.mjs', 'build/stamp_spa.mjs'])
 const isTest = (rel) => /\.test\.m?js$/.test(rel) || rel === 'server/edition_http_harness.mjs'
 const ids = EDITION_IDS.join('|')
 const QUOTED_ID = new RegExp(`['"\`](${ids})['"\`]`)

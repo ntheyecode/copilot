@@ -9265,6 +9265,57 @@ export default {
       security: 'Güvenlik',
     },
   },
+  edition: {
+    signupClosed: {
+      metaTitle: 'WorkCoPilot kuruluşlar içindir - AdmireVeda',
+      h1: 'WorkCoPilot kuruluşlar içindir',
+      p: 'Bireysel kayıt burada yapılamaz. WorkCoPilot\'u şirketinize getirmek için bizimle konuşun, ekibinizi biz kuralım.',
+      member: 'WorkCoPilot kullanan bir şirkette misiniz? Şirket hesabınızla giriş yapın ya da şirket yöneticinizden erişim isteyin.',
+      talk: 'Bizimle konuşun',
+      signIn: 'Giriş yap',
+    },
+    orgPlans: {
+      popular: 'En çok seçilen',
+      cta: 'Bizimle konuşun',
+      note: 'Her plan, her cihazda veri koruması, şirket politikası ve denetim günlükleri içerir. Fiyatlar şirketiniz için teklif olarak verilir.',
+      hosted: {
+        name: 'Şirketiniz için barındırılan',
+        price: 'Şirket büyüklüğüne göre kişi başı fiyat',
+        lead: 'Şirketiniz bizim barındırılan hizmetimizde, imzaladığınız gün hazır.',
+        p1: 'Şirket konsolu, tek oturum açma ve etkinleştirip kilitlediğiniz şirket politikası',
+        p2: 'Şirket yöneticinizin dağıttığı bir rehberlik saati havuzu',
+        p3: 'Şirket Beyni ve öğretilen iş akışları, şirketinize özel ve gizli',
+      },
+      managed: {
+        name: 'Yönetilen özel bulut',
+        price: 'Talep üzerine teklif',
+        lead: 'Kendi bulutunuzda sizin için işlettiğimiz, size ayrılmış bir kurulum.',
+        p1: 'Verileriniz kendi bulut veritabanınızda kalır',
+        p2: 'İşletmesini ve güncellemesini sizin için biz yaparız',
+        p3: 'Bizim yapay zekamız, kullandığınız kadar faturalanır',
+      },
+      onprem: {
+        name: 'Şirket içi (on-premises)',
+        price: 'Talep üzerine sunulur',
+        lead: 'Kendi sunucularınıza kurulur, kontrol tamamen sizde.',
+        p1: 'Kendi yapay zeka sağlayıcı anahtarlarınızla çalışır',
+        p2: 'Kurulum üzerindeki bir lisansla etkinleştirilir',
+        p3: 'Kendi veritabanınız ve kendi ağınız',
+      },
+    },
+    validate: {
+      talk: 'Ekibiniz için bizimle konuşun',
+      plans: 'Kuruluşlar için planları görün',
+    },
+    app: {
+      noPlanTitle: 'Bu hesapta henüz plan yok',
+      noPlanBody: 'Bireysel planlar burada satılmaz. Erişiminiz şirketinizden gelir: şirket yöneticinizden sizi eklemesini isteyin.',
+      noPlanTalk: 'Bizimle konuşun',
+    },
+    login: {
+      orgOnly: 'WorkCoPilot\'ta yeni misiniz? Kuruluşlar için tasarlandı. <a>Bizimle konuşun</a>.',
+    },
+  },
   enterprisePage: {
     art: {
       sop: 'SOP',

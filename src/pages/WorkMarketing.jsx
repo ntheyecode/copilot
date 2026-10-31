@@ -27,6 +27,9 @@ import NotAChatBox from '../components/NotAChatBox.jsx'     // "not another chat
 import FieldVignettes from '../components/FieldVignettes.jsx'   // real-screen field photographs, deep-linking to the use-cases showcase
 import { useAuth } from '../auth.jsx'
 import { api } from '../api.js'
+import OrgPlans from '../components/OrgPlans.jsx'   // organizations-only plans, where personal plans are not sold
+import { useEditionView } from '../edition/useCaps.js'
+import { CONTACT_PATH } from '../edition/surfaces.js'
 import useSeo from '../useSeo.js'
 import { useLocale, renderRich, interpolate } from '../i18n/index.jsx'   // every visible string on this page comes from the locale catalog (home.*)
 // The plan contract (/api/work/pricing) is read through ONE view model shared
@@ -106,7 +109,11 @@ export default function WorkMarketing() {
   // Subscribe onboarding (/workcopilot/signup): the plan + cycle ride along in the
   // URL; a signed-in visitor lands on its pay step (which also knows when the
   // account already has an active plan and never charges twice).
+  // Organizations-only edition (no personal sign-up): every "start" leads to
+  // the sales conversation instead of the personal sign-up.
+  const ed = useEditionView()
   const go = (plan, cyc, signedIn) => {
+    if (!ed.soloSignup) return nav(CONTACT_PATH)
     const qs = []
     if (plan) qs.push(`plan=${plan}`)
     if (cyc && cyc !== 'monthly') qs.push(`cycle=${cyc}`)
@@ -372,6 +379,7 @@ export default function WorkMarketing() {
           under the ledger (the full feature list is the enterprise page), and
           the two CTAs go to contact and to that page. The section keeps BOTH
           anchors (#enterprise on the section, #roi inside) so no old link dies. */}
+      {ed.companies && (
       <section className="wm-sec wm-roi" id="enterprise">
         <span id="roi" aria-hidden="true" />
         <div className="wm-wrap">
@@ -450,6 +458,8 @@ export default function WorkMarketing() {
         </div>
       </section>
 
+      )}
+
       {/* EVERYWHERE - platforms, languages, personalization: three shared
           WorkCards. The language chips are the locale registry's endonyms
           (each tagged lang= so the browser picks the right script font) and
@@ -473,7 +483,21 @@ export default function WorkMarketing() {
         </div>
       </section>
 
-      {/* PRICING */}
+      {/* PRICING. Where personal plans are not sold (organizations only), the
+          section shows the organization plans instead (same anchor). */}
+      {!ed.individualPlans ? (
+      <section className="wm-sec wm-pricing" id="pricing">
+        <div className="wm-wrap">
+          <div className="wm-eyebrow" data-reveal><Zap size={14} /> {t('home.pricing.eyebrow')}</div>
+          <h2 className="wm-h2" data-reveal>{t('home.pricing.h2')}</h2>
+          <p className="wm-sub" data-reveal>{t('home.pricing.sub')}</p>
+          <OrgPlans compact />
+          <div className="wm-fld-more" data-reveal>
+            <a className="wm-cta alt" href="/workcopilot/pricing">{t('home.pricing.fullCompare')} <ArrowRight size={15} className="wm-arrow" /></a>
+          </div>
+        </div>
+      </section>
+      ) : (
       <section className="wm-sec wm-pricing" id="pricing">
         <div className="wm-wrap">
           <div className="wm-eyebrow" data-reveal><Zap size={14} /> {t('home.pricing.eyebrow')}</div>
@@ -519,6 +543,7 @@ export default function WorkMarketing() {
           </div>
         </div>
       </section>
+      )}
 
       {/* FINAL */}
       <section className="wm-final">

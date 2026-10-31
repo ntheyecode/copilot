@@ -21,10 +21,13 @@
 //
 // PERSISTENCE: the choice is kept in localStorage under STORAGE_KEY and applied
 // before the first paint of the next visit. First visit: navigator.languages.
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import enBase from './locales/en.js'
 import { deepMergeEn } from './deep_merge_en.js'
 import { DEFAULT_LOCALE, LOCALES, getLocaleMeta, resolveLocale, localeFromTimezone, localeFromTimezoneExplicit } from './locales.js'
+import { loadOverlay, overlayReady, withOverlay } from './overlay.js'   // edition wording: per-audience overlays over the base catalog
+import { getCaps, subscribeCaps } from '../edition/active.js'
+import { copyAudience } from '../shared/edition_caps.js'
 
 // Per-section English key partials (src/i18n/locales/en/*.js). This lets MANY i18n
 // waves add keys AT THE SAME TIME, each writing its OWN partial file under a distinct
@@ -55,6 +58,33 @@ async function loadDictionary(code) {
     cache[code] = en   // network hiccup: keep reading in English rather than blank
   }
   return cache[code]
+}
+
+// ---- edition wording ---------------------------------------------------------
+// The audience the active capabilities speak to ('organizations' |
+// 'individuals' | null). null (both audiences, today's product) merges nothing,
+// so every dictionary below is the base object itself.
+const activeAudience = () => copyAudience(getCaps())
+
+// The dictionary + English fallback a reader sees, synchronously, or null while
+// an overlay is still loading.
+function effectiveSync(code, aud) {
+  const base = cache[code]
+  if (!base || !overlayReady(aud, code)) return null
+  return { dict: withOverlay(base, aud, code), fallback: withOverlay(en, aud, 'en') }
+}
+// While a locale (or its overlay) is not available: the base locale when there
+// is no audience (exactly as before), else the audience's ENGLISH wording (its
+// en overlay ships in the main bundle), never base wording that speaks to the
+// wrong audience.
+function interim(code, aud) {
+  if (!aud) return { dict: cache[code] || en, fallback: en }
+  const e = withOverlay(en, aud, 'en')
+  return { dict: e, fallback: e }
+}
+async function loadEffective(code, aud) {
+  await Promise.all([loadDictionary(code), loadOverlay(aud, code)])
+  return effectiveSync(code, aud)
 }
 
 // ---- detection + persistence -------------------------------------------------
@@ -135,7 +165,7 @@ export function getLocale() {
 // which is already populated once this resolves. Safe to await in the entrypoint
 // - it never rejects (loadDictionary swallows a failed import and keeps English).
 export async function preloadActiveLocale() {
-  try { const code = getLocale(); await loadDictionary(code); return code } catch { return null }
+  try { const code = getLocale(); await loadEffective(code, activeAudience()); return code } catch { return null }
 }
 
 // <html lang> + <html dir>. Arabic flips the document to right-to-left; every
@@ -203,7 +233,8 @@ export function renderRich(str, tags) {
 
 // Build a translator for a (dictionary, locale) pair. Pure, so it also works
 // outside React (e.g. tests or non-component code).
-export function makeT(dict, locale) {
+export function makeT(dict, locale, fallback = en) {
+  const en = fallback   // the English fallback dictionary (the edition's English wording when an overlay is active)
   const get = (key) => {
     let v = lookup(dict, key)
     if (v === undefined && dict !== en) { v = lookup(en, key); if (v !== undefined) warnMissing(locale, key) }
@@ -243,8 +274,12 @@ const LocaleContext = createContext(null)
 
 export function LocaleProvider({ children, initial }) {
   const [locale, setLocaleState] = useState(() => initial || detectLocale())
-  const [dict, setDict] = useState(() => cache[locale] || en)
-  const [loading, setLoading] = useState(() => !cache[locale])
+  // The edition's audience: follows the live capabilities (they can change once,
+  // when the server's answer differs from the page stamp). An external store,
+  // so a change between the first render and an effect is never missed.
+  const aud = copyAudience(useSyncExternalStore(subscribeCaps, getCaps, getCaps))
+  const [eff, setEff] = useState(() => effectiveSync(locale, aud) || interim(locale, aud))
+  const [loading, setLoading] = useState(() => !effectiveSync(locale, aud))
 
   // Reflect the locale on <html> immediately and persist it.
   useEffect(() => {
@@ -255,18 +290,19 @@ export function LocaleProvider({ children, initial }) {
   // Load the dictionary (no-op for English and anything already cached).
   useEffect(() => {
     let alive = true
-    if (cache[locale]) { setDict(cache[locale]); setLoading(false); return undefined }
+    const ready = effectiveSync(locale, aud)
+    if (ready) { setEff((prev) => (prev.dict === ready.dict && prev.fallback === ready.fallback ? prev : ready)); setLoading(false); return undefined }
     setLoading(true)
-    loadDictionary(locale).then((d) => { if (alive) { setDict(d); setLoading(false) } })
+    loadEffective(locale, aud).then((e) => { if (alive) { setEff(e || interim(locale, aud)); setLoading(false) } })
     return () => { alive = false }
-  }, [locale])
+  }, [locale, aud])
 
   const setLocale = useCallback((code) => {
     const next = resolveLocale(code)
     if (next) setLocaleState(next)
   }, [])
 
-  const t = useMemo(() => makeT(dict, locale), [dict, locale])
+  const t = useMemo(() => makeT(eff.dict, locale, eff.fallback), [eff, locale])
   const meta = getLocaleMeta(locale)
   const value = useMemo(() => ({ locale, setLocale, t, dir: meta.dir, tag: meta.tag, meta, loading, locales: LOCALES }), [locale, setLocale, t, meta, loading])
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>
