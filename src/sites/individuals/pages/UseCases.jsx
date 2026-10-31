@@ -1,9 +1,9 @@
-// LinkNotes: WHO IT IS FOR. Five groups (students and new grads, career
+// LinkNotes: WHO IT IS FOR. Six groups (students and new grads, career
 // switchers, freelancers and solo founders, professionals leveling up,
-// creators), each as one band: the copy on one side and a "guide card" on the
-// other showing the goal, one step, what the guide catches, and when it is
-// done. Strings: indiv.use.*.
-import { ArrowRight, GraduationCap, Compass, Store, TrendingUp, Clapperboard, Target, MousePointerClick, AlertTriangle, CheckCircle2 } from 'lucide-react'
+// creators, technicians and makers at a machine screen), each as one band: the
+// copy on one side and a "guide card" on the other showing the goal, one step,
+// what the guide catches, and when it is done. Strings: indiv.use.*.
+import { ArrowRight, GraduationCap, Compass, Store, TrendingUp, Clapperboard, Wrench, Target, MousePointerClick, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import IndivShell from '../IndivShell.jsx'
 import FinalBand from '../FinalBand.jsx'
 import { START } from '../links.js'
@@ -11,8 +11,8 @@ import useSeo from '../../../useSeo.js'
 import { indivSeo } from '../seo_pages.js'   // the one SEO table the prerender reads too
 import { useT } from '../../../i18n/index.jsx'
 
-const IDS = ['students', 'career-switchers', 'freelancers', 'professionals', 'creators']
-const ICONS = [GraduationCap, Compass, Store, TrendingUp, Clapperboard]
+const IDS = ['students', 'career-switchers', 'freelancers', 'professionals', 'creators', 'makers']
+const ICONS = [GraduationCap, Compass, Store, TrendingUp, Clapperboard, Wrench]
 
 export default function UseCases() {
   const t = useT()

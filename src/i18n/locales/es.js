@@ -1268,6 +1268,45 @@ export default {
         },
       ],
     },
+    camera: {
+      eyebrow: 'Cuando compartir pantalla no es una opción',
+      h2: 'Apunta una cámara al panel. <em>Recibe el siguiente paso.</em>',
+      sub: 'Paneles de control y HMI, consolas SCADA, pantallas de equipos de laboratorio y médicos, máquinas y robots, un quiosco bloqueado, un segundo ordenador que no puede ejecutar la app. WorkCoPilot lee lo que ve la cámara y guía a la persona que está delante.',
+      points: [
+        {
+          t: 'Lee el panel o la pantalla de la máquina',
+          d: 'Basta un móvil o una webcam apuntando a la pantalla. No se instala nada en el equipo y nada toca su red.',
+        },
+        {
+          t: 'El siguiente paso exacto, comprobado',
+          d: 'El menú correcto, el valor correcto, en orden. Tras cada paso vuelve a leer la pantalla y confirma que el cambio se aplicó.',
+        },
+        {
+          t: 'Detecta un paso en falso',
+          d: 'Un modo equivocado, una receta equivocada, un valor fuera de rango: se avisa en el momento, antes del siguiente paso.',
+        },
+        {
+          t: 'Enmascarado en el dispositivo, solo lectura',
+          d: 'Los fotogramas se reducen y los valores sensibles legibles se tachan en el dispositivo de la persona antes de enviar nada. La guía solo lee: nunca hace clic, escribe ni envía un comando al equipo.',
+        },
+      ],
+      admin: 'El administrador de tu empresa activa la lectura por cámara, y cada sesión de cámara se registra como una sesión de pantalla.',
+      cta: 'Habla con nosotros',
+      visual: {
+        aria: 'Ilustración: la cámara de un móvil apuntando a un panel de control industrial, con el siguiente paso y una comprobación al lado',
+        panel: 'Llenadora línea 3',
+        mode: 'Modo',
+        manual: 'Manual',
+        pressure: 'Presión',
+        recipe: 'Receta',
+        masked: 'enmascarado en el dispositivo',
+        reading: 'Leyendo la cámara',
+        stepLabel: 'Paso 3 de 7',
+        step: 'En el panel abre Setup, luego Receta, y selecciona la que lleva el nombre de este lote.',
+        check: 'Comprobado: el nombre de la receta en pantalla coincide',
+        caught: 'Sigue en Manual. Pasa el panel a Auto antes de cargar la receta.',
+      },
+    },
   },
   login: {
     meta: {
@@ -2047,6 +2086,28 @@ export default {
           done: 'la tarea termina con un registro limpio y sin errores',
         },
       },
+      {
+        tag: 'Operaciones, OT e industria',
+        short: 'OT',
+        outcome: 'Guiado en el panel, no en un escritorio',
+        benefit: 'Cuando compartir pantalla no es una opción, una cámara lee el HMI, la consola o la pantalla del equipo y la guía da el siguiente paso: solo lectura, enmascarado en el dispositivo.',
+        can: [
+          'Cambiar una receta en un HMI',
+          'Despejar una alarma en una consola SCADA',
+          'Preparar una serie en un instrumento de laboratorio',
+          'Guiar un quiosco o un segundo ordenador',
+        ],
+        guide: {
+          goal: 'Cambiar la línea 3 a la nueva receta',
+          plan: [
+            'Parar la línea y confirmar el modo Manual',
+            'Cargar la nueva receta en el HMI',
+            'Ejecutar un ciclo de prueba y releer las consignas',
+          ],
+          now: 'En el panel abre Setup, luego Receta, selecciona la que lleva el nombre de este lote y relee las consignas antes de pulsar Cargar.',
+          done: 'la pantalla muestra el nombre de la nueva receta y el ciclo de prueba termina sin alarma',
+        },
+      },
     ],
     case: {
       cta: 'Guíame en esto',
@@ -2055,6 +2116,7 @@ export default {
     mini: {
       aria: 'Sesión guiada de ejemplo: {goal}',
       watching: 'observando',
+      watchingCamera: 'por cámara',
       youWant: 'QUIERES',
       stepOf: 'Paso {n} de {total}',
       srDone: 'Hecho: ',
@@ -5656,11 +5718,15 @@ export default {
           },
           {
             t: 'App para Android',
-            d: 'Apunta la cámara a una pantalla, un dispositivo o un formulario y recibe la guía al momento.',
+            d: 'La guía en tu bolsillo. Acerca el móvil a una pantalla o a un formulario y recibe el siguiente paso al momento.',
           },
           {
             t: 'Flotante, en el navegador',
             d: 'Nada que instalar. Una ventana flotante se queda encima mientras trabajas en otra pestaña.',
+          },
+          {
+            t: 'Apunta una cámara a otra pantalla o a una máquina',
+            d: 'Una webcam o tu móvil lee una pantalla que no puedes compartir: un segundo ordenador, un instrumento de laboratorio, una impresora 3D. Solo lee, nunca toca la máquina, y los fotogramas se enmascaran en tu dispositivo. Activado por defecto en la ventana flotante del navegador y en la app de escritorio.',
           },
         ],
       },
@@ -5862,8 +5928,8 @@ export default {
     },
     use: {
       seo: {
-        title: 'Para quién es MyTaskPilot: estudiantes, cambios de carrera, freelancers, profesionales y creadores',
-        description: 'MyTaskPilot guía a quienes hacen su propio trabajo en su propia pantalla: estudiantes y recién graduados, personas que cambian de carrera, freelancers y emprendedores en solitario, profesionales que suben de nivel y creadores. Mira una tarea guiada real para cada perfil.',
+        title: 'Para quién es MyTaskPilot: estudiantes, cambios de carrera, freelancers, profesionales, creadores y makers',
+        description: 'MyTaskPilot guía a quienes hacen su propio trabajo en su propia pantalla: estudiantes y recién graduados, quienes cambian de carrera, freelancers y emprendedores en solitario, profesionales que suben de nivel, creadores, y técnicos y makers que trabajan frente a la pantalla de una máquina. Mira una tarea guiada real para cada uno.',
       },
       hero: {
         eyebrow: 'Para quién es',
@@ -5923,6 +5989,15 @@ export default {
           catches: 'Un archivo de subtítulos en el formato equivocado, así que los subtítulos nunca aparecen.',
           done: 'la subida pasa las comprobaciones y la publicación queda programada.',
         },
+        {
+          tag: 'Técnicos y makers',
+          h2: 'Cuando la pantalla está en una máquina, no en tu portátil.',
+          d: 'Una impresora 3D, una CNC, un instrumento de laboratorio, un segundo ordenador que no puede ejecutar la app: apunta una webcam o tu móvil a su pantalla y recibe el siguiente paso exacto, en solo lectura y enmascarado en tu dispositivo.',
+          goal: 'Nivelar la cama y lanzar la primera impresión en mi impresora 3D',
+          step: 'En la pantalla de la impresora abre Preparar, luego Nivelar, y lleva la boquilla a la primera esquina hasta que el papel apenas roce.',
+          catches: 'Una temperatura de boquilla aún ajustada para el filamento anterior, así que la primera capa no se pegará.',
+          done: 'la primera capa queda uniforme en las cuatro esquinas.',
+        },
       ],
       cta: {
         h2: 'Tu día se parece a uno de estos.',
@@ -5964,6 +6039,10 @@ export default {
             {
               q: '¿Analiza o escribe mis documentos?',
               a: 'No. Te ayuda a hacer y terminar trabajo en pantalla. Lo que sí puede es aprender de tus propios documentos, para que los pasos sigan tu forma de trabajar.',
+            },
+            {
+              q: '¿Puede leer una pantalla que no puedo compartir, como una máquina u otro ordenador?',
+              a: 'Sí. Apunta una webcam o la cámara de tu móvil a la otra pantalla, a un panel de control o a la pantalla de un equipo. La guía lee lo que ve la cámara, da el siguiente paso y lo comprueba. Los fotogramas se reducen y se enmascaran en tu dispositivo antes de enviar nada, y nunca toca el equipo.',
             },
           ],
         },
@@ -6018,7 +6097,7 @@ export default {
           items: [
             {
               q: '¿Qué sale de mi dispositivo?',
-              a: 'Capturas de pantalla reducidas con las líneas sensibles ya tachadas, y tu texto con los valores sensibles sustituidos por tokens. Los valores reales se quedan en tu dispositivo.',
+              a: 'Capturas de pantalla o fotogramas de cámara reducidos con las líneas sensibles ya tachadas, y tu texto con los valores sensibles sustituidos por tokens. Los valores reales se quedan en tu dispositivo.',
             },
             {
               q: '¿Puede cambiar mis cuentas o archivos?',
@@ -6109,7 +6188,7 @@ export default {
           {
             title: 'Lo que sale de tu dispositivo',
             items: [
-              'Capturas de pantalla reducidas, con las líneas sensibles ya tachadas',
+              'Capturas de pantalla o fotogramas de cámara reducidos, con las líneas sensibles ya tachadas',
               'Tu texto, con los valores sensibles ya sustituidos por tokens',
               'El texto de los documentos que subes a tu cerebro personal, para aprender',
             ],
@@ -6126,7 +6205,7 @@ export default {
             title: 'Lo que nunca se conserva',
             items: [
               'Tus documentos subidos: se aprende de ellos y luego se borran',
-              'Capturas de pantalla sin procesar',
+              'Capturas de pantalla o fotogramas de cámara en bruto',
               'Los valores sensibles reales: la guía nunca los ve',
             ],
           },

@@ -156,6 +156,7 @@ export const HIDDEN = {
     'footer.dpa': 'SiteFooter: the DPA link needs companies',
     'home.roi': 'WorkMarketing: the #enterprise section needs companies',
     'home.enterprise': 'WorkMarketing: the enterprise chips live in the #enterprise section',
+    'home.camera': 'WorkMarketing: the #camera section renders only where companies exist (the company administrator turns camera reading on)',
     'enterprise': 'the enterprise demo band (WorkEnterprise only, route needs companies)',
     'seo.enterprise': 'the /enterprise route needs companies',
     'rel.enterprise': 'ReleaseNote group shown on the enterprise page only',

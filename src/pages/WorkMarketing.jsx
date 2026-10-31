@@ -28,6 +28,7 @@ import FieldVignettes from '../components/FieldVignettes.jsx'   // real-screen f
 import { useAuth } from '../auth.jsx'
 import { api } from '../api.js'
 import OrgPlans from '../components/OrgPlans.jsx'   // organizations-only plans, where personal plans are not sold
+import CameraReadSection from '../components/camera_read/CameraReadSection.jsx'   // where screen sharing is not an option: the camera reads the panel
 import { useEditionView } from '../edition/useCaps.js'
 import { CONTACT_PATH } from '../edition/surfaces.js'
 import useSeo from '../useSeo.js'
@@ -460,6 +461,13 @@ export default function WorkMarketing() {
       </section>
 
       )}
+
+      {/* CAMERA - where screen sharing is not an option (operations, OT and
+          industrial teams): a camera reads the panel or machine screen and the
+          guide gives the next step. Its own module (src/components/camera_read);
+          renders where companies exist, since the company administrator turns
+          camera reading on. Copy: home.camera. */}
+      {ed.companies && <CameraReadSection className="wm-sec" />}
 
       {/* EVERYWHERE - platforms, languages, personalization: three shared
           WorkCards. The language chips are the locale registry's endonyms

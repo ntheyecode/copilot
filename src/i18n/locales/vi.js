@@ -1623,6 +1623,45 @@ export default {
         },
       ],
     },
+    camera: {
+      eyebrow: 'Khi không thể chia sẻ màn hình',
+      h2: 'Hướng camera vào bảng điều khiển. <em>Nhận ngay bước tiếp theo.</em>',
+      sub: 'Bảng điều khiển và HMI, màn hình SCADA, màn hình thiết bị phòng thí nghiệm và y tế, máy móc và robot, một kiosk bị khóa, một máy tính thứ hai không chạy được ứng dụng. WorkCoPilot đọc những gì camera thấy và hướng dẫn người đang đứng trước nó.',
+      points: [
+        {
+          t: 'Đọc bảng điều khiển hoặc màn hình máy',
+          d: 'Chỉ cần một điện thoại hoặc webcam hướng vào màn hình. Không cài gì lên thiết bị và không chạm vào mạng của nó.',
+        },
+        {
+          t: 'Đúng bước tiếp theo, có kiểm tra',
+          d: 'Đúng menu, đúng giá trị, theo đúng thứ tự. Sau mỗi bước, nó đọc lại màn hình và xác nhận thay đổi đã có hiệu lực.',
+        },
+        {
+          t: 'Bắt lỗi đi sai bước',
+          d: 'Sai chế độ, sai công thức, giá trị ngoài phạm vi: được gắn cờ ngay khi xảy ra, trước bước tiếp theo.',
+        },
+        {
+          t: 'Che ngay trên thiết bị, chỉ đọc',
+          d: 'Khung hình được thu nhỏ và các giá trị nhạy cảm đọc được bị bôi đen ngay trên thiết bị của người dùng trước khi gửi bất cứ gì. Nó chỉ đọc: không bao giờ nhấp, gõ hay gửi lệnh đến thiết bị.',
+        },
+      ],
+      admin: 'Quản trị viên công ty của bạn bật tính năng đọc bằng camera, và mọi phiên camera đều được ghi nhật ký như một phiên màn hình.',
+      cta: 'Trao đổi với chúng tôi',
+      visual: {
+        aria: 'Minh họa: camera điện thoại hướng vào một bảng điều khiển công nghiệp, bên cạnh là bước tiếp theo và kết quả kiểm tra',
+        panel: 'Chiết rót dây chuyền 3',
+        mode: 'Chế độ',
+        manual: 'Thủ công',
+        pressure: 'Áp suất',
+        recipe: 'Công thức',
+        masked: 'đã che trên thiết bị',
+        reading: 'Đang đọc camera',
+        stepLabel: 'Bước 3/7',
+        step: 'Trên bảng điều khiển, mở Thiết lập, rồi Công thức, và chọn công thức mang tên lô này.',
+        check: 'Đã kiểm tra: tên công thức trên màn hình khớp',
+        caught: 'Vẫn đang ở Thủ công. Chuyển bảng điều khiển sang Tự động trước khi nạp công thức.',
+      },
+    },
   },
   login: {
     meta: {
@@ -2349,7 +2388,11 @@ export default {
         ],
         guide: {
           goal: 'Đối chiếu cả tháng đến từng đồng',
-          plan: ['Nhập sao kê, khóa số dư đầu kỳ', 'Khớp mọi khoản, truy tìm chênh lệch', 'Khóa kỳ, xuất báo cáo'],
+          plan: [
+            'Nhập sao kê, khóa số dư đầu kỳ',
+            'Khớp mọi khoản, truy tìm chênh lệch',
+            'Khóa kỳ, xuất báo cáo',
+          ],
           now: 'Tự động khớp các khoản nộp, đối soát từng khoản rút, và khi không cân được hãy so sánh ngày và số tiền của các khoản chưa đối soát.',
           done: 'số dư đã đối soát bằng với sao kê đến từng xu',
         },
@@ -2367,7 +2410,11 @@ export default {
         ],
         guide: {
           goal: 'Nộp một hồ sơ tuân thủ hằng quý',
-          plan: ['Mở cổng thông tin, bắt đầu tờ khai', 'Điền từng trường, đính kèm bằng chứng', 'Xác thực và nộp'],
+          plan: [
+            'Mở cổng thông tin, bắt đầu tờ khai',
+            'Điền từng trường, đính kèm bằng chứng',
+            'Xác thực và nộp',
+          ],
           now: 'Điền từng trường bắt buộc từ hồ sơ của bạn và đính kèm đúng bằng chứng mà biểu mẫu yêu cầu, không thiếu gì.',
           done: 'cổng thông tin chấp nhận hồ sơ và trả về một số xác nhận',
         },
@@ -2394,6 +2441,28 @@ export default {
           done: 'công việc kết thúc với nhật ký sạch và không có lỗi',
         },
       },
+      {
+        tag: 'Vận hành, OT và công nghiệp',
+        short: 'OT',
+        outcome: 'Hướng dẫn tại bảng điều khiển, không phải tại bàn làm việc',
+        benefit: 'Khi không thể chia sẻ màn hình, camera đọc màn hình HMI, console hay thiết bị và hướng dẫn đưa ra bước tiếp theo: chỉ đọc, che ngay trên thiết bị.',
+        can: [
+          'Đổi công thức trên HMI',
+          'Xóa cảnh báo trên console SCADA',
+          'Thiết lập một lần chạy trên thiết bị phòng thí nghiệm',
+          'Hướng dẫn trên kiosk hoặc máy tính thứ hai',
+        ],
+        guide: {
+          goal: 'Chuyển Dây chuyền 3 sang công thức mới',
+          plan: [
+            'Dừng dây chuyền và xác nhận chế độ Thủ công',
+            'Nạp công thức mới trên HMI',
+            'Chạy một chu kỳ thử và đọc lại các điểm đặt',
+          ],
+          now: 'Trên bảng điều khiển, mở Thiết lập, rồi Công thức, chọn công thức mang tên lô này, và đọc lại các điểm đặt trước khi bạn nhấn Nạp.',
+          done: 'màn hình hiện tên công thức mới và chu kỳ thử kết thúc không có cảnh báo',
+        },
+      },
     ],
     case: {
       cta: 'Hướng dẫn tôi việc này',
@@ -2402,6 +2471,7 @@ export default {
     mini: {
       aria: 'Phiên hướng dẫn ví dụ: {goal}',
       watching: 'đang theo dõi',
+      watchingCamera: 'qua camera',
       youWant: 'BẠN MUỐN',
       stepOf: 'Bước {n} trên {total}',
       srDone: 'Đã xong: ',
@@ -7222,11 +7292,15 @@ export default {
           },
           {
             t: 'Ứng dụng Android',
-            d: 'Hướng camera vào màn hình, thiết bị hay biểu mẫu và được hướng dẫn ngay tại chỗ.',
+            d: 'Người dẫn đường trong túi bạn. Giơ điện thoại lên trước một màn hình hay biểu mẫu và nhận ngay bước tiếp theo tại chỗ.',
           },
           {
             t: 'Nổi phía trên, trong trình duyệt',
             d: 'Không cần cài đặt. Một cửa sổ nổi luôn ở trên trong khi bạn làm việc ở tab khác.',
+          },
+          {
+            t: 'Hướng camera vào màn hình khác hoặc một chiếc máy',
+            d: 'Webcam hoặc điện thoại của bạn đọc màn hình bạn không thể chia sẻ: máy tính thứ hai, thiết bị phòng thí nghiệm, máy in 3D. Nó chỉ đọc, không bao giờ chạm vào máy, và khung hình được che ngay trên thiết bị của bạn. Bật sẵn trong cửa sổ nổi của trình duyệt và ứng dụng máy tính.',
           },
         ],
       },
@@ -7428,8 +7502,8 @@ export default {
     },
     use: {
       seo: {
-        title: 'MyTaskPilot dành cho ai: sinh viên, người chuyển ngành, freelancer, người đi làm và nhà sáng tạo',
-        description: 'MyTaskPilot hướng dẫn những người tự làm việc của mình trên màn hình của mình: sinh viên và người mới ra trường, người chuyển ngành, freelancer và người tự khởi nghiệp, người đi làm muốn lên trình, và nhà sáng tạo nội dung. Xem một việc thật được hướng dẫn cho mỗi nhóm.',
+        title: 'MyTaskPilot dành cho ai: sinh viên, người chuyển ngành, freelancer, người đi làm, nhà sáng tạo và maker',
+        description: 'MyTaskPilot hướng dẫn những người tự làm việc của mình trên màn hình của mình: sinh viên và người mới ra trường, người chuyển ngành, freelancer và người tự khởi nghiệp, người đi làm muốn lên trình, nhà sáng tạo nội dung, và kỹ thuật viên cùng maker làm việc trước màn hình máy. Xem một việc thật được hướng dẫn cho mỗi nhóm.',
       },
       hero: {
         eyebrow: 'Dành cho ai',
@@ -7489,6 +7563,15 @@ export default {
           catches: 'Tệp phụ đề để sai định dạng, nên phụ đề không bao giờ hiện.',
           done: 'tệp tải lên qua được kiểm tra và bài đăng đã được lên lịch.',
         },
+        {
+          tag: 'Kỹ thuật viên và maker',
+          h2: 'Khi màn hình nằm trên máy, không phải trên laptop của bạn.',
+          d: 'Máy in 3D, máy CNC, thiết bị phòng thí nghiệm, máy tính thứ hai không chạy được ứng dụng: hướng webcam hoặc điện thoại vào màn hình của nó và nhận đúng bước tiếp theo, chỉ đọc và che ngay trên thiết bị của bạn.',
+          goal: 'Cân bàn in và chạy bản in đầu tiên trên máy in 3D của tôi',
+          step: 'Trên màn hình máy in, mở Chuẩn bị, rồi Cân bàn, và đưa đầu phun đến góc đầu tiên cho đến khi tờ giấy vừa hơi bị kéo.',
+          catches: 'Nhiệt độ đầu phun vẫn đặt cho loại sợi nhựa cũ, nên lớp đầu tiên sẽ không bám.',
+          done: 'lớp đầu tiên trải đều ở cả bốn góc.',
+        },
       ],
       cta: {
         h2: 'Ngày của bạn giống một trong số này.',
@@ -7530,6 +7613,10 @@ export default {
             {
               q: 'Nó có phân tích hay viết tài liệu cho tôi không?',
               a: 'Không. Nó giúp bạn làm và hoàn thành việc trên màn hình. Điều nó có thể làm là học từ tài liệu của riêng bạn, để các bước đi theo cách làm việc của bạn.',
+            },
+            {
+              q: 'Nó đọc được màn hình tôi không thể chia sẻ, như một chiếc máy hay máy tính khác không?',
+              a: 'Được. Hướng webcam hoặc camera điện thoại vào màn hình kia, bảng điều khiển hay màn hình thiết bị. Người dẫn đường đọc những gì camera thấy, đưa ra bước tiếp theo và kiểm tra nó. Khung hình được thu nhỏ và che ngay trên thiết bị của bạn trước khi gửi bất cứ gì, và nó không bao giờ chạm vào thiết bị.',
             },
           ],
         },
@@ -7584,7 +7671,7 @@ export default {
           items: [
             {
               q: 'Những gì rời khỏi thiết bị của tôi?',
-              a: 'Các khung hình màn hình thu nhỏ với các dòng nhạy cảm đã bôi đen, và văn bản của bạn với giá trị nhạy cảm đã thay bằng token. Giá trị thật ở lại trên thiết bị.',
+              a: 'Các khung hình màn hình hoặc camera thu nhỏ với các dòng nhạy cảm đã bôi đen, và văn bản của bạn với giá trị nhạy cảm đã thay bằng token. Giá trị thật ở lại trên thiết bị.',
             },
             {
               q: 'Nó có thay đổi được tài khoản hay tệp của tôi không?',
@@ -7675,7 +7762,7 @@ export default {
           {
             title: 'Những gì rời thiết bị',
             items: [
-              'Khung hình màn hình thu nhỏ, các dòng nhạy cảm đã bôi đen',
+              'Khung hình màn hình hoặc camera thu nhỏ, các dòng nhạy cảm đã bôi đen',
               'Văn bản của bạn, giá trị nhạy cảm đã thay bằng token',
               'Văn bản từ tài liệu bạn tải lên bộ não cá nhân, để học',
             ],
@@ -7692,7 +7779,7 @@ export default {
             title: 'Những gì không bao giờ giữ',
             items: [
               'Tài liệu bạn tải lên: học xong, rồi xóa',
-              'Khung hình màn hình thô',
+              'Khung hình màn hình hoặc camera thô',
               'Giá trị nhạy cảm thật: người dẫn đường không bao giờ thấy',
             ],
           },

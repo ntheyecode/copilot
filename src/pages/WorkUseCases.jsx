@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ServerCog, Blocks, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass,
-  ArrowRight, Check, Play,
+  ServerCog, Blocks, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass, Factory,
+  ArrowRight, Check, Play, Camera,
 } from 'lucide-react'
 import { BrandMark as AVMark } from '../components/brand/BrandLogo.jsx'   // the edition's brand mark
 import SiteHeader from '../components/SiteHeader.jsx'
@@ -35,8 +35,10 @@ import { revealOnScroll } from '../reveal.js'              // the ONE scroll-rev
 // the mock progress bar defers to its "Step X of N" text, reveals respect
 // prefers-reduced-motion, and the badge/accent greens meet AA contrast.
 
-// The eight cases' non-copy meta (anchor id, icon, tone, the step shown as
-// happening now), in page order; the copy is useCases.cases, same order.
+// The nine cases' non-copy meta (anchor id, icon, tone, the step shown as
+// happening now, and `camera` where the guide reads a camera aimed at a panel
+// instead of a shared screen), in page order; the copy is useCases.cases,
+// same order.
 const CASE_META = [
   { id: 'config', icon: ServerCog, tone: 'a', active: 1 },
   { id: 'build', icon: Blocks, tone: 'b', active: 1 },
@@ -46,6 +48,7 @@ const CASE_META = [
   { id: 'office', icon: Calculator, tone: 'a', active: 1 },
   { id: 'legal', icon: Scale, tone: 'b', active: 1 },
   { id: 'general', icon: Compass, tone: 'c', active: 1 },
+  { id: 'ot', icon: Factory, tone: 'd', active: 1, camera: true },
 ]
 
 export default function WorkUseCases() {
@@ -116,7 +119,7 @@ export default function WorkUseCases() {
               <button className="uc-cta" onClick={go} aria-label={t('useCases.case.ctaAria', { tag: c.tag })}>{t('useCases.case.cta')} <ArrowRight size={15} aria-hidden="true" /></button>
             </div>
             <div className="uc-case-graphic" data-reveal>
-              <MiniGuide g={c.guide} short={c.short} />
+              <MiniGuide g={c.guide} short={c.short} camera={c.camera} />
             </div>
           </div>
         </section>
@@ -145,7 +148,8 @@ export default function WorkUseCases() {
 // plain how-line plus how you know it worked. No terminal, no nested how-list.
 // `short` is the one-word badge for the case (useCases.cases[i].short); the
 // chrome strings are useCases.mini.*. The product name stays as it is.
-function MiniGuide({ g, short }) {
+// `camera`: the guide reads a camera aimed at a panel, so the live pill says so.
+function MiniGuide({ g, short, camera = false }) {
   const t = useT()
   const plan = g.plan
   const active = Math.min(Math.max(g.active || 0, 0), plan.length - 1)
@@ -155,7 +159,7 @@ function MiniGuide({ g, short }) {
       <div className="uc-mini-head">
         <span className="d r" aria-hidden="true" /><span className="d y" aria-hidden="true" /><span className="d g" aria-hidden="true" />
         <b>WorkCoPilot</b>
-        <span className="uc-mini-live"><i aria-hidden="true" /> {t('useCases.mini.watching')}</span>
+        <span className="uc-mini-live">{camera ? <Camera size={11} aria-hidden="true" /> : <i aria-hidden="true" />} {camera ? t('useCases.mini.watchingCamera') : t('useCases.mini.watching')}</span>
         <span className="uc-mini-tag">{short}</span>
       </div>
       <div className="uc-mini-goal"><span>{t('useCases.mini.youWant')}</span> {g.goal}</div>
@@ -236,7 +240,7 @@ const CSS = `
 .uc-ro{display:flex;align-items:center;justify-content:center;gap:7px;margin:16px auto 0;font-size:13.5px;color:var(--mut);text-align:center}
 .uc-ro svg{color:var(--em);flex:none}
 .uc-case{padding:56px 0;border-top:1px solid var(--line)}
-.uc-case-in{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.uc-case-in{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px;align-items:center}
 .uc-case.alt .uc-case-copy{order:2}
 .uc-case-copy{min-width:0}
 .uc-ic{display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:15px;background:linear-gradient(135deg,rgba(140,245,196,.2),rgba(57,211,255,.12));color:var(--em);margin-bottom:16px;box-shadow:0 0 28px -8px rgba(140,245,196,.55)}
@@ -287,7 +291,7 @@ const CSS = `
 .uc-final p{color:var(--mut);font-size:18px;max-width:52ch;margin:0 auto 26px}
 
 @media(max-width:860px){
- .uc-case-in{grid-template-columns:1fr;gap:26px}
+ .uc-case-in{grid-template-columns:minmax(0,1fr);gap:26px}
  .uc-case.alt .uc-case-copy{order:0}
  .uc-can{grid-template-columns:1fr 1fr}
  /* DESIGN-06: comfortable tap targets for the jump-to-use-case chips on touch */

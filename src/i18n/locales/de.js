@@ -1627,6 +1627,45 @@ export default {
         },
       ],
     },
+    camera: {
+      eyebrow: 'Wenn Bildschirmfreigabe keine Option ist',
+      h2: 'Kamera auf das Panel richten. <em>Den nächsten Schritt bekommen.</em>',
+      sub: 'Bedienpanels und HMIs, SCADA-Konsolen, Displays von Labor- und Medizingeräten, Maschinen und Roboter, ein gesperrter Kiosk, ein zweiter Rechner, auf dem die App nicht laufen kann. WorkCoPilot liest, was die Kamera sieht, und leitet die Person an, die davor steht.',
+      points: [
+        {
+          t: 'Liest das Panel oder den Maschinenbildschirm',
+          d: 'Ein Smartphone oder eine Webcam, auf das Display gerichtet, mehr braucht es nicht. Auf der Anlage wird nichts installiert, und ihr Netzwerk bleibt unberührt.',
+        },
+        {
+          t: 'Der genaue nächste Schritt, geprüft',
+          d: 'Das richtige Menü, der richtige Wert, in der richtigen Reihenfolge. Nach jedem Schritt liest es das Display erneut und bestätigt, dass die Änderung übernommen wurde.',
+        },
+        {
+          t: 'Erkennt eine falsche Abzweigung',
+          d: 'Ein falscher Modus, ein falsches Rezept, ein Wert außerhalb des Bereichs: wird sofort gemeldet, noch vor dem nächsten Schritt.',
+        },
+        {
+          t: 'Auf dem Gerät maskiert, nur lesend',
+          d: 'Die Bilder werden verkleinert und lesbare sensible Werte auf dem Gerät der Person geschwärzt, bevor etwas gesendet wird. Der Guide liest nur: Er klickt nie, tippt nie und sendet nie einen Befehl an die Anlage.',
+        },
+      ],
+      admin: 'Ihr Unternehmensadministrator schaltet das Kameralesen frei, und jede Kamerasitzung wird wie eine Bildschirmsitzung protokolliert.',
+      cta: 'Sprechen Sie mit uns',
+      visual: {
+        aria: 'Illustration: eine Smartphone-Kamera, auf ein industrielles Bedienpanel gerichtet, daneben der nächste Schritt und eine Prüfung',
+        panel: 'Linie 3 Abfüller',
+        mode: 'Modus',
+        manual: 'Manuell',
+        pressure: 'Druck',
+        recipe: 'Rezept',
+        masked: 'auf dem Gerät maskiert',
+        reading: 'Kamera wird gelesen',
+        stepLabel: 'Schritt 3 von 7',
+        step: 'Öffnen Sie am Panel Setup, dann Rezept, und wählen Sie das Rezept mit dem Namen dieser Charge.',
+        check: 'Geprüft: Der Rezeptname auf dem Display stimmt überein',
+        caught: 'Noch in Manuell. Stellen Sie das Panel auf Auto, bevor Sie das Rezept laden.',
+      },
+    },
   },
   login: {
     meta: {
@@ -3631,11 +3670,15 @@ export default {
           },
           {
             t: 'Android-App',
-            d: 'Richte die Kamera auf einen Bildschirm, ein Gerät oder ein Formular und lass dich direkt anleiten.',
+            d: 'Der Guide in deiner Tasche. Halte dein Handy vor einen Bildschirm oder ein Formular und bekomm den nächsten Schritt direkt vor Ort.',
           },
           {
             t: 'Schwebend im Browser',
             d: 'Nichts zu installieren. Ein schwebendes Fenster bleibt oben, während du in einem anderen Tab arbeitest.',
+          },
+          {
+            t: 'Kamera auf einen anderen Bildschirm oder eine Maschine richten',
+            d: 'Eine Webcam oder dein Handy liest einen Bildschirm, den du nicht freigeben kannst: einen zweiten Rechner, ein Laborinstrument, einen 3D-Drucker. Es liest nur, es rührt die Maschine nie an, und die Bilder werden auf deinem Gerät maskiert. Im schwebenden Browser-Fenster und in der Desktop-App standardmäßig an.',
           },
         ],
       },
@@ -3837,8 +3880,8 @@ export default {
     },
     use: {
       seo: {
-        title: 'Für wen MyTaskPilot ist: Studierende, Quereinsteiger, Freelancer, Profis und Creator',
-        description: 'MyTaskPilot leitet Menschen an, die ihre Arbeit selbst auf dem eigenen Bildschirm erledigen: Studierende und Absolventen, Quereinsteiger, Freelancer und Solo-Gründer, Profis auf dem nächsten Level und Creator. Sieh dir für jede Gruppe eine echte geführte Aufgabe an.',
+        title: 'Für wen MyTaskPilot ist: Studierende, Quereinsteiger, Freelancer, Profis, Creator und Maker',
+        description: 'MyTaskPilot leitet Menschen an, die ihre eigene Arbeit auf ihrem eigenen Bildschirm erledigen: Studierende und Absolventen, Quereinsteiger, Freelancer und Solo-Gründer, Profis auf dem nächsten Level, Creator sowie Techniker und Maker am Bildschirm einer Maschine. Sieh dir für jede Gruppe eine echte geführte Aufgabe an.',
       },
       hero: {
         eyebrow: 'Für wen',
@@ -3898,6 +3941,15 @@ export default {
           catches: 'Eine Untertiteldatei im falschen Format, sodass die Untertitel nie erscheinen.',
           done: 'der Upload die Prüfungen besteht und der Beitrag geplant ist.',
         },
+        {
+          tag: 'Techniker und Maker',
+          h2: 'Wenn der Bildschirm an einer Maschine hängt, nicht an deinem Laptop.',
+          d: 'Ein 3D-Drucker, eine CNC, ein Laborinstrument, ein zweiter Rechner, auf dem die App nicht laufen kann: richte eine Webcam oder dein Handy auf sein Display und bekomm den genauen nächsten Schritt, nur lesend und auf deinem Gerät maskiert.',
+          goal: 'Das Druckbett nivellieren und den ersten Druck auf meinem 3D-Drucker starten',
+          step: 'Öffne am Druckerbildschirm Vorbereiten, dann Nivellieren, und fahr die Düse in die erste Ecke, bis das Papier gerade so schleift.',
+          catches: 'Eine Düsentemperatur, die noch auf das alte Filament eingestellt ist, sodass die erste Schicht nicht haftet.',
+          done: 'die erste Schicht liegt in allen vier Ecken gleichmäßig auf.',
+        },
       ],
       cta: {
         h2: 'Dein Tag sieht aus wie einer davon.',
@@ -3939,6 +3991,10 @@ export default {
             {
               q: 'Analysiert oder schreibt es meine Dokumente?',
               a: 'Nein. Es hilft dir, Arbeit auf dem Bildschirm zu erledigen und abzuschließen. Was es kann: aus deinen eigenen Dokumenten lernen, damit die Schritte deiner Art zu arbeiten folgen.',
+            },
+            {
+              q: 'Kann es einen Bildschirm lesen, den ich nicht freigeben kann, etwa eine Maschine oder einen anderen Computer?',
+              a: 'Ja. Richte eine Webcam oder die Kamera deines Handys auf den anderen Bildschirm, ein Bedienpanel oder das Display eines Geräts. Der Guide liest, was die Kamera sieht, gibt den nächsten Schritt und prüft ihn. Die Bilder werden auf deinem Gerät verkleinert und maskiert, bevor etwas gesendet wird, und die Anlage rührt es nie an.',
             },
           ],
         },
@@ -3993,7 +4049,7 @@ export default {
           items: [
             {
               q: 'Was verlässt mein Gerät?',
-              a: 'Verkleinerte Bildschirmbilder, bei denen sensible Zeilen schon geschwärzt sind, und dein Text, bei dem sensible Werte durch Platzhalter ersetzt sind. Die echten Werte bleiben auf deinem Gerät.',
+              a: 'Verkleinerte Bildschirm- oder Kamerabilder mit schon geschwärzten sensiblen Zeilen, und dein Text mit sensiblen Werten, die durch Platzhalter ersetzt sind. Die echten Werte bleiben auf deinem Gerät.',
             },
             {
               q: 'Kann es meine Konten oder Dateien ändern?',
@@ -4084,7 +4140,7 @@ export default {
           {
             title: 'Was dein Gerät verlässt',
             items: [
-              'Verkleinerte Bildschirmbilder, sensible Zeilen schon geschwärzt',
+              'Verkleinerte Bildschirm- oder Kamerabilder, sensible Zeilen schon geschwärzt',
               'Dein Text, sensible Werte schon durch Platzhalter ersetzt',
               'Text aus Dokumenten, die du in dein persönliches Gehirn hochlädst, zum Lernen',
             ],
@@ -4101,7 +4157,7 @@ export default {
             title: 'Was nie behalten wird',
             items: [
               'Deine hochgeladenen Dokumente: gelernt, dann gelöscht',
-              'Rohe Bildschirmbilder',
+              'Rohe Bildschirm- oder Kamerabilder',
               'Die echten sensiblen Werte: der Guide sieht sie nie',
             ],
           },
@@ -8146,6 +8202,28 @@ export default {
           done: 'die Aufgabe endet mit einem sauberen Protokoll und ohne Fehler',
         },
       },
+      {
+        tag: 'Betrieb, OT und Industrie',
+        short: 'OT',
+        outcome: 'Angeleitet am Panel, nicht am Schreibtisch',
+        benefit: 'Wo Bildschirmfreigabe keine Option ist, liest eine Kamera das HMI, die Konsole oder das Gerätedisplay, und der Guide gibt den nächsten Schritt: nur lesend, auf dem Gerät maskiert.',
+        can: [
+          'Ein Rezept an einem HMI ändern',
+          'Einen Alarm an einer SCADA-Konsole quittieren',
+          'Einen Lauf an einem Laborinstrument einrichten',
+          'Einen Kiosk oder einen zweiten Rechner anleiten',
+        ],
+        guide: {
+          goal: 'Linie 3 auf das neue Rezept umstellen',
+          plan: [
+            'Die Linie stoppen und den Modus Manuell bestätigen',
+            'Das neue Rezept am HMI laden',
+            'Einen Testzyklus fahren und die Sollwerte zurücklesen',
+          ],
+          now: 'Öffnen Sie am Panel Setup, dann Rezept, wählen Sie das Rezept mit dem Namen dieser Charge und lesen Sie die Sollwerte zurück, bevor Sie auf Laden drücken.',
+          done: 'das Display zeigt den neuen Rezeptnamen und der Testzyklus endet ohne Alarm',
+        },
+      },
     ],
     case: {
       cta: 'Dabei anleiten',
@@ -8154,6 +8232,7 @@ export default {
     mini: {
       aria: 'Beispiel einer geführten Sitzung: {goal}',
       watching: 'beobachtet',
+      watchingCamera: 'per Kamera',
       youWant: 'SIE WOLLEN',
       stepOf: 'Schritt {n} von {total}',
       srDone: 'Erledigt: ',

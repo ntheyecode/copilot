@@ -77,5 +77,5 @@ const CSS = `
 .lnhs-next{margin-top:12px;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 13px;border-radius:999px;background:var(--ln-violet);border:1.5px solid var(--ln-ink);color:#fff;font-size:13px;font-weight:800;white-space:nowrap}
 @keyframes lnhs-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.lnhs-win,.lnhs-watch,.lnhs-card,.lnhs-caught{animation:none}}
-@media (max-width:640px){.lnhs{aspect-ratio:1;min-height:300px}.lnhs-card{width:min(66%,280px);padding:14px}.lnhs-caught{max-width:58%;bottom:auto;top:52px}.lnhs-win{inset:18px 10% 20% 0}}
+@media (max-width:640px){.lnhs-cols,.lnhs-row{grid-template-columns:22px repeat(5,minmax(0,1fr)) minmax(0,2.2fr)}.lnhs-row>span.cell.on{padding:0 3px}.lnhs-row>span.cell.on em{font-size:9px}.lnhs{aspect-ratio:1;min-height:300px}.lnhs-card{width:min(66%,280px);padding:14px}.lnhs-caught{max-width:58%;bottom:auto;top:52px}.lnhs-win{inset:18px 10% 20% 0}}
 `

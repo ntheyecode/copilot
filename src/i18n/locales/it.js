@@ -1268,6 +1268,45 @@ export default {
         },
       ],
     },
+    camera: {
+      eyebrow: 'Quando condividere lo schermo non è un\'opzione',
+      h2: 'Inquadra il pannello con una fotocamera. <em>Ricevi la prossima mossa.</em>',
+      sub: 'Pannelli di controllo e HMI, console SCADA, schermi di strumenti di laboratorio e dispositivi medicali, macchine e robot, un chiosco bloccato, un secondo computer su cui l\'app non può girare. WorkCoPilot legge ciò che vede la fotocamera e guida la persona che ci sta davanti.',
+      points: [
+        {
+          t: 'Legge il pannello o lo schermo della macchina',
+          d: 'Basta un telefono o una webcam puntati sul display. Niente da installare sull\'impianto, e nulla tocca la sua rete.',
+        },
+        {
+          t: 'La prossima mossa esatta, verificata',
+          d: 'Il menu giusto, il valore giusto, nell\'ordine giusto. Dopo ogni passo rilegge il display e conferma che la modifica è stata applicata.',
+        },
+        {
+          t: 'Intercetta un passo falso',
+          d: 'Una modalità sbagliata, una ricetta sbagliata, un valore fuori range: segnalati nel momento stesso, prima del passo successivo.',
+        },
+        {
+          t: 'Oscurato sul dispositivo, sola lettura',
+          d: 'I fotogrammi vengono ridotti e i valori sensibili leggibili oscurati sul dispositivo della persona prima che qualsiasi cosa venga inviata. La guida legge soltanto: non clicca mai, non digita e non invia alcun comando all\'impianto.',
+        },
+      ],
+      admin: 'L\'amministratore della tua azienda attiva la lettura da fotocamera, e ogni sessione da fotocamera viene registrata come una sessione dello schermo.',
+      cta: 'Parliamone',
+      visual: {
+        aria: 'Illustrazione: la fotocamera di un telefono puntata su un pannello di controllo industriale, con accanto la prossima mossa e una verifica',
+        panel: 'Riempitrice linea 3',
+        mode: 'Modalità',
+        manual: 'Manuale',
+        pressure: 'Pressione',
+        recipe: 'Ricetta',
+        masked: 'oscurato sul dispositivo',
+        reading: 'Lettura della fotocamera',
+        stepLabel: 'Passo 3 di 7',
+        step: 'Sul pannello apri Setup, poi Ricetta, e seleziona quella con il nome di questo lotto.',
+        check: 'Verificato: il nome della ricetta sul display corrisponde',
+        caught: 'Ancora in Manuale. Porta il pannello in Auto prima di caricare la ricetta.',
+      },
+    },
   },
   login: {
     meta: {
@@ -1890,17 +1929,17 @@ export default {
             'Attivare gli aggiornamenti di sicurezza automatici',
           ],
           now: 'Imposti il firewall in default-deny, consenta solo le porte 22 e 443, poi confermi da una seconda sessione prima di disconnettersi.',
-          done: "sono aperte solo la 22 e la 443 e l'accesso con password viene rifiutato",
+          done: 'sono aperte solo la 22 e la 443 e l\'accesso con password viene rifiutato',
         },
       },
       {
         tag: 'Sviluppo e implementazione',
         short: 'Sviluppo',
         outcome: 'Da cartella vuota a sistema funzionante',
-        benefit: "I comandi e il codice esatti, nell'ordine giusto, con gli errori che di solito costano ore individuati per tempo.",
+        benefit: 'I comandi e il codice esatti, nell\'ordine giusto, con gli errori che di solito costano ore individuati per tempo.',
         can: [
           'Impalcare una nuova app o servizio',
-          "Collegare due sistemi con un'API",
+          'Collegare due sistemi con un\'API',
           'Costruire una pipeline di dati',
           'Distribuire sul cloud',
         ],
@@ -1911,7 +1950,7 @@ export default {
             'Verificare ogni evento, renderlo idempotente',
             'Riprodurre eventi di test, poi andare in produzione',
           ],
-          now: "Verifichi la firma prima di fidarsi dell'evento, e ignori qualsiasi id evento già visto, così i tentativi ripetuti non addebitano due volte.",
+          now: 'Verifichi la firma prima di fidarsi dell\'evento, e ignori qualsiasi id evento già visto, così i tentativi ripetuti non addebitano due volte.',
           done: 'un evento riprodotto viene accettato una volta e ignorato la seconda',
         },
       },
@@ -1919,12 +1958,12 @@ export default {
         tag: 'AI e automazione',
         short: 'AI',
         outcome: 'Automazioni che funzionano davvero',
-        benefit: "Ogni nodo, impostazione e connessione guidati, così l'agente o l'assistente funziona invece di bloccarsi in silenzio.",
+        benefit: 'Ogni nodo, impostazione e connessione guidati, così l\'agente o l\'assistente funziona invece di bloccarsi in silenzio.',
         can: [
           'Costruire un flusso di lavoro n8n',
           'Mettere in piedi un assistente RAG',
-          "Automatizzare un'attività ricorrente",
-          "Integrare l'AI nei Suoi strumenti",
+          'Automatizzare un\'attività ricorrente',
+          'Integrare l\'AI nei Suoi strumenti',
         ],
         guide: {
           goal: 'Pubblicare un assistente RAG che cita le fonti',
@@ -1934,13 +1973,13 @@ export default {
             'Testare le risposte, poi distribuire',
           ],
           now: 'Recuperi i blocchi più pertinenti, passi solo quelli come contesto, e faccia in modo che citi la fonte o dica "Non lo so".',
-          done: "le risposte citano il documento giusto e rifiutano quando la risposta non c'è",
+          done: 'le risposte citano il documento giusto e rifiutano quando la risposta non c\'è',
         },
       },
       {
         tag: 'Prodotto e innovazione',
         short: 'Prodotto',
-        outcome: "Dall'idea al rilascio",
+        outcome: 'Dall\'idea al rilascio',
         benefit: 'Guidato attraverso strumenti che non ha mai aperto, con tutto orientato al risultato che desidera.',
         can: [
           'Prototipare una nuova funzionalità',
@@ -1955,15 +1994,15 @@ export default {
             'Collegare il Suo dominio',
             'Pubblicare e dimostrare che il tracciamento scatta',
           ],
-          now: "Aggiunga lo snippet di analytics, imposti una conversione sul pulsante di iscrizione, poi confermi che un'iscrizione di prova arriva in tempo reale.",
-          done: "l'URL in produzione si carica e un'iscrizione di prova compare come conversione",
+          now: 'Aggiunga lo snippet di analytics, imposti una conversione sul pulsante di iscrizione, poi confermi che un\'iscrizione di prova arriva in tempo reale.',
+          done: 'l\'URL in produzione si carica e un\'iscrizione di prova compare come conversione',
         },
       },
       {
         tag: 'Marketing e crescita',
         short: 'Marketing',
         outcome: 'Lanci, poi legga i numeri',
-        benefit: "Accompagnato nel gestore delle inserzioni e nell'analytics, con ogni numero spiegato in parole semplici.",
+        benefit: 'Accompagnato nel gestore delle inserzioni e nell\'analytics, con ogni numero spiegato in parole semplici.',
         can: [
           'Lanciare una campagna pubblicitaria',
           'Impostare il tracciamento delle conversioni',
@@ -1985,7 +2024,7 @@ export default {
         tag: 'Contabilità e ufficio',
         short: 'Contabilità',
         outcome: 'Conti chiusi, dichiarazioni fatte',
-        benefit: "Le viene mostrato esattamente cosa inserire, con tutto ciò che non torna segnalato all'istante.",
+        benefit: 'Le viene mostrato esattamente cosa inserire, con tutto ciò che non torna segnalato all\'istante.',
         can: [
           'Riconciliare un estratto conto',
           'Costruire un report finanziario',
@@ -1995,12 +2034,12 @@ export default {
         guide: {
           goal: 'Riconciliare il mese al centesimo',
           plan: [
-            "Importare l'estratto conto, bloccare il saldo iniziale",
+            'Importare l\'estratto conto, bloccare il saldo iniziale',
             'Abbinare tutto, cercare lo scostamento',
             'Bloccare il periodo, esportare il report',
           ],
           now: 'Abbini automaticamente i versamenti, spunti ogni prelievo e, quando non torna, confronti le date e gli importi non spuntati.',
-          done: "il saldo spuntato è pari all'estratto conto al centesimo",
+          done: 'il saldo spuntato è pari all\'estratto conto al centesimo',
         },
       },
       {
@@ -2022,7 +2061,7 @@ export default {
             'Convalidare e inviare',
           ],
           now: 'Compili ogni campo obbligatorio dalle Sue registrazioni e alleghi esattamente le prove che il modulo richiede, senza nulla di mancante.',
-          done: "il portale accetta l'adempimento e restituisce un numero di conferma",
+          done: 'il portale accetta l\'adempimento e restituisce un numero di conferma',
         },
       },
       {
@@ -2034,17 +2073,39 @@ export default {
           'Imparare in fretta un nuovo strumento',
           'Correggere un errore confuso',
           'Compilare un modulo complicato',
-          "Sbloccarsi su un'attività",
+          'Sbloccarsi su un\'attività',
         ],
         guide: {
           goal: 'Decifrare e correggere un errore criptico',
           plan: [
-            "Riprodurre l'errore in modo affidabile",
+            'Riprodurre l\'errore in modo affidabile',
             'Trovare la causa reale, non il sintomo',
             'Correggerlo, confermare che è sparito',
           ],
-          now: "Incolli l'intero errore: legge tutto lo stack, individua la causa reale e indica il file e la riga da modificare.",
-          done: "l'attività si conclude con un log pulito e nessun errore",
+          now: 'Incolli l\'intero errore: legge tutto lo stack, individua la causa reale e indica il file e la riga da modificare.',
+          done: 'l\'attività si conclude con un log pulito e nessun errore',
+        },
+      },
+      {
+        tag: 'Operazioni, OT e industria',
+        short: 'OT',
+        outcome: 'Guidati davanti al pannello, non a una scrivania',
+        benefit: 'Dove condividere lo schermo non è un\'opzione, una fotocamera legge l\'HMI, la console o lo schermo del dispositivo e la guida dà la prossima mossa: sola lettura, oscurato sul dispositivo.',
+        can: [
+          'Cambiare una ricetta su un HMI',
+          'Tacitare un allarme su una console SCADA',
+          'Preparare una corsa su uno strumento di laboratorio',
+          'Guidare un chiosco o un secondo computer',
+        ],
+        guide: {
+          goal: 'Passare la linea 3 alla nuova ricetta',
+          plan: [
+            'Fermare la linea e confermare la modalità Manuale',
+            'Caricare la nuova ricetta sull\'HMI',
+            'Eseguire un ciclo di prova e rileggere i setpoint',
+          ],
+          now: 'Sul pannello apra Setup, poi Ricetta, selezioni quella con il nome di questo lotto e rilegga i setpoint prima di premere Carica.',
+          done: 'il display mostra il nome della nuova ricetta e il ciclo di prova termina senza allarmi',
         },
       },
     ],
@@ -2055,6 +2116,7 @@ export default {
     mini: {
       aria: 'Esempio di sessione guidata: {goal}',
       watching: 'in osservazione',
+      watchingCamera: 'da fotocamera',
       youWant: 'LEI VUOLE',
       stepOf: 'Passo {n} di {total}',
       srDone: 'Fatto: ',
@@ -5656,11 +5718,15 @@ export default {
           },
           {
             t: 'App Android',
-            d: 'Inquadra uno schermo, un dispositivo o un modulo con la fotocamera e fatti guidare sul momento.',
+            d: 'La guida in tasca. Punta il telefono su uno schermo o un modulo e ricevi la prossima mossa sul momento.',
           },
           {
             t: 'In primo piano, nel browser',
-            d: "Niente da installare. Una finestra flottante resta in primo piano mentre lavori in un'altra scheda.",
+            d: 'Niente da installare. Una finestra flottante resta in primo piano mentre lavori in un\'altra scheda.',
+          },
+          {
+            t: 'Inquadra un altro schermo o una macchina',
+            d: 'Una webcam o il tuo telefono legge uno schermo che non puoi condividere: un secondo computer, uno strumento di laboratorio, una stampante 3D. Legge soltanto, non tocca mai la macchina, e i fotogrammi vengono oscurati sul tuo dispositivo. Attivo di default nella finestra flottante del browser e nell\'app desktop.',
           },
         ],
       },
@@ -5862,8 +5928,8 @@ export default {
     },
     use: {
       seo: {
-        title: 'Per chi è MyTaskPilot: studenti, chi cambia carriera, freelance, professionisti e creator',
-        description: 'MyTaskPilot guida chi fa il proprio lavoro sul proprio schermo: studenti e neolaureati, chi cambia carriera, freelance e imprenditori in proprio, professionisti che crescono e creator. Vedi un compito guidato reale per ciascuno.',
+        title: 'A chi serve MyTaskPilot: studenti, chi cambia carriera, freelance, professionisti, creator e maker',
+        description: 'MyTaskPilot guida chi fa il proprio lavoro sul proprio schermo: studenti e neolaureati, chi cambia carriera, freelance e imprenditori in proprio, professionisti che crescono, creator, e tecnici e maker che lavorano davanti allo schermo di una macchina. Guarda un compito guidato reale per ognuno.',
       },
       hero: {
         eyebrow: 'Per chi è',
@@ -5884,7 +5950,7 @@ export default {
           d: 'Il software che il tuo corso o il primo lavoro richiede, installato e configurato, e il compito svolto un passo verificato alla volta.',
           goal: 'Installare gli strumenti dati del mio corso ed eseguire il primo notebook',
           step: 'Crea un nuovo ambiente chiamato course, poi installa i tre pacchetti elencati nel programma del tuo corso.',
-          catches: "Un notebook in esecuzione nell'ambiente sbagliato, così l'import fallisce.",
+          catches: 'Un notebook in esecuzione nell\'ambiente sbagliato, così l\'import fallisce.',
           done: 'il primo notebook gira da cima a fondo senza errori.',
         },
         {
@@ -5892,9 +5958,9 @@ export default {
           h2: 'Entra in un nuovo settore con chi ne conosce gli strumenti.',
           d: 'Console cloud, fogli di calcolo, app di design o codice: le mosse esatte, spiegate al livello che scegli, in molti settori.',
           goal: 'Pubblicare la mia prima web app su un hosting cloud',
-          step: "Crea l'app, scegli il piano più piccolo, poi incolla qui il comando di build del tuo progetto.",
+          step: 'Crea l\'app, scegli il piano più piccolo, poi incolla qui il comando di build del tuo progetto.',
           catches: 'Una chiave segreta salvata nel repository prima del primo push.',
-          done: "l'app si apre al suo indirizzo pubblico e la chiave è salvata come segreto.",
+          done: 'l\'app si apre al suo indirizzo pubblico e la chiave è salvata come segreto.',
         },
         {
           tag: 'Freelance e imprenditori in proprio',
@@ -5917,11 +5983,20 @@ export default {
         {
           tag: 'Creator',
           h2: 'Pubblica con le impostazioni giuste, ogni volta.',
-          d: "Strumenti di editing, piattaforme di pubblicazione, analisi: l'esportazione esatta, l'impostazione esatta, verificate prima di premere Pubblica.",
+          d: 'Strumenti di editing, piattaforme di pubblicazione, analisi: l\'esportazione esatta, l\'impostazione esatta, verificate prima di premere Pubblica.',
           goal: 'Esportare il mio video per la piattaforma e programmare il post',
           step: 'Apri Esporta, scegli il preset della piattaforma, poi imposta il frame rate in base al tuo progetto.',
           catches: 'Un file di sottotitoli lasciato nel formato sbagliato, così i sottotitoli non compaiono mai.',
           done: 'il caricamento supera i controlli e il post è programmato.',
+        },
+        {
+          tag: 'Tecnici e maker',
+          h2: 'Quando lo schermo è su una macchina, non sul tuo portatile.',
+          d: 'Una stampante 3D, una CNC, uno strumento di laboratorio, un secondo computer su cui l\'app non può girare: inquadra il suo display con una webcam o con il telefono e ricevi la prossima mossa esatta, in sola lettura e oscurata sul tuo dispositivo.',
+          goal: 'Livellare il piano e lanciare la prima stampa sulla mia stampante 3D',
+          step: 'Sullo schermo della stampante apri Prepara, poi Livella, e porta l\'ugello nel primo angolo finché il foglio fa appena attrito.',
+          catches: 'Una temperatura dell\'ugello ancora impostata per il vecchio filamento, così il primo strato non aderirà.',
+          done: 'il primo strato si stende uniforme su tutti e quattro gli angoli.',
         },
       ],
       cta: {
@@ -5947,7 +6022,7 @@ export default {
           items: [
             {
               q: 'Cosa fa davvero MyTaskPilot?',
-              a: "Ti guida in un compito sul tuo schermo: pianifica il compito, mostra il passo successivo esatto nell'app in cui sei, verifica che il passo abbia funzionato e va avanti finché il compito non è finito.",
+              a: 'Ti guida in un compito sul tuo schermo: pianifica il compito, mostra il passo successivo esatto nell\'app in cui sei, verifica che il passo abbia funzionato e va avanti finché il compito non è finito.',
             },
             {
               q: 'Fa il lavoro al posto mio?',
@@ -5955,7 +6030,7 @@ export default {
             },
             {
               q: 'Con quali app funziona?',
-              a: "Le app già sul tuo schermo: fogli di calcolo, strumenti di design, console cloud, codice, pannelli di gestione, moduli. Legge ciò che c'è sullo schermo, quindi non serve alcun plug-in.",
+              a: 'Le app già sul tuo schermo: fogli di calcolo, strumenti di design, console cloud, codice, pannelli di gestione, moduli. Legge ciò che c\'è sullo schermo, quindi non serve alcun plug-in.',
             },
             {
               q: 'È un assistente in chat?',
@@ -5965,13 +6040,17 @@ export default {
               q: 'Analizza o scrive i miei documenti?',
               a: 'No. Ti aiuta a fare e finire il lavoro sullo schermo. Quello che può fare è imparare dai tuoi documenti, così i passaggi seguono il tuo modo di lavorare.',
             },
+            {
+              q: 'Può leggere uno schermo che non posso condividere, come una macchina o un altro computer?',
+              a: 'Sì. Punta una webcam o la fotocamera del telefono sull\'altro schermo, su un pannello di controllo o sul display di un dispositivo. La guida legge ciò che vede la fotocamera, dà la prossima mossa e la verifica. I fotogrammi vengono ridotti e oscurati sul tuo dispositivo prima che qualsiasi cosa venga inviata, e non tocca mai l\'impianto.',
+            },
           ],
         },
         {
           title: 'Il tuo cervello personale',
           items: [
             {
-              q: "Cos'è il cervello personale?",
+              q: 'Cos\'è il cervello personale?',
               a: 'Una pagina della tua dashboard dove carichi i tuoi documenti: appunti, checklist, procedure, resoconti passati. MyTaskPilot impara da essi e la guida usa ciò che ha imparato.',
             },
             {
@@ -5984,7 +6063,7 @@ export default {
             },
             {
               q: 'Impara anche dalle mie sessioni?',
-              a: "Sull'app desktop sì: mascherate sul tuo dispositivo, nel tuo profilo. Solo tu trai vantaggio da ciò che impara.",
+              a: 'Sull\'app desktop sì: mascherate sul tuo dispositivo, nel tuo profilo. Solo tu trai vantaggio da ciò che impara.',
             },
           ],
         },
@@ -5993,11 +6072,11 @@ export default {
           items: [
             {
               q: 'Come funzionano le ore?',
-              a: "Ogni piano include ore di tempo guidato ogni mese, conteggiate al minuto che usi. Niente è arrotondato all'ora. La pagina dei prezzi mostra i numeri aggiornati.",
+              a: 'Ogni piano include ore di tempo guidato ogni mese, conteggiate al minuto che usi. Niente è arrotondato all\'ora. La pagina dei prezzi mostra i numeri aggiornati.',
             },
             {
               q: 'Posso comprare altro tempo?',
-              a: "Sì. Aggiungi un'ora quando ti serve dal tuo account. Il tempo acquistato non scade mai.",
+              a: 'Sì. Aggiungi un\'ora quando ti serve dal tuo account. Il tempo acquistato non scade mai.',
             },
             {
               q: 'Posso cambiare piano?',
@@ -6005,11 +6084,11 @@ export default {
             },
             {
               q: 'Come disdico?',
-              a: "Dal tuo account, in due clic. Mantieni l'accesso fino alla fine del periodo pagato, e prima di allora puoi riattivare con un clic.",
+              a: 'Dal tuo account, in due clic. Mantieni l\'accesso fino alla fine del periodo pagato, e prima di allora puoi riattivare con un clic.',
             },
             {
               q: 'Cosa succede se un pagamento fallisce?',
-              a: "Ricevi un'email e un avviso nel tuo account con un pulsante per aggiornare la carta. Il tuo piano resta tuo mentre sistemi.",
+              a: 'Ricevi un\'email e un avviso nel tuo account con un pulsante per aggiornare la carta. Il tuo piano resta tuo mentre sistemi.',
             },
           ],
         },
@@ -6018,7 +6097,7 @@ export default {
           items: [
             {
               q: 'Cosa esce dal mio dispositivo?',
-              a: 'Fotogrammi dello schermo a dimensione ridotta con le righe sensibili già oscurate, e il tuo testo con i valori sensibili sostituiti da token. I valori reali restano sul tuo dispositivo.',
+              a: 'Fotogrammi dello schermo o della fotocamera a dimensione ridotta con le righe sensibili già oscurate, e il tuo testo con i valori sensibili sostituiti da token. I valori reali restano sul tuo dispositivo.',
             },
             {
               q: 'Può modificare i miei account o i miei file?',
@@ -6043,7 +6122,7 @@ export default {
             },
             {
               q: 'Devo installare qualcosa?',
-              a: "No. La finestra flottante funziona nel browser. Se preferisci, ci sono anche l'app desktop per Windows e l'app Android.",
+              a: 'No. La finestra flottante funziona nel browser. Se preferisci, ci sono anche l\'app desktop per Windows e l\'app Android.',
             },
             {
               q: 'Posso provarlo prima?',
@@ -6109,7 +6188,7 @@ export default {
           {
             title: 'Cosa esce dal tuo dispositivo',
             items: [
-              'Fotogrammi dello schermo a dimensione ridotta, righe sensibili già oscurate',
+              'Fotogrammi dello schermo o della fotocamera a dimensione ridotta, righe sensibili già oscurate',
               'Il tuo testo, valori sensibili già sostituiti da token',
               'Il testo dei documenti che carichi nel tuo cervello personale, per imparare',
             ],
@@ -6126,7 +6205,7 @@ export default {
             title: 'Cosa non viene mai conservato',
             items: [
               'I documenti che carichi: usati per imparare, poi eliminati',
-              'Fotogrammi dello schermo non elaborati',
+              'Fotogrammi grezzi dello schermo o della fotocamera',
               'I valori sensibili reali: la guida non li vede mai',
             ],
           },

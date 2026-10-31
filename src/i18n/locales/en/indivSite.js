@@ -130,10 +130,15 @@ export default {
       runs: {
         eyebrow: 'Where it runs',
         h2: 'On your desk, in your browser, <em>in your pocket.</em>',
+        // Three tiles, then the camera card across the row (items[3], marked
+        // New). Honest: it reads what the camera sees (screens, panels,
+        // displays), it never touches the machine, masking covers readable
+        // text in the frame.
         items: [
           { t: 'Windows desktop app', d: 'Floats over whatever you are working in and reads the screen you choose to share.' },
-          { t: 'Android app', d: 'Point the camera at a screen, a device or a form and get guided on the spot.' },
+          { t: 'Android app', d: 'The guide in your pocket. Hold your phone up to a screen or a form and get the next step on the spot.' },
           { t: 'Float on top, in the browser', d: 'Nothing to install. A floating window stays on top while you work in another tab.' },
+          { t: 'Point a camera at another screen or a machine', d: 'A webcam or your phone reads a screen you cannot share: a second computer, a lab instrument, a 3D printer. It only reads, it never touches the machine, and the frames are masked on your device. On by default in the browser float and the desktop app.' },
         ],
       },
       privacy: {
@@ -249,8 +254,8 @@ export default {
     // ---- Who it is for (use cases) ----------------------------------------------
     use: {
       seo: {
-        title: 'Who MyTaskPilot is for: students, career switchers, freelancers, professionals and creators',
-        description: 'MyTaskPilot guides people who do their own work on their own screen: students and new grads, career switchers, freelancers and solo founders, professionals leveling up, and creators. See a real guided task for each.',
+        title: 'Who MyTaskPilot is for: students, career switchers, freelancers, professionals, creators and makers',
+        description: 'MyTaskPilot guides people who do their own work on their own screen: students and new grads, career switchers, freelancers and solo founders, professionals leveling up, creators, and technicians and makers working at a machine screen. See a real guided task for each.',
       },
       hero: {
         eyebrow: 'Who it is for',
@@ -300,6 +305,16 @@ export default {
           catches: 'A caption file left in the wrong format, so the subtitles never show.',
           done: 'the upload passes the checks and the post is scheduled.',
         },
+        // The screen is on a machine: a camera reads it. Honest: it reads the
+        // display, never controls the printer; masking covers readable text.
+        {
+          tag: 'Technicians and makers', h2: 'When the screen is on a machine, not on your laptop.',
+          d: 'A 3D printer, a CNC, a lab instrument, a second computer that cannot run the app: point a webcam or your phone at its display and get the exact next step, read-only and masked on your device.',
+          goal: 'Level the bed and run the first print on my 3D printer',
+          step: 'On the printer screen open Prepare, then Level, and move the nozzle to the first corner until the paper just drags.',
+          catches: 'A nozzle temperature still set for the old filament, so the first layer will not stick.',
+          done: 'the first layer goes down evenly on all four corners.',
+        },
       ],
       cta: { h2: 'Your day looks like one of these.', p: 'Choose a plan and bring your first task. You are guided within minutes.' },
     },
@@ -321,6 +336,7 @@ export default {
             { q: 'Which apps does it work with?', a: 'The apps already on your screen: spreadsheets, design tools, cloud consoles, code, control panels, forms. It reads what is on screen, so nothing needs a plug-in.' },
             { q: 'Is it a chat assistant?', a: 'Not really. A chat answer leaves you to go and do it. MyTaskPilot stays with you on the screen, one step at a time, and confirms the finish.' },
             { q: 'Does it analyze or write my documents?', a: 'No. It helps you do and finish work on screen. What it can do is learn from your own documents, so the steps follow your way of working.' },
+            { q: 'Can it read a screen I cannot share, like a machine or another computer?', a: 'Yes. Point a webcam or your phone camera at the other screen, a control panel or a device display. The guide reads what the camera sees, gives the next step and checks it. Frames are shrunk and masked on your device before anything is sent, and it never touches the equipment.' },
           ],
         },
         {
@@ -345,7 +361,7 @@ export default {
         {
           title: 'Privacy and safety',
           items: [
-            { q: 'What leaves my device?', a: 'Reduced-size screen frames with sensitive lines already blacked out, and your text with sensitive values replaced by tokens. The real values stay on your device.' },
+            { q: 'What leaves my device?', a: 'Reduced-size screen or camera frames with sensitive lines already blacked out, and your text with sensitive values replaced by tokens. The real values stay on your device.' },
             { q: 'Can it change my accounts or files?', a: 'No. It is read-only. It shows the step and checks the result; it never acts in your apps.' },
             { q: 'Can I delete what it keeps?', a: 'Yes. Every session is yours. Delete any of them at any time from your account.' },
             { q: 'Is my card stored by you?', a: 'No. Checkout and card details are handled by Stripe. We never see or store your card number.' },
@@ -393,9 +409,9 @@ export default {
         h2: 'How your data is handled',
         sub: 'What the product does today. Plain words, no small print.',
         groups: [
-          { title: 'What leaves your device', items: ['Reduced-size screen frames, sensitive lines already blacked out', 'Your text, sensitive values already replaced by tokens', 'Text from documents you upload to your personal brain, for learning'] },
+          { title: 'What leaves your device', items: ['Reduced-size screen or camera frames, sensitive lines already blacked out', 'Your text, sensitive values already replaced by tokens', 'Text from documents you upload to your personal brain, for learning'] },
           { title: 'What we keep', items: ['One write-up per session, with masked milestone pictures (you can turn it off)', 'One log per session, recording what was sent', 'What your personal brain learned, private to your account'] },
-          { title: 'What is never kept', items: ['Your uploaded documents: learned from, then deleted', 'Raw screen frames', 'The real sensitive values: the guide never sees them'] },
+          { title: 'What is never kept', items: ['Your uploaded documents: learned from, then deleted', 'Raw screen or camera frames', 'The real sensitive values: the guide never sees them'] },
         ],
       },
       brain: {

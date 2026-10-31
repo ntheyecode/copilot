@@ -1623,6 +1623,45 @@ export default {
         },
       ],
     },
+    camera: {
+      eyebrow: 'Ekran paylaşımının mümkün olmadığı yerlerde',
+      h2: 'Kamerayı panele tutun. <em>Sonraki adımı alın.</em>',
+      sub: 'Kontrol panelleri ve HMI\'lar, SCADA konsolları, laboratuvar ve tıbbi cihaz ekranları, makineler ve robotlar, kilitli bir kiosk, uygulamayı çalıştıramayan ikinci bir bilgisayar. WorkCoPilot kameranın gördüğünü okur ve önünde duran kişiye yol gösterir.',
+      points: [
+        {
+          t: 'Paneli veya makine ekranını okur',
+          d: 'Ekrana tutulan bir telefon ya da web kamerası yeter. Ekipmana hiçbir şey kurulmaz, ağına hiçbir şey dokunmaz.',
+        },
+        {
+          t: 'Tam olarak sonraki adım, kontrol edilmiş',
+          d: 'Doğru menü, doğru değer, doğru sırada. Her adımdan sonra ekranı yeniden okur ve değişikliğin geçtiğini doğrular.',
+        },
+        {
+          t: 'Yanlış bir dönüşü yakalar',
+          d: 'Yanlış mod, yanlış reçete, aralık dışı bir değer: olduğu anda, sonraki adımdan önce işaretlenir.',
+        },
+        {
+          t: 'Cihazda maskelenir, salt okunur',
+          d: 'Kareler küçültülür ve okunabilir hassas değerler, hiçbir şey gönderilmeden önce kişinin cihazında karartılır. Rehber yalnızca okur: ekipmana asla tıklamaz, yazmaz ya da komut göndermez.',
+        },
+      ],
+      admin: 'Kamera ile okumayı şirket yöneticiniz açar ve her kamera oturumu, ekran oturumu gibi kayda geçer.',
+      cta: 'Bizimle konuşun',
+      visual: {
+        aria: 'Çizim: bir telefon kamerası endüstriyel bir kontrol paneline tutulmuş, yanında sonraki adım ve bir kontrol gösteriliyor',
+        panel: 'Hat 3 dolum',
+        mode: 'Mod',
+        manual: 'Manuel',
+        pressure: 'Basınç',
+        recipe: 'Reçete',
+        masked: 'cihazda maskelendi',
+        reading: 'Kamera okunuyor',
+        stepLabel: 'Adım 3 / 7',
+        step: 'Panelde Ayarlar\'ı, sonra Reçete\'yi açın ve bu parti için adlandırılmış olanı seçin.',
+        check: 'Kontrol edildi: ekrandaki reçete adı eşleşiyor',
+        caught: 'Hâlâ Manuel modda. Reçeteyi yüklemeden önce paneli Otomatik\'e alın.',
+      },
+    },
   },
   login: {
     meta: {
@@ -2241,7 +2280,7 @@ export default {
           goal: 'Bir üretim Linux sunucusunu sağlamlaştırın',
           plan: [
             'Root olmayan bir sudo kullanıcısı oluşturun',
-            "SSH'yi ve güvenlik duvarını kilitleyin",
+            'SSH\'yi ve güvenlik duvarını kilitleyin',
             'Otomatik güvenlik güncellemelerini açın',
           ],
           now: 'Güvenlik duvarını varsayılan olarak reddet şeklinde ayarlayın, yalnızca 22 ve 443 numaralı bağlantı noktalarına izin verin, sonra oturumu kapatmadan önce ikinci bir oturumdan doğrulayın.',
@@ -2260,7 +2299,7 @@ export default {
           'Buluta dağıtın',
         ],
         guide: {
-          goal: "Stripe ödeme webhook'larını ekleyin",
+          goal: 'Stripe ödeme webhook\'larını ekleyin',
           plan: [
             'Ham gövdeli webhook rotasını ekleyin',
             'Her olayı doğrulayın, işlemi idempotent yapın',
@@ -2371,7 +2410,11 @@ export default {
         ],
         guide: {
           goal: 'Üç aylık bir uyumluluk bildirimi gönderin',
-          plan: ['Portalı açın, beyanı başlatın', 'Her alanı doldurun, kanıt ekleyin', 'Doğrulayın ve gönderin'],
+          plan: [
+            'Portalı açın, beyanı başlatın',
+            'Her alanı doldurun, kanıt ekleyin',
+            'Doğrulayın ve gönderin',
+          ],
           now: 'Her zorunlu alanı kayıtlarınızdan doldurun ve formun istediği kanıtı eksiksiz, tam olarak ekleyin.',
           done: 'portal bildirimi kabul ediyor ve bir onay numarası veriyor',
         },
@@ -2398,6 +2441,28 @@ export default {
           done: 'görev temiz bir günlükle ve hatasız tamamlanıyor',
         },
       },
+      {
+        tag: 'Operasyon, OT ve endüstri',
+        short: 'OT',
+        outcome: 'Masada değil, panelin başında rehberlik',
+        benefit: 'Ekran paylaşımının mümkün olmadığı yerde kamera HMI\'ı, konsolu ya da cihaz ekranını okur, rehber sonraki adımı verir: salt okunur, cihazda maskelenmiş.',
+        can: [
+          'HMI üzerinde reçete değiştirin',
+          'SCADA konsolunda bir alarmı temizleyin',
+          'Laboratuvar cihazında bir çalışma hazırlayın',
+          'Bir kiosk ya da ikinci bir bilgisayarda yol alın',
+        ],
+        guide: {
+          goal: 'Hat 3\'ü yeni reçeteye geçirin',
+          plan: [
+            'Hattı durdurun ve Manuel modu doğrulayın',
+            'Yeni reçeteyi HMI\'a yükleyin',
+            'Bir deneme çevrimi çalıştırın ve ayar değerlerini geri okuyun',
+          ],
+          now: 'Panelde Ayarlar\'ı, sonra Reçete\'yi açın, bu parti için adlandırılmış olanı seçin ve Yükle\'ye basmadan önce ayar değerlerini geri okuyun.',
+          done: 'ekranda yeni reçetenin adı görünüyor ve deneme çevrimi alarmsız bitiyor',
+        },
+      },
     ],
     case: {
       cta: 'Bu konuda bana rehberlik et',
@@ -2406,6 +2471,7 @@ export default {
     mini: {
       aria: 'Örnek rehberli oturum: {goal}',
       watching: 'izliyor',
+      watchingCamera: 'kamerayla',
       youWant: 'İSTEDİĞİNİZ',
       stepOf: 'Adım {n} / {total}',
       srDone: 'Tamamlandı: ',
@@ -4539,11 +4605,15 @@ export default {
           },
           {
             t: 'Android uygulaması',
-            d: 'Kamerayı bir ekrana, cihaza veya forma tut, anında yol göstersin.',
+            d: 'Rehber cebinde. Telefonunu bir ekrana ya da forma tut, sonraki adımı anında al.',
           },
           {
             t: 'Tarayıcıda, en üstte',
             d: 'Kurulum yok. Başka bir sekmede çalışırken yüzen pencere en üstte kalır.',
+          },
+          {
+            t: 'Kamerayı başka bir ekrana ya da bir makineye tut',
+            d: 'Web kameran ya da telefonun, paylaşamadığın bir ekranı okur: ikinci bir bilgisayar, bir laboratuvar cihazı, bir 3D yazıcı. Yalnızca okur, makineye asla dokunmaz ve kareler cihazında maskelenir. Tarayıcıdaki yüzen pencerede ve masaüstü uygulamasında varsayılan olarak açık.',
           },
         ],
       },
@@ -4745,8 +4815,8 @@ export default {
     },
     use: {
       seo: {
-        title: 'MyTaskPilot kimler için: öğrenciler, kariyer değiştirenler, freelancerlar, profesyoneller ve içerik üreticileri',
-        description: 'MyTaskPilot, işini kendi ekranında kendi yapanlara yol gösterir: öğrenciler ve yeni mezunlar, kariyer değiştirenler, freelancerlar ve solo girişimciler, seviye atlayan profesyoneller ve içerik üreticileri. Her biri için gerçek bir rehberli görev gör.',
+        title: 'MyTaskPilot kimler için: öğrenciler, kariyer değiştirenler, freelancerlar, profesyoneller, içerik üreticileri ve maker\'lar',
+        description: 'MyTaskPilot, işini kendi ekranında kendi yapanlara yol gösterir: öğrenciler ve yeni mezunlar, kariyer değiştirenler, freelancerlar ve solo girişimciler, seviye atlayan profesyoneller, içerik üreticileri, ve bir makine ekranının başında çalışan teknisyenler ile maker\'lar. Her biri için gerçek bir rehberli görev gör.',
       },
       hero: {
         eyebrow: 'Kimler için',
@@ -4776,7 +4846,7 @@ export default {
           d: 'Bulut konsolları, tablolar, tasarım uygulamaları veya kod: tam hamleler, seçtiğin derinlikte anlatılır, pek çok alanda.',
           goal: 'İlk web uygulamamı bir bulut sunucuya dağıt',
           step: 'Uygulamayı oluştur, en küçük planı seç, sonra projendeki derleme komutunu buraya yapıştır.',
-          catches: "İlk push'tan önce depoya commit edilmiş bir gizli anahtar.",
+          catches: 'İlk push\'tan önce depoya commit edilmiş bir gizli anahtar.',
           done: 'uygulama herkese açık adresinde açılıp anahtar gizli olarak saklandığında.',
         },
         {
@@ -4784,7 +4854,7 @@ export default {
           h2: 'Dükkânı, hesapları ve randevuları kendin yönet.',
           d: 'Müşteri portalları, faturalama, online mağazalar, randevu sayfaları: her kurulum kendi ekranında sonuna kadar yönlendirilir, ilk seferde doğru.',
           goal: 'Kapora alan bir randevu sayfası kur',
-          step: "Kapora iste'yi aç, yüzde 20 olarak ayarla ve iptal süresini seç.",
+          step: 'Kapora iste\'yi aç, yüzde 20 olarak ayarla ve iptal süresini seç.',
           catches: 'Varsayılanda bırakılmış saat dilimi, bu yüzden saatler yanlış görünüyor.',
           done: 'deneme randevusu kapora alıp takvimine düştüğünde.',
         },
@@ -4793,18 +4863,27 @@ export default {
           h2: 'Seviyenin üstündeki görevi üstlen, beceri sende kalsın.',
           d: 'Kimsenin nasıl yapılacağını göstermediği rapor, geçiş, pano: kendi ekranında, tam hamleler yanında, tamamlanır.',
           goal: 'Pivot tabloyla aylık gider özeti oluştur',
-          step: "Tablonun tamamını seç, sonra Ekle, sonra Pivot tablo. Kategori'yi Satırlar'a, Tutar'ı Değerler'e koy.",
+          step: 'Tablonun tamamını seç, sonra Ekle, sonra Pivot tablo. Kategori\'yi Satırlar\'a, Tutar\'ı Değerler\'e koy.',
           catches: 'Metin olarak saklanmış bir tutar sütunu, bu yüzden her toplam sıfır çıkıyor.',
           done: 'özet ham toplamlarla eşleşip veri değişince yenilendiğinde.',
         },
         {
           tag: 'İçerik üreticileri',
           h2: 'Her seferinde doğru ayarlarla yayınla.',
-          d: "Düzenleme araçları, yayın platformları, analizler: tam dışa aktarma, tam ayar, Yayınla'ya basmadan önce kontrol edilir.",
+          d: 'Düzenleme araçları, yayın platformları, analizler: tam dışa aktarma, tam ayar, Yayınla\'ya basmadan önce kontrol edilir.',
           goal: 'Videomu platform için dışa aktar ve paylaşımı zamanla',
-          step: "Dışa Aktar'ı aç, platform ön ayarını seç, sonra kare hızını projenle eşleştir.",
+          step: 'Dışa Aktar\'ı aç, platform ön ayarını seç, sonra kare hızını projenle eşleştir.',
           catches: 'Yanlış formatta bırakılmış bir altyazı dosyası, bu yüzden altyazılar hiç görünmüyor.',
           done: 'yükleme kontrolleri geçip paylaşım zamanlandığında.',
+        },
+        {
+          tag: 'Teknisyenler ve maker\'lar',
+          h2: 'Ekran dizüstünde değil, makinede olduğunda.',
+          d: 'Bir 3D yazıcı, bir CNC, bir laboratuvar cihazı, uygulamayı çalıştıramayan ikinci bir bilgisayar: web kameranı ya da telefonunu ekranına tut ve tam olarak sonraki adımı al; salt okunur ve cihazında maskelenmiş.',
+          goal: 'Tablayı seviyele ve 3D yazıcımda ilk baskıyı başlat',
+          step: 'Yazıcı ekranında Hazırla\'yı, sonra Seviyele\'yi aç ve nozülü ilk köşeye, kâğıt hafifçe sürtünene kadar yaklaştır.',
+          catches: 'Nozül sıcaklığı hâlâ eski filamente göre ayarlı, bu yüzden ilk katman tutmayacak.',
+          done: 'ilk katman dört köşede de düzgün serildiğinde.',
         },
       ],
       cta: {
@@ -4847,6 +4926,10 @@ export default {
             {
               q: 'Belgelerimi analiz ediyor ya da yazıyor mu?',
               a: 'Hayır. Ekrandaki işi yapmana ve bitirmene yardım eder. Yapabildiği şey, kendi belgelerinden öğrenmek; böylece adımlar çalışma tarzını izler.',
+            },
+            {
+              q: 'Paylaşamadığım bir ekranı, mesela bir makineyi ya da başka bir bilgisayarı okuyabilir mi?',
+              a: 'Evet. Web kameranı ya da telefonunun kamerasını diğer ekrana, bir kontrol paneline ya da bir cihaz ekranına tut. Rehber kameranın gördüğünü okur, sonraki adımı verir ve kontrol eder. Kareler hiçbir şey gönderilmeden önce cihazında küçültülüp maskelenir ve makineye asla dokunmaz.',
             },
           ],
         },
@@ -4901,7 +4984,7 @@ export default {
           items: [
             {
               q: 'Cihazımdan ne çıkıyor?',
-              a: 'Hassas satırları önceden karartılmış, küçültülmüş ekran kareleri ve hassas değerleri yer tutucularla değiştirilmiş metnin. Gerçek değerler cihazında kalır.',
+              a: 'Küçültülmüş ekran ya da kamera kareleri, hassas satırları önceden karartılmış, ve metnin, hassas değerleri yer tutucularla değiştirilmiş. Gerçek değerler cihazında kalır.',
             },
             {
               q: 'Hesaplarımı veya dosyalarımı değiştirebilir mi?',
@@ -4992,7 +5075,7 @@ export default {
           {
             title: 'Cihazından çıkanlar',
             items: [
-              'Küçültülmüş ekran kareleri, hassas satırları önceden karartılmış',
+              'Küçültülmüş ekran ya da kamera kareleri, hassas satırları önceden karartılmış',
               'Metnin, hassas değerleri önceden yer tutucularla değiştirilmiş',
               'Kişisel beynine yüklediğin belgelerin metni, öğrenme için',
             ],
@@ -5009,7 +5092,7 @@ export default {
             title: 'Asla saklanmayanlar',
             items: [
               'Yüklediğin belgeler: öğrenilir, sonra silinir',
-              'Ham ekran kareleri',
+              'Ham ekran ya da kamera kareleri',
               'Gerçek hassas değerler: rehber onları asla görmez',
             ],
           },

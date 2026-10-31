@@ -121,6 +121,7 @@ const CSS = `
 .lnh.folded .lnh-links a{padding:13px 14px;border-radius:12px}
 .lnh.folded .lnh-links .lnh-m{display:block;border-top:1.5px solid var(--ln-line,#e4e2f3);margin-top:6px;border-radius:0;padding-top:15px}
 .lnh.folded .lnh-links .lnh-m-cta{display:none}
+@media (max-width:520px){.lnh-brand .ln-logo-product{display:none}}
 @media (max-width:880px){.lnh-in{gap:10px;padding:0 16px;height:64px}.lnh-ghost{display:none}.lnh-btn{padding:9px 14px;font-size:13.5px}}
 @media (max-width:520px){
   .lnh-cta .lnh-btn{display:none}

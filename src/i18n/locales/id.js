@@ -1623,6 +1623,45 @@ export default {
         },
       ],
     },
+    camera: {
+      eyebrow: 'Saat berbagi layar bukan pilihan',
+      h2: 'Arahkan kamera ke panel. <em>Dapatkan langkah berikutnya.</em>',
+      sub: 'Panel kontrol dan HMI, konsol SCADA, layar perangkat laboratorium dan medis, mesin dan robot, kios yang terkunci, komputer kedua yang tidak bisa menjalankan aplikasi. WorkCoPilot membaca apa yang dilihat kamera dan memandu orang yang berdiri di depannya.',
+      points: [
+        {
+          t: 'Membaca panel atau layar mesin',
+          d: 'Cukup ponsel atau webcam yang diarahkan ke layar. Tidak ada yang dipasang di peralatan, dan tidak ada yang menyentuh jaringannya.',
+        },
+        {
+          t: 'Langkah berikutnya yang tepat, sudah diperiksa',
+          d: 'Menu yang benar, nilai yang benar, sesuai urutan. Setelah tiap langkah ia membaca layar lagi dan memastikan perubahannya masuk.',
+        },
+        {
+          t: 'Menangkap kekeliruan',
+          d: 'Mode yang salah, resep yang salah, nilai di luar rentang: ditandai saat terjadi, sebelum langkah berikutnya.',
+        },
+        {
+          t: 'Disamarkan di perangkat, hanya membaca',
+          d: 'Bingkai diperkecil dan nilai sensitif yang terbaca dihitamkan di perangkat orang itu sebelum apa pun dikirim. Pemandu hanya membaca: ia tidak pernah mengeklik, mengetik, atau mengirim perintah ke peralatan.',
+        },
+      ],
+      admin: 'Administrator perusahaan Anda yang mengaktifkan pembacaan kamera, dan setiap sesi kamera dicatat seperti sesi layar.',
+      cta: 'Hubungi kami',
+      visual: {
+        aria: 'Ilustrasi: kamera ponsel diarahkan ke panel kontrol industri, dengan langkah berikutnya dan pemeriksaan ditampilkan di sampingnya',
+        panel: 'Pengisi lini 3',
+        mode: 'Mode',
+        manual: 'Manual',
+        pressure: 'Tekanan',
+        recipe: 'Resep',
+        masked: 'disamarkan di perangkat',
+        reading: 'Membaca kamera',
+        stepLabel: 'Langkah 3 dari 7',
+        step: 'Di panel, buka Setup, lalu Resep, dan pilih yang namanya sesuai batch ini.',
+        check: 'Diperiksa: nama resep di layar cocok',
+        caught: 'Masih di Manual. Alihkan panel ke Auto sebelum Anda memuat resep.',
+      },
+    },
   },
   login: {
     meta: {
@@ -2239,7 +2278,11 @@ export default {
         ],
         guide: {
           goal: 'Perkuat keamanan server Linux produksi',
-          plan: ['Buat pengguna sudo non-root', 'Kunci SSH dan firewall', 'Aktifkan pembaruan keamanan otomatis'],
+          plan: [
+            'Buat pengguna sudo non-root',
+            'Kunci SSH dan firewall',
+            'Aktifkan pembaruan keamanan otomatis',
+          ],
           now: 'Tetapkan firewall menolak secara bawaan, izinkan hanya port 22 dan 443, lalu konfirmasikan dari sesi kedua sebelum Anda keluar.',
           done: 'hanya 22 dan 443 yang terbuka dan login dengan kata sandi ditolak',
         },
@@ -2301,7 +2344,11 @@ export default {
         ],
         guide: {
           goal: 'Luncurkan dan lacak landing page hari ini',
-          plan: ['Bangun halaman, tulis teksnya', 'Hubungkan domain Anda', 'Terbitkan dan buktikan pelacakan aktif'],
+          plan: [
+            'Bangun halaman, tulis teksnya',
+            'Hubungkan domain Anda',
+            'Terbitkan dan buktikan pelacakan aktif',
+          ],
           now: 'Tambahkan cuplikan analitik, tetapkan konversi pada tombol pendaftaran, lalu konfirmasikan pendaftaran uji masuk secara real-time.',
           done: 'URL langsung termuat dan pendaftaran uji muncul sebagai konversi',
         },
@@ -2363,7 +2410,11 @@ export default {
         ],
         guide: {
           goal: 'Kirim pelaporan kepatuhan triwulanan',
-          plan: ['Buka portal, mulai pelaporan', 'Isi setiap kolom, lampirkan bukti', 'Validasi dan kirim'],
+          plan: [
+            'Buka portal, mulai pelaporan',
+            'Isi setiap kolom, lampirkan bukti',
+            'Validasi dan kirim',
+          ],
           now: 'Isi setiap kolom wajib dari catatan Anda dan lampirkan persis bukti yang diminta formulir, tanpa ada yang terlewat.',
           done: 'portal menerima pelaporan dan mengembalikan nomor konfirmasi',
         },
@@ -2390,6 +2441,28 @@ export default {
           done: 'tugas selesai dengan log bersih dan tanpa error',
         },
       },
+      {
+        tag: 'Operasi, OT & industri',
+        short: 'OT',
+        outcome: 'Dipandu di panel, bukan di meja',
+        benefit: 'Saat berbagi layar bukan pilihan, kamera membaca HMI, konsol, atau layar perangkat dan pemandu memberi langkah berikutnya: hanya membaca, disamarkan di perangkat.',
+        can: [
+          'Ganti resep di HMI',
+          'Hapus alarm di konsol SCADA',
+          'Siapkan proses di instrumen laboratorium',
+          'Pandu kios atau komputer kedua',
+        ],
+        guide: {
+          goal: 'Alihkan Lini 3 ke resep baru',
+          plan: [
+            'Hentikan lini dan pastikan mode Manual',
+            'Muat resep baru di HMI',
+            'Jalankan siklus uji dan baca ulang setpoint',
+          ],
+          now: 'Di panel, buka Setup, lalu Resep, pilih yang namanya sesuai batch ini, dan baca ulang setpoint sebelum Anda menekan Muat.',
+          done: 'layar menampilkan nama resep baru dan siklus uji berakhir tanpa alarm',
+        },
+      },
     ],
     case: {
       cta: 'Pandu saya untuk ini',
@@ -2398,6 +2471,7 @@ export default {
     mini: {
       aria: 'Contoh sesi berpandu: {goal}',
       watching: 'mengamati',
+      watchingCamera: 'lewat kamera',
       youWant: 'ANDA INGIN',
       stepOf: 'Langkah {n} dari {total}',
       srDone: 'Selesai: ',
@@ -4464,11 +4538,15 @@ export default {
           },
           {
             t: 'Aplikasi Android',
-            d: 'Arahkan kamera ke layar, perangkat, atau formulir dan dapatkan panduan di tempat.',
+            d: 'Pemandu di sakumu. Arahkan ponselmu ke layar atau formulir dan dapatkan langkah berikutnya di tempat.',
           },
           {
             t: 'Mengambang di atas, di browser',
             d: 'Tanpa instalasi. Jendela mengambang tetap di atas saat kamu bekerja di tab lain.',
+          },
+          {
+            t: 'Arahkan kamera ke layar lain atau ke mesin',
+            d: 'Webcam atau ponselmu membaca layar yang tidak bisa kamu bagikan: komputer kedua, instrumen laboratorium, printer 3D. Ia hanya membaca, tidak pernah menyentuh mesinnya, dan bingkainya disamarkan di perangkatmu. Aktif secara default di jendela mengambang browser dan aplikasi desktop.',
           },
         ],
       },
@@ -4670,8 +4748,8 @@ export default {
     },
     use: {
       seo: {
-        title: 'Untuk siapa MyTaskPilot: mahasiswa, pindah karier, freelancer, profesional, dan kreator',
-        description: 'MyTaskPilot memandu orang yang mengerjakan sendiri pekerjaannya di layarnya sendiri: mahasiswa dan lulusan baru, yang pindah karier, freelancer dan pendiri solo, profesional yang naik level, dan kreator. Lihat tugas terpandu nyata untuk masing-masing.',
+        title: 'Untuk siapa MyTaskPilot: mahasiswa, pindah karier, freelancer, profesional, kreator, dan maker',
+        description: 'MyTaskPilot memandu orang yang mengerjakan sendiri pekerjaannya di layarnya sendiri: mahasiswa dan lulusan baru, yang pindah karier, freelancer dan pendiri solo, profesional yang naik level, kreator, serta teknisi dan maker yang bekerja di layar sebuah mesin. Lihat tugas terpandu nyata untuk masing-masing.',
       },
       hero: {
         eyebrow: 'Untuk siapa',
@@ -4731,6 +4809,15 @@ export default {
           catches: 'File caption dibiarkan dalam format yang salah, sehingga subtitle tidak pernah muncul.',
           done: 'unggahannya lolos pemeriksaan dan postingannya terjadwal.',
         },
+        {
+          tag: 'Teknisi dan maker',
+          h2: 'Saat layarnya ada di mesin, bukan di laptopmu.',
+          d: 'Printer 3D, CNC, instrumen laboratorium, komputer kedua yang tidak bisa menjalankan aplikasi: arahkan webcam atau ponselmu ke layarnya dan dapatkan langkah berikutnya yang tepat, hanya membaca dan disamarkan di perangkatmu.',
+          goal: 'Ratakan bed dan jalankan cetakan pertama di printer 3D-ku',
+          step: 'Di layar printer, buka Prepare, lalu Level, dan gerakkan nozzle ke sudut pertama sampai kertasnya mulai terasa tertahan.',
+          catches: 'Suhu nozzle masih diatur untuk filamen lama, sehingga lapisan pertama tidak akan menempel.',
+          done: 'lapisan pertama turun rata di keempat sudut.',
+        },
       ],
       cta: {
         h2: 'Harimu mirip salah satunya.',
@@ -4772,6 +4859,10 @@ export default {
             {
               q: 'Apakah ia menganalisis atau menulis dokumenku?',
               a: 'Tidak. Ia membantumu mengerjakan dan menyelesaikan pekerjaan di layar. Yang bisa ia lakukan adalah belajar dari dokumenmu sendiri, supaya langkahnya mengikuti cara kerjamu.',
+            },
+            {
+              q: 'Bisakah ia membaca layar yang tidak bisa kubagikan, seperti mesin atau komputer lain?',
+              a: 'Bisa. Arahkan webcam atau kamera ponselmu ke layar lain itu, panel kontrol, atau layar perangkat. Pemandu membaca apa yang dilihat kamera, memberi langkah berikutnya, dan memeriksanya. Bingkai diperkecil dan disamarkan di perangkatmu sebelum apa pun dikirim, dan ia tidak pernah menyentuh peralatannya.',
             },
           ],
         },
@@ -4826,7 +4917,7 @@ export default {
           items: [
             {
               q: 'Apa yang keluar dari perangkatku?',
-              a: 'Bingkai layar berukuran kecil dengan baris sensitif yang sudah dihitamkan, dan teksmu dengan nilai sensitif yang sudah diganti token. Nilai aslinya tetap di perangkatmu.',
+              a: 'Bingkai layar atau kamera berukuran kecil dengan baris sensitif sudah dihitamkan, dan teksmu dengan nilai sensitif sudah diganti token. Nilai aslinya tetap di perangkatmu.',
             },
             {
               q: 'Bisakah ia mengubah akun atau fileku?',
@@ -4917,7 +5008,7 @@ export default {
           {
             title: 'Yang keluar dari perangkatmu',
             items: [
-              'Bingkai layar berukuran kecil, baris sensitif sudah dihitamkan',
+              'Bingkai layar atau kamera berukuran kecil, baris sensitif sudah dihitamkan',
               'Teksmu, nilai sensitif sudah diganti token',
               'Teks dari dokumen yang kamu unggah ke otak pribadimu, untuk dipelajari',
             ],
@@ -4934,7 +5025,7 @@ export default {
             title: 'Yang tidak pernah disimpan',
             items: [
               'Dokumen yang kamu unggah: dipelajari, lalu dihapus',
-              'Bingkai layar mentah',
+              'Bingkai layar atau kamera mentah',
               'Nilai sensitif yang asli: pemandu tidak pernah melihatnya',
             ],
           },

@@ -67,7 +67,7 @@ export default function LinkNotesLogo({ size = 28, variant = 'full', onDark = fa
         {LN_WORDMARK[0]}<span style={{ color: accent }}>{LN_WORDMARK[1]}</span>
       </span>
       {product && (
-        <span style={{ flexShrink: 0, fontFamily: '"Inter Variable","Inter",system-ui,sans-serif', fontWeight: 700, fontSize: Math.max(11, Math.round(size * 0.4)), color: accent, border: `1px solid ${onDark ? 'rgba(201,242,58,.45)' : 'rgba(91,61,245,.35)'}`, background: onDark ? 'transparent' : 'rgba(91,61,245,.07)', borderRadius: 999, padding: '2px 9px', whiteSpace: 'nowrap' }}>
+        <span className="ln-logo-product" style={{ flexShrink: 0, fontFamily: '"Inter Variable","Inter",system-ui,sans-serif', fontWeight: 700, fontSize: Math.max(11, Math.round(size * 0.4)), color: accent, border: `1px solid ${onDark ? 'rgba(201,242,58,.45)' : 'rgba(91,61,245,.35)'}`, background: onDark ? 'transparent' : 'rgba(91,61,245,.07)', borderRadius: 999, padding: '2px 9px', whiteSpace: 'nowrap' }}>
           {BRANDS.linknotes.product}
         </span>
       )}
