@@ -8886,7 +8886,7 @@ export default {
     settingUp: 'Penagihan sedang disiapkan. Detail paket dan faktur Anda akan muncul di sini begitu aktif.',
     pastDue: {
       title: 'Pembayaran terakhir Anda tidak berhasil.',
-      body: 'Perbarui metode pembayaran Anda untuk mempertahankan akses. Paket Anda tetap aktif selama Anda memperbaikinya.',
+      body: 'Perbarui metode pembayaran untuk kembali dipandu. Paket dan jamnya tetap tersimpan selagi Anda memperbaikinya.',
       fix: 'Perbaiki pembayaran',
     },
     canceledNote: {

@@ -8890,7 +8890,7 @@ export default {
     settingUp: 'Phần thanh toán đang được thiết lập. Thông tin gói và hóa đơn của bạn sẽ xuất hiện ở đây khi nó hoạt động.',
     pastDue: {
       title: 'Khoản thanh toán gần nhất của bạn không thành công.',
-      body: 'Hãy cập nhật phương thức thanh toán để giữ quyền truy cập. Gói của bạn vẫn hoạt động trong khi bạn khắc phục việc này.',
+      body: 'Cập nhật phương thức thanh toán để tiếp tục được dẫn. Gói và số giờ của bạn được giữ nguyên trong khi bạn xử lý.',
       fix: 'Khắc phục thanh toán',
     },
     canceledNote: {

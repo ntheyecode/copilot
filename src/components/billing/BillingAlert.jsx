@@ -12,7 +12,10 @@ import { useT } from '../../i18n/index.jsx'
 
 const cap = (s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : '')
 
-export default function BillingAlert({ subscription, onReload }) {
+// `states` limits which of the three it may show (the billing page's own panel
+// already carries the past-due and ending banners with their actions, so there
+// the strip only announces a scheduled downgrade).
+export default function BillingAlert({ subscription, onReload, states = ['pastDue', 'ending', 'pending'] }) {
   const t = useT()
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
@@ -29,11 +32,11 @@ export default function BillingAlert({ subscription, onReload }) {
     catch (e) { setErr((e && e.message) || t('billingWidget.lifecycle.errResume')) } finally { setBusy(false) }
   }
   let body = null
-  if (s.status === 'past_due') {
+  if (s.status === 'past_due' && states.includes('pastDue')) {
     body = { cls: 'warn', icon: <AlertTriangle size={18} />, title: t('billingWidget.alert.pastDueTitle'), text: t('billingWidget.alert.pastDueBody'), cta: t('billingWidget.alert.pastDueCta'), act: portal, ctaIcon: <CreditCard size={15} /> }
-  } else if (s.cancelAtPeriodEnd && (s.status === 'active' || s.status === 'trialing')) {
+  } else if (s.cancelAtPeriodEnd && (s.status === 'active' || s.status === 'trialing') && states.includes('ending')) {
     body = { cls: 'muted', icon: <CalendarClock size={18} />, title: t('billingWidget.alert.endingTitle', { date: fmtDate(s.currentPeriodEnd) }), text: t('billingWidget.alert.endingBody'), cta: t('billingWidget.alert.endingCta'), act: resume, ctaIcon: <RotateCcw size={15} /> }
-  } else if (s.pendingChange && s.pendingChange.plan) {
+  } else if (s.pendingChange && s.pendingChange.plan && states.includes('pending')) {
     body = { cls: 'info', icon: <ArrowDownRight size={18} />, title: t('billingWidget.alert.pendingTitle', { plan: cap(s.pendingChange.plan), date: fmtDate(s.pendingChange.effectiveDate) }), text: t('billingWidget.alert.pendingBody') }
   }
   if (!body) return null

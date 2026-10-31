@@ -8920,7 +8920,7 @@ export default {
     settingUp: 'La fatturazione è in fase di configurazione. I dettagli del suo piano e le fatture compariranno qui una volta attiva.',
     pastDue: {
       title: 'Il suo ultimo pagamento non è andato a buon fine.',
-      body: "Aggiorni il metodo di pagamento per mantenere l'accesso. Il suo piano resta attivo mentre risolve il problema.",
+      body: 'Aggiorna il metodo di pagamento per tornare alla guida. Il tuo piano e le sue ore restano tuoi mentre sistemi la cosa.',
       fix: 'Correggi il pagamento',
     },
     canceledNote: {

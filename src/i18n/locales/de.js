@@ -8907,7 +8907,7 @@ export default {
     settingUp: 'Die Abrechnung wird eingerichtet. Ihre Tarifdetails und Rechnungen erscheinen hier, sobald sie aktiv ist.',
     pastDue: {
       title: 'Ihre letzte Zahlung ist nicht durchgegangen.',
-      body: 'Aktualisieren Sie Ihre Zahlungsmethode, um Ihren Zugang zu behalten. Ihr Tarif bleibt aktiv, während Sie dies beheben.',
+      body: 'Aktualisieren Sie Ihre Zahlungsmethode, um die Begleitung fortzusetzen. Ihr Tarif und seine Stunden bleiben erhalten, während Sie das klären.',
       fix: 'Zahlung beheben',
     },
     canceledNote: {

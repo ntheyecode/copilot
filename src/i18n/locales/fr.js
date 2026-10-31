@@ -8920,7 +8920,7 @@ export default {
     settingUp: 'La facturation est en cours de configuration. Les détails de votre plan et vos factures apparaîtront ici une fois en service.',
     pastDue: {
       title: "Votre dernier paiement n'a pas abouti.",
-      body: 'Mettez à jour votre moyen de paiement pour conserver votre accès. Votre plan reste actif pendant que vous corrigez cela.',
+      body: 'Mettez à jour votre moyen de paiement pour reprendre le guidage. Votre forfait et ses heures sont conservés pendant que vous réglez cela.',
       fix: 'Corriger le paiement',
     },
     canceledNote: {

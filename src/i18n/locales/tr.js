@@ -8894,7 +8894,7 @@ export default {
     settingUp: 'Faturalama kuruluyor. Plan ayrıntılarınız ve faturalarınız, hazır olduğunda burada görünecek.',
     pastDue: {
       title: 'Son ödemeniz gerçekleşmedi.',
-      body: 'Erişiminizi sürdürmek için ödeme yönteminizi güncelleyin. Siz bunu düzeltirken planınız etkin kalır.',
+      body: 'Rehberliğe geri dönmek için ödeme yönteminizi güncelleyin. Siz düzeltirken planınız ve saatleriniz korunur.',
       fix: 'Ödemeyi düzelt',
     },
     canceledNote: {

@@ -8920,7 +8920,7 @@ export default {
     settingUp: 'La facturación se está configurando. Los detalles de tu plan y tus facturas aparecerán aquí una vez que esté activa.',
     pastDue: {
       title: 'Tu último pago no se completó.',
-      body: 'Actualiza tu método de pago para mantener tu acceso. Tu plan sigue activo mientras lo resuelves.',
+      body: 'Actualiza tu método de pago para volver a la guía. Tu plan y sus horas se conservan mientras lo resuelves.',
       fix: 'Corregir el pago',
     },
     canceledNote: {

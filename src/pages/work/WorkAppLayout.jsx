@@ -223,7 +223,10 @@ export default function WorkAppLayout() {
       // paid_only (no free tier): an account without a plan needs one even
       // before billing is configured, matching the server's subscription gate,
       // so the dashboard never reads "free access" on such an edition.
-      setNeedsSub(!cov && (on || ed.caps.has('paid_only')))
+      // A past-due plan is a plan with a failed payment, not a missing one:
+      // the billing alert carries the fix, the plan chooser stays away.
+      const pastDue = !!(r && r.subscription && r.subscription.status === 'past_due')
+      setNeedsSub(!cov && !pastDue && (on || ed.caps.has('paid_only')))
     }).catch(() => {})
     if (user && !user.companyId) api.workInvoices().then((r) => setInvoices(r.invoices || [])).catch(() => setInvoices([]))
   }, [authed, user, ed.caps])

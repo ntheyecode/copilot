@@ -20,7 +20,8 @@ export default function Billing() {
         <h1 id="wd-billing-h">{t('billingWidget.page.title')}</h1>
         <p>{t('billingWidget.page.sub')}</p>
       </header>
-      <BillingAlert subscription={subscription} onReload={reload} />
+      {/* The panel below carries the past-due and ending banners with their actions; the strip announces a scheduled downgrade. */}
+      <BillingAlert subscription={subscription} onReload={reload} states={['pending']} />
       {showBilling || billingOn
         ? <WorkBilling user={user} subscription={subscription} pricing={pricing} invoices={invoices} billingConfigured={billingOn} onReload={reload} />
         : <p className="wd-billing-none">{t('billingWidget.noPlanYet')}</p>}

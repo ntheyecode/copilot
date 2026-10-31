@@ -126,6 +126,10 @@ individualTest('cancel at the period end in the app, read the end date, resume w
   await dialog.locator('textarea').fill('Project finished for now')
   await dialog.getByRole('button', { name: 'Cancel at period end' }).click()
   await expect(dialog).toHaveCount(0)
+  // The billing panel states it, with its own Resume; the dashboard strip too.
+  await expect(page.locator('.wb-ending')).toContainText(/set to cancel/)
+  await expect(page.locator('.wb-ending .wb-resume')).toBeVisible()
+  await page.goto('/work')
   await expect(page.locator('.wba.muted')).toContainText(/Your plan ends on/)
   const sub = (await api.get('/api/work/subscription')).data.subscription
   expect(sub.status, 'still active until the period end').toBe('active')

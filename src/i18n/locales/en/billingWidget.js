@@ -35,7 +35,7 @@ export default {
     settingUp: 'Billing is being set up. Your plan details and invoices will appear here once it is live.',
     pastDue: {
       title: 'Your last payment did not go through.',
-      body: 'Update your payment method to keep your access. Your plan stays active while you fix this.',
+      body: 'Update your payment method to get back to guiding. Your plan and its hours are kept while you fix this.',
       fix: 'Fix payment',
     },
     canceledNote: {

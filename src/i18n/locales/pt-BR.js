@@ -8914,7 +8914,7 @@ export default {
     settingUp: 'O faturamento está sendo configurado. Os detalhes do seu plano e as faturas aparecerão aqui assim que estiver ativo.',
     pastDue: {
       title: 'Seu último pagamento não foi aprovado.',
-      body: 'Atualize sua forma de pagamento para manter seu acesso. Seu plano continua ativo enquanto você resolve isso.',
+      body: 'Atualize sua forma de pagamento para voltar à orientação. Seu plano e suas horas ficam guardados enquanto você resolve.',
       fix: 'Corrigir pagamento',
     },
     canceledNote: {
