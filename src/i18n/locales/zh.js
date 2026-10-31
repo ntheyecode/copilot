@@ -4640,6 +4640,12 @@ export default {
   billingAdmin: {
     loading: '正在加载账单配置',
     stepUpLabel: '保存账单密钥',
+    offByEdition: {
+      title: '此服务器上的 Stripe 已关闭。',
+      license: '方案由安装许可证决定。此处设置或环境变量中的 Stripe 密钥都会被忽略。',
+      invoiced: '此安装直接开具账单。此处设置或环境变量中的 Stripe 密钥都会被忽略。',
+      generic: '此处设置或环境变量中的 Stripe 密钥都会被忽略。',
+    },
     readOnlyNote: '只有超级管理员才能更改账单配置。当前状态显示在下方。',
     plans: {
       lite: 'Lite',

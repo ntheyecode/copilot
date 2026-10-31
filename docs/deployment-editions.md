@@ -87,7 +87,8 @@ tenants and Stripe for enterprise billing.
 |---|---|---|
 | `solo_signup` | `POST /api/work/signup` (index.js), `POST /api/work/onboarding/signup` (onboarding.js), first-time social sign-in (`resolveSocialAccount`, onboarding.js) | 403 `{ error, signupDisabled: true }` from `soloSignupRefusal()`, nothing created. Existing accounts still sign in. |
 | `saas_companies` / `single_company` | `POST /api/work/admin/companies` (work-admin.js) via `companyCreationRefusal()` | `single_company`: the first company is created, a second gets 409 `{ singleCompany: true }`. Neither: 403 `{ companiesDisabled: true }`. |
-| `stripe_billing` | `cfg()` in billing.js; `GET /api/work/admin/billing` | Every Stripe path takes its existing "not configured" branch and no Stripe call is made, even with keys in the env or the store. The superadmin billing panel response carries `offByEdition: true` and an `offReason`. |
+| `stripe_billing` | `cfg()` in billing.js; `GET /api/work/admin/billing`; `annualCheckoutReady()` in billing.js (read by `GET /api/work/pricing` and the sign-up state in onboarding.js) | Every Stripe path takes its existing "not configured" branch and no Stripe call is made, even with keys in the env or the store. `annualReady` is false. The superadmin billing panel response carries `offByEdition: true`, an `offReason` (English, for integrations) and an `offCode` (`license` or `invoiced`, from `stripeOffCode()` in edition.js); the panel (src/pages/workadmin/sections/Billing.jsx) shows it as a note in the reader's language (`billingAdmin.offByEdition.*`). |
+| `public_site` | `server/edition_route_gates.js` `PUBLIC_SITE_ROUTES`: `POST /api/work/coverage` and `POST /api/work/leads` ("validate it live"), `POST /api/work/contact`; `server/public_site_gate.js` ahead of the static SPA; `src/edition/PublicSiteGate.jsx` and `RootRedirect` in src/App.jsx. The page list is `server/public_site_paths.js` (one list, read by the server and the SPA). | The forms answer 403 `{ error, publicSiteDisabled: true, signIn: '/workcopilot' }` from `publicSiteRefusal()` ("this installation does not serve the public website ... sign in"); nothing is stored or mailed. Marketing pages (including any prerendered file left in dist/) answer 302 to `/workcopilot`; the sign-in page is served as the plain shell, never its prerendered marketing variant; legal pages stay served. In the SPA, the same marketing routes and `/` for a signed-out visitor redirect to sign-in. |
 | `individual_plans` | `server/edition_route_gates.js` (one middleware ahead of every route): `POST /api/work/checkout`, `/checkout/credits`, `/subscription/change`, `/onboarding/plan`, `/onboarding/checkout`; also inside `createSubscriptionCheckout()`; `canUpgrade` / `nextTier` in `store.publicWorkUser()` | 403 `{ error, individualPlansDisabled: true, contact }` from `individualPlanRefusal()` ("WorkCoPilot is for organizations ... talk to us"). Reading an existing subscription, invoices and the Stripe portal stay open. |
 | company tenancy (`saas_companies` or `single_company`: `companyTenancy()`) | `server/edition_route_gates.js` prefixes: `/api/work/company/`, `/team/`, `/my-company`, `/exec/`, `/pm/`, `/grc/`, `/brain/`, `/workflows`, `/workflow-incidents*`, `/templates`, `/kb-spaces`, `/customers`, `/my/assigned`, `/app/msi`, `/launch/`, `/sso/`, `/api/v1/` | 403 `{ error: 'This feature is not available on this service.', companiesDisabled: true }` (neutral wording: the individuals site never talks about companies). |
 | `paid_only` | `requireWorkSubscription` (index.js) | With Stripe not configured, a personal account without comp access gets 503 `{ billingNotConfigured: true }` instead of free guiding; the server logs the fix for the operator. |
@@ -99,13 +100,12 @@ tenants and Stripe for enterprise billing.
 These capabilities exist so editions can be described completely, but setting
 `WORK_EDITION=paid` or `onprem` today does not yet change these behaviors:
 
-1. **SPA, remaining**: the SPA is edition-aware (section 5). Still open: hide
-   the marketing routes when `public_site` is off, and show `offReason` in the
-   superadmin billing panel. (The superadmin console still lists its Companies
-   section on `paid`; creating one is refused.)
+1. **SPA, remaining**: the superadmin console still lists its Companies
+   section on `paid`; creating one is refused. (Done: the marketing routes
+   redirect to sign-in where `public_site` is off, and the superadmin billing
+   panel shows why Stripe is off; see the table above.)
 2. (Done: `paid_only` is enforced, see the table above.)
-3. **`public_site`**: the "validate it live" lead endpoints and the prerendered
-   marketing pages are still served in every edition.
+3. (Done: `public_site` is enforced, see the table above.)
 4. **`platform_ai`** (refuse platform AI providers where it is off) and
    **`ai_custody_customer`** (default new companies to company AI and
    customer-held brain custody): part of the first-run setup (planned).
@@ -114,8 +114,10 @@ These capabilities exist so editions can be described completely, but setting
    when an edition first needs them off with companies on.
 6. **`offline_licensing`**: no license check exists yet; `onprem` has no
    subscription or license gate today (planned with the first-run setup).
-7. `store.getBillingPublic().annualReady` reads `db.billing` directly; route it
-   through billing.js `cfg()` so it reads false where `stripe_billing` is off.
+7. (Done: the public `annualReady` comes from billing.js `annualCheckoutReady()`,
+   through `cfg()`, so it is false where `stripe_billing` is off. The
+   superadmin panel's own `getBillingPublic().annualReady` still reports what
+   is saved in each key bundle, which is what that panel edits.)
 
 ---
 

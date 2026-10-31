@@ -4917,6 +4917,12 @@ export default {
   billingAdmin: {
     loading: 'Faturalama yapılandırması yükleniyor',
     stepUpLabel: 'Faturalama anahtarları kaydediliyor',
+    offByEdition: {
+      title: 'Stripe bu sunucuda kapalı.',
+      license: 'Planlar kurulum lisansından gelir. Bu ayarlardaki veya ortamdaki Stripe anahtarları yok sayılır.',
+      invoiced: 'Bu kurulum doğrudan faturalandırılır. Bu ayarlardaki veya ortamdaki Stripe anahtarları yok sayılır.',
+      generic: 'Bu ayarlardaki veya ortamdaki Stripe anahtarları yok sayılır.',
+    },
     readOnlyNote: 'Faturalama yapılandırmasını yalnızca bir süper yönetici değiştirebilir. Mevcut durum aşağıda gösterilir.',
     plans: {
       lite: 'Lite',

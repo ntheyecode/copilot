@@ -3723,6 +3723,12 @@ export default {
   billingAdmin: {
     loading: 'Abrechnungskonfiguration wird geladen',
     stepUpLabel: 'Abrechnungsschlüssel speichern',
+    offByEdition: {
+      title: 'Stripe ist auf diesem Server ausgeschaltet.',
+      license: 'Die Tarife kommen aus der Installationslizenz. Stripe-Schlüssel in diesen Einstellungen oder in der Umgebung werden ignoriert.',
+      invoiced: 'Diese Installation wird direkt in Rechnung gestellt. Stripe-Schlüssel in diesen Einstellungen oder in der Umgebung werden ignoriert.',
+      generic: 'Stripe-Schlüssel in diesen Einstellungen oder in der Umgebung werden ignoriert.',
+    },
     readOnlyNote: 'Nur ein Superadmin kann die Abrechnungskonfiguration ändern. Der aktuelle Stand ist unten zu sehen.',
     plans: {
       lite: 'Lite',

@@ -62,7 +62,7 @@ export function registerOnboardingRoutes(app, deps = {}) {
   for (const k of ['store', 'establishSession', 'resolveWorkIdentity', 'authBlocked', 'authFail', 'authOk', 'ipOf']) {
     if (!deps[k]) throw new Error(`registerOnboardingRoutes: missing dep ${k}`)
   }
-  const { createSubscriptionCheckout, stripeClient, billingConfigured, billingPriceMap } = { ...billingDefault, ...(deps.billing || {}) }
+  const { createSubscriptionCheckout, stripeClient, billingConfigured, billingPriceMap, annualCheckoutReady } = { ...billingDefault, ...(deps.billing || {}) }
   const socialConfigured = deps.socialConfigured || (() => ({ google: false, microsoft: false, facebook: false }))
   const ipRateOk = typeof deps.ipRateOk === 'function' ? deps.ipRateOk : () => true
   const mailRateBlocked = (req, res) => {
@@ -102,7 +102,7 @@ export function registerOnboardingRoutes(app, deps = {}) {
   function stateFor(req, idn, urlIntent = {}) {
     const pricing = store.getWorkPricing()
     let annualReady = false
-    try { annualReady = !!store.getBillingPublic().annualReady } catch { annualReady = false }
+    try { annualReady = annualCheckoutReady(store) } catch { annualReady = false }
     const base = {
       signedIn: !!(idn && idn.full),
       billingConfigured: billingConfigured(store),

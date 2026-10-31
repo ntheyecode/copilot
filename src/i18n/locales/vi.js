@@ -5594,6 +5594,12 @@ export default {
   billingAdmin: {
     loading: 'Đang tải cấu hình thanh toán',
     stepUpLabel: 'Đang lưu khóa thanh toán',
+    offByEdition: {
+      title: 'Stripe đang tắt trên máy chủ này.',
+      license: 'Các gói đến từ giấy phép cài đặt. Khóa Stripe trong phần cài đặt này hoặc trong môi trường sẽ bị bỏ qua.',
+      invoiced: 'Bản cài đặt này được lập hóa đơn trực tiếp. Khóa Stripe trong phần cài đặt này hoặc trong môi trường sẽ bị bỏ qua.',
+      generic: 'Khóa Stripe trong phần cài đặt này hoặc trong môi trường sẽ bị bỏ qua.',
+    },
     readOnlyNote: 'Chỉ superadmin mới có thể thay đổi cấu hình thanh toán. Trạng thái hiện tại được hiển thị bên dưới.',
     plans: {
       lite: 'Lite',

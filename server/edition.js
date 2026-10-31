@@ -57,6 +57,14 @@ export function companyFeatureRefusal(c = caps) {
   return { status: 403, body: { error: 'This feature is not available on this service.', companiesDisabled: true } }
 }
 
+// A public-website form (the "validate it live" check and lead capture, the
+// contact form) where this server serves no public site, or null when it does.
+// A customer's own install has no sales pages; the person signs in instead.
+export function publicSiteRefusal(c = caps) {
+  if (c.has('public_site')) return null
+  return { status: 403, body: { error: 'This installation does not serve the public website, so this form is not available here. Sign in to use WorkCoPilot.', publicSiteDisabled: true, signIn: '/workcopilot' } }
+}
+
 // Creating a company tenant, or null when allowed. countCompanies is called
 // only when the answer depends on it (single_company), so the default edition
 // does no extra work.
@@ -71,9 +79,15 @@ export function companyCreationRefusal(countCompanies, c = caps) {
 
 // Why Stripe is off on this server, for the superadmin billing panel, or null
 // when this edition uses Stripe.
-export function stripeOffReason(c = caps) {
+// stripeOffCode is the stable id the panel words in the reader's language
+// (billingAdmin.offByEdition.<code>); stripeOffReason is the English text.
+export function stripeOffCode(c = caps) {
   if (c.has('stripe_billing')) return null
-  return c.has('offline_licensing')
+  return c.has('offline_licensing') ? 'license' : 'invoiced'
+}
+export function stripeOffReason(c = caps) {
+  if (!stripeOffCode(c)) return null
+  return stripeOffCode(c) === 'license'
     ? 'Stripe is off in this edition: plans come from the installation license. Stripe keys in the settings or the environment are ignored.'
     : 'Stripe is off in this edition: this installation is invoiced directly. Stripe keys in the settings or the environment are ignored.'
 }

@@ -3770,6 +3770,12 @@ export default {
   billingAdmin: {
     loading: 'Cargando la configuración de facturación',
     stepUpLabel: 'Guardando las claves de facturación',
+    offByEdition: {
+      title: 'Stripe está desactivado en este servidor.',
+      license: 'Los planes vienen de la licencia de la instalación. Se ignoran las claves de Stripe de esta configuración o del entorno.',
+      invoiced: 'Esta instalación se factura directamente. Se ignoran las claves de Stripe de esta configuración o del entorno.',
+      generic: 'Se ignoran las claves de Stripe de esta configuración o del entorno.',
+    },
     readOnlyNote: 'Solo un superadministrador puede cambiar la configuración de facturación. El estado actual se muestra abajo.',
     plans: {
       lite: 'Lite',

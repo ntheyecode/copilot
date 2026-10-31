@@ -33,6 +33,8 @@ import WorkSetPassword from './pages/WorkSetPassword.jsx'
 import OnboardingPage from './pages/onboarding/OnboardingPage.jsx'   // subscribe: create account -> verify -> pay -> welcome
 import SignupClosed from './pages/onboarding/SignupClosed.jsx'         // where personal sign-up is off: who it is for + talk to us / sign in
 import EditionRoute from './edition/EditionRoute.jsx'                  // capability gate per route (src/edition/surfaces.js)
+import PublicSiteGate from './edition/PublicSiteGate.jsx'              // marketing routes go to sign-in where no public site is served
+import { useEditionView } from './edition/useCaps.js'
 // Signed-in app + admin consoles are code-split: public marketing/SEO visitors
 // never download them, which keeps the initial bundle (and LCP) small.
 // The signed-in app is a shared shell (WorkAppLayout) with per-route pages under
@@ -90,8 +92,11 @@ function Splash() {
 // users go straight to their surface. Admins land on the admin console.
 function RootRedirect() {
   const { user, ready } = useAuth()
+  const ed = useEditionView()
   if (!ready) return <Splash />
-  if (!user) return <WorkMarketing />
+  // No public site here (a customer's own install): visitors sign in.
+  if (!user) return ed.publicSite ? <WorkMarketing /> : <Navigate to="/workcopilot" replace />
+
   const admin = ['admin', 'superadmin', 'accounting', 'affiliate_admin'].includes(user.role)
   // A company admin lands on their own company console; platform/console admins on
   // the admin console (which shows only their allowed sections); everyone else the app.
@@ -120,6 +125,7 @@ export default function App() {
   return (
     <ErrorBoundary>
     <Suspense fallback={<Splash />}>
+    <PublicSiteGate>
     <Routes>
       <Route path="/" element={<RootRedirect />} />
       {/* Public scripted demo (no login, no AI, all canned). */}
@@ -221,6 +227,7 @@ export default function App() {
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </PublicSiteGate>
     </Suspense>
     {/* Global GDPR/CCPA consent banner + re-openable preferences (footer link). */}
     <ConsentBanner />

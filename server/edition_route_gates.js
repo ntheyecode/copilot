@@ -7,12 +7,14 @@
 //                             (individualPlanRefusal: actionable "talk to us")
 //   no company tenancy    ->  every company-only route family is refused
 //                             (companyFeatureRefusal: neutral wording)
+//   public_site off       ->  the public website's forms are refused
+//                             (publicSiteRefusal: "sign in instead")
 //
 // Reading what you already have is never refused here: the subscription, the
 // invoices and the Stripe portal stay reachable, so a person keeps managing a
 // plan they are already paying for (never degrade an entitlement). The list of
 // what each edition refuses is tested per edition (edition_*_routes.test.mjs).
-import { caps as activeCaps, individualPlanRefusal, companyFeatureRefusal } from './edition.js'
+import { caps as activeCaps, individualPlanRefusal, companyFeatureRefusal, publicSiteRefusal } from './edition.js'
 
 // Personal-plan purchase and change (method + exact path).
 export const INDIVIDUAL_PLAN_ROUTES = Object.freeze([
@@ -46,6 +48,14 @@ export const COMPANY_ROUTE_PREFIXES = Object.freeze([
   '/api/v1/',                        // the integration API (company API keys)
 ])
 
+// The public website's forms (method + exact path), refused where public_site
+// is off: the "validate it live" check and its lead capture, and the contact form.
+export const PUBLIC_SITE_ROUTES = Object.freeze([
+  ['POST', '/api/work/coverage'],              // "validate it live": is my scenario covered?
+  ['POST', '/api/work/leads'],                 // "validate it live": lead capture
+  ['POST', '/api/work/contact'],               // contact us (sales)
+])
+
 // 'a/b/' covers a/b and everything under it; 'a/b' covers a/b, a/b/... and a/b-...
 // (workflow-incidents also covers workflow-incidents-alerts).
 function matchesPrefix(p, prefix) {
@@ -66,6 +76,10 @@ export function routeRefusal(method, urlPath, c = activeCaps) {
   }
   if (COMPANY_ROUTE_PREFIXES.some((pre) => matchesPrefix(p, pre))) {
     const r = companyFeatureRefusal(c)
+    if (r) return r
+  }
+  if (PUBLIC_SITE_ROUTES.some(([rm, rp]) => rm === m && rp === p)) {
+    const r = publicSiteRefusal(c)
     if (r) return r
   }
   return null

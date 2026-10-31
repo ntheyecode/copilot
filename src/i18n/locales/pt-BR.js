@@ -3018,6 +3018,12 @@ export default {
   billingAdmin: {
     loading: 'Carregando a configuração de cobrança',
     stepUpLabel: 'Salvando as chaves de cobrança',
+    offByEdition: {
+      title: 'O Stripe está desativado neste servidor.',
+      license: 'Os planos vêm da licença da instalação. As chaves do Stripe nestas configurações ou no ambiente são ignoradas.',
+      invoiced: 'Esta instalação é faturada diretamente. As chaves do Stripe nestas configurações ou no ambiente são ignoradas.',
+      generic: 'As chaves do Stripe nestas configurações ou no ambiente são ignoradas.',
+    },
     readOnlyNote: 'Só um superadmin pode alterar a configuração de cobrança. O estado atual é mostrado abaixo.',
     plans: {
       lite: 'Lite',

@@ -5756,6 +5756,12 @@ export default {
   billingAdmin: {
     loading: '청구 구성을 불러오는 중',
     stepUpLabel: '청구 키 저장',
+    offByEdition: {
+      title: '이 서버에서는 Stripe가 꺼져 있습니다.',
+      license: '요금제는 설치 라이선스에 따라 정해집니다. 이 설정이나 환경 변수의 Stripe 키는 무시됩니다.',
+      invoiced: '이 설치는 직접 청구됩니다. 이 설정이나 환경 변수의 Stripe 키는 무시됩니다.',
+      generic: '이 설정이나 환경 변수의 Stripe 키는 무시됩니다.',
+    },
     readOnlyNote: '슈퍼관리자만 청구 구성을 변경할 수 있습니다. 현재 상태는 아래에 표시됩니다.',
     plans: {
       lite: 'Lite',

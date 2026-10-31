@@ -3024,6 +3024,12 @@ export default {
   billingAdmin: {
     loading: 'Chargement de la configuration de facturation',
     stepUpLabel: 'Enregistrement des clés de facturation',
+    offByEdition: {
+      title: 'Stripe est désactivé sur ce serveur.',
+      license: "Les forfaits proviennent de la licence de l'installation. Les clés Stripe de ces paramètres ou de l'environnement sont ignorées.",
+      invoiced: "Cette installation est facturée directement. Les clés Stripe de ces paramètres ou de l'environnement sont ignorées.",
+      generic: "Les clés Stripe de ces paramètres ou de l'environnement sont ignorées.",
+    },
     readOnlyNote: "Seul un superadmin peut modifier la configuration de facturation. L'état actuel est affiché ci-dessous.",
     plans: {
       lite: 'Lite',

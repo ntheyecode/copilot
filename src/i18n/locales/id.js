@@ -4570,6 +4570,12 @@ export default {
   billingAdmin: {
     loading: 'Memuat konfigurasi penagihan',
     stepUpLabel: 'Menyimpan kunci penagihan',
+    offByEdition: {
+      title: 'Stripe nonaktif di server ini.',
+      license: 'Paket berasal dari lisensi instalasi. Kunci Stripe di pengaturan ini atau di lingkungan server diabaikan.',
+      invoiced: 'Instalasi ini ditagih secara langsung. Kunci Stripe di pengaturan ini atau di lingkungan server diabaikan.',
+      generic: 'Kunci Stripe di pengaturan ini atau di lingkungan server diabaikan.',
+    },
     readOnlyNote: 'Hanya superadmin yang bisa mengubah konfigurasi penagihan. Keadaan saat ini ditampilkan di bawah.',
     plans: {
       lite: 'Lite',

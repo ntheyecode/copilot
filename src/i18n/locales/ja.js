@@ -4667,6 +4667,12 @@ export default {
   billingAdmin: {
     loading: '請求設定を読み込んでいます',
     stepUpLabel: '請求キーを保存',
+    offByEdition: {
+      title: 'このサーバーでは Stripe はオフです。',
+      license: 'プランはインストールのライセンスで決まります。この設定や環境変数にある Stripe キーは使われません。',
+      invoiced: 'このインストールは直接請求されます。この設定や環境変数にある Stripe キーは使われません。',
+      generic: 'この設定や環境変数にある Stripe キーは使われません。',
+    },
     readOnlyNote: '請求設定を変更できるのはスーパー管理者だけです。現在の状態を下に表示します。',
     plans: {
       lite: 'Lite',
