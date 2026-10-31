@@ -27,6 +27,7 @@
 // the static avatar with its glow. Everything is guarded so it never throws.
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Check, AlertTriangle } from 'lucide-react'
+import { useT } from '../i18n/index.jsx'
 
 const ACCENT = '#8cf5c4'   // emerald
 const CYAN = '#39d3ff'     // cyan
@@ -45,11 +46,10 @@ const LEGACY = { bot: 'dog', dino: 'dog', woman: 'girl', maya: 'girl', sami: 'gi
 // and that image becomes the face layer (still breathing, with the state rings,
 // reaction FX and speech bubble). Empty = the animated SVG rig renders.
 const ART_URL = {}
-// Friendly display names for each character key. Single source (SUPREME RULE II):
-// BuddyPicker imports this instead of keeping its own copy, and AliveBuddy uses it
-// for the accessible label + the missing-asset fallback so neither ever shows the
-// internal key (e.g. "woman" / "man" instead of "Nova" / "Leo").
-const CHARACTER_LABELS = { boy: 'Boy', girl: 'Girl', dog: 'Dog', cat: 'Cat', bot: 'Bot' }
+// Friendly display names for each character key live in the i18n catalog
+// (buddyPicker.characters.<key>), the single source for AliveBuddy's accessible
+// label and BuddyPicker's options, so every locale names the buddy in its own
+// language and neither ever shows the internal key.
 
 // Per-state look: the glow color, its strength, and which state-motion class to
 // apply on the motion layer. One-shot motions (jump/pop/shake) carry a flag so
@@ -181,7 +181,8 @@ export default function AliveBuddy({
   title,
 }) {
   const char = CHARACTERS.includes(character) ? character : (LEGACY[character] || 'bot')
-  const charName = CHARACTER_LABELS[char] || char
+  const t = useT()
+  const charName = t(`buddyPicker.characters.${char}`)
   const st = STATES[state] || STATES.idle
 
   const wrapRef = useRef(null)   // perspective + pointer surface
@@ -300,7 +301,7 @@ export default function AliveBuddy({
     <div
       ref={wrapRef}
       role="img"
-      aria-label={title || `WorkCoPilot buddy (${charName})`}
+      aria-label={title || t('buddyPicker.buddyAria', { name: charName })}
       title={title}
       style={{
         position: 'relative',
@@ -397,7 +398,7 @@ export function surprisePet() {
   } catch { return PETS[Math.floor(Math.random() * PETS.length)] }
 }
 
-export { CHARACTERS, PETS, CHARACTER_LABELS }
+export { CHARACTERS, PETS }
 
 const CHAR_KEY = 'wc.buddy.character'
 

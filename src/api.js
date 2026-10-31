@@ -143,6 +143,12 @@ export const api = {
   workMyCompany: () => req('GET', '/api/work/my-company'),
   // Executive productivity dashboard (company-scoped; no AI model or cost in it).
   workExecProductivity: (days) => req('GET', `/api/work/exec/productivity?days=${days || 30}`),
+  workExecOverview: (days) => req('GET', `/api/work/exec/overview?days=${days || 30}`),
+  // Executive-only Company Brain download (encrypted with the executive's export passphrase).
+  brainExportStatus: () => req('GET', '/api/work/brain/export/status'),
+  brainExportSetKey: (passphrase, mfaToken) => req('POST', '/api/work/brain/export/key', { passphrase, mfaToken }),
+  brainExportRevealKey: (mfaToken) => req('POST', '/api/work/brain/export/key/reveal', { mfaToken }),
+  brainExportPath: () => '/api/work/brain/export',   // POST; the UI fetches this as a binary blob (the .wcpx archive)
   // CSV export is a direct browser download (cookie-authed): link to this URL.
   workExecCsvUrl: (days) => `/api/work/exec/productivity.csv?days=${days || 30}`,
   // Billing (Stripe Checkout). workCheckout returns { url } to redirect to.
@@ -211,6 +217,35 @@ export const api = {
   // GRC / Sr PM / admin oversight (read-only data).
   workGrcRisks: () => req('GET', '/api/work/grc/risks'),
   workGrcStats: () => req('GET', '/api/work/grc/stats'),
+  // Teach workflows (trainer / company admin author; everyone sees published).
+  workflowsList: (state) => req('GET', `/api/work/workflows${state ? `?state=${encodeURIComponent(state)}` : ''}`),
+  workflowGet: (id) => req('GET', `/api/work/workflows/${encodeURIComponent(id)}`),
+  workflowCreate: (body) => req('POST', '/api/work/workflows', body),
+  workflowUpdate: (id, body) => req('PATCH', `/api/work/workflows/${id}`, body),
+  workflowPublish: (id) => req('POST', `/api/work/workflows/${id}/publish`),
+  workflowRevise: (id) => req('POST', `/api/work/workflows/${id}/revise`),
+  workflowRetire: (id) => req('POST', `/api/work/workflows/${id}/retire`),
+  workflowDelete: (id) => req('DELETE', `/api/work/workflows/${id}`),
+  // Wave 2 capture: upload a scrubbed frame -> { ref } for a step's `shot`; the path serves it back.
+  workflowFrameUpload: (dataUrl) => req('POST', '/api/work/workflows/frames', { dataUrl }),
+  workflowFramePath: (ref) => `/api/work/workflows/frames/${encodeURIComponent(ref)}`,
+  // Wave 3 part B: run a published workflow -> { sessionId, steps, taskUsage };
+  // open the guided console on sessionId (same as an assigned task's start).
+  workflowStart: (id) => req('POST', `/api/work/workflows/${encodeURIComponent(id)}/start`),
+  // Wave 3 part C: workflow incidents (trainers, PMs and above, admins, executives).
+  workflowIncidents: ({ state, workflow, limit } = {}) => req('GET', `/api/work/workflow-incidents?${new URLSearchParams({ ...(state ? { state } : {}), ...(workflow ? { workflow } : {}), ...(limit ? { limit: String(Number(limit)) } : {}) })}`),
+  workflowIncidentSetState: (id, state, note) => req('PATCH', `/api/work/workflow-incidents/${encodeURIComponent(id)}`, { state, note }),
+  workflowIncidentFramePath: (id) => `/api/work/workflow-incidents/${encodeURIComponent(id)}/frame`,
+  workflowIncidentAdopt: (id) => req('POST', `/api/work/workflow-incidents/${encodeURIComponent(id)}/adopt`),
+  // The signed-in person's workflow alerts: { alerts: [{ id, at, read, kind, workflowTitle, stepIndex, why, incidentId }], unread }.
+  workflowAlerts: (limit) => req('GET', `/api/work/workflow-incidents-alerts${limit ? `?limit=${Number(limit)}` : ''}`),
+  workflowAlertsRead: (id) => req('POST', '/api/work/workflow-incidents-alerts/read', { id: id || '*' }),
+  // Wave 3: read one draft step's frames -> { workflow } with steps[i].reading
+  // ({ controlLabel, controlKind, doneWhen, confidence }), a suggestion for review.
+  workflowReadStep: (id, stepId) => req('POST', `/api/work/workflows/${encodeURIComponent(id)}/steps/${encodeURIComponent(stepId)}/read`),
+  // Speech to text for one audio chunk (base64 or data URL) -> { text, segments|null };
+  // segments are relative to the chunk. Uses the company's own AI provider.
+  workTranscribe: (audio, mime, language) => req('POST', '/api/work/transcribe', { audio, mime, language }),
   workGrcLog: (projectId, limit) => req('GET', `/api/work/grc/log${projectId || limit ? `?${[projectId ? `project=${encodeURIComponent(projectId)}` : '', limit ? `limit=${Number(limit)}` : ''].filter(Boolean).join('&')}` : ''}`),
   // Project templates (team projects, Model B): a template is a planned task map
   // a PM / Sr PM / company admin assigns to many people, each getting their own
@@ -232,6 +267,29 @@ export const api = {
   // Removing a space ungroups its learnings (server rule); the reason is logged.
   workCompanyKbSpaceDelete: (id, reason) => req('DELETE', `/api/work/company/kb-spaces/${encodeURIComponent(id)}`, { reason: clean(reason || '') }),
   workCompanyLearningSpace: (learningId, space) => req('POST', `/api/work/company/learnings/${encodeURIComponent(learningId)}/space`, { space: space || null }),
+  // Company API keys (company admin; server/api_keys.js). GET carries the keys,
+  // the scope registry and whether a step-up code is required. The SECRET is in
+  // the create / rotate response ONLY and is never stored client-side beyond the
+  // show-once panel. body: { name, scopes, expiresInDays|null, ipAllowlist, mfaToken? }.
+  workCompanyApiKeys: () => req('GET', '/api/work/company/api-keys'),
+  workCompanyApiKeyCreate: (body) => req('POST', '/api/work/company/api-keys', { ...body, name: clean((body && body.name) || '') }),
+  workCompanyApiKeyRotate: (id, body) => req('POST', `/api/work/company/api-keys/${encodeURIComponent(id)}/rotate`, body || {}),
+  workCompanyApiKeyRevoke: (id) => req('DELETE', `/api/work/company/api-keys/${encodeURIComponent(id)}`),
+  // Company webhooks (company admin; server/webhook_events.js): endpoints, the
+  // event registry, per-endpoint deliveries. The signing secret comes back from
+  // create / rotate-secret ONLY (same show-once rule as API keys).
+  workCompanyWebhooks: () => req('GET', '/api/work/company/webhooks'),
+  workCompanyWebhookCreate: (body) => req('POST', '/api/work/company/webhooks', { ...body, description: clean((body && body.description) || '') }),
+  workCompanyWebhookUpdate: (id, patch) => req('PATCH', `/api/work/company/webhooks/${encodeURIComponent(id)}`, patch || {}),
+  workCompanyWebhookRotateSecret: (id) => req('POST', `/api/work/company/webhooks/${encodeURIComponent(id)}/rotate-secret`, {}),
+  workCompanyWebhookTest: (id) => req('POST', `/api/work/company/webhooks/${encodeURIComponent(id)}/test`, {}),
+  workCompanyWebhookDelete: (id) => req('DELETE', `/api/work/company/webhooks/${encodeURIComponent(id)}`),
+  workCompanyWebhookDeliveries: (id) => req('GET', `/api/work/company/webhooks/${encodeURIComponent(id)}/deliveries`),
+  workCompanyWebhookRetry: (deliveryId) => req('POST', `/api/work/company/webhooks/deliveries/${encodeURIComponent(deliveryId)}/retry`, {}),
+  // Launch link (employee): redeem the token a company app minted through
+  // POST /api/v1/workflows/:id/launch. The token travels in the URL FRAGMENT and
+  // reaches the server only here, in the body. -> { workflowId, title }.
+  workLaunchRedeem: (token) => req('POST', '/api/work/launch/redeem', { token }),
   // Company customers ("who the work is for"): the project picker reads the list;
   // the company console adds / renames / archives (Default is server-protected).
   workCompanyCustomers: () => req('GET', '/api/work/company/customers'),
@@ -625,7 +683,6 @@ export const api = {
   getInterviewSittings: (id) => req('GET', `/api/interviews/${id}/sittings`),
   // PHASE 2: live self-recording for the debrief (candidate's own mic, gated).
   aiSaid: (body) => req('POST', '/api/ai/said', body || {}),
-  aiTranscribe: (body) => req('POST', '/api/ai/transcribe', body || {}),
   getSelfRecord: () => req('GET', '/api/ai/self-record'),
   setSelfRecord: (on) => req('POST', '/api/ai/self-record', { on: !!on }),
   // PREMIUM: web-search provider pool for curation (admin).
@@ -663,9 +720,6 @@ export const api = {
   // The suggested read-aloud answer, fetched separately so the question voices
   // instantly (fast, human back-and-forth).
   practiceAnswer: (body) => req('POST', '/api/practice/answer', body),
-  // Server-side transcription of a recorded answer clip (the Electron shell can't
-  // use the browser SpeechRecognition), best-effort.
-  practiceTranscribe: (body) => req('POST', '/api/practice/transcribe', body),
   practiceEnd: (body) => req('POST', '/api/practice/end', body),
   // Separate practice-LICENCE check (the creation checkbox). Gates the Training
   // Assistant with a clear "Practice licence is not available" when off.

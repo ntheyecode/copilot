@@ -51,7 +51,7 @@ import { deriveKey, randomSalt, KDF } from './key_derive.js'
 import { attestReport, verifyReport } from './report_sign.js'
 import * as store from './store.js'
 import { ensureTenantDek, isUnlocked, open as brainOpen } from './brain_crypto.js'
-import { readSealedBlobsForExport } from './brain_store.js'
+import { readSealedBlobsForExport, readEmbeddingForExport } from './brain_store.js'
 
 export const WCPX_MAGIC = Buffer.from('WCPX1\n', 'utf8')   // 6 bytes
 export const WCPX_VERSION = 1
@@ -87,7 +87,9 @@ function sha256Hex(s) { return crypto.createHash('sha256').update(s).digest('hex
 // ---- brain envelope resolution --------------------------------------------
 // Returns one of:
 //   { present:false, mode:'none', note }                      (no brain / locked)
-//   { present:true,  mode:'envelope', dek:Buffer, blobs }     (ready to envelope)
+//   { present:true,  mode:'envelope', dek:Buffer, blobs, embedding, note? }  (ready to envelope)
+//   embedding = { dim, model:{id,rev,dim,quant} }, the brain's CURRENT geometry
+//   (follows a re-embed), or null with a note when it could not be read.
 export function resolveBrainForExport(companyId) {
   const blobs = readSealedBlobsForExport(companyId)
   if (!blobs || !blobs.present) {
@@ -117,7 +119,13 @@ export function resolveBrainForExport(companyId) {
   if (!Buffer.isBuffer(dek) || dek.length !== 32) {
     return { present: false, mode: 'none', note: 'The Company Brain key could not be resolved, so it was NOT included.' }
   }
-  return { present: true, mode: 'envelope', dek, blobs }
+  // Label the brain with the model + dim it is ACTUALLY on (brain_store owns that
+  // answer). Unreadable = no label plus a stated note, never a default guess.
+  try {
+    return { present: true, mode: 'envelope', dek, blobs, embedding: readEmbeddingForExport(companyId) }
+  } catch {
+    return { present: true, mode: 'envelope', dek, blobs, embedding: null, note: 'The Company Brain embedding model could not be read, so the archive does not label it.' }
+  }
 }
 
 // Re-wrap the DEK under scrypt(password, dekWrapSalt) and return the header dekWrap
@@ -171,11 +179,12 @@ export function buildCompanyArchive({ companyId, password } = {}) {
   if (brainRes.note) notes.push(brainRes.note)
   if (brainRes.present) {
     const dekWrap = wrapDekForExport(brainRes.dek, password, kdfParams)
-    headerBrain = { present: true, mode: 'envelope', dekWrap }
+    headerBrain = { present: true, mode: 'envelope', dekWrap, embedding: brainRes.embedding }
     payloadBrain = {
       mode: 'envelope',
       seal: 'brain_crypto-v1 (ver(1)=0x01|iv(12)|tag(16)|ciphertext) under the DEK in header.brain.dekWrap',
-      dim: brainRes.blobs.dim || 384,
+      dim: brainRes.embedding ? brainRes.embedding.dim : null,
+      model: brainRes.embedding ? brainRes.embedding.model : null,
       files: {
         index: brainRes.blobs.index ? brainRes.blobs.index.toString('base64') : null,
         vectors: brainRes.blobs.vectors ? brainRes.blobs.vectors.toString('base64') : null,

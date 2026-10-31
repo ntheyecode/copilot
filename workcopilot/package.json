@@ -7,18 +7,19 @@
   "author": "COE Security LLC",
   "license": "UNLICENSED",
   "scripts": {
+    "postinstall": "install-electron",
     "start": "electron .",
     "dist": "electron-builder --win --x64"
   },
   "dependencies": {
-    "electron-updater": "^6.3.9",
+    "electron-updater": "^6.8.11",
     "mammoth": "^1.12.1",
     "pdf-parse": "^2.4.5",
-    "tesseract.js": "^5.1.1"
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
-    "electron": "^30.0.0",
-    "electron-builder": "^24.0.0"
+    "electron": "^45.2.1",
+    "electron-builder": "^26.18.0"
   },
   "build": {
     "appId": "com.workcopilot.desktop",
@@ -45,12 +46,14 @@
         "nsis",
         "msi"
       ],
-      "certificateSha1": "71D78BF55B844DCEEC51ED85DD664BD617C5C71D",
-      "signingHashAlgorithms": [
-        "sha256"
-      ],
-      "rfc3161TimeStampServer": "http://timestamp.digicert.com",
-      "publisherName": "COE Security LLC"
+      "signtoolOptions": {
+        "certificateSha1": "71D78BF55B844DCEEC51ED85DD664BD617C5C71D",
+        "signingHashAlgorithms": [
+          "sha256"
+        ],
+        "rfc3161TimeStampServer": "http://timestamp.digicert.com",
+        "publisherName": "COE Security LLC"
+      }
     },
     "nsis": {
       "oneClick": true,

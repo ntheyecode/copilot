@@ -13,5 +13,28 @@ export default {
     youAsked: 'You asked:',
     planUpdated: 'Your plan was updated.',
     followUp: 'Ask a follow-up',
+    offerOpen: 'This step has been open for a while. Tell me what is in the way, or I can explain it another way.',
+    offerOpenStep: 'This step has been open for a while: <step></step>. Tell me what is in the way, or I can explain it another way.',
+    explainAgain: 'Explain this step again',
+    working: {
+      research: 'Looking this up',
+      analyze: 'Reading your screen',
+      stuck: 'Taking a closer look at this step',
+      question: 'Working on your question',
+    },
+    label: {
+      research: 'What I found',
+      analyze: 'What I see',
+      betterWay: 'A better way through',
+      explained: 'This step, explained',
+    },
+    resumeAt: 'Continue picks up at step {n}.',
+    resumeAtStep: 'Continue picks up at step {n}: <step></step>',
+    continue: {
+      plan: 'Continue with the updated plan',
+      step: 'Got it, back to the step',
+      guiding: 'Continue guiding',
+    },
+    backToStep: 'Back to step {n}.',
   },
 }

@@ -14,6 +14,13 @@
 // HTML. Image paths stay here (they are assets, not copy).
 import { Inbox, Briefcase, Users, ShieldCheck, UserCog, LayoutDashboard, Play, FolderKanban, Compass, FileText } from 'lucide-react'
 import { useT, renderRich } from '../../../i18n/index.jsx'
+// The newer surfaces use annotated screenshots (numbered callouts over the real
+// screen, help/AnnotatedShot.jsx), one small module per surface.
+import { ANNOTATED_SHOT_CSS } from './annotatedShot.css.js'
+import { WORKFLOWS_HELP } from './entries/workflowsHelp.jsx'
+import { TEACH_HELP } from './entries/teachHelp.jsx'
+import { ISSUES_HELP } from './entries/issuesHelp.jsx'
+import { EXEC_HELP } from './entries/execHelp.jsx'
 
 // One screenshot with its caption (the figure recipe the guide already uses).
 function Shot({ src, alt, caption, width = 1280, height }) {
@@ -90,6 +97,7 @@ export const DASHBOARD_HELP = [
       <Steps t={t} k="dashboardsHelp.queue.steps" />
     </>),
   },
+  WORKFLOWS_HELP,
   {
     id: 'dash-pm', k: 'pm', icon: Briefcase, show: (v) => v.showPm,
     body: (v, t) => (<>
@@ -142,6 +150,9 @@ export const DASHBOARD_HELP = [
       <Steps t={t} k="dashboardsHelp.grc.log.steps" />
     </>),
   },
+  TEACH_HELP,
+  ISSUES_HELP,
+  EXEC_HELP,
   {
     id: 'dash-admin', k: 'admin', icon: UserCog, show: (v) => v.isCompanyAdmin,
     body: (v, t) => (<>
@@ -166,6 +177,7 @@ export default function DashboardsHelp({ roleView }) {
   const t = useT()
   const v = roleView || {}
   return (<>
+    <style>{ANNOTATED_SHOT_CSS}</style>
     {dashboardHelpFor(v).map((s) => (
       <section key={s.id} id={'help-' + s.id}>
         <h2>{dashboardHelpLabel(t, s)}</h2>

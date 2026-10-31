@@ -28,6 +28,8 @@ const IMAGE_PROVIDERS = new Set(['openai', 'gemini'])
 // they are not the runtime's chat/vision model - they are named here because the
 // resolved runtime never carries an image model. If a provider renames one, the
 // provider's own error text is surfaced loudly (no silent swap, SUPREME RULE III).
+import { reportUsage, usageFromResponse, withKeySource } from './ai_usage.js'
+
 const OPENAI_IMAGE_MODEL = 'gpt-image-1'
 const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image'
 
@@ -64,6 +66,7 @@ async function openaiImage(apiKey, prompt) {
   })
   const data = await res.json().catch(() => null)
   if (!res.ok) throw httpErr(502, `Image provider error: ${data?.error?.message || `request failed (${res.status})`}`)
+  reportUsage({ provider: 'openai', model: OPENAI_IMAGE_MODEL, usage: usageFromResponse('openai', data), call: 'image' })
   const b64 = data?.data?.[0]?.b64_json
   if (!b64) throw httpErr(502, 'Image provider error: no image was returned.')
   return { dataUrl: `data:image/png;base64,${b64}` }
@@ -83,6 +86,7 @@ async function geminiImage(apiKey, prompt) {
   })
   const data = await res.json().catch(() => null)
   if (!res.ok) throw httpErr(502, `Image provider error: ${data?.error?.message || `request failed (${res.status})`}`)
+  reportUsage({ provider: 'gemini', model: GEMINI_IMAGE_MODEL, usage: usageFromResponse('gemini', data), call: 'image' })
   const parts = data?.candidates?.[0]?.content?.parts || []
   const img = parts.find((pt) => pt && pt.inlineData && pt.inlineData.data)
   if (!img) {
@@ -96,7 +100,10 @@ async function geminiImage(apiKey, prompt) {
 
 // Resolve a runtime (provider + key) to an image. Returns { dataUrl } or throws.
 // rt is { providerId, apiKey, chatModel, visionModel } from resolveWorkRuntime.
-async function imageFromRuntime(rt, prompt) {
+function imageFromRuntime(rt, prompt) {
+  return withKeySource(rt && rt.keySource, () => imageOnKey(rt, prompt))
+}
+async function imageOnKey(rt, prompt) {
   if (!rt || !rt.apiKey) throw httpErr(503, 'AI is not configured for image generation.')
   if (rt.providerId === 'openai') return openaiImage(rt.apiKey, prompt)
   if (rt.providerId === 'gemini') return geminiImage(rt.apiKey, prompt)

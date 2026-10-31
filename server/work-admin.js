@@ -117,6 +117,7 @@ function sessionRow(s, nameById) {
 
 import { buildCompanyInvoice } from './company_invoice.js'
 import { sendAccountWelcomeAsync } from './emails.js'
+import { companyCreationRefusal } from './edition.js'
 
 // A strong throwaway password for accounts created without one (the person sets
 // their own via the emailed set-password link).
@@ -318,6 +319,10 @@ export function registerWorkAdminRoutes(app, deps = {}) {
     res.json({ companies: store.listCompanies() })
   }))
   app.post('/api/work/admin/companies', requireAuth, superGate, w((req, res) => {
+    // Edition rule: many tenants (saas_companies), exactly one (single_company,
+    // on-prem and managed), or none (individual-only editions).
+    const refused = companyCreationRefusal(() => store.listCompanies().length)
+    if (refused) return res.status(refused.status).json(refused.body)
     const b = req.body || {}
     const c = store.createCompany({
       name: b.name, plan: b.plan, seats: b.seats, seatsByTier: b.seatsByTier,
@@ -440,6 +445,13 @@ export function registerWorkAdminRoutes(app, deps = {}) {
   }))
   app.post('/api/work/admin/leads/clear', requireAuth, superGate, w((req, res) => {
     res.json(store.clearWorkLeads({ reason: reasonBody(req), by: req.user.username }))
+  }))
+  // Run the orphan workflow-frame sweep now (it also runs daily). Same rule and
+  // 24h grace as the scheduled run; returns counts only, never file names.
+  app.post('/api/work/admin/workflow-frames/sweep', requireAuth, superGate, w((req, res) => {
+    const r = store.sweepOrphanWorkflowFrames()
+    if (r.removed) console.log(`[work] workflow frames: removed ${r.removed} orphan frame(s) (manual run)`)
+    res.json(r)
   }))
   app.delete('/api/work/admin/tickets/:id', requireAuth, superGate, w((req, res) => {
     res.json(store.deleteWorkTicket(req.params.id, { reason: reasonBody(req), by: req.user.username }))

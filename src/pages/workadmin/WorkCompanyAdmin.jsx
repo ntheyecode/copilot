@@ -15,7 +15,7 @@ import {
   Loader2, ShieldAlert, LogOut, Plus, Trash2, Check, Info, KeyRound, Lock, AlertTriangle,
   Building2, UserCog, RefreshCw, Receipt, Copy, Clock, Mail, ChevronDown, ChevronRight,
   FileText, Download, Activity, Globe, Upload, Brain, X, Blocks, Camera, BookOpen, Gauge,
-  Network, Briefcase,
+  Network, Briefcase, Code2,
 } from 'lucide-react'
 import { api } from '../../api.js'
 import { useT } from '../../i18n/index.jsx'
@@ -30,13 +30,15 @@ import HelpCompany from './sections/HelpCompany.jsx'
 import CompanyPoolCard from './sections/CompanyPoolCard.jsx'
 import GuidanceDepth from './sections/GuidanceDepth.jsx'
 import Customers from './sections/Customers.jsx'
+import ApiKeys from './sections/ApiKeys.jsx'
+import Webhooks from './sections/Webhooks.jsx'
 import { DEPTH_CHOICE_CSS } from './sections/DepthChoice.jsx'
 import { WORKADMIN_CSS } from './workadmin.css.js'
 import { Loading, ErrorBox, EmptyState, Spinning, SavedTag, RecRow, EditToggle, useReasonModal } from './sections/_shared.jsx'
 import { Meter, VIZ_CSS } from './sections/_viz.jsx'
 import { AiSourceChoice, AI_SOURCE_CHOICE_CSS } from './sections/AiSourceChoice.jsx'
 import { aiSetupOf } from '../../shared/ai_source_options.js'
-import { COMPANY_ROLE_OPTIONS, WORK_FLOW_OPTIONS, normalizeFlow } from '../../shared/work_roles_options.js'
+import { COMPANY_ROLE_OPTIONS, WORK_FLOW_OPTIONS, normalizeFlow, GRANT_OPTIONS, canGrantTrainer, hasTrainerGrant } from '../../shared/work_roles_options.js'
 import * as SSO from '../../shared/sso_guide.js'
 import { OIDC_PROVIDER_LABELS as SSO_PROVIDER_LABELS, OIDC_PROVIDER_IDS as SSO_PROVIDER_ORDER } from '../../shared/oidc_providers.js'
 
@@ -77,6 +79,7 @@ const SECTIONS = [
   { id: 'brainsecurity', label: 'companyAdmin.nav.brainsecurity', icon: Lock, title: 'companyAdmin.sections.brainsecurity.title', sub: 'companyAdmin.sections.brainsecurity.sub' },
   { id: 'alerts', label: 'companyAdmin.nav.alerts', icon: ShieldAlert, title: 'companyAdmin.sections.alerts.title', sub: 'companyAdmin.sections.alerts.sub' },
   { id: 'integrations', label: 'companyAdmin.nav.integrations', icon: Globe, title: 'companyAdmin.sections.integrations.title', sub: 'companyAdmin.sections.integrations.sub' },
+  { id: 'developer', label: 'companyAdmin.nav.developer', icon: Code2, title: 'companyAdmin.sections.developer.title', sub: 'companyAdmin.sections.developer.sub' },
   { id: 'sessions', label: 'companyAdmin.nav.sessions', icon: Activity, title: 'companyAdmin.sections.sessions.title', sub: 'companyAdmin.sections.sessions.sub' },
   { id: 'tickets', label: 'companyAdmin.nav.tickets', icon: LifeBuoy, title: 'companyAdmin.sections.tickets.title', sub: 'companyAdmin.sections.tickets.sub' },
   { id: 'help', label: 'companyAdmin.nav.help', icon: BookOpen, title: 'companyAdmin.sections.help.title', sub: 'companyAdmin.sections.help.sub' },
@@ -525,7 +528,7 @@ function OverviewSection({ company, onOpen }) {
       </div>
 
       {company && aiReady === false && (
-        <div className="wka-note" style={{ color: 'var(--wka-amber)' }}><AlertTriangle size={14} /> {company.aiReason || t('companyAdmin.overview.aiNotConfigured')} {company.aiSource === 'company' ? <button type="button" className="wka-btn sm ghost" style={{ marginLeft: 6 }} onClick={() => onOpen && onOpen('ai')}>{t('companyAdmin.overview.aiSetKeys')}</button> : ''}</div>
+        <div className="wka-note" style={{ color: 'var(--wka-amber)' }}><AlertTriangle size={14} /> {company.aiReasonCode ? t(`companyAdmin.overview.aiReason.${company.aiReasonCode}`) : t('companyAdmin.overview.aiNotConfigured')} {company.aiSource === 'company' ? <button type="button" className="wka-btn sm ghost" style={{ marginLeft: 6 }} onClick={() => onOpen && onOpen('ai')}>{t('companyAdmin.overview.aiSetKeys')}</button> : ''}</div>
       )}
 
       <CompanyPoolCard onOpen={onOpen} />
@@ -624,7 +627,10 @@ function TeamSection({ meId, onCompany }) {
         // The license summary carries usage; the user list carries each person's
         // work flow (worker / independent / mixed). Merge by id, ONE row per person.
         const flowOf = new Map((r.users || []).map((u) => [String(u.id), normalizeFlow(u.workFlow)]))
-        setMembers((lic.members || []).map((m) => ({ ...m, workFlow: flowOf.get(String(m.id)) || 'independent' })))
+        // The user list also carries each person's additive grants (trainer); merge
+        // them in so the Team row reflects (and can toggle) the current grant.
+        const grantsOf = new Map((r.users || []).map((u) => [String(u.id), Array.isArray(u.grants) ? u.grants : []]))
+        setMembers((lic.members || []).map((m) => ({ ...m, workFlow: flowOf.get(String(m.id)) || 'independent', grants: grantsOf.get(String(m.id)) || [] })))
         setPool(lic.poolSeconds || 0)
         // Default the add mode to email when SSO is connected, else password.
         setMode(co && co.sso && co.sso.connected ? 'email' : 'password')
@@ -785,6 +791,19 @@ function TeamSection({ meId, onCompany }) {
                               onChange={(e) => patchUser(m, { companyRole: e.target.value })}>
                               {COMPANY_ROLE_OPTIONS.map((o) => <option key={o.id} value={o.id}>{t(o.labelKey)}</option>)}
                             </select>
+                            {/* Additive trainer grant: author guided workflows. Only a
+                                member or project-manager role may hold it (canGrantTrainer),
+                                so the checkbox appears for those roles only; the server
+                                drops the grant automatically if the role changes to one
+                                that cannot hold it. */}
+                            {canGrantTrainer(m.companyRole || 'member') && (
+                              <label className="wka-check" title={t('companyAdmin.grants.trainerHelp')} style={{ marginTop: 6, fontSize: 12 }}>
+                                <input type="checkbox" disabled={rowBusy === m.id}
+                                  checked={hasTrainerGrant(m.grants)}
+                                  onChange={(e) => patchUser(m, { grants: e.target.checked ? ['trainer'] : [] })} />
+                                {t('companyAdmin.grants.trainer')}
+                              </label>
+                            )}
                           </td>
                           <td>
                             <select className="wka-select" value={m.workFlow || 'independent'} disabled={rowBusy === m.id} title={t('companyAdmin.team.flowHelp')} aria-label={t('companyAdmin.team.flow')}
@@ -1906,6 +1925,7 @@ export default function WorkCompanyAdmin() {
       case 'activity': return <ActivitySection />
       case 'alerts': return <AlertsSection onSeen={alertsSeen} />
       case 'integrations': return <IntegrationsSection />
+      case 'developer': return (<><ApiKeys /><Webhooks /></>)
       case 'settings': return <SettingsSection viewer={viewer} company={company} onProfile={(u) => setViewer(u)} />
       case 'overview':
       default: return <OverviewSection company={company} onOpen={setActive} />

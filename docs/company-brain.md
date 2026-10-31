@@ -272,6 +272,8 @@ company-scoped (solo users have no brain):
 | `GET /api/work/brain/inventory` | company admin (superadmin passes) | `stats` (chunks, active sources, dims, on-disk bytes, resident flag) + a per-source listing. |
 | `DELETE /api/work/brain/sources/:id` | company admin | Remove one source's chunks (reason required, >= 3 chars; audit-logged). |
 | `POST /api/work/brain/clear` | company admin | Remove every source (reason required; audit-logged). |
+| `POST /api/work/brain/query` | company user | Read-only retrieval: `{ q, topK? }` -> top matching SCRUBBED chunks with provenance (`source` + `revision`) and a relevance `score`. See section 9. |
+| `POST /api/work/brain/reembed` | company admin | Rebuild the tenant's vectors under a different catalog model `{ model, batchSize? }`, with NO re-upload. Audit-logged. See section 10. |
 
 Key-custody routes are documented in `docs/company-brain-security.md`.
 
@@ -307,7 +309,140 @@ elapsed (see the security doc).
 
 ---
 
-## 8. Related documents
+## 9. Query interface (read-only, company-scoped)
+
+`POST /api/work/brain/query` (`server/brain_query.js`, orchestration; the route in
+`server/index.js` is thin) lets a company user query their OWN tenant's brain
+without exporting it. It reuses the one embedder and the one hybrid retriever
+(`retrieveForGoal`) - there is no parallel retrieval path - and returns only
+already-scrubbed chunk text plus provenance and a relevance score.
+
+Request: `{ q: string, topK?: number }`. `topK` is clamped to `[1, 20]` (default
+6). Response:
+
+```
+{
+  matched: boolean,            // true when at least one source matched
+  topK: number,                // the effective (clamped) topK
+  semanticSearchReady: boolean,// false when the on-device embedder is not serving
+  hits: [ { text, score, source: { sourceId, title, revision } } ],
+  note?: string,               // present when matched === false (stated no-match)
+  semanticNote?: string        // present when semanticSearchReady === false
+}
+```
+
+What it returns and what it never returns:
+- `text` is the already-scrubbed chunk text. `source` carries the provenance
+  (`sourceId`, `title`, `revision`). `score` is the fused relevance (higher is
+  closer). It returns NO vectors, NO content/chunk hashes, NO raw screens or
+  secrets, and NO chat AI provider/model name.
+- Company scope: the only tenant read is `req.workUser.companyId`.
+
+Never a silent empty (SUPREME RULE III):
+- A LOCKED customer-held brain returns HTTP 423 with code `BRAIN_LOCKED` and a
+  message telling the caller to unlock it (the store throws `BRAIN_LOCKED` from
+  `loadTenant`; the module maps it).
+- An EMPTY brain (no active source) returns HTTP 409 `BRAIN_EMPTY`.
+- An empty query returns HTTP 400 `BAD_QUERY`.
+- A genuine no-match returns HTTP 200 with `matched:false` and a stated `note`
+  (nothing is fabricated). This is honest, not silent.
+- When the on-device embedding model is not serving, the request still succeeds in
+  keyword-only mode and says so in `semanticNote` (honest degradation, never a
+  silent drop).
+
+## 10. Re-embedding under a larger or newer model
+
+The store keeps the scrubbed chunk TEXT, not only vectors (`texts.sealed`), so a
+tenant's vectors can be rebuilt by a different embedding model with NO re-upload.
+
+- **Model catalog (single source of truth):** `server/brain_model.js`
+  `EMBED_MODELS` lists the available models; all are the standard, open bge family
+  (so the one bge query prefix is valid for every one). `EMBED` is the default pin,
+  derived from the catalog but kept as the canonical 4-field public shape
+  (`{ id, rev, dim, quant }`) the desktop and the manifest rely on. The larger
+  entries today are `bge-base-en-v1.5` (dim 768) and `bge-large-en-v1.5` (dim
+  1024). An unknown model name is a STATED error, never a silent default.
+- **Dimension-aware store:** `server/brain_store.js` now carries each tenant's own
+  `dim` (read from its manifest; default 384 for every existing tenant, so legacy
+  tenants load byte-identically). Scoring, persistence, and the query-vector guard
+  all use the tenant's dim. A query vector of the wrong dim throws rather than
+  scoring past the end.
+- **Model-aware retrieval:** `retrieveForGoal` embeds the query under the SAME
+  model the tenant's passages were embedded with (resolved from the active
+  sources' `embeddingModelVersion`, default `EMBED`), so query and passage vectors
+  always share one space and one dim. `buildManifest` reports the tenant's ACTUAL
+  pinned model (still normalized to the 4-field shape).
+- **Atomic swap:** `server/brain_reembed.js` `reembedTenant` reads the chunk text
+  (`brainStore.listChunksWithText`), embeds it in batches under the target model
+  (`embedPassagesWith`), recomputes each `chunkHash`, and calls
+  `brainStore.reembed`, which replaces every vector + the tenant `dim` + each
+  source's pinned model, and re-seals any re-scrubbed text, in ONE persist. It is
+  all-or-nothing: `reembed` asserts exactly one new vector per resident chunk
+  (never silently truncates), so an abort or crash mid-run leaves the OLD vectors
+  intact. Re-running simply redoes the work from the unchanged source; that is the
+  resumability guarantee (there is deliberately no half-swapped, mixed-dim state on
+  disk). Progress is surfaced per batch via an `onProgress` callback and an
+  `AbortSignal` is honored before the swap.
+- **Optional policy re-scrub:** when a new `policy` is supplied, each chunk's
+  stored (already-scrubbed) text is re-scrubbed under it before embedding (which
+  can only redact MORE), the re-scrubbed text is re-sealed, and the policy version
+  is bumped. When omitted, the text and policy version are preserved.
+- **Route:** `POST /api/work/brain/reembed` (company admin) runs it synchronously
+  and returns `{ ok, chunks, sources, dim, model:{name,id,rev,dim}, policyVersion,
+  batches }`. The embedding-model identifier here is a neutral, standard id of the
+  same kind already in the manifest (for portability); it is NOT the chat AI
+  provider/model. For a very large corpus this should move to a background job with
+  streamed progress (the function already supports `onProgress`/`signal`); the
+  synchronous route is the V1.
+
+Export label: the executive export (`customer_export.js`) labels the brain with
+its CURRENT geometry, read by `brain_store.readEmbeddingForExport` once the DEK is
+resolvable: `header.brain.embedding = { dim, model:{id,rev,dim,quant} }`, with the
+same `dim` and `model` on `payload.brain`. `dim` is the manifest's own dim (what the
+sealed vectors are) and `model` comes from `brain_model.activeEmbedModel`, the one
+rule retrieval and the sync manifest also use, so after a re-embed all three
+report the new model. If the manifest cannot be read the label is `null` with a
+stated note, never a default guess.
+
+## 11. External-platform query access (company API keys - BUILT)
+
+Requirement: a company-scoped, admin-issued, hashed, revocable token so another
+platform can query the brain without a browser session. Built as the general
+**company API key** of the integration API (`docs/integration-api.md`); brain
+access is the `brain:query` scope on `POST /api/v1/brain/query`, which calls the
+same `queryBrain` as the session route. The session route
+`POST /api/work/brain/query` stays session-only and never accepts a key.
+
+What was built, against the design proposed here:
+- **Shape:** `wcp_live_<16 hex id>_<43 base64url secret>` (256-bit secret). The
+  public id makes lookup O(1); the secret is shown once at creation or rotation.
+- **Hash (departure, stronger at the same cost):** HMAC-SHA256 with a server pepper
+  derived (HKDF) from the platform KEK, over `id.salt.secret` with a per-key random
+  salt, compared in constant time. The proposal was plain SHA-256. A slow KDF was
+  rejected on purpose: the secret already has 256 bits of entropy, and scrypt on
+  every API call would turn auth into a denial-of-service lever. The pepper means a
+  leaked database alone cannot test a guess.
+- **Scopes (extension):** one registry, `server/api_scopes.js`: `brain:query`,
+  `workflows:read`, `workflows:run`, `incidents:read`, `webhooks:manage`. No scope
+  reaches billing, users, keys, brain ingest/export or company settings.
+- **Record:** `{ id, companyId, name, scopes, hashAlg, salt, hash, last4, createdBy,
+  createdAt, lastUsedAt, expiresAt?, ttlDays?, ipAllowlist[], revokedAt?, rotatedFromId?,
+  rotatedToId? }` in `db.apiKeys` (owned by store.js through `api_keys.js`; the
+  persistence home question is settled by the store-context factory pattern, not a
+  separate file). Revoke keeps the record, so a leaked copy keeps failing.
+- **Routes (company admin, session):** `GET/POST /api/work/company/api-keys`,
+  `POST /api/work/company/api-keys/:id/rotate`, `DELETE /api/work/company/api-keys/:id`,
+  `GET /api/work/company/api-keys/:id/usage`. Create and rotate need an MFA step-up
+  on the hosted service when the admin has MFA (shared `mfa_step_up.js`, the policy
+  extracted from `export_key.js`), and are refused during a support impersonation.
+- **Middleware:** `requireApiKey(scope)` (`server/api_key_auth.js`) sets only
+  `req.apiPrincipal = { kind:'api_key', keyId, companyId, scopes }`, never
+  `req.workUser`. Order: key valid and live, company enabled, IP allowlist, per-key
+  rate limit (429 + Retry-After), scope.
+- **Audit:** create, rotate, revoke go to the admin action log; every use is
+  aggregated per key per UTC hour (`db.apiKeyUsage`, bounded).
+
+## 12. Related documents
 
 - `docs/company-brain-security.md` - envelope encryption, platform vs
   customer-held key custody, the honest security ceiling, and the custody routes.

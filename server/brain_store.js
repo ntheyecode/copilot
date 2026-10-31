@@ -2,7 +2,7 @@
 //
 // Pure-JS brute-force cosine VectorBrainAdapter. One instance: `brainStore`.
 // Per-tenant ENCRYPTED files under BRAIN_DIR = path.join(DATA_DIR,'brain',companyId)
-// with DATA_DIR = process.env.WORK_DATA_DIR || path.join(__dirname,'data').
+// with DATA_DIR from data_dir.js (WORK_DATA_DIR, else <server>/data).
 //
 // Design (why this layout):
 //   The retrieval hot path scores every chunk vector with a dot product (vectors
@@ -47,17 +47,23 @@ import {
   ensureTenantDek,
   isUnlocked,
 } from './brain_crypto.js'
+import { activeEmbedModel, publicEmbedModel } from './brain_model.js'
+import { resolveDataDir } from './data_dir.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// Mirror store.js: WORK_DATA_DIR relocates all on-disk state; default <server>/data.
-const DATA_DIR = process.env.WORK_DATA_DIR || path.join(__dirname, 'data')
+// Same resolver as store.js (data_dir.js): WORK_DATA_DIR relocates all on-disk state.
+const DATA_DIR = resolveDataDir()
 const BRAIN_ROOT = path.join(DATA_DIR, 'brain')
 
-// Embedding geometry is fixed by the pinned model (bge-small-en-v1.5): dim 384,
-// L2-normalized, so cosine similarity reduces to a dot product. Kept local so this
-// module is fully self-contained (no import of brain_model for the hot path).
-const DIM = 384
+// Default embedding geometry (bge-small-en-v1.5): dim 384, L2-normalized, so
+// cosine similarity reduces to a dot product. A tenant's ACTUAL dim is stored in
+// its manifest and carried on the resident entry (`resident.dim`), so a tenant
+// re-embedded by a larger/newer model (dim 768, 1024, ...) loads, scores, and
+// persists at its own geometry. DEFAULT_DIM is used only to seed a brand-new or
+// empty tenant, and as the geometry a fresh first upsert adopts. Kept local so
+// this module stays self-contained (no import of brain_model for the hot path).
+const DEFAULT_DIM = 384
 const INDEX_VERSION = 1
 
 const LRU_LIMIT = (() => {
@@ -154,7 +160,8 @@ function ensureBrainDir(companyId) {
 //   tombstones: Tombstone[]
 //   chunks:     ChunkMeta[]   (parallel to vectors; {chunkId,sourceId,sourceTitle,ordinal,contentHash,chunkHash})
 //   byId:       Map<chunkId, index into chunks>
-//   vectors:    Float32Array  (chunks.length * DIM, chunk i at [i*DIM, (i+1)*DIM))
+//   dim:        number        (this tenant's embedding dimension)
+//   vectors:    Float32Array  (chunks.length * dim, chunk i at [i*dim, (i+1)*dim))
 //   sealedText: Map<chunkId, Buffer>  (per-chunk ciphertext; decrypted only for returned hits)
 // }
 const _lru = new Map()
@@ -183,6 +190,7 @@ function emptyResident() {
     tombstones: [],
     chunks: [],
     byId: new Map(),
+    dim: DEFAULT_DIM,
     vectors: new Float32Array(0),
     sealedText: new Map(),
   }
@@ -216,6 +224,10 @@ function loadTenant(companyId) {
     const indexSealed = fs.readFileSync(indexPath)
     const manifest = JSON.parse(decryptForTenant(key, indexSealed).toString('utf8'))
     const chunks = Array.isArray(manifest.chunks) ? manifest.chunks : []
+    // The tenant's own embedding dim (written at persist). Older manifests, and
+    // any without a positive dim, fall back to the default so existing tenants
+    // load exactly as before.
+    const dim = (Number.isInteger(manifest.dim) && manifest.dim > 0) ? manifest.dim : DEFAULT_DIM
 
     const vectorsPath = path.join(dir, VECTORS_FILE)
     let vectors
@@ -226,7 +238,7 @@ function loadTenant(companyId) {
         throw new Error(`[brain_store] tenant ${key} index lists ${chunks.length} chunks but ${VECTORS_FILE} is missing`)
       }
       const vecSealed = fs.readFileSync(vectorsPath)
-      vectors = decryptVectorForTenant(key, vecSealed, chunks.length * DIM)
+      vectors = decryptVectorForTenant(key, vecSealed, chunks.length * dim)
     }
 
     const sealedText = new Map()
@@ -249,6 +261,7 @@ function loadTenant(companyId) {
       tombstones: Array.isArray(manifest.tombstones) ? manifest.tombstones : [],
       chunks,
       byId,
+      dim,
       vectors,
       sealedText,
     }
@@ -268,7 +281,7 @@ function persistTenant(companyId, resident) {
 
   const manifest = {
     v: INDEX_VERSION,
-    dim: DIM,
+    dim: resident.dim,
     sources: Array.from(resident.sources.values()),
     tombstones: resident.tombstones,
     chunks: resident.chunks.map((c) => ({
@@ -301,25 +314,39 @@ function persistTenant(companyId, resident) {
 }
 
 // ---- helpers ---------------------------------------------------------------
-function toFloat32(vec) {
+// Validate a vector against an EXPECTED dim (the tenant's own dim). A length
+// mismatch throws loudly - a wrong-dim vector is never stored or scored.
+function toFloat32(vec, dim) {
   if (vec instanceof Float32Array) {
-    if (vec.length !== DIM) throw new Error(`[brain_store] vector length ${vec.length} != dim ${DIM}`)
+    if (vec.length !== dim) throw new Error(`[brain_store] vector length ${vec.length} != dim ${dim}`)
     return vec
   }
   if (Array.isArray(vec)) {
-    if (vec.length !== DIM) throw new Error(`[brain_store] vector length ${vec.length} != dim ${DIM}`)
+    if (vec.length !== dim) throw new Error(`[brain_store] vector length ${vec.length} != dim ${dim}`)
     return Float32Array.from(vec)
   }
   throw new Error('[brain_store] vector must be a Float32Array or number[]')
 }
 
+// For a fresh/empty tenant, the FIRST stored vector establishes the tenant dim.
+// For a non-empty tenant, the dim is fixed (only a full re-embed changes it), so
+// an incoming vector of a different length is a loud error, never a silent store.
+function resolveUpsertDim(resident, firstVec) {
+  if (resident.chunks.length > 0) return resident.dim
+  const len = firstVec instanceof Float32Array || Array.isArray(firstVec) ? firstVec.length : 0
+  if (!(len > 0)) throw new Error('[brain_store] cannot establish tenant dim from an empty first vector')
+  return len
+}
+
 function rebuildVectors(resident, vectorById) {
-  // vectorById: Map<chunkId, Float32Array(DIM)> for the current chunk set.
-  const out = new Float32Array(resident.chunks.length * DIM)
+  // vectorById: Map<chunkId, Float32Array(dim)> for the current chunk set.
+  const dim = resident.dim
+  const out = new Float32Array(resident.chunks.length * dim)
   resident.chunks.forEach((c, i) => {
     const v = vectorById.get(c.chunkId)
     if (!v) throw new Error(`[brain_store] internal: no vector for chunk ${c.chunkId} during rebuild`)
-    out.set(v, i * DIM)
+    if (v.length !== dim) throw new Error(`[brain_store] internal: vector for ${c.chunkId} is dim ${v.length}, tenant dim ${dim}`)
+    out.set(v, i * dim)
   })
   resident.vectors = out
   resident.byId = new Map()
@@ -327,7 +354,8 @@ function rebuildVectors(resident, vectorById) {
 }
 
 function residentVectorAt(resident, i) {
-  return resident.vectors.subarray(i * DIM, (i + 1) * DIM)
+  const dim = resident.dim
+  return resident.vectors.subarray(i * dim, (i + 1) * dim)
 }
 
 function currentVectorMap(resident) {
@@ -426,6 +454,10 @@ export const brainStore = {
     const resident = loadTenant(key)
     if (records.length === 0) return { upserted: 0, bytes: statBytes(key) }
 
+    // A fresh tenant adopts the first vector's dim; an existing tenant keeps its
+    // own. This runs before any mutation so a dim mismatch aborts the whole batch.
+    resident.dim = resolveUpsertDim(resident, records[0] && records[0].vector)
+
     const vectorById = currentVectorMap(resident)
     // Snapshot existing vectors into concrete buffers (subarrays alias the resident
     // Float32Array we are about to replace).
@@ -435,7 +467,7 @@ export const brainStore = {
     let upserted = 0
     for (const rec of records) {
       if (!rec || !rec.chunkId) throw new Error('[brain_store] upsert: each record needs a chunkId')
-      const vec = toFloat32(rec.vector)
+      const vec = toFloat32(rec.vector, resident.dim)
       const meta = {
         chunkId: rec.chunkId,
         sourceId: rec.sourceId,
@@ -471,7 +503,11 @@ export const brainStore = {
     const k = Number.isInteger(topK) && topK > 0 ? topK : 0
     if (k === 0 || resident.chunks.length === 0) return []
 
-    const q = toFloat32(queryVector)
+    const dim = resident.dim
+    // Guard: a query vector must match the tenant's geometry. A mismatch (e.g. a
+    // 384-dim query against a tenant re-embedded to 768) throws instead of reading
+    // past the end and scoring NaN - a wrong result is never served silently.
+    const q = toFloat32(queryVector, dim)
     const filter = opts.filterSourceIds ? new Set(opts.filterSourceIds) : null
     const minScore = typeof opts.minScore === 'number' ? opts.minScore : -Infinity
 
@@ -479,9 +515,9 @@ export const brainStore = {
     for (let i = 0; i < resident.chunks.length; i++) {
       const c = resident.chunks[i]
       if (filter && !filter.has(c.sourceId)) continue
-      const base = i * DIM
+      const base = i * dim
       let dot = 0
-      for (let d = 0; d < DIM; d++) dot += q[d] * resident.vectors[base + d]
+      for (let d = 0; d < dim; d++) dot += q[d] * resident.vectors[base + d]
       if (dot < minScore) continue
       scored.push({ i, score: dot })
     }
@@ -528,6 +564,10 @@ export const brainStore = {
       })
     }
 
+    // Dim is fixed for a non-empty tenant; a brand-new tenant adopts it from the
+    // first incoming vector. Decided before mutation so a mismatch aborts cleanly.
+    if (records.length) resident.dim = resolveUpsertDim(resident, records[0] && records[0].vector)
+
     const vectorById = currentVectorMap(resident)
     for (const [id, sub] of vectorById) vectorById.set(id, Float32Array.from(sub))
 
@@ -547,7 +587,7 @@ export const brainStore = {
     let upserted = 0
     for (const rec of records) {
       if (!rec || !rec.chunkId) throw new Error('[brain_store] supersede: each record needs a chunkId')
-      const vec = toFloat32(rec.vector)
+      const vec = toFloat32(rec.vector, resident.dim)
       resident.chunks.push({
         chunkId: rec.chunkId,
         sourceId: rec.sourceId != null ? rec.sourceId : sourceId,
@@ -622,7 +662,7 @@ export const brainStore = {
     return {
       chunks: resident.chunks.length,
       sources: activeSources,
-      dims: DIM,
+      dims: resident.dim,
       bytes: statBytes(key),
       resident: _lru.has(key),
     }
@@ -632,6 +672,85 @@ export const brainStore = {
     const key = String(companyId)
     const resident = loadTenant(key)
     return Array.from(resident.sources.values()).map((s) => ({ ...s, chunkHashes: [...(s.chunkHashes || [])] }))
+  },
+
+  // Enumerate EVERY resident chunk with its decrypted (already-scrubbed) text and
+  // metadata. This is the "brain is ready to be re-embedded" read: it confirms the
+  // store keeps the raw chunk TEXT, not only vectors, so a bigger model can rebuild
+  // the vectors with NO re-upload. Decrypts every chunk's text, so it is for the
+  // admin re-embed path only, never the hot retrieval path. A decrypt failure
+  // THROWS (never a silent empty), consistent with query().
+  async listChunksWithText(companyId) {
+    const key = String(companyId)
+    const resident = loadTenant(key)
+    return resident.chunks.map((c) => {
+      const sealed = resident.sealedText.get(c.chunkId)
+      const text = sealed ? decryptForTenant(key, sealed).toString('utf8') : ''
+      return {
+        chunkId: c.chunkId,
+        sourceId: c.sourceId,
+        sourceTitle: c.sourceTitle,
+        ordinal: c.ordinal,
+        contentHash: c.contentHash,
+        chunkHash: c.chunkHash,
+        text,
+      }
+    })
+  },
+
+  // ATOMIC re-embed swap: replace EVERY chunk's vector (and chunkHash) with vectors
+  // produced by a different embedding model, set the tenant's new `dim`, and stamp
+  // the new embedding-model version (and effective policy version) onto every
+  // source row - all in ONE persist. The caller (brain_reembed.js) owns the slow
+  // embedding; this method owns the on-disk mutation (SUPREME RULE II: the store is
+  // the single owner of the layout). It is all-or-nothing: `records` MUST cover
+  // every resident chunk exactly, or it throws BEFORE any write, so an interrupted
+  // re-embed never leaves a half-swapped, mixed-dim brain. Optionally re-seals each
+  // chunk's text when `text` is supplied (a policy re-scrub can only redact more).
+  async reembed(companyId, { dim, records, modelVersion, policyVersion } = {}) {
+    const key = String(companyId)
+    if (!(Number.isInteger(dim) && dim > 0)) throw new Error('[brain_store] reembed: dim must be a positive integer')
+    if (!Array.isArray(records)) throw new Error('[brain_store] reembed: records must be an array')
+    const resident = loadTenant(key)
+    if (resident.chunks.length === 0) return { chunks: 0, dim: resident.dim, sources: 0 }
+
+    const byId = new Map()
+    for (const r of records) {
+      if (!r || !r.chunkId) throw new Error('[brain_store] reembed: each record needs a chunkId')
+      byId.set(String(r.chunkId), r)
+    }
+    // Never silently truncate: there must be exactly one new vector per resident chunk.
+    if (byId.size !== resident.chunks.length || records.length !== resident.chunks.length) {
+      throw new Error(`[brain_store] reembed: expected ${resident.chunks.length} records, got ${records.length} (${byId.size} unique chunkIds)`)
+    }
+
+    const vectorById = new Map()
+    for (const c of resident.chunks) {
+      const r = byId.get(String(c.chunkId))
+      if (!r) throw new Error(`[brain_store] reembed: missing new vector for chunk ${c.chunkId}`)
+      vectorById.set(c.chunkId, Float32Array.from(toFloat32(r.vector, dim)))
+    }
+    // All vectors validated: now mutate. chunkHash is rebound to the new model;
+    // text is re-sealed only when the caller re-scrubbed it under a new policy.
+    for (const c of resident.chunks) {
+      const r = byId.get(String(c.chunkId))
+      if (r.chunkHash != null) c.chunkHash = String(r.chunkHash)
+      if (r.text != null) resident.sealedText.set(c.chunkId, sealChunkText(key, r.text))
+    }
+    resident.dim = dim
+    rebuildVectors(resident, vectorById)
+
+    // Stamp the new pinned model + policy version onto every source row (and refresh
+    // its chunkHashes from the now-rebound chunks). syncSources preserves title,
+    // kind, revision, version and contentHash (only the fields we pass change).
+    const affected = new Set(resident.chunks.map((c) => c.sourceId))
+    const srcMeta = {}
+    if (modelVersion != null) srcMeta.embeddingModelVersion = String(modelVersion)
+    if (policyVersion != null) srcMeta.policyVersion = String(policyVersion)
+    syncSources(key, resident, affected, { opts: { source: srcMeta } })
+
+    persistTenant(key, resident)
+    return { chunks: resident.chunks.length, dim, sources: affected.size }
   },
 }
 
@@ -648,7 +767,20 @@ export function readSealedBlobsForExport(companyId) {
   const index = read(INDEX_FILE)
   const vectors = read(VECTORS_FILE)
   const texts = read(TEXTS_FILE)
-  return { present: !!(index && index.length), dim: DIM, index, vectors, texts }
+  // Bytes only: this helper has no DEK, so it cannot read the geometry from the
+  // encrypted manifest. The export reads that from readEmbeddingForExport below.
+  return { present: !!(index && index.length), index, vectors, texts }
+}
+
+// The tenant's CURRENT embedding geometry for the export label: `dim` is the
+// manifest's own dim (what the sealed vectors really are, updated atomically by
+// reembed) and `model` is brain_model.activeEmbedModel over the tenant's sources,
+// the same rule retrieval and the sync manifest use. Opens the manifest with the
+// tenant key, so the exporter calls it only once the brain is resolvable; a
+// locked customer brain throws BRAIN_LOCKED (loadTenant's gate), never a guess.
+export function readEmbeddingForExport(companyId) {
+  const resident = loadTenant(String(companyId))
+  return { dim: resident.dim, model: publicEmbedModel(activeEmbedModel(Array.from(resident.sources.values()))) }
 }
 
 // Sum the on-disk sealed-blob sizes for the tenant.

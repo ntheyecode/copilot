@@ -37,12 +37,16 @@ import useSeo from '../useSeo.js'
 import { useT } from '../i18n/index.jsx'
 import HoursBadge, { HOURS_BADGE_CSS } from '../components/HoursBadge.jsx'
 import { normalizePricing, planValueLines, planHoursShare, annualMonthlyRate, annualTotal, expiryFootnote, planRange, money, hours, PLAN_IDS, LIST_PRICE_FALLBACK } from '../pricingModel.js'
+import OrgPlans from '../components/OrgPlans.jsx'   // the organizations-only plans (hosted / managed / on-prem), where personal plans are not sold
+import { useEditionView } from '../edition/useCaps.js'
 
 // Product names are never translated; the per-plan promise and highlight live
 // in the catalog (pricing.plans.<id>). Column order is Lite, Basic, Advanced,
 // Premium, Enterprise, the same order as every matrix row's 5 values.
 const PLAN_NAME = { lite: 'Lite', basic: 'Basic', advanced: 'Advanced', premium: 'Premium', enterprise: 'Enterprise' }
-const COLS = [...PLAN_IDS, 'enterprise']
+// The Enterprise column shows only where company tenants exist (an
+// individuals-only edition sells the four personal plans alone).
+const ALL_COLS = [...PLAN_IDS, 'enterprise']
 const POPULAR = 'advanced'
 const ALL = [true, true, true, true, true]
 const ENT = [false, false, false, false, true]
@@ -91,6 +95,50 @@ function ValueBand({ model, t }) {
 }
 
 export default function WorkPricing() {
+  const ed = useEditionView()
+  // No personal plans on this edition (organizations only): the page sells the
+  // organization plans instead, from the same hero, notes and CTA.
+  if (!ed.individualPlans) return <OrgPricing />
+  return <PersonalPricing companies={ed.companies} />
+}
+
+// Organizations-only pricing: hero, the three deployment cards, good to know,
+// and the sales CTA. No personal plan, price, checkout or Stripe line.
+function OrgPricing() {
+  const t = useT()
+  useSeo({ title: t('seo.pricing.title'), description: t('seo.pricing.description'), path: '/workcopilot/pricing' })
+  return (
+    <div className="wpr">
+      <style>{CSS}</style>
+      <SiteHeader current="pricing" />
+      <section className="wpr-hero">
+        <div className="wpr-eyebrow"><Building2 size={14} aria-hidden /> {t('pricing.eyebrow')}</div>
+        <h1>{t.rich('pricing.h1')}</h1>
+        <p>{t('pricing.sub')}</p>
+      </section>
+      <section className="wpr-orgplans" aria-label={t('pricing.plansAria')}>
+        <OrgPlans />
+      </section>
+      <section className="wpr-notes" aria-labelledby="wpr-notes-h">
+        <h2 id="wpr-notes-h" className="wpr-h2">{t('pricing.notes.h2')}</h2>
+        <div className="wpr-notes-grid">
+          {(t('pricing.notes.items') || []).map((n) => (
+            <div className="wpr-note" key={n.t}><h3>{n.t}</h3><p>{n.d}</p></div>
+          ))}
+        </div>
+        <p className="wpr-fine"><BadgeCheck size={14} aria-hidden /> {t('pricing.fine')}</p>
+      </section>
+      <section className="wpr-cta">
+        <a className="wpr-btn" href="/workcopilot/contact">{t('common.getStarted')} <ArrowRight size={15} aria-hidden /></a>
+        <a className="wpr-btn alt" href="/demo">{t('pricing.ctaDemo')}</a>
+      </section>
+      <SiteFooter />
+    </div>
+  )
+}
+
+function PersonalPricing({ companies }) {
+  const COLS = companies ? ALL_COLS : PLAN_IDS
   const nav = useNavigate()
   const t = useT()
   // Arriving from the live check (?plan=<id>&from=validate): the plan it
@@ -162,12 +210,12 @@ export default function WorkPricing() {
   const m = model
   const mx = (k) => t(`pricing.matrix.${k}`)
   const val = (fn) => PLAN_IDS.map((id) => (m ? fn(id) : '')).concat([''])
-  const ROWS = [
+  const ALL_ROWS = [
     { g: mx('groups.capacity') },
     { k: t('pricing.rowHours'), v: val((id) => (m.hoursMonthly[id] == null ? '' : t('pricing.hoursVal', { hours: hours(m.hoursMonthly[id]) }))).map((x, i) => (i === 4 ? t('pricing.custom') : x)) },
     { k: t('pricing.rowCarry'), v: val(() => (m.expiry.mode === 'carryforward' ? (m.expiry.carryCapHours ? t('pricing.carryCapVal', { cap: hours(m.expiry.carryCapHours) }) : t('pricing.carryVal')) : t('pricing.resetVal'))).map((x, i) => (i === 4 ? t('pricing.custom') : x)) },
     { k: t('pricing.rowExtra'), v: val((id) => (m.hour[id] == null ? '' : `${money(m.hour[id])}/hr`)).map((x, i) => (i === 4 ? t('pricing.custom') : x)) },
-    { k: mx('seats'), v: [mx('seatOne'), mx('seatOne'), mx('seatOne'), mx('seatOne'), mx('seatPools')] },
+    { k: mx('seats'), v: [mx('seatOne'), mx('seatOne'), mx('seatOne'), mx('seatOne'), mx('seatPools')], companyOnly: true },
     { k: mx('queue'), v: [mx('queueStd'), mx('queueStd'), mx('queuePri'), mx('queueTop'), mx('queueTop')] },
     { g: mx('groups.guidance') },
     ...(mx('guidanceRows') || []).map((k) => ({ k, v: ALL })),
@@ -179,9 +227,12 @@ export default function WorkPricing() {
     { k: mx('projects'), v: [false, false, false, true, true] },
     { g: mx('groups.security') },
     ...(mx('securityRows') || []).map((k) => ({ k, v: ALL })),
-    { g: mx('groups.enterprise') },
-    ...(mx('enterpriseRows') || []).map((k) => ({ k, v: ENT })),
+    { g: mx('groups.enterprise'), companyOnly: true },
+    ...(mx('enterpriseRows') || []).map((k) => ({ k, v: ENT, companyOnly: true })),
   ]
+  // Where there are no company tenants: no Enterprise column, no seat-pool or
+  // enterprise rows (every row keeps exactly one value per shown column).
+  const ROWS = companies ? ALL_ROWS : ALL_ROWS.filter((r) => !r.companyOnly).map((r) => (r.v ? { ...r, v: r.v.slice(0, COLS.length) } : r))
   const StartBtn = ({ id, small }) => (id === 'enterprise'
     ? <a className={`wpr-btn alt${small ? ' sm' : ''}`} href="/workcopilot/contact">{t('pricing.contact')}{!small && <ArrowRight size={15} aria-hidden />}</a>
     : <button className={`wpr-btn${small ? ' sm' : ''}${id === POPULAR || id === rec ? '' : ' alt'}${id === rec ? ' rec' : ''}`} onClick={() => start(id)} aria-label={t('pricing.start', { plan: PLAN_NAME[id] })}>{small ? t('pricing.startShort') : t('pricing.start', { plan: PLAN_NAME[id] })}{!small && <ArrowRight size={15} aria-hidden />}</button>)
@@ -343,6 +394,7 @@ const CSS = `
     radial-gradient(900px 500px at 100% 0%, rgba(57,211,255,.14), transparent 60%),
     var(--bg)}
 .wpr *{box-sizing:border-box}
+.wpr-orgplans{position:relative;padding:8px 0 40px}
 /* min-width:0 only on the page's own grid children (never on a wildcard: the
    shared header lives inside .wpr and its nowrap nav links must keep their
    intrinsic width so the measured fold can trigger) */

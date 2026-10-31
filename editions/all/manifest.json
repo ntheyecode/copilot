@@ -1,0 +1,5 @@
+{
+  "edition": "all",
+  "env": {},
+  "notes": "Today's all-inclusive product: individuals (personal plans, self sign-up) and company tenants on one hosted server. Kept exactly as it is, deployed on its own server (owner, 2026-10-30). Set WORK_PUBLIC_URL to that server's origin; the SPA needs no stamp. Checklist: docs/deployment-editions.md, Deploy checklist."
+}

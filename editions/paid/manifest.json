@@ -1,0 +1,5 @@
+{
+  "edition": "paid",
+  "env": {},
+  "notes": "The individuals-only site: personal accounts on a paid plan, no free tier, no company tenants and no company wording (owner, 2026-10-30). Domain to be chosen: set WORK_PUBLIC_URL (or compose with --origin) to it. Checklist: docs/deployment-editions.md, Deploy checklist."
+}

@@ -8,12 +8,24 @@
 //   - management ROLE (a grant on top; the user's companyRole):
 //       member | company_admin | executive  (existing)
 //       project_manager | senior_project_manager | grc  (added here)
+// Plus additive GRANTS a user can hold on top of the primary role (multi-role):
+//   trainer  (records/authors guided workflows), only with member or PM.
 // A Senior PM is a superset of PM (can also manage projects directly). GRC is
 // read-only oversight. The flow governs starting vs receiving tasks regardless
 // of role.
 
 export const WORK_FLOWS = ['worker', 'independent', 'mixed']
 export const MGMT_ROLES = ['project_manager', 'senior_project_manager', 'grc']
+// Every PRIMARY company role, in one place. store.js imports this as its
+// validation enum (SUPREME RULE II: no parallel copy). Mutually exclusive: a
+// user has exactly one.
+export const COMPANY_ROLES = ['member', 'company_admin', 'executive', ...MGMT_ROLES]
+// Additive grants a user may hold ON TOP of the primary role (multi-role). A
+// closed, additive set. 'trainer' = may record and author guided workflows, and
+// is allowed ONLY with a 'member' or 'project_manager' primary role (the two
+// permitted combinations: user+trainer, PM+trainer).
+export const GRANTS = ['trainer']
+export function canGrantTrainer(role) { return role === 'member' || role === 'project_manager' }
 export const RISK_SLA_DAYS = 5          // owner default; configurable per company
 const DAY_MS = 86400000
 
@@ -33,6 +45,14 @@ export function isGRC(role) { return role === 'grc' }
 // A PM capability holder: PM, or Sr PM (superset), or a company admin.
 export function isPM(role) { return role === 'project_manager' || isSrPM(role) }
 export function isCompanyAdmin(role) { return role === 'company_admin' }
+// ---- Grant predicates (grants = the user's additive-role list) ----
+export function hasTrainerGrant(grants) { return Array.isArray(grants) && grants.includes('trainer') }
+// Keep only valid grants, and only those the primary role is allowed to hold.
+// The ONE place the combination rule lives; store and client both call it.
+export function sanitizeGrants(role, grants) {
+  const set = Array.isArray(grants) ? [...new Set(grants.filter((g) => GRANTS.includes(g)))] : []
+  return set.filter((g) => g !== 'trainer' || canGrantTrainer(role))
+}
 
 // ---- Management capabilities ----
 export function canCreateProject(role) { return isPM(role) || isCompanyAdmin(role) }
@@ -47,6 +67,19 @@ export function isReadOnlyOversight(role) { return isGRC(role) }
 // Only the company admin sets flows and roles; a Sr PM may additionally hand a
 // project to a PM (assign the managing PM), but not change a user's flow/role.
 export function canSetUserFlowAndRole(role) { return isCompanyAdmin(role) }
+// Teach studio: who may record and author guided workflows. Anyone holding the
+// trainer grant, or a company admin (superset). Oversight roles only view.
+export function canAuthorWorkflow(role, grants) { return hasTrainerGrant(grants) || isCompanyAdmin(role) }
+// Workflow incidents (Wave 3 part C): who RECEIVES a deviation raised while an
+// employee follows a published workflow: trainers, PMs and above (PM, Sr PM, GRC),
+// company admins and executives. Who may ACT on one (acknowledge, resolve,
+// dismiss): trainers, PMs, Sr PMs and company admins. GRC and executives watch.
+export function canReceiveWorkflowIncidents(role, grants) {
+  return hasTrainerGrant(grants) || isPM(role) || isGRC(role) || isCompanyAdmin(role) || role === 'executive'
+}
+export function canManageWorkflowIncidents(role, grants) {
+  return hasTrainerGrant(grants) || isPM(role) || isCompanyAdmin(role)
+}
 
 // Can this user act on this specific project? GRC is view-only (see canWrite*).
 export function canViewProject(role, userId, project) {
@@ -77,10 +110,11 @@ export function taskSlaRisk(task, now = Date.now(), slaDays = RISK_SLA_DAYS) {
 }
 
 export default {
-  WORK_FLOWS, MGMT_ROLES, RISK_SLA_DAYS, normalizeFlow,
+  WORK_FLOWS, MGMT_ROLES, COMPANY_ROLES, GRANTS, RISK_SLA_DAYS, normalizeFlow,
   canStartOwnTask, canReceiveAssignment,
-  isSrPM, isGRC, isPM, isCompanyAdmin,
+  isSrPM, isGRC, isPM, isCompanyAdmin, hasTrainerGrant, canGrantTrainer, sanitizeGrants,
   canCreateProject, canAssignTask, canReassignTask, canReassignProject, canAssignProjectManager,
-  canSeeAllProjects, isReadOnlyOversight, canSetUserFlowAndRole,
+  canSeeAllProjects, isReadOnlyOversight, canSetUserFlowAndRole, canAuthorWorkflow,
+  canReceiveWorkflowIncidents, canManageWorkflowIncidents,
   canViewProject, canManageProject, taskSlaRisk,
 }

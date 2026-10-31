@@ -23,6 +23,7 @@ import { sendTemplateAsync, sendOwnerSubscriptionAlertAsync } from './emails.js'
 // Shared with the onboarding confirm path (billing_checkout.js): one param
 // builder + one activation function, so webhook and confirm never drift.
 import { PLANS, mapStatus, planFromSub, periodEndIso, cycleFromSub, subscriptionCheckoutParams, applyCheckoutSession } from './billing_checkout.js'
+import { caps, stripeOffReason, individualPlanRefusal } from './edition.js'
 // Where Stripe sends the customer back. Fixed to the public site by default; an
 // operator can override it for a staging host via WORK_PUBLIC_URL.
 const SITE = (process.env.WORK_PUBLIC_URL || 'https://admireveda.com').replace(/\/+$/, '')
@@ -60,6 +61,13 @@ const looksLikeEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || '').
 // precedence, env vars fall back. Price ids fall back per plan, so a half-filled
 // store config still picks up any env price ids that are set.
 function cfg(store) {
+  // Editions without Stripe (on-prem, managed) resolve to an empty config, so
+  // every Stripe path takes its existing "not configured" branch and no Stripe
+  // call is ever made, even if a key sits in the env or the store.
+  if (!caps.has('stripe_billing')) {
+    const none = { lite: '', basic: '', advanced: '', premium: '' }
+    return { secret: '', webhookSecret: '', price: { ...none }, priceAnnual: { ...none } }
+  }
   const c = (store && typeof store.getBillingConfig === 'function') ? (store.getBillingConfig() || {}) : {}
   const storeOn = c.enabled !== false   // default on when a store secret key is present
   const secret = (c.secretKey && storeOn) ? c.secretKey : (process.env.STRIPE_SECRET_KEY || '')
@@ -429,6 +437,29 @@ function userStripe(store, userId) {
 }
 
 // ---- Subscription checkout (shared by the dashboard route + onboarding) ----
+// A Stripe Customer Portal configuration without plan switching (invoices,
+// payment method, cancel at period end), created once per process and reused.
+// null when Stripe refuses it (the caller answers with an actionable 503;
+// never the default configuration, which may allow a plan switch).
+let noSwitchConfigId = null
+async function noPlanChangePortalConfig(s) {
+  if (noSwitchConfigId) return noSwitchConfigId
+  try {
+    const c = await s.billingPortal.configurations.create({
+      features: {
+        invoice_history: { enabled: true },
+        payment_method_update: { enabled: true },
+        subscription_cancel: { enabled: true, mode: 'at_period_end' },
+        subscription_update: { enabled: false },
+      },
+    })
+    noSwitchConfigId = (c && c.id) || null
+  } catch (e) {
+    console.warn('[billing] could not create the no-plan-change portal configuration: ' + (e && e.message))
+  }
+  return noSwitchConfigId
+}
+
 // Resolve the plan's price (monthly or annual), the affiliate trial, and create
 // the Stripe Checkout Session. Throws an error with .status (+ optional .body
 // fields) for every operator-facing refusal, so each caller maps it to its own
@@ -436,6 +467,10 @@ function userStripe(store, userId) {
 // a 502). Returns { url, id } of the created session.
 const checkoutRefusal = (status, message, body) => { const e = new Error(message); e.status = status; if (body) e.body = body; return e }
 export async function createSubscriptionCheckout(store, user, { plan, cycle = 'monthly', successUrl, cancelUrl }) {
+  // Every personal-plan checkout funnels through here, so the edition rule is
+  // also checked here (the route gate in edition_route_gates.js answers first).
+  const noPlans = individualPlanRefusal()
+  if (noPlans) throw checkoutRefusal(noPlans.status, noPlans.body.error, noPlans.body)
   const p = String(plan || '').trim().toLowerCase()
   if (!PLANS.includes(p)) throw checkoutRefusal(400, 'Pick a plan: lite, basic, advanced or premium.')
   const cyc = cycle === 'annual' ? 'annual' : 'monthly'
@@ -503,6 +538,10 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
   // Stripe products to manage. The webhook credits the account + emails a
   // receipt on completion.
   app.post('/api/work/checkout/credits', requireWorkAuth, async (req, res) => {
+    // Edition backstop (the route gate answers first): no personal top-ups
+    // where personal plans are not sold.
+    const noPlans = individualPlanRefusal()
+    if (noPlans) return res.status(noPlans.status).json(noPlans.body)
     try {
       const kind = String((req.body || {}).kind || '').trim().toLowerCase()
       if (kind !== 'hours' && kind !== 'images') return res.status(400).json({ error: 'Choose hours or images.' })
@@ -576,6 +615,8 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
   // Never silent (SUPREME RULE III/VI): a Stripe failure logs a work incident and
   // returns an actionable error; it never degrades to a wrong-tier state.
   app.post('/api/work/subscription/change', requireWorkAuth, async (req, res) => {
+    const noPlans = individualPlanRefusal()   // edition backstop, as above
+    if (noPlans) return res.status(noPlans.status).json(noPlans.body)
     try {
       const plan = String((req.body || {}).plan || '').trim().toLowerCase()
       if (!PLANS.includes(plan)) return res.status(400).json({ error: 'Pick a plan: lite, basic, advanced or premium.' })
@@ -691,7 +732,15 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
       if (!s) return res.status(503).json({ error: 'Billing is not configured yet.' })
       const customer = (req.workUser.subscription && req.workUser.subscription.stripeCustomerId) || null
       if (!customer) return res.status(400).json({ error: 'No billing account yet. Choose a plan first.' })
-      const portal = await s.billingPortal.sessions.create({ customer, return_url: `${SITE}/work` })
+      // Where personal plans are not sold, the portal must not offer a plan
+      // switch either (the dashboard's default configuration may allow one):
+      // invoices, card and cancel only.
+      let configuration
+      if (!caps.has('individual_plans')) {
+        configuration = await noPlanChangePortalConfig(s)
+        if (!configuration) return res.status(503).json({ error: 'The billing portal is not available right now. Your invoices are in your dashboard; for anything else write to support.', portalUnavailable: true })
+      }
+      const portal = await s.billingPortal.sessions.create({ customer, return_url: `${SITE}/work`, ...(configuration ? { configuration } : {}) })
       if (!portal || !portal.url) return res.status(502).json({ error: 'Could not open the billing portal. Please try again.' })
       res.json({ url: portal.url })
     } catch (e) {
@@ -710,7 +759,7 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
       res.json({ billing: store.getBillingPublic(), webhookUrl: `${SITE}/api/work/stripe/webhook`, envFallback: {
         secretKey: !!process.env.STRIPE_SECRET_KEY,
         webhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET,
-      } })
+      }, ...(stripeOffReason() ? { offByEdition: true, offReason: stripeOffReason() } : {}) })
     }))
     app.post('/api/work/admin/billing', requireAuth, requireSuperAdmin, stepUp, wrap((req, res) => {
       res.json({ billing: store.setBillingConfig(req.body || {}) })

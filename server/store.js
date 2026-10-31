@@ -61,12 +61,28 @@ import * as eq from './enterprise_quota.js'
 import { createEnterpriseBilling } from './enterprise_billing.js'
 import { createPlanAllowance } from './plan_allowance.js'
 import { createOnboarding } from './onboarding_store.js'
+import { createWorkflows } from './workflows_store.js'
+import { isFrameRef } from './workflows_rules.js'
+import { createWorkflowIncidents, alertInboxOf } from './workflow_incidents.js'
+import { createAiUsageLedger } from './ai_usage_ledger.js'
+import { createInbox } from './notifications.js'
+import { createWorkflowFrames } from './workflow_frames.js'
+import { caps as editionCaps } from './edition.js'   // edition capabilities: personal plans are only offered where individual_plans is on
+import { createWorkflowFrameSweep } from './workflow_frame_sweep.js'
+import { execOverview } from './exec_overview.js'
+import { makeExportKey } from './export_key.js'
+import { createIntegrationState } from './integration_store.js'
+import { resolveDataDir } from './data_dir.js'
+import { assertResolvesPublic } from './egress_guard.js'
+// Persistence driver (server/storage/): json (db.json, the default) or postgres.
+// The store keeps its in-memory db exactly as before; only the bytes-to-disk
+// step at load/persist goes through the driver.
+import { openStorage } from './storage/index.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // WORK_DATA_DIR lets the owner point the DB + on-disk docs/shots anywhere (the
 // save/handoff drive); web-dev falls back to ./data next to the server.
-const DATA_DIR = process.env.WORK_DATA_DIR || path.join(__dirname, 'data')
-const DB_FILE = path.join(DATA_DIR, 'db.json')
+const DATA_DIR = resolveDataDir()   // data_dir.js: the one resolver (a test can never land on the real dir)
 // Optional one-time AI seed the owner drops at deploy (providers + keys +
 // platform-allowed flag + model pins). Never contains a hardcoded key in source.
 const AI_SEED_FILE = path.join(DATA_DIR, 'ai-seed.json')
@@ -318,35 +334,39 @@ let db = EMPTY
 let _usersById = new Map()
 function indexUsers() { _usersById = new Map((db.users || []).map((u) => [u.id, u])) }
 
+// The driver refuses (throws) when stored data exists but cannot be read, so an
+// unreadable or corrupt store is never reseeded over the real one.
+const storage = openStorage({ dataDir: DATA_DIR })
+// The ciphertexts last stored for each secret (plaintext -> list). encSecret
+// draws a fresh random IV, so re-encrypting an unchanged secret on every save
+// would change its stored bytes every time (and make the postgres driver
+// rewrite every record holding a key). Writing back a value already stored is
+// not a new encryption, so no IV is ever reused for different data. Each stored
+// ciphertext is handed to one field only, so two fields with the same secret
+// still get different ciphertexts (stored data never shows they match).
+// Rebuilt on each persist.
+let _cipherOf = new Map()
+const takeCipher = (pool, plain) => { const l = pool.get(plain); return l && l.length ? l.shift() : null }
+const keepCipher = (map, plain, c) => { if (!map.has(plain)) map.set(plain, []); map.get(plain).push(c) }
+
 function load() {
   ensureDir()
-  if (fs.existsSync(DB_FILE)) {
-    let raw
-    try {
-      raw = fs.readFileSync(DB_FILE, 'utf8')
-    } catch (e) {
-      // An existing DB we CANNOT READ must NEVER be reseeded (that silently
-      // overwrites every account). Fail loud, leave the bytes untouched.
-      throw new Error(
-        `[store] db.json exists but is UNREADABLE (${e.code || e.message}). ` +
-        `Refusing to start so your data is not overwritten. Fix ownership then restart.`)
-    }
-    try {
-      db = { ...EMPTY, ...JSON.parse(raw) }
-    } catch (e) {
-      // Present but CORRUPT: preserve a copy and refuse to start, rather than
-      // seed an empty DB over the real one.
-      const bak = `${DB_FILE}.corrupt-${Date.now()}`
-      try { fs.copyFileSync(DB_FILE, bak) } catch { /* best effort */ }
-      throw new Error(`[store] db.json is CORRUPT (${e.message}). Saved a copy to ${bak} and refusing to start.`)
-    }
+  const stored = storage.load()
+  if (stored) {
+    db = { ...EMPTY, ...stored }
     // Decrypt stored secrets into memory. A key that is marked encrypted but
     // cannot be decrypted (wrong/lost master key) must fail loud, NOT blank the
     // key (SUPREME RULE III) - refuse to start so the operator fixes the key.
     // Also note any LEGACY plaintext so we can encrypt it on disk immediately
     // (eager migration) rather than waiting for the next mutation.
     let sawLegacy = false
-    const decTrack = (v) => { const s = v == null ? '' : String(v); if (s && !s.startsWith(ENC_PREFIX)) sawLegacy = true; return decSecret(v) }
+    const decTrack = (v) => {
+      const s = v == null ? '' : String(v)
+      if (s && !s.startsWith(ENC_PREFIX)) sawLegacy = true
+      const plain = decSecret(v)
+      if (s.startsWith(ENC_PREFIX)) keepCipher(_cipherOf, plain, s)
+      return plain
+    }
     try { mapSecrets(db, decTrack) } catch (e) {
       throw new Error(`[store] cannot decrypt stored secrets (${e.message}). The master key (WORK_ENC_KEY or ${ENC_KEY_FILE}) is missing or wrong. Refusing to start so no key is silently lost. Restore the key and restart.`)
     }
@@ -360,28 +380,32 @@ function load() {
   indexUsers()
 }
 
-// Atomic write: write + fsync the temp file, preserve the live file's owner/mode
-// on the replacement (a root-performed write must not leave a db the service
-// user can no longer read), then rename.
+// Atomic save through the driver (json: temp + fsync + rename; postgres: one
+// transaction). Returns once the write is durable, or throws.
 function persist() {
-  ensureDir()
-  const tmp = DB_FILE + '.tmp'
   // Encrypt secrets on a disk-only CLONE so the in-memory db stays plaintext.
+  // The driver only ever sees the encrypted form, whichever driver it is.
   const disk = JSON.parse(JSON.stringify(db))
-  mapSecrets(disk, encSecret)
-  const fd = fs.openSync(tmp, 'w', 0o600)
+  const pool = new Map([..._cipherOf].map(([k, l]) => [k, l.slice()]))
+  const next = new Map()
+  mapSecrets(disk, (v) => {
+    const s = v == null ? '' : String(v)
+    if (!s || s.startsWith(ENC_PREFIX)) return encSecret(v)
+    const c = takeCipher(pool, s) || encSecret(s)
+    keepCipher(next, s, c)
+    return c
+  })
+  storage.save(disk)
+  _cipherOf = next
+}
+
+// Release the persistence driver (for postgres: its connection and lock, after
+// which every write throws) once any coalesced write is flushed. For a clean
+// shutdown and for tests that stand in for a restart.
+export function closeStore() {
   try {
-    fs.writeSync(fd, JSON.stringify(disk, null, 2))
-    fs.fsyncSync(fd)
-  } finally { fs.closeSync(fd) }
-  try {
-    if (fs.existsSync(DB_FILE)) {
-      const st = fs.statSync(DB_FILE)
-      fs.chownSync(tmp, st.uid, st.gid)
-      fs.chmodSync(tmp, st.mode & 0o777)
-    }
-  } catch { /* non-root same-user writes keep ownership anyway */ }
-  fs.renameSync(tmp, DB_FILE)
+    if (_soonTimer) { clearTimeout(_soonTimer); _soonTimer = null; persist() }
+  } finally { storage.close() }
 }
 
 // Coalesced write for high-frequency, low-criticality mutations (live step +
@@ -431,6 +455,85 @@ export const {
   getOnboarding, setOnboardingIntent, setOnboardingCheckout, completeOnboarding,
   changeOnboardingEmail, issueEmailOtp, verifyEmailOtp, emailOtpStatus,
 } = onb
+// ---- Teach workflows (module: workflows_store.js) ----
+// Company-scoped guided workflows a trainer authors and users are guided
+// through. RBAC (company + trainer grant + ownership) lives in the module; the
+// store just owns db + persistence. Public API re-exported so the routes keep
+// their store.* names.
+// Wave 2 capture frames: encrypted at rest with the SAME shot cipher as session
+// screenshots (encryptBuffer/decryptBuffer stay single-source here), in their own
+// folder so session-shot housekeeping never walks them.
+const wfFrames = createWorkflowFrames({ dir: path.join(DATA_DIR, 'workflow-frames'), seal: encryptBuffer, open: decryptBuffer })
+// Frames a still-running guided session shows (a published workflow's step
+// screenshots copied onto the session), so deleting or editing the workflow never
+// breaks the screen an employee is following right now. Ended sessions do not pin.
+function workflowFramesInUse(companyId) {
+  const out = new Set()
+  for (const s of (db.workSessions || [])) {
+    if (!s || s.status === 'ended' || !s.workflowRef) continue
+    const u = getUser(s.workUserId)
+    if (!u || String(u.companyId) !== String(companyId)) continue
+    for (const st of (s.steps || [])) if (st && st.shot) out.add(st.shot)
+  }
+  return out
+}
+const wfs = createWorkflows({ db: () => db, persist, id, now, httpErr, getUser, emit: emitStoreEvent, frames: wfFrames, framesInUse: workflowFramesInUse })
+export const {
+  listWorkflowsForUser, getWorkflowForUser, createWorkflow, updateWorkflow,
+  publishWorkflow, reviseWorkflow, retireWorkflow, deleteWorkflow,
+  uploadWorkflowFrame, readWorkflowFrame, userCanAuthorWorkflows,
+  prepareStepRead, saveStepReading,
+} = wfs
+// Orphan-frame sweep (uploaded but never saved, interrupted saves, deleted
+// companies). The keep-rule is wfs.referencedFrames, the same one edit/delete use.
+const wfFrameSweep = createWorkflowFrameSweep({ frames: wfFrames, referencedFrames: wfs.referencedFrames, companyIds: () => (db.companies || []).map((c) => c.id) })
+export function sweepOrphanWorkflowFrames() { return wfFrameSweep.sweepAll() }
+// Wave 3 part C: deviations raised while an employee follows a published workflow
+// (workflow_incidents.js). Their screenshots live in their own encrypted folder,
+// readable only through the incident (recipients), never the workflow frame route.
+const wfIncidentFrames = createWorkflowFrames({ dir: path.join(DATA_DIR, 'workflow-incident-frames'), seal: encryptBuffer, open: decryptBuffer })
+const wfAlertInbox = createInbox({ db: () => db, persistSoon, id })
+const wfIncidents = createWorkflowIncidents({
+  db: () => db, persist, id, now, httpErr, getUser, emit: emitStoreEvent,
+  companyUsers: (companyId) => (db.users || []).filter((u) => u.companyId === companyId),
+  inbox: wfAlertInbox, frames: wfIncidentFrames, workflows: wfs,
+  // The screen the guide saw is kept only when the company keeps screenshots
+  // (the same setting that governs report screenshots).
+  shotsAllowed: (userId) => workUserReportShotsOn(userId),
+})
+export const {
+  recordWorkflowIncident, listWorkflowIncidents, setWorkflowIncidentState,
+  readWorkflowIncidentFrame, adoptWorkflowIncidentStep, purgeWorkflowIncidents,
+} = wfIncidents
+// Each person's workflow-alert inbox (incident alerts only; billing alerts stay in
+// the shared inbox and are never pushed out by a burst of incidents).
+// Company-scoped reads for the integration API (a company key, not a person).
+export const { listPublishedWorkflowsForCompany, getPublishedWorkflowForCompany } = wfs
+export const { listIncidentsForCompany, getIncidentForCompany } = wfIncidents
+// ---- Integration API: company API keys, webhooks, launch links (module: integration_store.js) ----
+// Key hashes are HMAC-peppered from the platform KEK; webhook signing secrets are
+// sealed with the same KEK as every other stored secret.
+const integ = createIntegrationState({
+  db: () => db, persist, persistSoon, httpErr, getUser, company: _company,
+  companyUsers: (companyId) => (db.users || []).filter((u) => u.companyId === companyId),
+  masterKey: encKey, seal: encSecret, open: decSecret,
+  verifyMfa: (user, token) => verifyUserMfa(user.id, token), hosted: HOSTED, mfaGloballyEnabled,
+  audit: (a) => recordAdminAction(a), workflows: wfs, incidents: wfIncidents,
+  resolveHost: (host) => assertResolvesPublic(host),
+})
+export const {
+  apiKeyStepUpRequired, listApiKeys, createApiKey, rotateApiKey, revokeApiKey, resolveApiKey, recordApiKeyUse, listApiKeyUsage,
+  listWebhooks, createWebhook, updateWebhook, rotateWebhookSecret, deleteWebhook, testWebhook,
+  listWebhookDeliveries, retryWebhookDelivery, enqueueWebhookEvent, dueWebhookDeliveries, webhookDeliveryJob, recordWebhookAttempt,
+  createLaunchLink, redeemLaunchLink,
+} = integ
+export const listWorkflowAlerts = (userId, opts) => (getUser(userId) ? wfAlertInbox.list(alertInboxOf(userId), opts) : [])
+export const unreadWorkflowAlerts = (userId) => wfAlertInbox.unreadCount(alertInboxOf(userId))
+export const markWorkflowAlertsRead = (userId, idOrAll) => wfAlertInbox.markRead(alertInboxOf(userId), idOrAll)
+// AI spend per company (or solo account) per month at provider-reported actuals
+// (ai_usage_ledger.js). Superadmin-only; the record Managed billing reads.
+const aiUsageLedger = createAiUsageLedger({ db: () => db, persistSoon })
+export const { recordAiUsage, listAiUsage } = aiUsageLedger
 
 // ---- AI seed (one-time, at deploy) ---------------------------------------
 // If an ai-seed.json exists and the platform AI is not already configured, load
@@ -524,7 +627,7 @@ function seed() {
 load()
 seed()
 reregisterCustomHosts()   // restore any custom-provider hosts onto the egress allowlist
-console.log(`[store] data dir ${DATA_DIR} (hosted=${HOSTED ? '1' : '0'}, users=${(db.users || []).length})`)
+console.log(`[store] data dir ${DATA_DIR} (hosted=${HOSTED ? '1' : '0'}, storage=${storage.name}, users=${(db.users || []).length})`)
 
 // ---- accounts (the account IS the WorkCoPilot user) ----------------------
 export function findUser(username) {
@@ -571,6 +674,7 @@ export function publicWorkUser(u) {
     watchLight: effectiveWatchMode(u.id) === 'light',
     companyId: u.companyId || null,
     companyRole: u.companyRole || null,          // member | company_admin | executive | project_manager | senior_project_manager | grc
+    grants: (u.companyId ? roles.sanitizeGrants(u.companyRole, u.grants) : []),  // additive grants (trainer); only those the primary role may hold
     workFlow: (u.companyId ? (['worker', 'independent', 'mixed'].includes(u.workFlow) ? u.workFlow : 'independent') : null),  // how tasks reach a company user: worker | independent | mixed (null for individuals)
     companyName: co ? co.name : null,
     // Enterprise allocation GROUP (admin / supervisor / member) the company admin
@@ -601,9 +705,11 @@ export function publicWorkUser(u) {
     // Per-tier feature gates (Lite has no roadmaps / diagrams) so the client can
     // hide what the plan does not include and keep the marketing claim honest.
     caps: TIER_FEATURES[(WORK_TIERS.includes(u.tier) ? u.tier : 'basic')] || TIER_FEATURES.basic,
-    // Show an Upgrade button to anyone below premium who is NOT a company user.
-    canUpgrade: !u.companyId && (WORK_TIERS.includes(u.tier) ? u.tier : 'basic') !== 'premium',
-    nextTier: u.companyId ? null : nextTierUp(WORK_TIERS.includes(u.tier) ? u.tier : 'basic'),
+    // Show an Upgrade button to anyone below premium who is NOT a company user,
+    // on an edition that sells personal plans (every upgrade prompt in the app
+    // reads these two fields, so the edition rule lives here once).
+    canUpgrade: editionCaps.has('individual_plans') && !u.companyId && (WORK_TIERS.includes(u.tier) ? u.tier : 'basic') !== 'premium',
+    nextTier: (u.companyId || !editionCaps.has('individual_plans')) ? null : nextTierUp(WORK_TIERS.includes(u.tier) ? u.tier : 'basic'),
     mfaEnabled: !!(u.mfa && u.mfa.enabled),       // TOTP authenticator set up
     mfaEnrolledAt: (u.mfa && u.mfa.enrolledAt) || null,
     disabled: !!u.disabled,                       // superadmin-disabled (blocked from sign-in + service)
@@ -701,6 +807,30 @@ export function verifyUserMfa(userId, token) {
   if (idx >= 0) { m.backupHashes.splice(idx, 1); persist(); return true }
   return false
 }
+
+// ---- Executive export passphrase (encrypts the Company Brain download) ------
+// Policy lives in export_key.js (unit-tested); here we wire the real platform
+// KEK (encSecret/decSecret) + MFA + the HOSTED flag, and own persistence. The
+// passphrase is sealed at rest on the account and only ever leaves through the
+// MFA-gated reveal or, server-side, to build the archive at download time.
+export function isHostedService() { return HOSTED }
+const _exportKey = makeExportKey({
+  seal: encSecret, open: decSecret,
+  verifyMfa: (user, token) => verifyUserMfa(user.id, token),
+  hosted: HOSTED, mfaGloballyEnabled,
+})
+export function hasExportKey(userId) { return _exportKey.has(getUser(userId)) }
+export function setExportKey(userId, passphrase, opts = {}) {
+  const u = getUser(userId); if (!u) throw httpErr(404, 'Account not found')
+  u.exportKeyEnc = _exportKey.set(u, passphrase, opts); persist()
+  return { ok: true, set: true }
+}
+export function revealExportKey(userId, opts = {}) {
+  const u = getUser(userId); if (!u) throw httpErr(404, 'Account not found')
+  return _exportKey.reveal(u, opts)
+}
+// Server-side only: the plaintext passphrase to build the archive at download.
+export function exportKeyFor(userId) { return _exportKey.plain(getUser(userId)) }
 
 // Reset (clear) an account's MFA so the next login forces a fresh setup. Used by
 // admins (lost device) and by the owner (new phone). The CALLER is responsible
@@ -1204,6 +1334,11 @@ function publicCompany(c) {
     aiReason: c.aiSource === 'company'
       ? ((c.companyAi && c.companyAi.apiKey) ? null : 'Company uses its own AI keys, but none are set yet.')
       : (c.aiSource === 'platform' ? null : 'AI source not selected yet (choose platform or company keys).'),
+    // The same reason as a code, so a console words it in the reader's language
+    // (aiReason stays the English text for API readers and logs).
+    aiReasonCode: c.aiSource === 'company'
+      ? ((c.companyAi && c.companyAi.apiKey) ? null : 'keysMissing')
+      : (c.aiSource === 'platform' ? null : 'sourceUnset'),
     imageGen: !!c.imageGen,
     trial: t ? { sessions: t.sessions || 0, used: t.used || 0, remaining: Math.max(0, (t.sessions || 0) - (t.used || 0)), minutesPer: t.minutesPer || 60 } : null,
     hasCompanyAi: !!(c.companyAi && c.companyAi.apiKey),
@@ -1322,7 +1457,9 @@ export function getCompanyRuntime(workUserId) {
   if (!c || c.aiSource !== 'company') return null
   const k = c.companyAi || {}
   if (!k.apiKey) return null
-  return { providerId: k.providerId || null, apiKey: k.apiKey, chatModel: k.chatModel || null, visionModel: k.visionModel || null, companyId: c.id }
+  // keySource: whose AI key pays (ai_usage.js books it, so a company on its own
+  // keys is never billed for spend it already paid its provider for).
+  return { providerId: k.providerId || null, apiKey: k.apiKey, chatModel: k.chatModel || null, visionModel: k.visionModel || null, companyId: c.id, keySource: 'company' }
 }
 // The AI-key requirement for a user's company. When a company is explicitly set
 // to use its OWN keys, those keys are REQUIRED: the runtime must not silently
@@ -1418,8 +1555,9 @@ export function companyProductivity(companyId, { days = 30 } = {}) {
   }
   const perUser = {}
   for (const s of completed) perUser[s.workUserId] = (perUser[s.workUserId] || 0) + 1
-  const topMembers = members.map((u) => ({ name: u.displayName || u.username, tasks: perUser[u.id] || 0 }))
-    .filter((x) => x.tasks > 0).sort((a, b) => b.tasks - a.tasks).slice(0, 8)
+  const membersRanked = members.map((u) => ({ id: u.id, name: u.displayName || u.username, tasks: perUser[u.id] || 0 }))
+    .filter((x) => x.tasks > 0).sort((a, b) => b.tasks - a.tasks)
+  const topMembers = membersRanked.slice(0, 8)
   const savedHours = savedMin / 60
   return {
     companyId, generatedAt: new Date().toISOString(), windowDays: days,
@@ -1433,6 +1571,7 @@ export function companyProductivity(companyId, { days = 30 } = {}) {
     depth,
     trend: Object.keys(trend).sort().map((d) => ({ date: d, count: trend[d] })),
     topMembers,
+    membersRanked,   // full ranked task-axis performers (the exec overview uses the complete list)
     estimated: {   // HYPOTHETICAL customer ROI, never AI cost - label it as an estimate in the UI
       basis: 'hypothetical',
       assumptions: EXEC_ASSUMPTIONS,
@@ -1440,6 +1579,19 @@ export function companyProductivity(companyId, { days = 30 } = {}) {
       dollarsSaved: Math.round(savedHours * EXEC_ASSUMPTIONS.laborUsdPerHour),
     },
   }
+}
+// Executive OVERVIEW: the company productivity above, plus the PROJECT dimension
+// (performers on both the task AND project axes, projects by task load, status
+// rollup, per-project detail). A company-wide read for an executive; the route
+// gates with requireExecutive. No AI model or cost (business rule).
+export function companyExecOverview(userId, { days = 30 } = {}) {
+  const u = getUser(userId)
+  if (!u || !u.companyId) throw httpErr(403, 'No company in scope.')
+  const cid = u.companyId
+  const productivity = companyProductivity(cid, { days })
+  const projects = _companyProjects(cid)
+  const members = (db.users || []).filter((x) => x && String(x.companyId) === String(cid)).map((x) => ({ id: x.id, name: x.displayName || x.username }))
+  return execOverview({ productivity, projects, members })
 }
 // White-label branding a company USER (any role) may see: logo + public contact.
 // No seats, pricing, AI config or cost - only what belongs on their dashboard.
@@ -2130,10 +2282,11 @@ export function workImageGenAllowed(userId) {
 //   `adminSeats` = company-admin licenses, each counted separately. 0 = unlimited.
 export const LICENSE_MODES = ['locked', 'flexible']
 export const SSO_PROVISIONING = ['explicit', 'auto']
-// member / company_admin / executive (original) + the enterprise project-management
-// roles. PM / Sr PM / GRC consume a member-type seat (like executive) and are
-// validated here as the single source; capabilities live in server/work_roles.js.
-export const COMPANY_ROLES = ['member', 'company_admin', 'executive', 'project_manager', 'senior_project_manager', 'grc']
+// member / company_admin / executive + the enterprise PM roles + trainer. The
+// list lives once in server/work_roles.js (SUPREME RULE II); store imports it as
+// its validation enum. PM / Sr PM / GRC / trainer consume a member-type seat
+// (like executive); capabilities live in server/work_roles.js.
+export const COMPANY_ROLES = roles.COMPANY_ROLES
 // Seat / license counts are whole, non-negative, finite numbers. Anything else
 // (negative, NaN, Infinity, "abc", 1.5) used to slip through as 0 = unlimited or
 // as a fractional / infinite cap; now it is clamped to a sane integer. SEAT_MAX
@@ -2822,16 +2975,21 @@ export function newSessionSecret() {
   if (!db.sessionSecret) { db.sessionSecret = crypto.randomBytes(24).toString('hex'); persist() }
   return db.sessionSecret
 }
+// Session records are stored and handed out as SNAPSHOTS (a JSON copy), like any
+// serializing store. Keeping the live req.session object let express-session's
+// per-request touch() slide the stored expiry forward on every request, so a
+// session in use never expired server-side (gate: session_store_snapshot.test.mjs).
+const sessionSnapshot = (rec) => JSON.parse(JSON.stringify(rec))
 export function getSessionRecord(sid) {
   const rec = (db.sessions || {})[sid]
   if (!rec) return null
   const exp = rec.cookie?.expires
   if (exp && new Date(exp).getTime() <= Date.now()) { delete db.sessions[sid]; persist(); return null }
-  return rec
+  return sessionSnapshot(rec)
 }
 export function setSessionRecord(sid, data) {
   if (!db.sessions) db.sessions = {}
-  db.sessions[sid] = data
+  db.sessions[sid] = sessionSnapshot(data)
   persist()
 }
 export function destroySessionRecord(sid) {
@@ -2916,6 +3074,7 @@ export function getProviderRuntime(id) {
     providerId: id, apiKey: rrPick(id, keys),
     chatModel: (cur && cur.chatModel) || (def.chatModels && def.chatModels[0]) || null,
     visionModel: (cur && cur.visionModel) || null,
+    keySource: 'platform',   // our keys: the spend a Managed invoice bills
   }
   // Custom providers carry their own definition so ai.js can resolve base/kind.
   if (!PROVIDERS[id]) rt.provider = { id, label: def.label, base: def.base, kind: def.kind || 'openai', chatModels: def.chatModels || [] }
@@ -4120,6 +4279,7 @@ export function deleteWorkUser(userId, { reason = '', by = '' } = {}) {
   // Tickets key their owner as `userId`; the old `t.workUserId` comparison never
   // matched, so a deleted account's tickets silently outlived the account.
   db.workTickets = (db.workTickets || []).filter((t) => t.userId !== userId)
+  try { purgeWorkflowIncidents({ userId }) } catch { /* best-effort */ }
   bumpSessionEpoch(userId)
   const i = (db.users || []).findIndex((x) => x.id === userId)
   if (i >= 0) db.users.splice(i, 1)
@@ -4157,11 +4317,17 @@ export function deleteCompany(companyId, { reason = '', by = '', deleteMembers =
     // Detach members to standalone (no company access until they get their own plan).
     for (const m of members) { m.companyId = null; m.companyRole = null; try { bumpSessionEpoch(m.id) } catch { /* ignore */ } }
   }
+  try { purgeWorkflowIncidents({ companyId }) } catch { /* best-effort */ }
+  try { integ.purgeCompanyIntegrations(companyId) } catch { /* best-effort */ }   // its API keys, webhooks, launch links
   const i = (db.companies || []).findIndex((x) => x.id === companyId)
   if (i >= 0) db.companies.splice(i, 1)
+  // The company's captured workflow frames go with it (privacy: no tenant
+  // screenshots left on disk). A failure here is logged, never fatal.
+  let framesPurged = 0
+  try { framesPurged = wfFrames.removeCompany(companyId) } catch (e) { console.warn(`[work] company frame purge error: ${e.message}`) }
   recordAdminAction({ action: 'company_deleted', reason: r, detail: `${c.name} (${members.length} members ${deleteMembers ? 'deleted' : 'detached'}) by ${by}` })
   persist()
-  return { ok: true, members: members.length }
+  return { ok: true, members: members.length, framesPurged }
 }
 
 // ---- Editable email templates (superadmin) --------------------------------
@@ -4390,8 +4556,8 @@ export function financialSummary(now = new Date()) {
     const prevStart = (() => {
       const s = new Date(start)
       if (startFn === startOfWeek) s.setUTCDate(s.getUTCDate() - 7)
-      else if (startFn === startOfMonth) s.setUTCMonth(s.getUTCMonth() - 1)
-      else if (startFn === startOfQuarter) s.setUTCMonth(s.getUTCMonth() - 3)
+      else if (startFn === startOfMonth) return new Date(Date.UTC(s.getUTCFullYear(), s.getUTCMonth() - 1, 1))
+      else if (startFn === startOfQuarter) return new Date(Date.UTC(s.getUTCFullYear(), s.getUTCMonth() - 3, 1))
       else s.setUTCFullYear(s.getUTCFullYear() - 1)
       return s
     })()
@@ -5108,7 +5274,7 @@ export function setWorkUserPassword(workUserId, currentPassword, newPassword) {
 // OWN company. The route guards companyId; this enforces it again (defense in
 // depth) and refuses to touch an account in another company. Returns the public
 // user shape so the console can refresh the row.
-export function updateCompanyMember(adminCompanyId, targetUserId, { companyRole, tier, workFlow } = {}) {
+export function updateCompanyMember(adminCompanyId, targetUserId, { companyRole, tier, workFlow, grants } = {}) {
   if (!adminCompanyId) throw httpErr(403, 'No company in scope.')
   const u = getUser(targetUserId)
   if (!u || String(u.companyId) !== String(adminCompanyId)) throw httpErr(404, 'That user is not in your company.')
@@ -5129,11 +5295,17 @@ export function updateCompanyMember(adminCompanyId, targetUserId, { companyRole,
   }
   u.companyRole = finalRole
   if (tier !== undefined) u.tier = finalTier
+  // Additive grants (currently: trainer), sanitized against the FINAL role, so a
+  // role change into something ineligible (e.g. promoting to executive) drops the
+  // grant automatically. One rule, in server/work_roles.js.
+  const _prevGrants = (u.grants || []).join(',')
+  u.grants = roles.sanitizeGrants(finalRole, grants !== undefined ? grants : (u.grants || []))
   persist()
-  // Tell the member when their role or work flow actually changed (what they can
-  // do is different now - e.g. made a project manager, or switched to worker flow).
-  if (finalRole !== _prevRole || (workFlow !== undefined && (u.workFlow || null) !== _prevFlow)) {
-    emitStoreEvent('work_access_changed', { userId: u.id, role: u.companyRole || 'member', flow: u.workFlow || 'independent', companyId: adminCompanyId })
+  // Tell the member when their role, work flow, or grants actually changed (what
+  // they can do is different now - e.g. made a project manager, given the trainer
+  // grant, or switched to worker flow).
+  if (finalRole !== _prevRole || (workFlow !== undefined && (u.workFlow || null) !== _prevFlow) || u.grants.join(',') !== _prevGrants) {
+    emitStoreEvent('work_access_changed', { userId: u.id, role: u.companyRole || 'member', flow: u.workFlow || 'independent', grants: u.grants, companyId: adminCompanyId })
   }
   return publicWorkUser(u)
 }
@@ -5376,7 +5548,7 @@ export function getWorkUserRuntime(workUserId) {
   if (getWorkPlatformAllowed()) return getActiveRuntime()
   const u = getUser(workUserId)
   if (u && u.ai && u.ai.apiKey && u.ai.tested) {
-    return { providerId: u.ai.providerId, apiKey: u.ai.apiKey, chatModel: u.ai.chatModel, visionModel: u.ai.visionModel }
+    return { providerId: u.ai.providerId, apiKey: u.ai.apiKey, chatModel: u.ai.chatModel, visionModel: u.ai.visionModel, keySource: 'user' }
   }
   return null
 }
@@ -5623,6 +5795,8 @@ export function setWorkSessionSteps(workUserId, sessionId, steps) {
       ? { file: String(x.code.file || '').trim() || null, content: String(x.code.content) }
       : null,
     source: (x && x.source) ? String(x.source) : '',
+    // A published workflow's step carries the trainer's screenshot (frame ref only).
+    ...(x && isFrameRef(x.shot) ? { shot: x.shot } : {}),
     status: i === 0 ? 'current' : 'pending',
   })).filter((x) => x.text)
   s.currentStep = 0
@@ -6105,6 +6279,7 @@ export function listCompanyDirectory(companyId) {
     displayName: u.displayName || u.username || null,
     workFlow: (['worker', 'independent', 'mixed'].includes(u.workFlow) ? u.workFlow : 'independent'),
     companyRole: u.companyRole || 'member',
+    grants: roles.sanitizeGrants(u.companyRole, u.grants),
     tier: u.tier || null,
   }))
 }
@@ -6426,6 +6601,18 @@ export function setWorkSessionSummary(workUserId, sessionId, summary) {
 // The rich "what you'll be doing" overview for a session, set from the plan (the
 // planner returns it; a fallback is composed from the goal). Shown when the task
 // is resumed or scanned. Never throws into the plan response path.
+// Wave 3: the published workflow a session follows ({ id, groupId, version,
+// title }), set when it was started from one or a plan matched one strongly.
+// Deviation reporting and run counts read it; the private brain does not distill
+// such a session (the trainer's workflow is already the authority).
+export function setWorkSessionWorkflowRef(workUserId, sessionId, ref) {
+  const s = findWorkSession(workUserId, sessionId)
+  if (!s) throw httpErr(404, 'Session not found')
+  const r = ref && typeof ref === 'object' ? ref : null
+  s.workflowRef = r && r.id ? { id: String(r.id), groupId: String(r.groupId || ''), version: Number(r.version) || 1, title: String(r.title || '').slice(0, 200), mode: r.mode === 'plan' ? 'plan' : 'run' } : null
+  persist()
+  return s
+}
 export function setWorkSessionOverview(workUserId, sessionId, overview) {
   const s = findWorkSession(workUserId, sessionId)
   if (!s) return null
@@ -6510,6 +6697,8 @@ export function deleteWorkSession(workUserId, sessionId, reason = '') {
     const sdir = safe && path.join(SHOTS_DIR, safe)
     if (sdir && fs.existsSync(sdir)) fs.rmSync(sdir, { recursive: true, force: true })
   } catch { /* best effort */ }
+  // Workflow incidents: drop this session's occurrences and any screenshot it supplied.
+  try { purgeWorkflowIncidents({ sessionId }) } catch { /* best-effort, never blocks a delete */ }
   db.workSessions.splice(i, 1)
   // Remove the session's transmission audit log too, so deleting a session really
   // removes what it transmitted (the log is not kept past the session).

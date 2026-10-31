@@ -28,6 +28,30 @@ test('Sr PM is a superset of PM; GRC is read-only', () => {
   assert.equal(R.canSetUserFlowAndRole('company_admin'), true)
 })
 
+test('trainer is an additive grant, only with member or PM; it authors workflows', () => {
+  assert.ok(R.GRANTS.includes('trainer'))
+  assert.equal(R.COMPANY_ROLES.includes('trainer'), false)   // NOT a primary role
+  // The two permitted combinations, and nothing else.
+  assert.equal(R.canGrantTrainer('member'), true)
+  assert.equal(R.canGrantTrainer('project_manager'), true)
+  assert.equal(R.canGrantTrainer('senior_project_manager'), false)
+  assert.equal(R.canGrantTrainer('executive'), false)
+  assert.equal(R.canGrantTrainer('grc'), false)
+  assert.equal(R.canGrantTrainer('company_admin'), false)
+  // sanitizeGrants drops a grant the role may not hold, de-dupes, and rejects junk.
+  assert.deepEqual(R.sanitizeGrants('member', ['trainer']), ['trainer'])
+  assert.deepEqual(R.sanitizeGrants('project_manager', ['trainer', 'trainer']), ['trainer'])
+  assert.deepEqual(R.sanitizeGrants('executive', ['trainer']), [])
+  assert.deepEqual(R.sanitizeGrants('member', ['trainer', 'bogus']), ['trainer'])
+  assert.deepEqual(R.sanitizeGrants('member', null), [])
+  // Authoring: the trainer grant, OR a company admin (superset).
+  assert.equal(R.canAuthorWorkflow('member', ['trainer']), true)
+  assert.equal(R.canAuthorWorkflow('project_manager', ['trainer']), true)
+  assert.equal(R.canAuthorWorkflow('company_admin', []), true)
+  assert.equal(R.canAuthorWorkflow('member', []), false)
+  assert.equal(R.canAuthorWorkflow('grc', ['trainer']), true)   // grant present → can author
+})
+
 test('project visibility and write scope', () => {
   const proj = { id: 'p1', managerId: 'pmA' }
   assert.equal(R.canViewProject('project_manager', 'pmA', proj), true)   // own

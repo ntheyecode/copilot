@@ -1,6 +1,6 @@
 import React from 'react'
 import { ShieldCheck, ShieldAlert, AlertTriangle, PackageSearch } from 'lucide-react'
-import { useT } from '../i18n/index.jsx'
+import { useT, renderRich } from '../i18n/index.jsx'
 
 // SecurityNote - the in-app security check for a CODE result or composition.
 // It renders ONLY when a `security` object is passed, which the server attaches
@@ -28,7 +28,7 @@ export default function SecurityNote({ security }) {
     <div className={'sn-wrap' + (hasFindings ? ' sn-flag' : '')}>
       <div className="sn-head">
         <Icon size={13} />
-        <span>{hasFindings ? 'Security check: review before you use this' : 'Security check: no known issues'}</span>
+        <span>{hasFindings ? t('securityNote.headFlag') : t('securityNote.headClean')}</span>
       </div>
 
       {codeIssues.length > 0 ? (
@@ -47,12 +47,14 @@ export default function SecurityNote({ security }) {
           {vulnerable.slice(0, 6).map((v, i) => {
             const vulns = Array.isArray(v.vulns) ? v.vulns : []
             const ids = vulns.slice(0, 3).map((x) => x.id).filter(Boolean).join(', ')
-            const safe = v.latest || vulns.map((x) => x.fixedIn).filter(Boolean).sort().pop() || 'a patched version'
+            const safe = v.latest || vulns.map((x) => x.fixedIn).filter(Boolean).sort().pop() || t('securityNote.patchedVersion')
             const n = vulns.length || 1
+            const pkg = `${v.name} ${v.version}`
+            const idList = ids && vulns.length > 3 ? t('securityNote.idsMore', { ids }) : ids
             return (
               <li key={'v' + i}>
                 <PackageSearch size={12} />
-                <span><b>{v.name} {v.version}</b> has {n} known {n === 1 ? 'vulnerability' : 'vulnerabilities'}{ids ? ` (${ids}${vulns.length > 3 ? ', and more' : ''})` : ''}. Upgrade to {safe}{v.latest ? ' (latest)' : ' or later'}.</span>
+                <span>{renderRich(t.n(idList ? 'securityNote.vulnsIds' : 'securityNote.vulns', n, { pkg, ids: idList }))} {t(v.latest ? 'securityNote.upgradeLatest' : 'securityNote.upgradeLater', { version: safe })}</span>
               </li>
             )
           })}

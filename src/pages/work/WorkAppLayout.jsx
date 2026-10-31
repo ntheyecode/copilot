@@ -8,20 +8,21 @@
 // the dashboard overview and the start-a-task wizard live in their own pages.
 import { useEffect, useState, useCallback, useMemo, Suspense } from 'react'
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
-import { Loader2, Check, X, Plus, LogOut, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, Download, AlertTriangle, Play, Blocks, BarChart3, Settings, FolderKanban, SlidersHorizontal, Inbox, Briefcase, ShieldCheck, LayoutTemplate } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, Download, AlertTriangle, Play, Blocks, BarChart3, Settings, FolderKanban, SlidersHorizontal, Inbox, Briefcase, ShieldCheck, LayoutTemplate, GraduationCap } from 'lucide-react'
 import { roleViewOf } from '../../shared/work_roles_options.js'
 import { api } from '../../api.js'
 import WorkShell from '../../workShell.jsx'
 import LanguagePinModal from '../../components/LanguagePinModal.jsx'
 import PreferencesPanel from '../../components/PreferencesPanel.jsx'
-import { setInProduct } from '../../theme/prefs.js'
 import { AVMark } from '../../components/AdmireVedaLogo.jsx'
 import { readBuddyPref } from '../../components/AliveBuddy.jsx'
 import { useLocale, useT } from '../../i18n/index.jsx'
+import { useEditionView } from '../../edition/useCaps.js'   // edition: personal top-ups only where personal plans are sold
 import { WD_CSS } from './workApp.css.js'
 import { card, shell } from './lib.js'
 import { WorkAppContext } from './WorkAppContext.jsx'
 import PlanPill from './PlanPill.jsx'
+import IncidentsNavItem from './incidents/IncidentsNavItem.jsx'
 import { planView, fmtRenewDate, fmtDuration } from './planModel.js'
 
 // ---- Android self-update banner (moved verbatim from WorkPage) --------------
@@ -159,13 +160,16 @@ export default function WorkAppLayout() {
   const user = sess && sess.user
   const isAdmin = !!(user && (user.role === 'superadmin' || user.role === 'admin'))
   const isCompanyMember = !!(user && user.companyId)
+  const ed = useEditionView()
   const isCompanyAdmin = !!(user && user.companyRole === 'company_admin' && user.companyId)
-  const isExecutive = !!(user && user.companyId && ['executive', 'company_admin'].includes(user.companyRole))
   const covered = isAdmin || isCompanyMember || !!(user && user.canUseService)
   // Enterprise flow + role view: ONE derivation (src/shared/work_roles_options.js)
   // read by the rail, the dashboard (queue vs Start), the Start page and every
   // management page, so a role is never gated differently in two places.
   const roleView = useMemo(() => roleViewOf(user), [user])
+  // The exec dashboard link (executive or company admin) reads the same registry
+  // as the role-gated Help, so the link and its help can never disagree.
+  const isExecutive = roleView.showExec
   const hasPlan = !!(user && !user.companyId && user.subscription && ['active', 'trialing', 'past_due', 'canceled'].includes(user.subscription.status))
 
   const [company, setCompany] = useState(null)
@@ -189,10 +193,9 @@ export default function WorkAppLayout() {
   const [railOpen, setRailOpen] = useState(true)
   const [showBuy, setShowBuy] = useState(false)
   // Per-user Preferences (theme mode, brand colors, accessibility): a modal
-  // opened from the rail foot. The user's saved theme mode paints only while
-  // this product shell is mounted (the public site stays light).
+  // opened from the rail foot. The user's saved theme mode paints on every
+  // signed-in console (src/theme/ProductThemeScope.jsx); the public site stays light.
   const [prefsOpen, setPrefsOpen] = useState(false)
-  useEffect(() => { setInProduct(true); return () => setInProduct(false) }, [])
   // Buy top-up hours or an image bundle: a small quantity + price modal.
   const [buyErr, setBuyErr] = useState('')
   const [buyModal, setBuyModal] = useState(null)   // { kind: 'hours' | 'images' } | null
@@ -212,10 +215,13 @@ export default function WorkAppLayout() {
       setBillingOn(on)
       const adm = !!(user && (user.role === 'superadmin' || user.role === 'admin'))
       const cov = adm || !!(user && (user.companyId || user.canUseService))
-      setNeedsSub(!cov && on)
+      // paid_only (no free tier): an account without a plan needs one even
+      // before billing is configured, matching the server's subscription gate,
+      // so the dashboard never reads "free access" on such an edition.
+      setNeedsSub(!cov && (on || ed.caps.has('paid_only')))
     }).catch(() => {})
     if (user && !user.companyId) api.workInvoices().then((r) => setInvoices(r.invoices || [])).catch(() => setInvoices([]))
-  }, [authed, user])
+  }, [authed, user, ed.caps])
   useEffect(() => { reload() }, [reload])
 
   const refreshUsage = useCallback(async () => { try { const u = await api.workUsage(); setUsage(u) } catch { /* ignore */ } }, [])
@@ -295,7 +301,7 @@ export default function WorkAppLayout() {
   const titleCase = useCallback((s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : ''), [])
   const money = useCallback((n) => (n == null ? '' : `$${Number(n) % 1 ? Number(n).toFixed(2) : Number(n)}`), [])
   const showBilling = hasPlan || (Array.isArray(invoices) && invoices.length > 0)
-  const canBuyHours = !!(user && !user.companyId && !isAdmin && usage != null)
+  const canBuyHours = !!(user && !user.companyId && !isAdmin && usage != null && ed.individualPlans)
   const upgradeHref = '/workcopilot/pricing'
 
   const stopImpersonate = async () => {
@@ -436,9 +442,15 @@ export default function WorkAppLayout() {
             <NavLink to="/work/completed" className={navClass} title={t('workShell.nav.completed')}><Check size={18} /> <span className="wd-nav-t">{t('workShell.nav.completed')}</span></NavLink>
             <NavLink to="/work/logs" className={navClass} title={t('workShell.nav.logs')}><FileText size={18} /> <span className="wd-nav-t">{t('workShell.nav.logs')}</span></NavLink>
             <NavLink to="/work/skills" className={navClass} title={t('workShell.nav.skills')}><Blocks size={18} /> <span className="wd-nav-t">{t('workShell.nav.skills')}</span></NavLink>
-            {/* Role-based management section: PM / Sr PM / GRC (and the company admin). */}
-            {(roleView.showPm || roleView.showSrPm || roleView.showGrc || roleView.showTemplates) && (<>
+            {/* Role-based management section: PM / Sr PM / GRC, the Teach studio
+                (trainer grant or company admin), and the company admin. */}
+            {(roleView.showPm || roleView.showSrPm || roleView.showGrc || roleView.showTemplates || roleView.showTeach || roleView.showIncidents) && (<>
               <div className="wd-sect">{t('workShell.nav.manage')}</div><span className="wd-sect-rule" aria-hidden />
+              {/* Teach is a standalone .wka console (own route, full navigation) like
+                  the exec dashboard, so it is a plain anchor, not a NavLink. */}
+              {roleView.showTeach && <a className="wd-nav" href="/work/teach" title={t('workShell.nav.teachTip')}><GraduationCap size={18} /> <span className="wd-nav-t">{t('workShell.nav.teach')}</span></a>}
+              {/* Workflow issues inbox (Wave 3 part C): its own .wka console, with an unread badge. */}
+              <IncidentsNavItem enabled={roleView.showIncidents} />
               {roleView.showPm && <NavLink to="/work/pm" className={navClass} title={t('workShell.nav.pmTip')}><Briefcase size={18} /> <span className="wd-nav-t">{t('workShell.nav.pm')}</span></NavLink>}
               {roleView.showTemplates && <NavLink to="/work/templates" className={navClass} title={t('workShell.nav.templatesTip')}><LayoutTemplate size={18} /> <span className="wd-nav-t">{t('workShell.nav.templates')}</span></NavLink>}
               {roleView.showSrPm && <NavLink to="/work/srpm" className={navClass} title={t('workShell.nav.srpmTip')}><Users size={18} /> <span className="wd-nav-t">{t('workShell.nav.srpm')}</span></NavLink>}

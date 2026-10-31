@@ -17,8 +17,28 @@ const dir = resolve('src/i18n/locales')
 const files = readdirSync(dir).filter((f) => f.endsWith('.js'))
 let holes = 0
 
+// A positional override can also DUPLICATE a row instead of leaving a hole: on
+// 2026-10-30 en-GB's roi.rows patched "index 3" after the base order shifted,
+// showing Onboarding twice and dropping Mistakes. So an array of titled objects
+// (t / k / title / q / name / label) must not repeat a title.
+const TITLE_KEYS = ['t', 'k', 'title', 'q', 'name', 'label']
+function dupTitles(arr, path, locale) {
+  if (!arr.length || !arr.every((el) => el && typeof el === 'object' && !Array.isArray(el))) return
+  const key = TITLE_KEYS.find((k) => arr.every((el) => typeof el[k] === 'string'))
+  if (!key) return
+  const seen = new Set()
+  for (const el of arr) {
+    if (seen.has(el[key])) {
+      console.error(`[locale-integrity] ${locale}: duplicate ${key} "${el[key]}" in ${path} - a positional override repeating a base row (and hiding another). Override by title, not by index.`)
+      holes++
+    }
+    seen.add(el[key])
+  }
+}
+
 function walk(val, path, locale) {
   if (Array.isArray(val)) {
+    dupTitles(val, path, locale)
     val.forEach((el, i) => {
       if (el === undefined || el === null) {
         console.error(`[locale-integrity] ${locale}: undefined/null element at ${path}[${i}] - a positional index into a base array that no longer exists. This blanks the site for this locale.`)
@@ -44,7 +64,7 @@ for (const f of files) {
 }
 
 if (holes) {
-  console.error(`\n[locale-integrity] FAILED: ${holes} array hole(s). Fix the locale(s) above (drop the stale index / add .filter(Boolean)) before building.`)
+  console.error(`\n[locale-integrity] FAILED: ${holes} array hole(s) or duplicate row(s). Fix the locale(s) above (override by title, not by index) before building.`)
   process.exit(1)
 }
-console.log(`[locale-integrity] OK: ${files.length} locale file(s), no array holes.`)
+console.log(`[locale-integrity] OK: ${files.length} locale file(s), no array holes, no duplicate rows.`)

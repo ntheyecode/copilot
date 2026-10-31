@@ -220,11 +220,19 @@ export function extractJson(text, preferKey = null) {
 // next call, so the strong model is a just-in-time backup, not the default.
 // Returns { raw, escalated, reason }. Never silently swallows a real failure:
 // a strong-model error on the error path propagates (SUPREME RULE III).
-async function escalateVision(run, primary, strong, isWeak) {
+// `better(a, b)` (optional): on the weak path, which of the two answers to keep
+// (true = the backup's). Without it the backup's answer always wins (unchanged for
+// existing callers); with it, a backup that comes back worse cannot replace a usable
+// primary answer.
+export async function escalateVision(run, primary, strong, isWeak, better = null) {
   try {
     const raw = await run(primary.cfg, primary.visionModel)
     if (strong && isWeak(raw)) {
-      try { const raw2 = await run(strong.cfg, strong.visionModel); return { raw: raw2, escalated: true, reason: 'weak' } }
+      try {
+        const raw2 = await run(strong.cfg, strong.visionModel)
+        if (better && !better(raw2, raw)) return { raw, escalated: false, reason: 'strong_not_better' }
+        return { raw: raw2, escalated: true, reason: 'weak' }
+      }
       catch { return { raw, escalated: false, reason: 'strong_failed' } }   // keep primary's result if the backup also fails
     }
     return { raw, escalated: false, reason: '' }
@@ -1110,8 +1118,15 @@ export function workNavigateUser({ goal, steps, currentStep }) {
     `CHECKLIST (the list currently assumes step ${Number(currentStep || 0) + 1} is next):\n${list}\n\n` +
     'Look at the screenshot and return the navigation JSON now.')
 }
-export async function workNavigate(ai, cfg, { base, voice = '', mode = 'stepwise', level = 'medium', goal, steps, currentStep, frame, visionModel, strong = null }) {
-  const system = workNavigateSystem({ base, voice, mode, level })
+// `extra` (optional): { system, parse } adds one caller-owned block to the watch
+// prompt and parses its own field from the same reply (one call, no second read).
+// Used by sessions that follow a published workflow (workflow_deviation.js);
+// every other session's prompt and cost are unchanged.
+export async function workNavigate(ai, cfg, { base, voice = '', mode = 'stepwise', level = 'medium', goal, steps, currentStep, frame, visionModel, strong = null, extra = null }) {
+  const system = workNavigateSystem({ base, voice, mode, level }) + (extra && extra.system ? `
+
+---
+${extra.system}` : '')
   const user = workNavigateUser({ goal, steps, currentStep })
   const n = (steps || []).length
   const curPlanIdx = Number.isFinite(Number(currentStep)) ? Math.round(Number(currentStep)) : null
@@ -1177,6 +1192,7 @@ export async function workNavigate(ai, cfg, { base, voice = '', mode = 'stepwise
     // it as escalated (the caller meters the strong model accordingly).
     escalated: out.escalated || preferStrong,
     reason: out.escalated ? out.reason : (preferStrong ? 'verify' : out.reason),
+    extra: extra && typeof extra.parse === 'function' ? extra.parse(parsed) : null,
   }
 }
 

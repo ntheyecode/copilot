@@ -29,7 +29,7 @@ export default function PolicyNote({ policy }) {
     <div className={'pn-wrap' + (has ? ' pn-flag' : '')}>
       <div className="pn-head">
         <Icon size={13} />
-        <span>{has ? 'Company policy: review before you use this' : `Company policy: clear (checked against ${n} ${n === 1 ? 'rule' : 'rules'})`}</span>
+        <span>{has ? t('policyNote.headFlag') : t.n('policyNote.headClean', n)}</span>
       </div>
 
       {has ? (
@@ -40,9 +40,11 @@ export default function PolicyNote({ policy }) {
               <li key={i}>
                 {f.kind === 'forbid' ? <Ban size={12} /> : <CircleAlert size={12} />}
                 <span>
-                  <b>{f.kind === 'forbid' ? 'Prohibited' : 'Required'}: {f.title || (f.kind === 'forbid' ? 'a prohibited practice' : 'a required practice')}.</b>
+                  <b>{f.title
+                    ? t(f.kind === 'forbid' ? 'policyNote.forbid' : 'policyNote.require', { title: f.title })
+                    : t(f.kind === 'forbid' ? 'policyNote.forbidAny' : 'policyNote.requireAny')}</b>
                   {f.guidance ? ' ' + f.guidance : ''}
-                  {cite ? <span className="pn-cite"> (per {cite})</span> : null}
+                  {cite ? <span className="pn-cite"> {t('policyNote.per', { cite })}</span> : null}
                 </span>
               </li>
             )

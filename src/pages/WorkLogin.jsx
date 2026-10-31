@@ -6,12 +6,15 @@ import MfaGate from '../components/MfaGate.jsx'
 import GuideConsole from '../components/GuideConsole.jsx'   // the live guide console (watch -> step -> correct -> confirm) in the brand aside
 import { api } from '../api.js'
 import { LEGAL_FALLBACK_DOCS } from '../components/LegalConsentGate.jsx'   // shared fallback agreement list
+import AgreementLinks from '../components/AgreementLinks.jsx'   // the keyed "I have read and agree to ..." sentence
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
 import SocialMark from '../components/SocialMark.jsx'   // Google / Microsoft / Facebook marks (shared with the subscribe onboarding)
 import WorkShell from '../workShell.jsx'
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
+import { hasLaunchHop } from './work/launch/launchHop.js'   // a launch link parked its token for this sign-in hop
 import LanguageMenu from '../components/LanguageMenu.jsx'   // pick a language at login; the app adopts it
 import { useT } from '../i18n/index.jsx'
+import { useEditionView } from '../edition/useCaps.js'   // edition: sign-up and company SSO shown only where the edition has them
 
 const WD_DESK = typeof window !== 'undefined' ? window.workDesktop : null
 // IN-APP MODE (owner, 2026-10-24): "Admireveda app is to work, not marketing; so
@@ -79,9 +82,12 @@ export default function WorkLogin() {
   const t = useT()
   const { user, login, signup, loginMfa, loginMfaSetup, refresh } = useAuth()
   const [sp] = useSearchParams()
+  // Edition: no personal sign-up -> sign-in only (no create switch, no plan
+  // hand-off); no company tenants -> no company SSO detection, step or entry.
+  const ed = useEditionView()
   // In the app there is no checkout path: ignore any ?plan so no plan card,
   // no checkout step and no "Log in to start X" copy can appear.
-  const plan = IN_APP ? '' : (sp.get('plan') || '').toLowerCase()
+  const plan = IN_APP || !ed.soloSignup ? '' : (sp.get('plan') || '').toLowerCase()
   useSeo({ title: t('login.meta.title'), description: t('login.meta.description'), path: '/workcopilot' })
   const cycle = (sp.get('cycle') || 'monthly').toLowerCase()   // annual selections are not auto-charged monthly
   const planName = { lite: 'Lite', basic: 'Basic', advanced: 'Advanced', premium: 'Premium' }[plan] || ''
@@ -98,7 +104,7 @@ export default function WorkLogin() {
       nav(`/workcopilot/signup?plan=${encodeURIComponent(plan)}${cycle !== 'monthly' ? `&cycle=${encodeURIComponent(cycle)}` : ''}`, { replace: true })
     }
   }, [])   // eslint-disable-line react-hooks/exhaustive-deps
-  const mode = IN_APP ? 'signin' : modeState   // the app is sign-in only; accounts are created on the web
+  const mode = IN_APP || !ed.soloSignup ? 'signin' : modeState   // the app is sign-in only (accounts are created on the web), and so is an edition without personal sign-up
   // The two tabs: 'social' | 'email'. A returning SSO error lands on the email
   // tab (that is where company SSO lives).
   const [tab, setTab] = useState(sp.get('sso_error') ? 'email' : 'social')
@@ -155,7 +161,7 @@ export default function WorkLogin() {
   const candidateEmail = (mode === 'signup' ? sEmail : uName).trim().toLowerCase()
   const candidateDomain = EMAIL_RE.test(candidateEmail) ? candidateEmail.slice(candidateEmail.indexOf('@') + 1) : ''
   const detectSso = async (domain) => {
-    if (!domain) return
+    if (!domain || !ed.companies) return
     if (domain in ssoSeen.current) { const v = ssoSeen.current[domain]; setSsoHit(v || null); return }
     setSsoChecking(true)
     try {
@@ -286,6 +292,10 @@ export default function WorkLogin() {
   useEffect(() => {
     if (!user || socialStep) return
     if (plan) { nav(`/workcopilot/signup/pay?plan=${encodeURIComponent(plan)}${cycle !== 'monthly' ? `&cycle=${encodeURIComponent(cycle)}` : ''}`, { replace: true }); return }
+    // A launch link (/work/launch#<token>) sent the person here to sign in and
+    // parked its token for this one hop: finish the launch instead of the
+    // role's home. The launch page takes and clears the parked token.
+    if (hasLaunchHop()) { nav('/work/launch', { replace: true }); return }
     const isAdmin = !!(user && ['superadmin', 'admin', 'accounting', 'affiliate_admin'].includes(user.role))
     const isCompanyAdmin = !!(user && user.companyRole === 'company_admin' && !isAdmin)
     nav(isAdmin ? '/work/admin' : isCompanyAdmin ? '/work/company' : '/work', { replace: true })
@@ -302,7 +312,7 @@ export default function WorkLogin() {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(sEmail.trim())) { setErr(t('login.err.validEmail')); return }
       // The agreements must be accepted to create an account (clickwrap). The
       // button is also disabled, this is the submit-time backstop.
-      if (!accepted) { setErr('Please accept the agreements to create your account.'); return }
+      if (!accepted) { setErr(t('login.err.acceptAgreements')); return }
     }
     setBusy(true); setErr('')
     try {
@@ -442,7 +452,7 @@ export default function WorkLogin() {
                 <p className="wl-consent">{t.rich('login.profile.consent', null, { terms: (c) => <a href="/workcopilot/terms">{c}</a>, privacy: (c) => <a href="/workcopilot/privacy">{c}</a> })}</p>
               </form>
             </>
-          ) : ssoView ? (
+          ) : ssoView && ed.companies ? (
             /* FOCUSED COMPANY-SSO STEP: its own clean view - one field, one action, a Back link. */
             <div className="wl-ssostep" role="region" aria-label={t('login.ssoStep.aria')}>
               <button type="button" className="wl-back" onClick={closeSso}><ArrowLeft size={15} aria-hidden="true" className="wl-arrow" /> {t('login.ssoStep.back')}</button>
@@ -507,10 +517,12 @@ export default function WorkLogin() {
                       <label htmlFor="wl-phone">{t('login.form.phone')} <span className="wl-opt">{t('common.optional')}</span></label>
                       <input id="wl-phone" name="phone" type="tel" value={sPhone} onChange={(e) => setSPhone(e.target.value)} autoComplete="tel" placeholder={t('login.form.phonePh')} />
                     </div>
+                    {ed.companies && (
                     <div>
                       <label htmlFor="wl-company">{t('login.form.company')} <span className="wl-opt">{t('common.optional')}</span></label>
                       <input id="wl-company" name="company" value={sCompany} onChange={(e) => setSCompany(e.target.value)} autoComplete="organization" placeholder={t('login.form.companyPh')} />
                     </div>
+                    )}
                   </div>
                 </>)}
                 {/* sign-in: the username-or-email field is the SSO detector too */}
@@ -560,9 +572,7 @@ export default function WorkLogin() {
                       aria-invalid={err && !accepted ? 'true' : undefined}
                     />
                     <label htmlFor="wl-accept">
-                      I have read and agree to the {acceptDocs.map((d, i) => (
-                        <span key={d.key}>{i > 0 ? (i === acceptDocs.length - 1 ? ' and ' : ', ') : ''}<a href={d.path} target="_blank" rel="noopener">{d.title}</a></span>
-                      ))}.
+                      <AgreementLinks docs={acceptDocs} />
                     </label>
                   </div>
                 )}
@@ -577,11 +587,13 @@ export default function WorkLogin() {
                 )}
               </form>
               {/* COMPANY SSO ENTRY: one clear row that opens the focused SSO step (no inline dropdown). */}
+              {ed.companies && (
               <button type="button" className="wl-ssoentry" onClick={openSso}>
                 <span className="wl-ssoentry-ic"><KeyRound size={15} aria-hidden="true" /></span>
                 <span className="wl-ssoentry-t"><b>{t('login.ssoEntry.btn')}</b><small>{t('login.ssoEntry.q')}</small></span>
                 <ArrowRight size={15} aria-hidden="true" className="wl-arrow wl-ssoentry-arrow" />
               </button>
+              )}
             </div>
           )}
 
@@ -599,7 +611,9 @@ export default function WorkLogin() {
           <p className="wl-switch">
             {IN_APP
               ? t.rich('login.newWeb', null, { a: (c) => <a href="https://admireveda.com/workcopilot" target="_blank" rel="noopener noreferrer">{c}</a> })
-              : mode === 'signup'
+              : !ed.soloSignup
+                ? (ed.publicSite ? t.rich('edition.login.orgOnly', null, { a: (c) => <a href="/workcopilot/contact">{c}</a> }) : null)
+                : mode === 'signup'
                 ? t.rich('login.switch.toLogin', null, { a: (c) => <button type="button" className="wl-link" onClick={() => switchMode('signin')}>{c}</button> })
                 : t.rich('login.switch.toCreate', null, { a: (c) => <button type="button" className="wl-link" onClick={() => switchMode('signup')}>{c}</button> })}
           </p>

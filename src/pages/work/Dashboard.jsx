@@ -42,11 +42,14 @@ import { DASH_CSS } from './dash.css.js'
 import { PJ_CSS } from './projects/projects.css.js'
 import { EP_CSS } from './pm/ep.css.js'
 import WorkerQueue from './pm/WorkerQueue.jsx'
+import CompanyWorkflows from './workflows/CompanyWorkflows.jsx'
+import { useEditionView } from '../../edition/useCaps.js'   // edition: personal plan chooser only where personal plans are sold
 
 // Plans offered in the chooser, in tier order; only tiers live pricing carries.
 const PLAN_TIER_ORDER = ['lite', 'basic', 'advanced', 'premium']
 
 export default function Dashboard() {
+  const ed = useEditionView()
   // One translator for the whole app (src/i18n): every key here ships in
   // en/workDashboard.js, so a raw key is never shown (SUPREME RULE III).
   const t = useT()
@@ -124,7 +127,7 @@ export default function Dashboard() {
         return (
           <section className="wd-cobrand" aria-label={t('workDashboard.cobrand.aria', { company: company.name })}>
             {company.logo
-              ? <span className="wd-cobrand-logo"><img src={company.logo} alt={`${company.name} logo`} /></span>
+              ? <span className="wd-cobrand-logo"><img src={company.logo} alt={t('workDashboard.cobrand.logoAlt', { company: company.name })} /></span>
               : <span className="wd-cobrand-logo mono" aria-hidden>{initials ? <b>{initials}</b> : <Building2 size={20} />}</span>}
             <div className="wd-cobrand-id">
               <span className="wd-cobrand-eyebrow">{t('workDashboard.cobrand.eyebrow')}</span>
@@ -155,7 +158,9 @@ export default function Dashboard() {
                 ? t('workDashboard.plan.admin')
                 : isCompanyMember
                   ? t('workDashboard.plan.companyLeft', { company: companyName || t('workDashboard.plan.yourCompany'), time: timeLeft })
-                  : (covered || (plan && plan.hasPlan))
+                  // No free tier (paid_only): an account that still needs a plan reads
+                  // "choose a plan", never a plan it does not have.
+                  : (covered || (plan && plan.hasPlan && !(needsSub && ed.caps.has('paid_only'))))
                     ? t('workDashboard.plan.coveredMonth', { plan: planName, time: timeLeft })
                     : needsSub
                       ? t('workDashboard.plan.choose')
@@ -209,6 +214,10 @@ export default function Dashboard() {
         </section>
       )}
 
+      {/* 3b. Company workflows: the guides trainers published, runnable by every
+          company role (worker-flow members too); renders nothing outside a company */}
+      <CompanyWorkflows />
+
       {/* 4. Plan meters: hours this month, top-ups / allowance, open tasks, the one state */}
       {!needsSub && (
         <PlanMeters plan={plan} renewLabel={renewLabel} companyName={companyName}
@@ -260,8 +269,27 @@ export default function Dashboard() {
         )}
       </>)}
 
+      {/* 6. needsSub: where personal plans are not sold (organizations only), an
+          account without coverage is told where access comes from instead of
+          being offered a plan it cannot buy. */}
+      {needsSub && !ed.individualPlans && (
+        <div className="wd-sub" role="note">
+          <div className="wd-sub-head">
+            <span className="ic"><Rocket size={18} /></span>
+            <div>
+              <h3>{t('edition.app.noPlanTitle')}</h3>
+              <p>{t('edition.app.noPlanBody')}</p>
+            </div>
+          </div>
+          {ed.publicSite && (
+          <div style={{ marginTop: 14, textAlign: 'center', fontSize: 13.5 }}>
+            <a href="/workcopilot/contact" className="wd-link">{t('edition.app.noPlanTalk')}</a>
+          </div>
+          )}
+        </div>
+      )}
       {/* 6. needsSub plan chooser */}
-      {needsSub && (
+      {needsSub && ed.individualPlans && (
         <div className="wd-sub" role="note">
           <div className="wd-sub-head">
             <span className="ic"><Rocket size={18} /></span>
@@ -282,7 +310,7 @@ export default function Dashboard() {
             ))}
           </div>
           {subErr && <div className="wd-sub-err"><AlertTriangle size={14} /> {subErr}</div>}
-          <div className="wd-sub-note">{t('workDashboard.sub.teamNote')}</div>
+          {ed.companies && <div className="wd-sub-note">{t('workDashboard.sub.teamNote')}</div>}
           <div style={{ marginTop: 14, textAlign: 'center', fontSize: 13.5 }}>
             {t('workDashboard.sub.demoPre')} <a href="/demo" className="wd-link">{t('workDashboard.sub.demoLink')}</a>
           </div>

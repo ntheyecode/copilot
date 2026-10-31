@@ -32,19 +32,23 @@ import { useT } from '../i18n/index.jsx'
 
 // Fallback used ONLY if the manifest fetch fails - the server manifest is the
 // single source of truth. The five core agreements apply to everyone; the DPA
-// (business:true) is added for company/business accounts. `title` is the English
-// default; the gate DISPLAYS t('workShell.legal.docs.<key>', title), keyed by the
-// manifest doc key, so the server list and this fallback both render translated.
+// (business:true) is added for company/business accounts. The fallback carries
+// no English titles: every surface DISPLAYS legalDocTitle(t, doc), keyed by the
+// manifest doc key (workShell.legal.docs.<key>), so the server list and this
+// fallback both render translated. A server doc whose key the catalog does not
+// know yet shows the server's own title.
 export const LEGAL_FALLBACK_DOCS = [
-  { key: 'terms', title: 'Terms of Service', path: '/workcopilot/terms' },
-  { key: 'privacy', title: 'Privacy Policy', path: '/workcopilot/privacy' },
-  { key: 'acceptable-use', title: 'Acceptable Use Policy', path: '/workcopilot/acceptable-use' },
-  { key: 'cookie-policy', title: 'Cookie Policy', path: '/workcopilot/cookie-policy' },
-  { key: 'disclaimer', title: 'Disclaimer', path: '/workcopilot/disclaimer' },
+  { key: 'terms', path: '/workcopilot/terms' },
+  { key: 'privacy', path: '/workcopilot/privacy' },
+  { key: 'acceptable-use', path: '/workcopilot/acceptable-use' },
+  { key: 'cookie-policy', path: '/workcopilot/cookie-policy' },
+  { key: 'disclaimer', path: '/workcopilot/disclaimer' },
 ]
 
 // Manifest doc key ('acceptable-use') -> i18n leaf ('acceptableUse').
 const docTitleKey = (key) => 'workShell.legal.docs.' + String(key || '').replace(/-([a-z0-9])/g, (_, c) => c.toUpperCase())
+// The one display rule for an agreement's name (consent gate + signup form).
+export const legalDocTitle = (t, d) => t(docTitleKey(d && d.key), (d && (d.title || d.key)) || '')
 
 export default function LegalConsentGate({ children }) {
   const t = useT()
@@ -140,7 +144,7 @@ export default function LegalConsentGate({ children }) {
             {shown.map((d) => (
               <li key={d.key}>
                 <a href={d.path} target="_blank" rel="noopener noreferrer">
-                  <span>{t(docTitleKey(d.key), d.title)}</span>
+                  <span>{legalDocTitle(t, d)}</span>
                   <ExternalLink size={14} aria-hidden="true" />
                 </a>
               </li>

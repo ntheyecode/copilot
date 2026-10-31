@@ -8,10 +8,14 @@
 // Two orthogonal axes per company user (admin-set):
 //   workFlow     worker | independent | mixed   (how guided tasks reach them)
 //   companyRole  member | company_admin | executive | project_manager |
-//                senior_project_manager | grc  (the management grant on top)
+//                senior_project_manager | grc  (the primary role)
+//   grants[]     trainer  (additive, only with a member or project_manager role)
 
 export const WORK_FLOWS = ['worker', 'independent', 'mixed']
 export const COMPANY_ROLES = ['member', 'executive', 'project_manager', 'senior_project_manager', 'grc', 'company_admin']
+// Additive grants on top of the primary role (mirrors server/work_roles.js).
+export const GRANTS = ['trainer']
+export function canGrantTrainer(role) { return role === 'member' || role === 'project_manager' }
 export const RISK_SLA_DAYS = 5
 
 // Select options: id + the i18n key of the label (+ a short help key). Order is
@@ -29,6 +33,10 @@ export const COMPANY_ROLE_OPTIONS = [
   { id: 'senior_project_manager', labelKey: 'companyAdmin.roles.seniorProjectManager' },
   { id: 'grc', labelKey: 'companyAdmin.roles.grc' },
   { id: 'company_admin', labelKey: 'companyAdmin.roles.companyAdmin' },
+]
+// Grant options: additive checkboxes the admin sets alongside the primary role.
+export const GRANT_OPTIONS = [
+  { id: 'trainer', labelKey: 'companyAdmin.grants.trainer', helpKey: 'companyAdmin.grants.trainerHelp' },
 ]
 export function roleLabelKey(role) {
   const o = COMPANY_ROLE_OPTIONS.find((x) => x.id === role)
@@ -53,6 +61,26 @@ export function isSrPM(role) { return role === 'senior_project_manager' }
 export function isGRC(role) { return role === 'grc' }
 export function isPM(role) { return role === 'project_manager' || isSrPM(role) }
 export function isCompanyAdmin(role) { return role === 'company_admin' }
+export function hasTrainerGrant(grants) { return Array.isArray(grants) && grants.includes('trainer') }
+export function sanitizeGrants(role, grants) {
+  const set = Array.isArray(grants) ? [...new Set(grants.filter((g) => GRANTS.includes(g)))] : []
+  return set.filter((g) => g !== 'trainer' || canGrantTrainer(role))
+}
+export function canAuthorWorkflow(role, grants) { return hasTrainerGrant(grants) || isCompanyAdmin(role) }
+// Workflow incidents (Wave 3 part C): who RECEIVES a deviation raised while an
+// employee follows a published workflow: trainers, PMs and above (PM, Sr PM, GRC),
+// company admins and executives. Who may ACT on one (acknowledge, resolve,
+// dismiss): trainers, PMs, Sr PMs and company admins. GRC and executives watch.
+export function canReceiveWorkflowIncidents(role, grants) {
+  return hasTrainerGrant(grants) || isPM(role) || isGRC(role) || isCompanyAdmin(role) || role === 'executive'
+}
+export function canManageWorkflowIncidents(role, grants) {
+  return hasTrainerGrant(grants) || isPM(role) || isCompanyAdmin(role)
+}
+// Executive dashboard (/work/exec): executives and company admins. The Company
+// Brain export on it is executive-only (the server enforces requireExecutiveOnly).
+export function isExecutive(role) { return role === 'executive' }
+export function canSeeExecDashboard(role) { return isExecutive(role) || isCompanyAdmin(role) }
 export function canCreateProject(role) { return isPM(role) || isCompanyAdmin(role) }
 export function canAssignTask(role) { return isPM(role) || isCompanyAdmin(role) }
 export function canReassignProject(role) { return isSrPM(role) || isCompanyAdmin(role) }
@@ -76,6 +104,7 @@ export function roleViewOf(user) {
   const srpm = company && isSrPM(role)
   const grc = company && isGRC(role)
   const admin = company && isCompanyAdmin(role)
+  const trainer = company && hasTrainerGrant(user && user.grants)
   return {
     company, role, flow,
     isWorker: flow === 'worker',
@@ -84,7 +113,13 @@ export function roleViewOf(user) {
     canStart: canStartOwnTask(flow),
     showQueue: company && canReceiveAssignment(flow),
     // Management surfaces.
-    isPM: pm, isSrPM: srpm, isGRC: grc, isCompanyAdmin: admin,
+    isPM: pm, isSrPM: srpm, isGRC: grc, isCompanyAdmin: admin, isTrainer: trainer,
+    // Teach studio: anyone holding the trainer grant; a company admin can too.
+    showTeach: trainer || admin,               // /work/teach (record + author)
+    showIncidents: company && canReceiveWorkflowIncidents(role, user && user.grants),   // workflow deviation inbox
+    canManageIncidents: company && canManageWorkflowIncidents(role, user && user.grants), // acknowledge / resolve / dismiss
+    isExecutive: company && isExecutive(role),
+    showExec: company && canSeeExecDashboard(role),   // /work/exec (Brain export inside: executives only)
     showPm: pm || admin,                       // /work/pm  (projects I manage)
     showSrPm: srpm || admin,                   // /work/srpm (all managers)
     showGrc: grc || srpm || admin,             // /work/grc  (oversight, read-only for GRC)
@@ -118,6 +153,7 @@ export function managerCandidates(people) {
 export default {
   WORK_FLOWS, COMPANY_ROLES, RISK_SLA_DAYS, WORK_FLOW_OPTIONS, COMPANY_ROLE_OPTIONS,
   roleLabelKey, flowLabelKey, normalizeFlow, canStartOwnTask, canReceiveAssignment,
-  isSrPM, isGRC, isPM, isCompanyAdmin, canCreateProject, canAssignTask, canReassignProject,
-  canAssignProjectManager, canSeeAllProjects, canManageProject, roleViewOf, assignablePeople, managerCandidates,
+  GRANTS, GRANT_OPTIONS, canGrantTrainer, hasTrainerGrant, sanitizeGrants,
+  isSrPM, isGRC, isPM, isCompanyAdmin, isExecutive, canSeeExecDashboard, canCreateProject, canAssignTask, canReassignProject,
+  canAssignProjectManager, canSeeAllProjects, canManageProject, canAuthorWorkflow, canReceiveWorkflowIncidents, canManageWorkflowIncidents, roleViewOf, assignablePeople, managerCandidates,
 }

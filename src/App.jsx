@@ -18,6 +18,8 @@ import WorkAcceptableUse from './pages/WorkAcceptableUse.jsx'
 import WorkDPA from './pages/WorkDPA.jsx'
 import WorkRefund from './pages/WorkRefund.jsx'
 import WorkCookiePolicy from './pages/WorkCookiePolicy.jsx'
+import ProductThemeScope from './theme/ProductThemeScope.jsx'
+import RequireSignIn from './components/RequireSignIn.jsx'
 import WorkSubprocessors from './pages/WorkSubprocessors.jsx'
 import WorkAccessibility from './pages/WorkAccessibility.jsx'
 import WorkBenchmark from './pages/WorkBenchmark.jsx'
@@ -29,6 +31,8 @@ import WorkContact from './pages/WorkContact.jsx'
 import AffiliatePage from './pages/AffiliatePage.jsx'
 import WorkSetPassword from './pages/WorkSetPassword.jsx'
 import OnboardingPage from './pages/onboarding/OnboardingPage.jsx'   // subscribe: create account -> verify -> pay -> welcome
+import SignupClosed from './pages/onboarding/SignupClosed.jsx'         // where personal sign-up is off: who it is for + talk to us / sign in
+import EditionRoute from './edition/EditionRoute.jsx'                  // capability gate per route (src/edition/surfaces.js)
 // Signed-in app + admin consoles are code-split: public marketing/SEO visitors
 // never download them, which keeps the initial bundle (and LCP) small.
 // The signed-in app is a shared shell (WorkAppLayout) with per-route pages under
@@ -45,6 +49,13 @@ const WorkFullGuide = lazy(() => import('./pages/WorkFullGuide.jsx'))
 const WorkAdmin = lazy(() => import('./pages/workadmin/WorkAdmin.jsx'))
 const WorkCompanyAdmin = lazy(() => import('./pages/workadmin/WorkCompanyAdmin.jsx'))
 const WorkExec = lazy(() => import('./pages/WorkExec.jsx'))
+// Teach studio: record + author guided workflows (trainer grant or company admin).
+// Standalone .wka console like the exec dashboard; self-gates on roleView.showTeach.
+const TeachStudio = lazy(() => import('./pages/work/teach/TeachStudio.jsx'))
+// Workflow issues inbox (Teach Wave 3 part C): standalone .wka console; self-gates on roleView.showIncidents.
+const WorkflowIssues = lazy(() => import('./pages/work/incidents/WorkflowIssues.jsx'))
+// Launch link (/work/launch#<token>): a company app's one-time link that starts a workflow.
+const LaunchPage = lazy(() => import('./pages/work/launch/LaunchPage.jsx'))
 // Standalone white sub-pages of the dashboard (same tokens, own white sub-shell).
 const WorkTasks = lazy(() => import('./pages/work/MyTasks.jsx'))
 const CompletedTasks = lazy(() => import('./pages/work/Completed.jsx'))
@@ -117,18 +128,21 @@ export default function App() {
       <Route path="/workcopilot" element={<WorkLogin />} />
       <Route path="/workcopilot/login" element={<WorkLogin />} />
       {/* Subscribe onboarding (public; the server state picks the step, the URL mirrors it). */}
-      <Route path="/workcopilot/signup" element={<OnboardingPage />} />
-      <Route path="/workcopilot/signup/:step" element={<OnboardingPage />} />
+      <Route path="/workcopilot/signup" element={<EditionRoute needs="soloSignup" fallback={<SignupClosed />}><OnboardingPage /></EditionRoute>} />
+      <Route path="/workcopilot/signup/:step" element={<EditionRoute needs="soloSignup" fallback={<SignupClosed />}><OnboardingPage /></EditionRoute>} />
       <Route path="/workcopilot/use-cases" element={<WorkUseCases />} />
       <Route path="/workcopilot/security" element={<WorkSecurity />} />
       {/* Enterprise features: the full list, linked from the main page + nav. */}
-      <Route path="/workcopilot/enterprise" element={<WorkEnterprise />} />
-      <Route path="/enterprise" element={<WorkEnterprise />} />
+      <Route path="/workcopilot/enterprise" element={<EditionRoute needs="companies"><WorkEnterprise /></EditionRoute>} />
+      <Route path="/enterprise" element={<EditionRoute needs="companies"><WorkEnterprise /></EditionRoute>} />
       {/* Public legal pages (plain-language disclosures, same light design as /security). */}
       <Route path="/workcopilot/privacy" element={<WorkPrivacy />} />
       <Route path="/workcopilot/disclaimer" element={<WorkDisclaimer />} />
       <Route path="/workcopilot/terms" element={<WorkTerms />} />
       <Route path="/workcopilot/acceptable-use" element={<WorkAcceptableUse />} />
+      {/* The DPA stays reachable on every edition: the terms page links to it
+          (legal text per audience is an owner decision); only the footer link
+          is hidden where there are no company tenants. */}
       <Route path="/workcopilot/dpa" element={<WorkDPA />} />
       <Route path="/workcopilot/refund" element={<WorkRefund />} />
       {/* Added compliance pages (global standard): cookie policy, subprocessors, accessibility. */}
@@ -149,6 +163,11 @@ export default function App() {
       <Route path="/work/set-password" element={<WorkSetPassword />} />
       {/* All signed-in surfaces render through the legal consent gate (one place). */}
       <Route element={<GatedSurface />}>
+        {/* Every signed-in console paints the user's theme mode (one place). The
+            buddy and full-guide windows below keep their own surface scheme. */}
+        <Route element={<ProductThemeScope />}>
+        {/* Signed out (or removed, or expired): straight to sign-in, one place. */}
+        <Route element={<RequireSignIn />}>
         {/* The signed-in app: a shared shell (rail + top bar + plan pill +
             desktop frame + app context) that self-gates on the session the
             server reports, with the per-route pages rendered through its
@@ -172,24 +191,33 @@ export default function App() {
           <Route path="projects/:id" element={<ProjectView />} />
           {/* Enterprise: the Worker queue (assigned tasks), the project manager's
               projects + one managed project, the senior PM roll-up, GRC oversight. */}
-          <Route path="queue" element={<QueuePage />} />
-          <Route path="pm" element={<PmDashboard />} />
-          <Route path="pm/:id" element={<PmProjectView />} />
-          <Route path="srpm" element={<SrPmDashboard />} />
-          <Route path="grc" element={<GrcDashboard />} />
-          <Route path="templates" element={<TemplatesPage />} />
-          <Route path="templates/:id" element={<TemplateRollup />} />
+          {/* Company-only surfaces: an edition with no company tenants sends them home. */}
+          <Route path="queue" element={<EditionRoute needs="companies" to="/work"><QueuePage /></EditionRoute>} />
+          <Route path="pm" element={<EditionRoute needs="companies" to="/work"><PmDashboard /></EditionRoute>} />
+          <Route path="pm/:id" element={<EditionRoute needs="companies" to="/work"><PmProjectView /></EditionRoute>} />
+          <Route path="srpm" element={<EditionRoute needs="companies" to="/work"><SrPmDashboard /></EditionRoute>} />
+          <Route path="grc" element={<EditionRoute needs="companies" to="/work"><GrcDashboard /></EditionRoute>} />
+          <Route path="templates" element={<EditionRoute needs="companies" to="/work"><TemplatesPage /></EditionRoute>} />
+          <Route path="templates/:id" element={<EditionRoute needs="companies" to="/work"><TemplateRollup /></EditionRoute>} />
           <Route path="session/:id" element={<Guiding />} />
+        </Route>
+        {/* Separate admin console (own module + /api/work/admin/*). Self-gates on admin. */}
+        <Route path="/work/admin" element={<WorkAdmin />} />
+        {/* Company-admin console (own-company scope, /api/work/* + /api/work/team/*). Self-gates on company_admin. */}
+        <Route path="/work/company" element={<EditionRoute needs="companies" to="/work"><WorkCompanyAdmin /></EditionRoute>} />
+        <Route path="/work/exec" element={<EditionRoute needs="companies" to="/work"><WorkExec /></EditionRoute>} />
+        <Route path="/work/teach" element={<EditionRoute needs="companies" to="/work"><TeachStudio /></EditionRoute>} />
+        <Route path="/work/workflow-issues" element={<EditionRoute needs="companies" to="/work"><WorkflowIssues /></EditionRoute>} />
+        </Route>
+        {/* Launch link from a company's own app: redeems the fragment token, then
+            starts the workflow and opens /work/session/:id. Self-gates on the
+            session (parks the token through the sign-in hop when needed). */}
+        <Route path="/work/launch" element={<EditionRoute needs="companies" to="/work"><LaunchPage /></EditionRoute>} />
         </Route>
         {/* Chrome-free buddy window the desktop shell loads (workcopilot/main.js). */}
         <Route path="/work/buddy" element={<WorkBuddy />} />
         {/* Full-screen guidance for a second monitor (read-only; drive from /work). */}
         <Route path="/work/guide" element={<WorkFullGuide />} />
-        {/* Separate admin console (own module + /api/work/admin/*). Self-gates on admin. */}
-        <Route path="/work/admin" element={<WorkAdmin />} />
-        {/* Company-admin console (own-company scope, /api/work/* + /api/work/team/*). Self-gates on company_admin. */}
-        <Route path="/work/company" element={<WorkCompanyAdmin />} />
-        <Route path="/work/exec" element={<WorkExec />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

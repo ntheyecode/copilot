@@ -226,7 +226,7 @@ export default function WorkShell({ authed = false }) {
       <div className="wshell-brand">
         <span className="wshell-dot" aria-hidden="true" />
         <span className="wshell-name">WorkCoPilot</span>
-        {authed && <span className={`wshell-mode${guiding ? ' guide' : ''}`}>{guiding ? 'Guiding' : 'Planning'}</span>}
+        {authed && <span className={`wshell-mode${guiding ? ' guide' : ''}`}>{guiding ? t('guideConsole.chip.guiding') : t('guideConsole.chip.planning')}</span>}
       </div>
       <div className="wshell-spacer" />
 
@@ -237,16 +237,16 @@ export default function WorkShell({ authed = false }) {
             <Pin size={14} /><span className="wshell-tlabel">{t('shellBar.onTop')}</span>
           </button>
           <button type="button" className={`wshell-tool warn w-share${!st.contentProtected ? ' on' : ''}`} onClick={toggleShare} aria-pressed={!st.contentProtected}
-            title={st.contentProtected ? 'Hidden from screen shares - click to show it on a share (Ctrl+Shift+Alt+S)' : 'Visible on screen shares - click to hide it again (Ctrl+Shift+Alt+S)'}>
+            title={st.contentProtected ? t('shellBar.shareHiddenTip') : t('shellBar.shareVisibleTip')}>
             {st.contentProtected ? <EyeOff size={14} /> : <Eye size={14} />}
-            <span className="wshell-tlabel">{st.contentProtected ? 'Hidden' : 'On share'}</span>
+            <span className="wshell-tlabel">{st.contentProtected ? t('shellBar.shareHidden') : t('shellBar.shareOn')}</span>
           </button>
           <button type="button" className={`wshell-tool w-see${seeThrough ? ' on' : ''}`} onClick={cycleSee} aria-pressed={seeThrough}
             title={t('shellBar.seeThroughTip')}>
-            <Contrast size={14} /><span className="wshell-tlabel">{seeThrough ? `${Math.round(st.opacity * 100)}%` : 'See-through'}</span>
+            <Contrast size={14} /><span className="wshell-tlabel">{seeThrough ? `${Math.round(st.opacity * 100)}%` : t('shellBar.seeThrough')}</span>
           </button>
           <button type="button" className={`wshell-tool w-behind${st.clickThrough ? ' on' : ''}`} onClick={toggleBehind} disabled={!guiding} aria-pressed={st.clickThrough}
-            title={guiding ? (st.clickThrough ? 'Click-behind is on: your clicks pass to the app underneath. This bar still takes clicks. Click here or press Ctrl+Shift+Alt+W to turn it off.' : 'Click-behind: let your clicks pass to the app underneath. This bar stays clickable so you can turn it off again (Ctrl+Shift+Alt+W).') : 'Click-behind is available while guiding'}>
+            title={guiding ? (st.clickThrough ? t('shellBar.clickBehindOnTip') : t('shellBar.clickBehindOffTip')) : t('shellBar.clickBehindIdleTip')}>
             <MousePointer2 size={14} /><span className="wshell-tlabel">{t('shellBar.clickBehind')}</span>
           </button>
           <button type="button" className="wshell-tool w-buddy" onClick={toBuddy}
@@ -259,8 +259,8 @@ export default function WorkShell({ authed = false }) {
 
       <div className="wshell-caps">
         <button type="button" className="wshell-cap" onClick={() => call('winMinimize')} aria-label={t('shellBar.minimize')}><CapMin /></button>
-        <button type="button" className="wshell-cap" onClick={() => call('winMaximize')} aria-label={st.maximized ? 'Restore' : 'Maximize'} title={st.mode === 'guide' ? 'Maximize (centered)' : (st.maximized ? 'Restore' : 'Maximize')}>{st.maximized ? <CapRestore /> : <CapMax />}</button>
-        <button type="button" className="wshell-cap" onClick={() => call('winFullscreen')} aria-label={st.fullscreen ? 'Exit full screen' : 'Full screen'} title={st.fullscreen ? 'Exit full screen' : 'Full screen (fills the screen, good on a second monitor)'}>{st.fullscreen ? <CapExitFull /> : <CapFull />}</button>
+        <button type="button" className="wshell-cap" onClick={() => call('winMaximize')} aria-label={st.maximized ? t('shellBar.restore') : t('shellBar.maximize')} title={st.mode === 'guide' ? t('shellBar.maximizeCentered') : (st.maximized ? t('shellBar.restore') : t('shellBar.maximize'))}>{st.maximized ? <CapRestore /> : <CapMax />}</button>
+        <button type="button" className="wshell-cap" onClick={() => call('winFullscreen')} aria-label={st.fullscreen ? t('widgets.fullScreen.exit') : t('widgets.fullScreen.enter')} title={st.fullscreen ? t('widgets.fullScreen.exit') : t('shellBar.fullScreenTip')}>{st.fullscreen ? <CapExitFull /> : <CapFull />}</button>
         <button type="button" className="wshell-cap close" onClick={() => call('winClose')} aria-label={t('shellBar.close')}><CapClose /></button>
       </div>
     </div>

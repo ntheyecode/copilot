@@ -190,8 +190,11 @@ import { Loader2, Check, X, Plus, HelpCircle, ChevronLeft, Play, AlertTriangle, 
 import { api } from '../../api.js'
 import { clean } from '../../scrub.js'
 import { useWorkApp } from './WorkAppContext.jsx'
+import { startGateOutcome } from '../../shared/start_gate.js'
 import { useT } from '../../i18n/index.jsx'
+import { useEditionView } from '../../edition/useCaps.js'   // edition: company knowledge spaces only where companies exist
 import { WIZ_CSS } from './wizard.css.js'
+import { ENV_OPTS, STYLE_OPTS, Q_CANON, buildTaskContext } from './plannerContext.js'
 import KbSpacePicker, { spaceSummary, cachedSpaces } from './KbSpacePicker.jsx'
 
 // Per-session hand-off of the chosen knowledge space to the guiding console
@@ -234,21 +237,10 @@ const WORKPLACES = [
   { id: 'other', labelKey: 'placeOtherLabel', blurbKey: 'placeOtherBlurb', icon: Compass },
 ]
 // ENV_Q / STYLE_Q option VALUES stay English because they are recorded and sent
-// to the planner as data (preserving the exact scope contract). Only the on-screen
-// label + hint are translated. OPTION_HINTS behaviour is preserved per option.
-const ENV_OPTS = [
-  { v: 'A website / web app', l: 'envWebsite', h: 'envWebsiteH' },
-  { v: 'A desktop or installed app', l: 'envDesktop', h: 'envDesktopH' },
-  { v: 'Install & configure software', l: 'envInstall', h: 'envInstallH' },
-  { v: 'An on-prem product at a local address', l: 'envOnprem', h: 'envOnpremH' },
-  { v: 'Not sure / mixed', l: 'envMixed', h: 'envMixedH' },
-]
-const STYLE_OPTS = [
-  { v: 'Plain and simple', l: 'stylePlain', h: 'stylePlainH' },
-  { v: 'Short bullets only', l: 'styleBullets', h: 'styleBulletsH' },
-  { v: 'Detailed, with context', l: 'styleDetailed', h: 'styleDetailedH' },
-  { v: 'Expert, no hand-holding', l: 'styleExpert', h: 'styleExpertH' },
-]
+// to the planner as data (preserving the exact scope contract); they live in
+// ./plannerContext.js with the canonical questions and the context builder. Only
+// the on-screen label + hint are translated. OPTION_HINTS behaviour is preserved
+// per option.
 
 // Terminal-style scoping progress ("csv/js box"): stages reveal line by line with
 // check marks while the scope call runs; the running stage shows a live caret and
@@ -407,6 +399,7 @@ function DocsAttach({ tier, onDesktopDocs, t }) {
 
 // Route entry: the unified start-a-task wizard.
 export default function StartTask() {
+  const ed = useEditionView()
   const navigate = useNavigate()
   const t = useT()
   const { ready, usage, plan, renewLabel, showGuard, onOpen, setNeedsSub, isCompanyMember, isAdmin, isCompanyAdmin, canBuyHours, buyCredits, refreshUsage, roleView } = useWorkApp()
@@ -481,50 +474,26 @@ export default function StartTask() {
         : { href: '/work', label: t('workStart.setupAiLink', 'Set up AI on the dashboard') }
   const goalComplete = !!(goal.trim() && planTitle.trim())
 
-  // A gated action failed. The server's coded flags (server/index.js POST
-  // /api/work/sessions) pick the message and the action:
-  //   409 tooManyOpen  every at-once task slot is in use: finish or pick one up
-  //   402 outOfHours   no guided hours left: renewal date + Add hours (individuals)
-  //                    or ask your administrator (company members)
-  //   402 taskLimit    a company member hit the admin-set task ceiling
-  //   402 (no flag)    company member without a license / individual without a
-  //                    plan (routes to the dashboard plan chooser)
+  // A gated action failed. What each of the server's coded flags means (and
+  // whether to offer Add hours / re-read usage / open the plan chooser) lives in
+  // src/shared/start_gate.js, shared with running a company workflow.
   const handleGate = (e) => {
-    const status = e && e.status
-    const d = (e && e.data) || {}
-    setGateAct('')
-    if (d.tooManyOpen) {
-      const max = d.maxOpen != null ? d.maxOpen : (plan && plan.tasks && plan.tasks.max != null ? plan.tasks.max : null)
-      setGateMsg(max != null ? t('workStart.gateTooManyOpen', { max }) : (e.message || ''))
-      refreshUsage && refreshUsage()
-      return
-    }
-    if (d.outOfHours) {
-      const reset = d.resetLabel || renewLabel || ''
-      setGateMsg(isCompanyMember ? t('workStart.gateOutOfHoursCompany', { reset }) : t('workStart.gateOutOfHours', { reset }))
-      if (!isCompanyMember && canBuyHours) setGateAct('hours')
-      refreshUsage && refreshUsage()
-      return
-    }
-    if (d.taskLimit) { setGateMsg(t('workStart.gateCompanyTaskLimit', { reset: d.resetLabel || renewLabel || '' })); return }
-    if (status === 402) {
-      if (isCompanyMember) setGateMsg(t('workStart.gateCompanyNoLicense'))
-      else { setNeedsSub(true); navigate('/work') }
-    } else if (e && e.message) { setGateMsg(e.message) }
+    const g = startGateOutcome(e, {
+      isCompanyMember, canBuyHours, renewLabel,
+      planMaxOpen: plan && plan.tasks && plan.tasks.max != null ? plan.tasks.max : null,
+    })
+    setGateAct(g.act || '')
+    if (g.refresh && refreshUsage) refreshUsage()
+    if (g.needsSub) { setNeedsSub(true); navigate('/work'); return }
+    if (g.key) setGateMsg(t(g.key, g.vars))
+    else if (g.message != null) setGateMsg(g.message)
+    else if (e && e.message) setGateMsg(e.message)
   }
 
   // Fold the interview context into the goal text the planner sees (prepended).
-  // Entirely client-side English DATA; preserved verbatim so the planner contract
-  // does not change.
-  const buildContext = useCallback(() => {
-    const parts = []
-    if (place === 'saas') parts.push(appName ? `Working in: ${appName}${appUrl ? ` (${appUrl})` : ''} - a website or SaaS app.` : 'Working in a website or SaaS app.')
-    else if (place === 'desktop') parts.push(appName ? `Working in: ${appName} - a desktop app.` : 'Working in a desktop app.')
-    else if (place === 'files') parts.push('Working with my own files or data.')
-    else if (place === 'other' && otherText.trim()) parts.push(`Working on: ${otherText.trim()}.`)
-    if (docsChoice === 'use') parts.push('Reference documents are attached to ground this.')
-    return parts.join(' ')
-  }, [place, appName, appUrl, otherText, docsChoice])
+  // Entirely client-side English DATA (./plannerContext.js); preserved verbatim
+  // so the planner contract does not change.
+  const buildContext = useCallback(() => buildTaskContext({ place, appName, appUrl, otherText, docsChoice }), [place, appName, appUrl, otherText, docsChoice])
   useEffect(() => { setTaskContext(buildContext()) }, [buildContext])
 
   const goalForPlan = (g) => {
@@ -549,8 +518,8 @@ export default function StartTask() {
   const onFieldKey = (e) => { if (e.key === 'Enter') { e.preventDefault(); setStep('docs') } }
 
   // --- Depth -> scope call (research) -> questions ---
-  const ENV_Q = useMemo(() => ({ id: 'environment', qCanon: 'Where does this work happen?', text: t('workStart.envQ'), help: t('workStart.envHelp'), kind: 'options', optList: ENV_OPTS.map((o) => ({ v: o.v, label: t('workStart.' + o.l), hint: t('workStart.' + o.h) })) }), [t])
-  const STYLE_Q = useMemo(() => ({ id: 'phrasing', qCanon: 'How should I phrase each step?', text: t('workStart.styleQ'), help: t('workStart.styleHelp'), kind: 'options', optList: STYLE_OPTS.map((o) => ({ v: o.v, label: t('workStart.' + o.l), hint: t('workStart.' + o.h) })) }), [t])
+  const ENV_Q = useMemo(() => ({ id: 'environment', qCanon: Q_CANON.environment, text: t('workStart.envQ'), help: t('workStart.envHelp'), kind: 'options', optList: ENV_OPTS.map((o) => ({ v: o.v, label: t('workStart.' + o.l), hint: t('workStart.' + o.h) })) }), [t])
+  const STYLE_Q = useMemo(() => ({ id: 'phrasing', qCanon: Q_CANON.phrasing, text: t('workStart.styleQ'), help: t('workStart.styleHelp'), kind: 'options', optList: STYLE_OPTS.map((o) => ({ v: o.v, label: t('workStart.' + o.l), hint: t('workStart.' + o.h) })) }), [t])
 
   const startScoping = async (d) => {
     setDepth(d); setStep('research'); setScopeErr('')
@@ -559,7 +528,7 @@ export default function StartTask() {
       const desk = typeof window !== 'undefined' ? window.workDesktop : null
       if (desk && desk.getMonitors) {
         const mons = await desk.getMonitors()
-        if (Array.isArray(mons) && mons.length > 1) monQ = { id: 'monitor', qCanon: 'Which screen should I watch?', text: t('workStart.monitorQ'), kind: 'monitor', monitors: mons }
+        if (Array.isArray(mons) && mons.length > 1) monQ = { id: 'monitor', qCanon: Q_CANON.monitor, text: t('workStart.monitorQ'), kind: 'monitor', monitors: mons }
       }
     } catch { /* ignore - fall back to the capture-time picker */ }
     // AI not provisioned yet (H5): the AI-written interview cannot run, so the
@@ -750,7 +719,7 @@ export default function StartTask() {
               <DocsAttach tier={tier} onDesktopDocs={setDeskDocs} t={t} />
               {/* Optional: which company knowledge grounds the plan. Renders
                   nothing when the company has no spaces. */}
-              <KbSpacePicker value={space} onChange={setSpace} />
+              {ed.companies && <KbSpacePicker value={space} onChange={setSpace} />}
             </div>
             <div className="wd-coach-choices wd-wiz-reveal" style={{ '--d': '120ms' }}>
               <button type="button" className={`wd-coach-choice primary${docsChoice === 'use' ? ' on' : ''}`} onClick={() => { setDocsChoice('use'); setStep('goal') }}><FileText size={15} /> {t('workStart.docsUse')}</button>

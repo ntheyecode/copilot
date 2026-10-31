@@ -12,6 +12,8 @@
 // logged (SUPREME RULE III). No em dashes, no AI-language in surfaced text.
 // ---------------------------------------------------------------------------
 
+import { reportUsage, usageFromResponse, withKeySource } from './ai_usage.js'
+
 export const PROVIDERS = {
   groq: {
     id: 'groq',
@@ -88,7 +90,7 @@ const ALLOWED_AI_HOSTS = new Set(Object.values(PROVIDERS).flatMap((p) => {
   for (const h of (p.altHosts || [])) if (h) hosts.push(String(h).trim().toLowerCase())
   return hosts
 }).filter(Boolean))
-function assertAllowedHost(base) {
+export function assertAllowedHost(base) {
   let h
   try { h = new URL(base).hostname } catch { throw Object.assign(new Error('AI endpoint is misconfigured.'), { status: 502 }) }
   if (!ALLOWED_AI_HOSTS.has(h)) throw Object.assign(new Error('AI endpoint host is not on the allowlist.'), { status: 502 })
@@ -118,7 +120,7 @@ export function allowAiHost(base) {
 // Resolve a runtime's provider definition. Built-ins come from PROVIDERS; a custom
 // provider carries its own definition on cfg.provider ({id,label,base,kind,chatModels}),
 // supplied by the store when it builds the runtime.
-function providerOf(cfg) { return (cfg && cfg.provider) || PROVIDERS[cfg && cfg.providerId] || null }
+export function providerOf(cfg) { return (cfg && cfg.provider) || PROVIDERS[cfg && cfg.providerId] || null }
 
 // What each provider is actually good at, so the setup UI can say it plainly
 // (vision is the gap people hit: most fast text keys cannot see images at all).
@@ -165,6 +167,9 @@ function httpErr(status, message, code = null) {
   const e = new Error(message); e.status = status; e.ai = true; if (code) e.code = code
   return e
 }
+// Shared with sibling AI modules (ai_transcribe.js) so every AI-layer error has
+// the same system-error shape. One definition (SUPREME RULE II).
+export const aiError = httpErr
 
 // Model calls occasionally hang or come back EMPTY (Groq does this under load),
 // so every call gets an abort timeout, and empty/timeout is retried once.
@@ -203,6 +208,7 @@ async function openaiChat(p, apiKey, model, system, turns, _retry = 0) {
   }
   clearTimeout(timer)
   if (!res.ok) throw httpErr(res.status, data?.error?.message || `${p.label} chat failed (${res.status})`)
+  reportUsage({ provider: p.id, model, usage: usageFromResponse('openai', data), call: 'chat' })   // billed even if empty
   const text = data?.choices?.[0]?.message?.content?.trim()
   if (!text) {
     if (_retry < 1) return openaiChat(p, apiKey, model, system, turns, _retry + 1)
@@ -229,6 +235,7 @@ async function openaiVision(p, apiKey, model, prompt, imageDataUrls, mediaRes = 
   })
   const data = await res.json().catch(() => null)
   if (!res.ok) throw httpErr(res.status, data?.error?.message || `${p.label} vision failed (${res.status})`)
+  reportUsage({ provider: p.id, model, usage: usageFromResponse('openai', data), call: 'vision' })
   return (data?.choices?.[0]?.message?.content || '').trim()
 }
 
@@ -245,6 +252,7 @@ async function geminiGenerate(p, apiKey, model, parts, mediaRes = null) {
   })
   const data = await res.json().catch(() => null)
   if (!res.ok) throw httpErr(res.status, data?.error?.message || `Gemini failed (${res.status})`)
+  reportUsage({ provider: p.id, model, usage: usageFromResponse('gemini', data), call: 'vision' })
   const text = data?.candidates?.[0]?.content?.parts?.map((x) => x.text).filter(Boolean).join('').trim()
   if (!text) throw httpErr(502, 'Gemini returned an empty response')
   return text
@@ -259,13 +267,14 @@ async function geminiChat(p, apiKey, model, system, turns) {
   })
   const data = await res.json().catch(() => null)
   if (!res.ok) throw httpErr(res.status, data?.error?.message || `Gemini failed (${res.status})`)
+  reportUsage({ provider: p.id, model, usage: usageFromResponse('gemini', data), call: 'chat' })
   const text = data?.candidates?.[0]?.content?.parts?.map((x) => x.text).filter(Boolean).join('').trim()
   if (!text) throw httpErr(502, 'Gemini returned an empty response')
   return text
 }
 
 // ---- model-error self-heal (never masks a key error) ---------------------
-function looksLikeModelError(e) {
+export function looksLikeModelError(e) {
   const status = e?.status
   const msg = (e?.message || '').toLowerCase()
   return (status === 400 || status === 404) && /model/.test(msg) &&
@@ -351,7 +360,12 @@ async function failoverChat(alternates, fromP, fromModel, system, turns, notify)
 // the SAME key (retired/quota heal), (3) the next configured PROVIDER's key, and
 // only when all are exhausted a crisp coded error. Every switch is reported via
 // cfg.onSwitch so the superadmin sees exactly what happened.
-export async function chat(cfg, system, turns, tele = null) {
+// Every AI call carries whose key it runs on, so the usage ledger can tell our
+// spend from a customer's own (ai_usage.js withKeySource).
+export function chat(cfg, system, turns, tele = null) {
+  return withKeySource(cfg && cfg.keySource, () => chatOnKey(cfg, system, turns, tele))
+}
+async function chatOnKey(cfg, system, turns, tele = null) {
   const p = providerOf(cfg)
   if (!p) throw httpErr(400, `Unknown provider: ${cfg.providerId}`, AI_CODES.PROVIDER)
   if (!cfg.apiKey) throw httpErr(400, `No API key configured for ${p.label}`, AI_CODES.KEY)
@@ -398,9 +412,19 @@ export async function generate(cfg, system, userText, tele = null) {
   return chat(cfg, String(system || ''), [{ role: 'user', content: String(userText || '') }], tele)
 }
 
+const GEMINI_IMAGE_MIMES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif'])
+export function geminiImageMime(type) {
+  const t = String(type || '').toLowerCase()
+  if (t === 'image/jpg') return 'image/jpeg'
+  return GEMINI_IMAGE_MIMES.has(t) ? t : 'image/jpeg'
+}
+
 // Several images in ONE vision call (WorkCoPilot's screen read). model is the
 // vision-capable model resolved by findVisionModel; a missing one is a clear 400.
-export async function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}, tele = null) {
+export function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}, tele = null) {
+  return withKeySource(cfg && cfg.keySource, () => analyseImagesOnKey(cfg, prompt, imageDataUrls, model, opts, tele))
+}
+async function analyseImagesOnKey(cfg, prompt, imageDataUrls, model, opts = {}, tele = null) {
   const p = providerOf(cfg)
   if (!p) throw httpErr(400, `Unknown provider: ${cfg.providerId}`, AI_CODES.PROVIDER)
   if (!cfg.apiKey || !model) throw httpErr(400, 'No vision-capable key.', AI_CODES.KEY)
@@ -418,7 +442,13 @@ export async function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}
   const run = (m) => {
     if (p.kind === 'gemini') {
       const parts = [{ text: prompt }]
-      for (const u of imgs) parts.push({ inline_data: { mime_type: 'image/jpeg', data: String(u).replace(/^data:[^;]+;base64,/, '') } })
+      // The data URL's own type when Gemini accepts it (PNG/WebP workflow frames as
+      // well as JPEG screen grabs); anything else (GIF/BMP attachments) keeps the
+      // long-standing JPEG label rather than a type Gemini rejects.
+      for (const u of imgs) {
+        const mt = /^data:(image\/[a-z0-9.+-]+);base64,/i.exec(String(u))
+        parts.push({ inline_data: { mime_type: geminiImageMime(mt && mt[1]), data: String(u).replace(/^data:[^;]+;base64,/, '') } })
+      }
       return geminiGenerate(p, cfg.apiKey, m, parts, mediaRes)
     }
     return openaiVision(p, cfg.apiKey, m, prompt, imgs, mediaRes)

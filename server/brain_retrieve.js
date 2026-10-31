@@ -14,8 +14,8 @@
 // and the same embedder (brain_embed.embedQuery). No parallel copies.
 
 import { brainStore } from './brain_store.js'
-import { tokenize, normalizeText } from './brain_model.js'
-import { embedQuery } from './brain_embed.js'
+import { tokenize, normalizeText, activeEmbedModel } from './brain_model.js'
+import { embedQueryWith } from './brain_embed.js'
 
 // Fusion weights (named constants - single source of truth for the blend).
 const VECTOR_WEIGHT = 0.6
@@ -88,9 +88,16 @@ export async function retrieveForGoal({ companyId, goal, app, topK = 6 }) {
   const queryText = [goalText, appText].filter((s) => s.trim()).join(' \n ')
   if (!queryText.trim()) return NO_MATCH
 
+  // Embed the query under the SAME model the tenant's passages were embedded with,
+  // so query and passage vectors share one space (and one dim). The pinned model
+  // is recorded on each active source as `embeddingModelVersion` (id@rev); it is
+  // the default EMBED unless the tenant was re-embedded by a larger model. An
+  // unknown/absent version falls back to the default, matching legacy tenants.
+  const queryModel = activeEmbedModel(sources)
+
   // Candidate pool from the dense arm. Pool size K1 = max(topK*4, 20).
   const K1 = Math.max(topK * 4, 20)
-  const qVector = await embedQuery(queryText)
+  const qVector = await embedQueryWith(queryModel, queryText)
   const pool = (await brainStore.query(companyId, qVector, K1)) || []
   if (!pool.length) return NO_MATCH
 

@@ -1,12 +1,16 @@
 // Company-admin HELP: the main admin flow as a step strip, then one area per key
-// screen (sign in, Overview, Team, AI keys, Data governance incl. Security
-// practice rules, Billing, Alerts) with short steps and the real screenshot.
+// screen (sign in, Overview, Team, Trainer grant, AI keys, Data governance incl.
+// Security practice rules, Billing, Alerts, API & webhooks) with short steps and the real screenshot.
 // Content only; it changes nothing in the console. `onOpen(sectionId)` switches
 // the console to that section from the "Open" button on each area.
 import React from 'react'
 import { KeyRound, LayoutDashboard, Users, Cpu, ShieldCheck, Receipt, ShieldAlert, Route } from 'lucide-react'
 import { HELP_CSS, HelpFlow, HelpArea } from './_help.jsx'
 import { useT } from '../../../i18n/index.jsx'
+// Newer areas (Trainer grant, API & webhooks) live in their own module and use
+// annotated screenshots (numbered callouts over the real screen).
+import { HelpTrainerArea, HelpDeveloperArea } from './HelpCompanyNewAreas.jsx'
+import { ANNOTATED_SHOT_CSS } from '../../work/help/annotatedShot.css.js'
 
 const FLOW_IDS = ['signin', 'overview', 'team', 'ai', 'governance', 'billing']
 
@@ -15,7 +19,7 @@ export default function HelpCompany({ onOpen }) {
   const FLOW = FLOW_IDS.map((id) => ({ id, label: t(`helpCompany.flow.${id}`) }))
   return (
     <div className="wkh">
-      <style>{HELP_CSS}</style>
+      <style>{HELP_CSS}{ANNOTATED_SHOT_CSS}</style>
 
       <div className="wka-panel">
         <div className="wkh-head"><h2><Route size={15} />{t('helpCompany.panel.title')}</h2></div>
@@ -51,6 +55,8 @@ export default function HelpCompany({ onOpen }) {
           { t: t('helpCompany.team.steps.managed.t'), d: t('helpCompany.team.steps.managed.d') },
         ]}
         shots={[{ src: '/help/company/team.png', w: 1048, h: 468, alt: t('helpCompany.team.shot.alt'), caption: t('helpCompany.team.shot.caption') }]} />
+
+      <HelpTrainerArea onOpen={onOpen} />
 
       <HelpArea id="ai" icon={Cpu} title={t('helpCompany.ai.title')} open={{ id: 'ai', label: t('helpCompany.ai.open') }} onOpen={onOpen}
         lead={t('helpCompany.ai.lead')}
@@ -92,6 +98,8 @@ export default function HelpCompany({ onOpen }) {
           { t: t('helpCompany.alerts.steps.relay.t'), d: t('helpCompany.alerts.steps.relay.d') },
         ]}
         shots={[{ src: '/help/company/alerts.png', w: 1048, h: 322, alt: t('helpCompany.alerts.shot.alt'), caption: t('helpCompany.alerts.shot.caption') }]} />
+
+      <HelpDeveloperArea onOpen={onOpen} />
     </div>
   )
 }

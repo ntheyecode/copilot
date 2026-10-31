@@ -15,20 +15,23 @@ import AdmireVedaLogo from './AdmireVedaLogo.jsx'
 import { SUPPORT_CONTACT, LEGAL_CONTACT } from './LegalPage.jsx'
 import { useT } from '../i18n/index.jsx'
 import { openPreferences } from '../consent.js'   // re-open the cookie consent panel
+import { useEditionView } from '../edition/useCaps.js'
+import { shows, startPath } from '../edition/surfaces.js'   // which links an edition shows (capability-driven)
 
 // Link groups: the catalog key for each label (footer.<key> / nav.<key>) and the
-// href. Labels are translated at render; hrefs never are.
+// href (+ what the link needs, src/edition/surfaces.js). Labels are translated
+// at render; hrefs never are.
 const GROUPS = [
   { key: 'product', links: [
     ['nav.how', '/workcopilot/how-it-works'], ['nav.use', '/workcopilot/use-cases'], ['nav.fields', '/workcopilot/fields'],
     ['nav.pricing', '/workcopilot/pricing'], ['nav.faq', '/workcopilot/faq'], ['footer.demo', '/demo'],
   ] },
   { key: 'trust', links: [
-    ['footer.securityData', '/workcopilot/security'], ['footer.enterpriseFeatures', '/workcopilot/enterprise'], ['footer.benchmark', '/workcopilot/benchmark'],
+    ['footer.securityData', '/workcopilot/security'], ['footer.enterpriseFeatures', '/workcopilot/enterprise', 'companies'], ['footer.benchmark', '/workcopilot/benchmark'],
   ] },
   { key: 'legal', links: [
     ['footer.privacy', '/workcopilot/privacy'], ['footer.terms', '/workcopilot/terms'], ['footer.aup', '/workcopilot/acceptable-use'],
-    ['footer.cookiePolicy', '/workcopilot/cookie-policy'], ['footer.dpa', '/workcopilot/dpa'], ['footer.subprocessors', '/workcopilot/subprocessors'],
+    ['footer.cookiePolicy', '/workcopilot/cookie-policy'], ['footer.dpa', '/workcopilot/dpa', 'companies'], ['footer.subprocessors', '/workcopilot/subprocessors'],
     ['footer.refund', '/workcopilot/refund'], ['footer.disclaimer', '/workcopilot/disclaimer'], ['footer.accessibility', '/workcopilot/accessibility'],
   ] },
 ]
@@ -36,6 +39,8 @@ const GROUPS = [
 // `dark` (default true) forces the dark palette regardless of data-theme.
 export default function SiteFooter({ dark = true }) {
   const t = useT()
+  const ed = useEditionView()
+  const start = startPath(ed)
   return (
     <footer className={`sf${dark ? ' sf-dark' : ''}`} aria-label={t('footer.aria')}>
       <style>{CSS}</style>
@@ -44,14 +49,14 @@ export default function SiteFooter({ dark = true }) {
           <a href="/" aria-label={t('nav.home')}><AdmireVedaLogo size={26} idSuffix="sf" onDark={dark} /></a>
           <p className="sf-tag">{t('footer.tag')}</p>
           <div className="sf-ctas">
-            <a className="sf-btn" href="/workcopilot">{t('common.getStarted')} <ArrowUpRight size={14} aria-hidden="true" className="sf-arrow" /></a>
-            <a className="sf-btn alt" href="/workcopilot/contact">{t('common.contactUs')}</a>
+            <a className="sf-btn" href={start}>{t('common.getStarted')} <ArrowUpRight size={14} aria-hidden="true" className="sf-arrow" /></a>
+            {start !== '/workcopilot/contact' && <a className="sf-btn alt" href="/workcopilot/contact">{t('common.contactUs')}</a>}
           </div>
         </div>
         {GROUPS.map((g) => (
           <nav key={g.key} className="sf-group" aria-label={t('footer.' + g.key)}>
             <div className="sf-k">{t('footer.' + g.key)}</div>
-            <ul>{g.links.map(([k, href]) => <li key={href}><a href={href}>{t(k)}</a></li>)}</ul>
+            <ul>{g.links.filter(([, , needs]) => shows(ed, needs)).map(([k, href]) => <li key={href}><a href={href}>{t(k)}</a></li>)}</ul>
           </nav>
         ))}
         <div className="sf-group" aria-label={t('footer.contact')}>

@@ -2,6 +2,7 @@ import { Check, CheckCircle2, ArrowRight } from 'lucide-react'
 import RichText from '../../components/RichText.jsx'
 import { StepLink, CmdBlock, CodeBlock } from '../../components/StepBlocks.jsx'
 import DestructiveGate from './DestructiveGate.jsx'
+import StepShot from './StepShot.jsx'
 import { useT } from '../../i18n/index.jsx'
 
 // THE STEP CARD: the current micro-step, front and center, in the same clean
@@ -12,12 +13,13 @@ import { useT } from '../../i18n/index.jsx'
 // values in the text are bold + highlighted by RichText; values are one-tap
 // copy chips. Shared by the console and the floating panel; styled by
 // guideView.css.js (.gv-step). `extra` slots host-specific bits (the How?
-// drill-down, the source chip) above the action row; `notice` is the calm
+// drill-down, the source chip) above the action row; a step from a company
+// workflow also shows its screenshot (StepShot) under the done check; `notice` is the calm
 // inline result strip (the optional verify verdict) directly above the
 // actions, and `doneReady` softly rings the primary Mark done when that
 // verdict says the step looks done (the shortcut is the button itself).
 export default function StepCard({
-  step, index, total, guidance, confirmN = 0, hint, onDone, doneLabel = 'Mark done', busy = false, extra, actions, notice, doneReady = false,
+  step, index, total, guidance, confirmN = 0, hint, onDone, doneLabel = null, busy = false, extra, actions, notice, doneReady = false,
 }) {
   const t = useT()
   if (!step) return null
@@ -29,8 +31,8 @@ export default function StepCard({
   return (
     <section className="gv-step" aria-labelledby={`gv-step-h-${n || 0}`}>
       <div className="gv-step-top">
-        {n != null && <span className="gv-step-n"><ArrowRight size={11} strokeWidth={2.8} aria-hidden="true" /> Step {n}{total ? ` of ${total}` : ''}</span>}
-        {confirmN > 0 && <span className="gv-confirm" role="status"><Check size={11} strokeWidth={3} aria-hidden="true" /> Step {confirmN} confirmed</span>}
+        {n != null && <span className="gv-step-n"><ArrowRight size={11} strokeWidth={2.8} aria-hidden="true" /> {total ? t('stepCard.stepOf', { n, total }) : t('stepCard.stepN', { n })}</span>}
+        {confirmN > 0 && <span className="gv-confirm" role="status"><Check size={11} strokeWidth={3} aria-hidden="true" /> {t('stepCard.confirmed', { n: confirmN })}</span>}
         {hint}
       </div>
       <h2 id={`gv-step-h-${n || 0}`} className="gv-step-text" style={{ margin: 0 }}><RichText text={headline} accent="var(--gv-accent)" /></h2>
@@ -41,6 +43,7 @@ export default function StepCard({
           <span><b>{t('stepCard.doneWhen')}</b> <RichText text={step.validate} accent="var(--gv-accent)" /></span>
         </div>
       )}
+      {step.shot && <StepShot key={`${n || 0}:${step.shot}`} id={`gv-shot-${n || 0}`} shot={step.shot} />}
       {step.url && <StepLink url={step.url} />}
       {((step.commands && step.commands.length > 0) || (step.code && step.code.content)) && (
         <DestructiveGate why={step.destructive ? step.destructiveWhy : null}>
@@ -51,7 +54,7 @@ export default function StepCard({
       {extra}
       {notice}
       <div className="gv-step-actions">
-        {onDone && <button type="button" className={`gv-btn primary${doneReady ? ' is-ready' : ''}`} onClick={onDone} disabled={busy} title={t('stepCard.markDoneTip')}><Check size={16} strokeWidth={2.6} aria-hidden="true" /> {doneLabel}</button>}
+        {onDone && <button type="button" className={`gv-btn primary${doneReady ? ' is-ready' : ''}`} onClick={onDone} disabled={busy} title={t('stepCard.markDoneTip')}><Check size={16} strokeWidth={2.6} aria-hidden="true" /> {doneLabel || t('floatPanel.markDone')}</button>}
         {actions}
       </div>
     </section>

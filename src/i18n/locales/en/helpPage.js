@@ -191,6 +191,10 @@ export default {
       items: [
         'Tap <b>Pause</b> to freeze the clock and your session while you step away or do other work, then <b>Resume</b> when you are back.',
         'Daily minutes reset at <b>11:59 PM ET</b>.',
+      ],
+      // Shown only to a personal account where personal plans are sold
+      // (Help.jsx); company members draw on their company's hours.
+      buyItems: [
         'Purchased top-up time never expires and is used only after your daily minutes are gone.',
         'Need more now? Use <b>Add time</b> at the top of the Dashboard.',
       ],

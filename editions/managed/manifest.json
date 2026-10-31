@@ -1,0 +1,7 @@
+{
+  "edition": "managed",
+  "env": {
+    "WORK_DB_AUTO_MIGRATE": "1"
+  },
+  "notes": "A dedicated install we operate in the customer's cloud, on their database. Upgrades migrate the schema at start, as on-prem."
+}

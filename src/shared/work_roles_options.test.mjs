@@ -38,6 +38,47 @@ test('the option registries cover every role and flow exactly once', () => {
   assert.equal(client.flowLabelKey(undefined), 'companyAdmin.flows.independent')
 })
 
+test('grants mirror the server, and trainer only coexists with member or PM', () => {
+  assert.deepEqual([...client.GRANTS].sort(), [...server.GRANTS].sort())
+  assert.deepEqual(client.GRANT_OPTIONS.map((o) => o.id).sort(), [...client.GRANTS].sort())
+  for (const r of ROLES) {
+    assert.equal(client.canGrantTrainer(r), server.canGrantTrainer(r), `canGrantTrainer(${r})`)
+    for (const g of [[], ['trainer'], ['trainer', 'bogus']]) {
+      assert.deepEqual(client.sanitizeGrants(r, g), server.sanitizeGrants(r, g), `sanitizeGrants(${r}, ${g})`)
+      assert.equal(client.canAuthorWorkflow(r, g), server.canAuthorWorkflow(r, g), `canAuthorWorkflow(${r}, ${g})`)
+    }
+  }
+})
+
+test('roleViewOf: the trainer grant opens the Teach studio, the primary role is unchanged', () => {
+  const t = client.roleViewOf({ companyId: 'c', companyRole: 'member', workFlow: 'mixed', grants: ['trainer'] })
+  assert.equal(t.isTrainer, true); assert.equal(t.showTeach, true); assert.equal(t.showPm, false)
+  const pmT = client.roleViewOf({ companyId: 'c', companyRole: 'project_manager', workFlow: 'mixed', grants: ['trainer'] })
+  assert.equal(pmT.isTrainer, true); assert.equal(pmT.showTeach, true); assert.equal(pmT.showPm, true)
+  const adm = client.roleViewOf({ companyId: 'c', companyRole: 'company_admin', workFlow: 'independent', grants: [] })
+  assert.equal(adm.showTeach, true)
+  const mem = client.roleViewOf({ companyId: 'c', companyRole: 'member', workFlow: 'mixed', grants: [] })
+  assert.equal(mem.isTrainer, false); assert.equal(mem.showTeach, false)
+})
+
+test('roleViewOf: exec dashboard for executives and company admins; Brain export and incident actions by role', () => {
+  const view = (companyRole, grants = []) => client.roleViewOf({ companyId: 'c', companyRole, workFlow: 'independent', grants })
+  for (const r of ROLES) {
+    const v = view(r)
+    assert.equal(v.showExec, r === 'executive' || r === 'company_admin', `showExec(${r})`)
+    assert.equal(v.isExecutive, r === 'executive', `isExecutive(${r})`)
+    assert.equal(v.canManageIncidents, client.canManageWorkflowIncidents(r, []), `canManageIncidents(${r})`)
+    // Every role that may act on an incident also receives it (no action without the inbox).
+    if (v.canManageIncidents) assert.equal(v.showIncidents, true, `manage implies receive (${r})`)
+  }
+  assert.equal(view('member', ['trainer']).canManageIncidents, true)
+  assert.equal(view('grc').canManageIncidents, false); assert.equal(view('grc').showIncidents, true)
+  assert.equal(view('executive').canManageIncidents, false); assert.equal(view('executive').showIncidents, true)
+  // An individual (no company) gets none of the company surfaces.
+  const solo = client.roleViewOf({ companyRole: 'executive' })
+  assert.equal(solo.showExec, false); assert.equal(solo.isExecutive, false); assert.equal(solo.canManageIncidents, false)
+})
+
 test('roleViewOf: a worker has the queue and no Start; an independent has Start and no queue; mixed has both', () => {
   const w = client.roleViewOf({ companyId: 'c', companyRole: 'member', workFlow: 'worker' })
   assert.equal(w.isWorker, true); assert.equal(w.canStart, false); assert.equal(w.showQueue, true)
@@ -91,4 +132,21 @@ test('assignablePeople / managerCandidates filter by flow and role', () => {
   ]
   assert.deepEqual(client.assignablePeople(derived).map((p) => p.id), ['x'])
   assert.deepEqual(client.managerCandidates(derived).map((p) => p.id), ['y'])
+})
+
+test('workflow incident predicates match the server for every role, with and without the trainer grant', () => {
+  for (const r of ROLES) {
+    for (const g of [[], ['trainer']]) {
+      for (const fn of ['canReceiveWorkflowIncidents', 'canManageWorkflowIncidents']) {
+        assert.equal(client[fn](r, g), server[fn](r, g), `${fn}(${r}, ${g})`)
+      }
+    }
+  }
+  assert.equal(server.canReceiveWorkflowIncidents('member', []), false)
+  assert.equal(server.canReceiveWorkflowIncidents('executive', []), true)
+  assert.equal(server.canManageWorkflowIncidents('executive', []), false)
+  assert.equal(server.canManageWorkflowIncidents('grc', []), false)
+  assert.equal(server.canManageWorkflowIncidents('member', ['trainer']), true)
+  assert.equal(client.roleViewOf({ companyId: 'c', companyRole: 'member', grants: [] }).showIncidents, false)
+  assert.equal(client.roleViewOf({ companyId: 'c', companyRole: 'executive', grants: [] }).showIncidents, true)
 })

@@ -34,7 +34,7 @@ function ensureStyle() {
   document.head.appendChild(el)
 }
 
-export default function DownloadMenu({ sessionId, label = 'Download', className = '', align = 'right', onError }) {
+export default function DownloadMenu({ sessionId, label, className = '', align = 'right', onError }) {
   const t = useT()
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState('')
@@ -49,21 +49,21 @@ export default function DownloadMenu({ sessionId, label = 'Download', className 
   }, [open])
 
   const FORMATS = [
-    { id: 'pdf', Icon: FileText, label: 'PDF report', hint: 'Formatted, with screenshots', url: api.workReportUrl(sessionId, true), name: `workcopilot-${sessionId}.pdf` },
-    { id: 'txt', Icon: AlignLeft, label: 'Text report (.txt)', hint: 'Plain text, same content', url: api.workReportTxtUrl(sessionId, true), name: `workcopilot-${sessionId}.txt` },
-    { id: 'log', Icon: ScrollText, label: 'Audit log (.log)', hint: 'Every AI transmission', url: api.workAuditUrl(sessionId), name: `workcopilot-${sessionId}-audit.log` },
+    { id: 'pdf', Icon: FileText, label: t('downloadMenu.formats.pdf'), hint: t('downloadMenu.formats.pdfHint'), url: api.workReportUrl(sessionId, true), name: `workcopilot-${sessionId}.pdf` },
+    { id: 'txt', Icon: AlignLeft, label: t('downloadMenu.formats.txt'), hint: t('downloadMenu.formats.txtHint'), url: api.workReportTxtUrl(sessionId, true), name: `workcopilot-${sessionId}.txt` },
+    { id: 'log', Icon: ScrollText, label: t('downloadMenu.formats.log'), hint: t('downloadMenu.formats.logHint'), url: api.workAuditUrl(sessionId), name: `workcopilot-${sessionId}-audit.log` },
   ]
   const pick = async (f) => {
     setOpen(false); setBusy(f.id)
     try { await api.downloadFile(f.url, f.name) }
-    catch (e) { if (onError) onError(friendlyError(e, 'Could not download. Please try again.')) }
+    catch (e) { if (onError) onError(friendlyError(e, t('downloadMenu.errDownload'))) }
     finally { setBusy('') }
   }
 
   return (
     <div ref={ref} className="wc-dlmenu-wrap">
       <button type="button" className={className} onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open} disabled={!!busy} title={t('downloadMenu.triggerTip')}>
-        {busy ? <Loader2 size={14} className="spin" /> : <Download size={14} />} {label} <ChevronDown size={13} className="wc-dlmenu-chev" />
+        {busy ? <Loader2 size={14} className="spin" /> : <Download size={14} />} {label || t('downloadMenu.label')} <ChevronDown size={13} className="wc-dlmenu-chev" />
       </button>
       {open && (
         <div role="menu" aria-label={t('downloadMenu.menuAria')} className={`wc-dlmenu ${align === 'left' ? 'left' : 'right'}`}>

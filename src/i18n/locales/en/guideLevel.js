@@ -6,5 +6,25 @@
 export default {
   guideLevel: {
     groupAria: 'Guidance strength',
+    levels: {
+      easy: {
+        label: 'Easy',
+        title: 'Plain words, every click spelled out',
+      },
+      medium: {
+        label: 'Medium',
+        title: 'Clear steps with the key details',
+      },
+      technical: {
+        label: 'Technical',
+        title: 'Precise, with commands, paths and values',
+        short: 'Tech',
+      },
+      executive: {
+        label: 'Executive',
+        title: 'Short, outcome-first, only what matters',
+        short: 'Exec',
+      },
+    },
   },
 }

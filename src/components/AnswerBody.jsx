@@ -54,7 +54,7 @@ function CodeBlock({ lang, body }) {
       <div className="ab-code-bar">
         <span>{lang || 'code'}</span>
         <button className="ab-copy" onClick={copy} title={t('answerBody.copyCodeTip')}>
-          {copied ? <Check size={12} /> : <Copy size={12} />} {copied ? 'Copied' : 'Copy'}
+          {copied ? <Check size={12} /> : <Copy size={12} />} {copied ? t('widgets.copy.copied') : t('widgets.copy.copy')}
         </button>
       </div>
       <div className="ab-code-lines">

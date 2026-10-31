@@ -12,11 +12,7 @@
 // users who do not use it.
 import { scrubSensitive, scrubWithPolicy } from '../server/work-scrub.js'
 import { activePolicy } from './scrub.js'
-
-const V = '5.1.1'
-const DIST = `https://cdn.jsdelivr.net/npm/tesseract.js@${V}/dist`
-const CORE = `https://cdn.jsdelivr.net/npm/tesseract.js-core@${V}`
-const LANG = 'https://tessdata.projectnaptha.com/4.0.0'
+import { OCR_DIST as DIST, OCR_CORE as CORE, OCR_LANG as LANG, OCR_OUTPUT, ocrLines, ocrLostLineBoxes } from './shared/ocr_engine.js'
 
 let workerPromise = null
 let unavailable = false   // set once if OCR cannot load, so we stop retrying every frame
@@ -63,8 +59,11 @@ export async function redactFrame(dataUrl, { strict = true } = {}) {
     const ctx = canvas.getContext('2d')
     ctx.drawImage(img, 0, 0)
     const worker = await getWorker()
-    const { data } = await worker.recognize(canvas)
-    const lines = (data && data.lines) || []
+    const { data } = await worker.recognize(canvas, {}, OCR_OUTPUT)
+    const lines = ocrLines(data)
+    // Text but no line boxes means the result shape is not what we can mask
+    // with: treat it as OCR failure (the fail-safe below), never as "clean".
+    if (ocrLostLineBoxes(data, lines)) throw new Error('ocr returned no line boxes')
     ctx.fillStyle = '#000'
     let masked = 0
     // Use the user's EFFECTIVE governance policy when one is armed, so the SAME

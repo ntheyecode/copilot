@@ -25,6 +25,10 @@ export default {
       seniorProjectManager: 'Senior project manager',
       grc: 'GRC (oversight, read-only)',
     },
+    grants: {
+      trainer: 'Trainer',
+      trainerHelp: 'Can record and author guided workflows. Available with a member or project manager role.',
+    },
     flows: {
       independent: 'Independent',
       independentHelp: 'Starts their own tasks. Not assigned to.',
@@ -45,6 +49,7 @@ export default {
       brainsecurity: 'Encryption & export',
       alerts: 'Alerts',
       integrations: 'SOC / SIEM',
+      developer: 'API & webhooks',
       sessions: 'Sessions',
       tickets: 'Support',
       help: 'Help',
@@ -63,6 +68,7 @@ export default {
       brainsecurity: { title: 'Private encryption and data export', sub: 'Hold the key to your Company Brain yourself (a passphrase plus a one-time recovery phrase - no backdoor), and take a complete, password-encrypted copy of your company\'s data whenever you want.' },
       alerts: { title: 'Security alerts', sub: 'When one of your people enters sensitive data (PII / PHI), it is redacted on their device before anything is sent, and you are told who, where and what kind - never the values themselves.' },
       integrations: { title: 'SOC / SIEM integrations', sub: 'Relay security alerts automatically into your SIEM, SOAR, chat and observability tools. Only alert metadata is ever sent - the kind and count of what was redacted plus who and where - never the values.' },
+      developer: { title: 'API keys and webhooks', sub: 'Connect your own apps: API keys that call WorkCoPilot with exactly the access you allow, and webhooks that tell your systems the moment a workflow is published or an issue is reported.' },
       sessions: { title: 'Member sessions', sub: 'Every session your people run - completed or in progress. Pull the report or audit log for any of them.' },
       tickets: { title: 'Support', sub: 'Open a ticket and talk to the WorkCoPilot team.' },
       help: { title: 'Help', sub: 'How to run your company console, screen by screen.' },
@@ -82,6 +88,11 @@ export default {
       totalForCompany: 'Total for your company',
       noDataYet: 'No data yet',
       aiNotConfigured: 'AI is not configured yet.',
+      // Why AI is not ready yet (server aiReasonCode).
+      aiReason: {
+        keysMissing: 'Your company uses its own AI keys, but none are set yet.',
+        sourceUnset: 'Choose where your AI comes from: the platform, or your own company keys.',
+      },
       aiSetKeys: 'Open AI keys',
       licensesByPlan: 'Licenses by plan',
       licensesByPlanHelp: 'How many of each plan your company bought, and how many are assigned. Assigning beyond a plan\'s allocation is blocked.',
@@ -684,6 +695,18 @@ export default {
       copyCommand: 'Copy the command',
       copyAria: 'Copy to clipboard',
       copiedAria: 'Copied to clipboard',
+      copyAll: 'Copy all',
+    },
+    // Download buttons on the result / document cards (ResultCard, ComposeCard).
+    download: {
+      file: 'Download file',
+      csv: 'Download CSV',
+      md: 'Download .md',
+    },
+    // Full-screen toggles (desktop title bar, full-screen guide).
+    fullScreen: {
+      enter: 'Full screen',
+      exit: 'Exit full screen',
     },
     // The shared step blocks (StepBlocks.jsx): the terminal header, the link-out
     // and the copy row a step carries, in the guiding console and the widget.
@@ -1032,6 +1055,9 @@ export default {
         { t: 'Onboarding', before: 'Months of shadowing.', now: 'Productive from the <em>first task</em>.' },
         { t: 'Mistakes', before: 'Found in production, or by the auditor.', now: '<em>Caught on screen</em> as they happen.' },
         { t: 'Documentation', before: 'Written up later, if at all.', now: 'Every step logged. <em>Audit-ready.</em>' },
+        { t: 'Workload', before: 'Pending tasks pile up on the same few people.', now: 'The backlog gets cleared, <em>one guided step at a time</em>.' },
+        { t: 'Stress', before: 'Long evenings stuck on work nobody has time to explain.', now: 'Help on screen when it is needed. <em>Less stress.</em>' },
+        { t: 'Keeping good people', before: 'Overloaded people burn out and leave.', now: 'A lighter load and real growth on the job. <em>Fewer reasons to leave.</em>' },
       ],
       controlsLbl: 'Enterprise controls, included',
       note: 'One company policy, set once. Your SOC sees who and what kind, never the values.',
@@ -1373,6 +1399,8 @@ export default {
       checking: 'Checking your organization\'s sign-in…',
     },
     form: {
+      // Signup clickwrap: {docs} is the linked agreement list, joined per locale.
+      agreeDocs: 'I have read and agree to the {docs}.',
       ariaCreate: 'Create account',
       ariaLogin: 'Log in',
       fullName: 'Full name',
@@ -1457,6 +1485,7 @@ export default {
       verifyContinue: 'Verify and continue',
     },
     err: {
+      acceptAgreements: 'Please accept the agreements to create your account.',
       timedOut: 'Your sign-in session timed out. Please start again.',
       finishFail: 'Could not finish signing you in. Please try again.',
       enterName: 'Enter your full name.',

@@ -26,9 +26,10 @@ import { verifyReport, attestReport, attestationText, REPORT_CONTACTS } from './
 import { formatWorkReportText } from './report_text.js'
 import { COMPLIANCE_FRAMEWORKS } from './compliance_frameworks.js'
 import { sendTemplate, sendTemplateAsync, sendAccountWelcomeAsync, sendPasswordReset } from './emails.js'
-import { EMAIL_DEFS, renderEmail } from './email_templates.js'
+import { EMAIL_DEFS, renderEmail, defaultsFor } from './email_templates.js'
 import { Writable } from 'node:stream'
 import { registerWorkAdminRoutes } from './work-admin.js'
+import { scheduleFrameSweep } from './workflow_frame_sweep.js'
 import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
 import { verifyResponse } from './work_verify.js'
@@ -38,6 +39,12 @@ import { registerKbSpaceRoutes } from './kb_spaces_routes.js'
 import { registerGuidanceDepthRoutes } from './work_depth_routes.js'
 import { registerWorkProjectRoutes } from './work_project_routes.js'
 import { registerWorkRolesRoutes } from './work_roles_routes.js'
+import { sessionIdForSwitch } from './work_switch_scope.js'
+import { createWorkTaskGate } from './work_task_gate.js'
+import { makeWrap } from './route_wrap.js'
+import { pickPublishedWorkflow, choosePlanBackbone, publishedWorkflowNote, workflowRefOf } from './workflow_playback.js'
+import { deviationHook } from './workflow_deviation.js'
+import { registerWorkflowIncidentRoutes } from './workflow_incidents_routes.js'
 import { registerWorkPracticeRoutes } from './work_practices_routes.js'
 import { registerTeamProjectRoutes } from './work_team_projects_routes.js'
 import { registerSsoRoutes } from './sso.js'
@@ -61,14 +68,32 @@ import { brainStore, configureBrainStore } from './brain_store.js'
 import { buildCompanyArchive } from './customer_export.js'
 import { retrieveForGoal } from './brain_retrieve.js'
 import { buildManifest } from './brain_ingest.js'
-import { EMBED, policyVersionOf } from './brain_model.js'
+import { EMBED, EMBED_MODELS, policyVersionOf } from './brain_model.js'
 import { embedderReady } from './brain_embed.js'
+import { queryBrain, BrainQueryError } from './brain_query.js'
+import { reembedTenant, ReembedError } from './brain_reembed.js'
 import { securityReview } from './security_gate.js'
 import { enforceRules, extractRulesAI, extractRulesHeuristic, ruleSummary } from './policy_rules.js'
 import { COMPLIANCE_PRESETS, COMPLIANCE_LABELS } from './compliance-presets.js'
 import { estimateCostUsd } from './model-prices.js'
+import { currentUsageScope, drainUsage, costForCall, setUsageSink, usageScopeMiddleware, runInBackgroundUsage } from './ai_usage.js'
 import * as llmGuard from './llm_guard.js'
 import * as extractionWatch from './extraction_watch.js'
+// Integration API (company API keys, /api/v1, webhooks, launch links). The routes,
+// the auth middleware and the worker are their own modules; this file only wires.
+import { registerV1Routes } from './routes_v1.js'
+import { registerApiAdminRoutes } from './api_admin_routes.js'
+import { makeRequireApiKey } from './api_key_auth.js'
+import { createRateLimiter } from './api_rate_limit.js'
+import { startWebhookWorker } from './webhook_worker.js'
+import { isPublicHttpUrl } from './egress_guard.js'
+import { PUBLIC_BASE } from './public_url.js'
+// Deployment edition (server/edition_registry.js is the registry): routes ask
+// for a capability, never an edition name.
+import { caps, publicEdition, soloSignupRefusal } from './edition.js'
+import { editionRouteGate } from './edition_route_gates.js'
+import { companyTenancy } from './edition_registry.js'
+import { checkSpaStamp } from './spa_stamp_check.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(__dirname, '..')
@@ -87,7 +112,26 @@ app.disable('x-powered-by')
 // mounted BEFORE the json parser (otherwise express.json consumes the body and
 // the signature check fails). Guarded so a missing key never crashes anything.
 app.post('/api/work/stripe/webhook', express.raw({ type: '*/*' }), workStripeWebhook({ store }))
+// The integration API takes small JSON only: parsed here first with a tight limit,
+// so the app-wide 16 MB parser below skips it (body-parser runs once per request).
+app.use('/api/v1', express.json({ limit: '64kb' }))
 app.use(express.json({ limit: '16mb' })) // generous: pasted base64 frames + uploaded reference docs (base64)
+// AI usage at actuals (ai_usage.js): every API request runs in its own usage
+// scope. Provider calls report the token / audio counts their responses carry;
+// meterCost takes them per call; whatever no meter took is booked to the
+// company's ledger when the request ends (and anything later, as it lands).
+// Who an AI call's spend belongs to: the signed-in person's company (or solo
+// account). Support work done while a superadmin views a customer is booked to
+// the platform, never billed to that customer.
+const usageHolder = (req) => {
+  const u = req && !req.impersonating ? req.workUser : null
+  return { companyId: (u && u.companyId) || null, userId: (u && u.id) || null, kind: req && req.impersonating ? 'support' : null }
+}
+setUsageSink((r) => store.recordAiUsage(r))
+app.use('/api', usageScopeMiddleware((req, entries) => {
+  const h = usageHolder(req)
+  store.recordAiUsage({ companyId: h.companyId, userId: h.userId, kind: h.kind || 'other', entries })
+}))
 
 // express-session's default MemoryStore does not survive a restart, which would
 // force a fresh login every time (and break the desktop buddy window sharing the
@@ -186,6 +230,12 @@ app.use(session({
   cookie: { httpOnly: true, sameSite: 'lax', secure: HOSTED, maxAge: 1000 * 60 * 60 * 8 }, // 8h
 }))
 
+// Edition route gates: personal-plan purchase routes need individual_plans,
+// company-only route families need company tenancy. ONE middleware ahead of
+// every route (server/edition_route_gates.js holds both lists); the default
+// edition passes everything through untouched.
+app.use(editionRouteGate())
+
 // ---- helpers --------------------------------------------------------------
 // Turn any thrown error into a user-safe response. SYSTEM errors (AI provider
 // failures, rate limits, timeouts, and unexpected 500s) are hidden behind a
@@ -218,6 +268,9 @@ function sendWorkError(res, e, req) {
     return res.status(503).json({ error: `The system is busy right now${ref}. Please try again in a little while.${extra}`, busy: true, code: (e && e.code) || null })
   }
   const body = { error: (e && e.message) || 'Server error' }
+  // A deliberate refusal may carry a machine code (e.g. WORKFLOW_CHANGED), so a
+  // client words it in the reader's language instead of matching the English.
+  if (e && typeof e.code === 'string' && /^[A-Z][A-Z0-9_]{2,}$/.test(e.code)) body.code = e.code
   if (e && e.locked) { body.locked = true; body.stepUp = e.stepUp || null }   // AI-config OTP step-up lapsed
   return res.status((e && e.status) || 500).json(body)
 }
@@ -239,10 +292,9 @@ function readLocale(req) {
   const first = al ? al.split(',')[0].split(';')[0].trim() : ''
   return first || 'en'
 }
-const wrap = (fn) => (req, res) => {
-  try { fn(req, res) }
-  catch (e) { sendWorkError(res, e, req) }
-}
+// Sync and async handlers alike: a rejected async handler is answered too, never
+// left as an unhandled rejection (route_wrap.js says why).
+const wrap = makeWrap((res, e, req) => sendWorkError(res, e, req))
 // One place that turns a verified user into a live session, so epoch/loginAt are
 // never set on one path and forgotten on another.
 //
@@ -363,7 +415,16 @@ function requireWorkSubscription(req, res, next) {
   // configured (so existing users are never locked out before Stripe is set up).
   // "Configured" is a usable secret key from the store (superadmin set it in the
   // console) OR the env var.
-  if (!billingConfigured(store)) return requireWorkTime(req, res, next)
+  // paid_only (no free tier): an unconfigured Stripe never means "free". The
+  // person sees an honest "not open yet" instead of free guiding, and the
+  // operator gets a log line naming the fix. Comp access still works.
+  if (!billingConfigured(store)) {
+    if (caps.has('paid_only') && !store.userCanUseService(req.workUser.id)) {
+      console.warn('[billing] paid_only: Stripe is not configured, so personal accounts cannot start guiding. Set the Stripe keys in Admin > Billing.')
+      return res.status(503).json({ error: 'Plans are not open on this service yet, so guiding cannot start. Please try again soon, or contact support.', billingNotConfigured: true })
+    }
+    return requireWorkTime(req, res, next)
+  }
   if (!store.userCanUseService(req.workUser.id)) {
     return res.status(402).json({ error: 'A subscription is needed to start guiding.', needsSubscription: true })
   }
@@ -432,6 +493,17 @@ function requireCompanyAdmin(req, res, next) {
   if (!wu || wu.companyRole !== 'company_admin' || !wu.companyId) return res.status(403).json({ error: 'Company admin access required.' })
   next()
 }
+// The Company Brain DOWNLOAD is executive-ONLY: an executive (or a superadmin for
+// support), NOT a company admin. Deliberately stricter than requireExecutive,
+// which also admits company admins.
+function requireExecutiveOnly(req, res, next) {
+  if (req.user && req.user.role === 'superadmin') return next()
+  const wu = req.workUser
+  if (!wu || !wu.companyId || wu.companyRole !== 'executive') {
+    return res.status(403).json({ error: 'Only an executive can download the Company Brain.' })
+  }
+  next()
+}
 // Executive (or company admin / superadmin) may view the company productivity
 // dashboard. Its payload carries NO AI model and NO AI cost (business rules);
 // the "savings" there are the customer's hypothetical ROI, not our cost.
@@ -477,8 +549,19 @@ function scrubIf(on, text, userId) { return govScrub(userId, text, on) }
 // compute/result/compose/howto). Premium = the model served was top-tier.
 function meterCost(sessionId, model, inText, outText, images = 0, opts = {}) {
   try {
-    const usd = estimateCostUsd(model, String(inText || '').length, String(outText || '').length, images)
+    // ACTUALS first: the usage the provider reported for this call (ai_usage.js).
+    // The text-length estimate covers only calls whose provider sent no usage
+    // block, and the ledger keeps the two apart (actual vs estimated).
+    const entries = drainUsage()
+    const { usd, estimatedUsd: estimated, estimateKeySource } = costForCall(entries, () => estimateCostUsd(model, String(inText || '').length, String(outText || '').length, images))
     if (usd > 0) store.addWorkSessionCost(sessionId, usd)
+    const scope = currentUsageScope()
+    const h = scope && scope.req ? usageHolder(scope.req) : null
+    const who = h ? null : ((opts && opts.workUserId) ? store.getUser(opts.workUserId) : null)
+    store.recordAiUsage({
+      companyId: h ? h.companyId : ((who && who.companyId) || null), userId: h ? h.userId : ((who && who.id) || null),
+      kind: (h && h.kind) || (opts && opts.kind) || 'guide', entries, estimatedUsd: estimated, estimateKeySource,
+    })
     if (sessionId && typeof store.recordSessionCall === 'function') {
       const tele = opts && opts.tele
       const owner = (opts && opts.workUserId) || null
@@ -665,7 +748,7 @@ function makeOnSwitch(req, sessionId) {
   return (evt) => {
     try {
       const label = (id) => (id && ai.PROVIDERS[id] && ai.PROVIDERS[id].label) || id || 'another provider'
-      const why = evt.reason === 'rate_limit' ? 'busy (rate limit)' : (evt.reason === 'retired' ? 'retired' : 'unavailable')
+      const why = evt.reason === 'rate_limit' ? 'busy (rate limit)' : evt.reason === 'retired' ? 'retired' : evt.reason === 'weak' ? 'gave an unclear answer' : 'unavailable'
       store.recordWorkIncident({
         kind: evt.fatal ? 'ai_exhausted' : 'ai_failover',
         status: evt.fatal ? 503 : null,
@@ -691,8 +774,7 @@ function makeOnSwitch(req, sessionId) {
 // runtimes both get it.
 function withFailover(req, rt) {
   if (!rt) return rt
-  const sessionId = (req && req.params && req.params.id) || null
-  return { ...rt, alternates: aiAlternates(req, rt.providerId), onSwitch: makeOnSwitch(req, sessionId) }
+  return { ...rt, alternates: aiAlternates(req, rt.providerId), onSwitch: makeOnSwitch(req, sessionIdForSwitch(req)) }
 }
 // MANDATORY security gate, in ONE place (SUPREME RULE II). Deterministically
 // verifies the code + dependencies we are about to hand the user BEFORE they act:
@@ -905,20 +987,7 @@ async function workResearchNotes(goal, apiKey) {
 // the SERVER, extract the readable text, and ground the plan in it. Safe by
 // construction: only public http(s), never private/internal hosts (no SSRF),
 // bounded pages/bytes/time, text only, and it never throws into a request.
-function isPublicHttpUrl(u) {
-  let url; try { url = new URL(u) } catch { return false }
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') return false
-  const h = url.hostname.toLowerCase()
-  if (!h.includes('.')) return false
-  if (/(^|\.)(localhost|local|internal|intranet|corp|lan|home|test|localdomain|priv|private)$/.test(h)) return false
-  if (h.includes(':')) return false // raw IPv6 literal
-  const m = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
-  if (m) {
-    const a = +m[1], b = +m[2]
-    if (a === 0 || a === 10 || a === 127 || a >= 224 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 169 && b === 254) || (a === 100 && b >= 64 && b <= 127)) return false
-  }
-  return true
-}
+// isPublicHttpUrl lives in egress_guard.js (the one SSRF rule set, shared with webhooks).
 function htmlToText(html) {
   let s = String(html || '')
   s = s.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<!--[\s\S]*?-->/g, ' ')
@@ -1083,6 +1152,8 @@ app.post('/api/work/login/mfa', wrap((req, res) => {
 // login applies to brand-new accounts too).
 app.post('/api/work/signup', wrap((req, res) => {
   if (authBlocked(req)) return res.status(429).json({ error: 'Too many attempts. Please wait a few minutes and try again.' })
+  const noSignup = soloSignupRefusal()
+  if (noSignup) return res.status(noSignup.status).json(noSignup.body)
   const b = req.body || {}
   const { username, password } = b
   const email = String(b.email || '').trim()
@@ -1114,6 +1185,10 @@ app.post('/api/work/signup', wrap((req, res) => {
 // checkbox at signup and the blocking consent modal on first login, and send the
 // version back. Version always comes from the server (never trusts the client).
 app.get('/api/work/legal', wrap((req, res) => res.json(legalManifest())))
+// Public: which edition this server runs and the capabilities it turns on, so
+// the SPA shows only what this installation offers (e.g. no Sign up button when
+// solo_signup is off). Nothing secret.
+app.get('/api/work/edition', (req, res) => res.json(publicEdition()))
 // Signed-in: accept the current agreements. This is how a social / SSO / admin-
 // created account (or any user after a version bump) clears the consent gate on
 // first use. Recorded with version + timestamp + IP + user agent. Only requires
@@ -1504,6 +1579,15 @@ app.post('/api/work/admin/companies/:id/hour-requests/:rid/decide', requireAuth,
   res.json(store.decideCompanyHours(req.params.id, req.params.rid, { approve: !!approve, by: req.user && req.user.username || 'superadmin', note }))
 }))
 // Superadmin notifications inbox (pool-threshold + hour-request alerts).
+// Superadmin: AI spend per company (or solo account) per month, at the token and
+// audio counts the providers reported (ai_usage_ledger.js). ?month=YYYY-MM for
+// every holder that month, or ?companyId=<id> for one company's months. Shows the
+// actual vs estimated split, so a Managed invoice states how much was measured.
+app.get('/api/work/admin/ai-usage', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  const q = req.query || {}
+  const month = /^\d{4}-\d{2}$/.test(String(q.month || '')) ? String(q.month) : null
+  res.json({ usage: store.listAiUsage({ month, companyId: q.companyId ? String(q.companyId) : null }) })
+}))
 app.get('/api/work/admin/notifications', requireAuth, requireSuperAdmin, wrap((req, res) => {
   res.json({ notifications: store.listSuperadminNotifications({ limit: Number((req.query || {}).limit) || 100 }), unread: store.superadminUnreadCount() })
 }))
@@ -1595,6 +1679,7 @@ function watchExtraction(req, call) {
   } catch { /* alerting must never break a request */ }
 }
 
+const beginWorkTask = createWorkTaskGate({ store })
 function guardUserText(req, res, text, field, sessionId = null) {
   const hit = llmGuard.inspectUserText(text, { field })
   if (!hit) return null
@@ -1620,31 +1705,9 @@ app.post('/api/work/sessions', requireWorkAuth, requireWorkSubscription, wrap((r
     return res.status(403).json({ error: 'Your tasks are assigned by your project manager. Open an assigned task to begin.', workerFlow: true })
   }
   const g0 = guardUserText(req, res, goal, 'goal'); if (g0 === 'refused') return
-  // Company free trial: a pool of 1-hour sessions shared across the company's
-  // users. Consume one here; gate when the pool is used up.
-  const cu = store.getUser(req.workUser.id)
-  // Task gate FIRST (before consuming a company trial). Individuals: hours are
-  // the only usage limit (402 outOfHours) and up to WORK_MAX_OPEN_TASKS may be
-  // open at once (409 tooManyOpen). Company members: unlimited unless their
-  // admin set a task ceiling (402 taskLimit). Every coded flag the store sets is
-  // forwarded so the client can show the matching message and action instead of
-  // guessing from the status alone (the old mustCompleteCurrent flag is retired
-  // with the single-running-task block).
-  try {
-    store.startWorkTask(req.workUser.id)
-  } catch (e) {
-    const body = { error: e.message }
-    if (e.outOfHours) { body.outOfHours = true; body.resetLabel = e.resetLabel }
-    if (e.tooManyOpen) { body.tooManyOpen = true; body.maxOpen = e.maxOpen; body.open = e.open }
-    if (e.taskLimit) { body.taskLimit = true; body.cap = e.cap; body.resetLabel = e.resetLabel; if (e.window) body.window = e.window }
-    return res.status(e.status || 402).json(body)
-  }
-  if (cu && cu.companyId) {
-    if (store.companyTrialRemaining(cu.companyId) <= 0) {
-      return res.status(402).json({ error: 'Your company free trial is used up. Your administrator can add more.', trialExhausted: true })
-    }
-    store.consumeCompanyTrialSession(cu.companyId)
-  }
+  // Usage gates (hours / open tasks / task ceiling / company trial pool), shared
+  // with every other way to start a task (work_task_gate.js).
+  if (!beginWorkTask(req, res)) return
   res.json({ session: store.createWorkSession(req.workUser.id, { title, goal, scope }), taskUsage: store.getWorkTaskUsage(req.workUser.id), ...(g0 && g0.guard ? { guard: g0.guard } : {}) })
 }))
 app.get('/api/work/sessions', requireWorkAuth, wrap((req, res) => {
@@ -2025,6 +2088,49 @@ app.post('/api/work/brain/clear', requireWorkAuth, requireCompanyAdmin, wrap(asy
   res.json({ cleared: sources.length, chunks })
 }))
 
+// ---- Company Brain: read-only QUERY interface (Wave 4) -----------------------
+// Any company user may query their OWN tenant's brain: top matching scrubbed
+// chunks with provenance (source + revision) and a relevance score. Company-scoped
+// (only req.workUser.companyId), reuses the one embedder + hybrid retriever, and
+// returns NO vectors, hashes, raw content, or AI provider/model names. A locked or
+// empty brain, or a bad query, returns a STATED error (never a silent empty).
+// AUTH NOTE (auditor): session auth only, for people in the app. External
+// platforms use the SAME queryBrain through POST /api/v1/brain/query with a company
+// API key holding the `brain:query` scope (routes_v1.js, docs/company-brain.md
+// section 11); this route never accepts a key.
+app.post('/api/work/brain/query', requireWorkAuth, wrap(async (req, res) => {
+  const cid = req.workUser.companyId
+  if (!cid) return res.status(403).json({ error: 'The Company Brain is for company accounts.' })
+  const b = req.body || {}
+  try {
+    res.json(await queryBrain(cid, { q: b.q, topK: b.topK }))
+  } catch (e) {
+    if (e instanceof BrainQueryError) return res.status(e.status || 400).json({ error: e.message, code: e.code })
+    throw e
+  }
+}))
+
+// ---- Company Brain: re-embed under a larger/newer model (company admin) -------
+// Rebuilds the tenant's vectors with a different catalog model WITHOUT re-upload
+// (the store keeps the scrubbed text). Atomic: on any failure the brain is left
+// unchanged. Synchronous for now; for a very large corpus this should move to a
+// background job with streamed progress (see docs/company-brain.md "Re-embedding").
+app.post('/api/work/brain/reembed', requireWorkAuth, requireCompanyAdmin, wrap(async (req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const b = req.body || {}
+  if (!b.model) {
+    return res.status(400).json({ error: `Choose a target embedding model. Available: ${Object.keys(EMBED_MODELS).join(', ')}.`, models: Object.keys(EMBED_MODELS) })
+  }
+  try {
+    const out = await reembedTenant(cid, { model: b.model, batchSize: b.batchSize })
+    store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'brain_reembed', reason: 'rebuild brain vectors under a new embedding model', detail: `model ${out.model.name}, dim ${out.dim}, ${out.chunks} chunk(s)` })
+    res.json({ ok: true, ...out })
+  } catch (e) {
+    if (e instanceof ReembedError) return res.status(e.status || 400).json({ error: e.message, code: e.code })
+    throw e
+  }
+}))
+
 // ---- Company Brain: customer-held-key custody (enable / unlock / lock / rotate) -------
 // A company can opt into customer-held encryption: a passphrase + a 24-word recovery phrase
 // the platform NEVER stores. After that the brain is LOCKED until the admin unlocks it;
@@ -2112,6 +2218,40 @@ app.get('/api/work/exec/productivity', requireWorkAuth, requireExecutive, wrap((
 }))
 // Executive CSV export of the productivity data (PDF + image are exported client
 // side from the live dashboard).
+// Executive OVERVIEW: productivity + the project dimension (both performer axes,
+// projects by task load, status rollup, per-project detail). Same business rule
+// as productivity: no AI model, no AI cost in the payload.
+app.get('/api/work/exec/overview', requireWorkAuth, requireExecutive, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30))
+  res.json(store.companyExecOverview(req.workUser.id, { days }))
+}))
+// ---- Executive-only Company Brain download ----
+// The archive is encrypted with the executive's own export passphrase (stored at
+// rest under the platform KEK; on hosted, viewing/replacing it needs a fresh MFA
+// code). The download returns needKey:true until the passphrase is set.
+app.get('/api/work/brain/export/status', requireWorkAuth, requireExecutiveOnly, wrap((req, res) => {
+  res.json({ keySet: store.hasExportKey(req.workUser.id), hosted: store.isHostedService() })
+}))
+app.post('/api/work/brain/export/key', requireWorkAuth, requireExecutiveOnly, wrap((req, res) => {
+  const b = req.body || {}
+  res.json(store.setExportKey(req.workUser.id, b.passphrase, { mfaToken: b.mfaToken }))
+}))
+app.post('/api/work/brain/export/key/reveal', requireWorkAuth, requireExecutiveOnly, wrap((req, res) => {
+  const b = req.body || {}
+  res.json(store.revealExportKey(req.workUser.id, { mfaToken: b.mfaToken }))
+}))
+app.post('/api/work/brain/export', requireWorkAuth, requireExecutiveOnly, wrap((req, res) => {
+  const cid = req.workUser.companyId
+  if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const password = store.exportKeyFor(req.workUser.id)
+  if (!password) return res.status(409).json({ needKey: true, error: 'Set your export passphrase in your profile first.' })
+  const out = buildCompanyArchive({ companyId: cid, password })
+  res.setHeader('Content-Type', 'application/octet-stream')
+  res.setHeader('Content-Disposition', `attachment; filename="${out.filename}"`)
+  res.setHeader('X-Brain-Included', out.brainIncluded ? '1' : '0')
+  res.send(out.buffer)
+}))
 app.get('/api/work/exec/productivity.csv', requireWorkAuth, requireExecutive, wrap((req, res) => {
   if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
   const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30))
@@ -2293,9 +2433,30 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     // tenant-routed). Deterministic match -> serve (strong) or seed (partial). This
     // is the template rung of private-brain-first grounding (and the seed for Plan B).
     let templateNote = ''
+    // Backbone for the plan, decided by ONE pure rule (choosePlanBackbone): a
+    // workflow the company's trainer PUBLISHED outranks a learned template (it is
+    // the reviewed, approved way), then learned, then partial matches of each.
+    // Published workflows are company-scoped, so company members only; a re-plan
+    // that keeps progress does not re-match. Deterministic, same scoring rule as
+    // the private brain. The session's link to the workflow is written only after
+    // the plan succeeds (below), so a refused or failed plan links nothing.
+    let published = { workflow: null, tier: 'none' }
+    if (req.workUser.companyId && !doneSteps.length) {
+      try { published = pickPublishedWorkflow({ ...s, goal: safeGoal }, store.listWorkflowsForUser(req.workUser.id, { state: 'published' })) }
+      catch (e) { console.warn(`[work] published workflow match error: ${e.message}`) }
+    }
+    let followsPublished = false
     try {
-      const tmatch = work.pickWorkflowTemplate({ ...s, goal: planGoal }, store.getWorkflowTemplates(req.workUser.id))
-      if (tmatch && tmatch.template && (tmatch.tier === 'strong' || tmatch.tier === 'partial')) {
+      const tmatch = published.tier === 'strong' ? null : work.pickWorkflowTemplate({ ...s, goal: planGoal }, store.getWorkflowTemplates(req.workUser.id))
+      const backbone = choosePlanBackbone(published, tmatch)
+      if (backbone.use === 'published') {
+        const title = workflowRefOf(published.workflow).title
+        templateNote = scrubText(publishedWorkflowNote(published)).clean
+        followsPublished = published.tier === 'strong'
+        store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: followsPublished
+          ? `Following the "${title}" workflow your company published.`
+          : `Found a related workflow your company published ("${title}") and adapted it.` })
+      } else if (backbone.use === 'template') {
         const tsteps = Array.isArray(tmatch.template.steps) ? tmatch.template.steps : []
         templateNote = scrubText((tmatch.tier === 'strong'
           ? 'A PROVEN WORKFLOW from your own private knowledge fits this goal. Follow it as the backbone, adjusting only where the live screen differs:\n'
@@ -2338,8 +2499,21 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     else store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: plannedBy.topRanked
       ? `Planned by a top-ranked model (per ${plannedBy.source}).`
       : 'Planned by the best model available on your key.' })
-    if (keepProgress && doneSteps.length) store.replanKeepingProgress(req.workUser.id, req.params.id, plan.steps)
-    else store.setWorkSessionSteps(req.workUser.id, req.params.id, plan.steps)
+    if (keepProgress && doneSteps.length) {
+      store.replanKeepingProgress(req.workUser.id, req.params.id, plan.steps)
+      // The steps are no longer the workflow's own, so its link becomes a plan link
+      // (no step-level incidents against the workflow from here on).
+      if (s.workflowRef && s.workflowRef.mode !== 'plan') {
+        try { store.setWorkSessionWorkflowRef(req.workUser.id, req.params.id, { ...s.workflowRef, mode: 'plan' }) } catch { /* best-effort */ }
+      }
+    } else {
+      store.setWorkSessionSteps(req.workUser.id, req.params.id, plan.steps)
+      // Link the published workflow only now that the plan exists. A fresh plan
+      // that follows one links it; one that does not clears a stale link (its
+      // steps are no longer the workflow's). A keep-progress re-plan keeps its link.
+      try { store.setWorkSessionWorkflowRef(req.workUser.id, req.params.id, followsPublished ? workflowRefOf(published.workflow, 'plan') : null) }
+      catch (e) { console.warn(`[work] workflow link failed: ${e.message}`) }
+    }
     // Store the rich "what you'll be doing" overview from the plan (or a derived
     // fallback) so a resumed/scanned session shows a clear description.
     try { store.setWorkSessionOverview(req.workUser.id, req.params.id, plan.overview) } catch { /* never block the plan response */ }
@@ -2578,6 +2752,11 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
     const r = await work.workNavigate(ai, call.rt, {
       base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), level: watchLevel, goal: watchGoal, steps: s.steps, currentStep: s.currentStep,
       frame, visionModel: call.visionModel, strong: escalateOk ? call.backup : null,
+      // Following a published workflow: the same read also says whether the screen
+      // left the workflow (Wave 3 part C). Other sessions are unchanged.
+      // Only when the steps ARE the workflow's (run mode): a plan built around a
+      // workflow has its own steps, and its gaps are not the workflow's.
+      extra: s.workflowRef && s.workflowRef.mode !== 'plan' ? deviationHook(s.workflowRef.title) : null,
     })
     // Track the empty-read streak: an unreadable frame (no guidance AND no
     // observation) is tolerated and counted; a readable one resets it.
@@ -2626,6 +2805,18 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
         if (newly.length) store.captureMilestoneShot(req.workUser.id, req.params.id, Math.max.apply(null, newly), frame)
       }
     } catch { /* evidence capture is best-effort */ }
+    // Wave 3 part C: a deviation from a published workflow becomes an incident for
+    // its trainers, PMs and above, admins and executives (deduplicated per step and
+    // kind). Best-effort: it never blocks or changes the person's guidance.
+    if (s.workflowRef && r.extra) {
+      try {
+        const at = r.current != null ? r.current : (s.currentStep || 0)
+        store.recordWorkflowIncident({
+          userId: req.workUser.id, sessionId: req.params.id, workflowRef: s.workflowRef, stepIndex: at,
+          stepText: (s.steps[at] && s.steps[at].text) || '', deviation: r.extra, frameDataUrl: frame, masked: watchScrubOn,
+        })
+      } catch (e) { console.warn(`[work] workflow incident not recorded: ${e.message}`) }
+    }
     if (r.flag) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'flag', text: r.flag })
     const allDone = r.done || updated.currentStep >= updated.steps.length
     res.json({
@@ -3192,8 +3383,11 @@ app.post('/api/work/leads', wrap((req, res) => {
   const b = req.body || {}
   const email = String(b.email || '').trim()
   const country = String(b.country || '').trim()
-  if (!String(b.firstName || '').trim() || !String(b.lastName || '').trim() || !email || !String(b.company || '').trim() || !country) {
-    return res.status(400).json({ error: 'First name, last name, email, company and country are required.' })
+  // The company field is asked only where company accounts exist (an
+  // individuals-only edition never asks a visitor for a company).
+  const needsCompany = companyTenancy(caps)
+  if (!String(b.firstName || '').trim() || !String(b.lastName || '').trim() || !email || (needsCompany && !String(b.company || '').trim()) || !country) {
+    return res.status(400).json({ error: needsCompany ? 'First name, last name, email, company and country are required.' : 'First name, last name, email and country are required.' })
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return res.status(400).json({ error: 'Enter a valid email address.' })
   const ip = String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim()
@@ -3363,11 +3557,11 @@ app.post('/api/work/company/users/:id/minutes', requireWorkAuth, requireCompanyA
 app.patch('/api/work/company/users/:id', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   const cid = req.workUser.companyId
   if (!cid) return res.status(403).json({ error: 'No company in scope.' })
-  const { companyRole, tier, workFlow } = req.body || {}
+  const { companyRole, tier, workFlow, grants } = req.body || {}
   if (companyRole !== undefined && String(req.params.id) === String(req.workUser.id)) {
     return res.status(400).json({ error: 'You cannot change your own role. Ask another company admin or support.' })
   }
-  res.json({ user: store.updateCompanyMember(cid, req.params.id, { companyRole, tier, workFlow }) })
+  res.json({ user: store.updateCompanyMember(cid, req.params.id, { companyRole, tier, workFlow, grants }) })
 }))
 // Company admin: remove a member from their OWN company (detach, reversible).
 // Cannot remove yourself.
@@ -3456,10 +3650,11 @@ app.get('/api/work/admin/email-templates', requireAuth, requireSuperAdmin, wrap(
   const templates = Object.keys(EMAIL_DEFS).map((type) => {
     const d = EMAIL_DEFS[type]
     const ov = overrides[type] || {}
+    const dd = defaultsFor(d)   // the edition audience's default wording (what a send uses when not overridden)
     return {
       type, label: d.label, category: d.category, description: d.description,
       placeholders: d.placeholders || [],
-      defaults: { subject: d.defaultSubject, heading: d.defaultHeading, body: d.defaultBody, ctaLabel: d.defaultCtaLabel || '' },
+      defaults: { subject: dd.subject, heading: dd.heading, body: dd.body, ctaLabel: dd.ctaLabel || '' },
       override: { subject: ov.subject, heading: ov.heading, body: ov.body, ctaLabel: ov.ctaLabel, updatedAt: ov.updatedAt || null },
       hasCta: !!d.ctaUrlToken || !!d.defaultCtaLabel,
     }
@@ -3574,7 +3769,9 @@ app.post('/api/work/sessions/:id/finalize', requireWorkAuth, async (req, res) =>
     // distill returns null unless EVERY step is confirmed done with no trailing
     // flag, so a half-done or failed task is never captured (zero-tolerance for
     // false templates). Best-effort: a capture failure never breaks finalize.
-    try { const rec = work.distillWorkflowTemplate(s); if (rec) store.captureWorkflowTemplate(req.workUser.id, rec) } catch (e) { console.warn(`[work] template capture failed: ${e.message}`) }
+    // A session that followed a published workflow is not distilled: the trainer's
+    // workflow is the authority, and a learned copy would compete with it.
+    try { const rec = s.workflowRef ? null : work.distillWorkflowTemplate(s); if (rec) store.captureWorkflowTemplate(req.workUser.id, rec) } catch (e) { console.warn(`[work] template capture failed: ${e.message}`) }
     // If this session is a project task, close the forward-learning loop: mark the task
     // done, record its outcome + telemetry (completed-task storage), and keep the ledger
     // populated for the next task. Best-effort - never breaks finalize.
@@ -3604,7 +3801,26 @@ registerWorkCustomerRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, w
 registerKbSpaceRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap })
 registerGuidanceDepthRoutes(app, { store, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
 registerWorkProjectRoutes(app, { store, work, ai, requireWorkAuth, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale })
-registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale })
+registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale, beginWorkTask, runPolicyGate })
+registerWorkflowIncidentRoutes(app, { store, requireWorkAuth, wrap })
+// Integration API: the company console's key + webhook routes (session), and the
+// versioned /api/v1 surface for customer apps (company API key, never a session).
+// Rate limits: per key (WORK_API_RATE_PER_MIN, default 120/min), per company across
+// all its keys (WORK_API_COMPANY_RATE_PER_MIN, 600/min) and, for failed key attempts,
+// per client network (30/min).
+const recordApiIncident = (e, req) => {
+  try { store.recordWorkIncident({ kind: 'system_error', status: (e && e.status) || 500, message: (e && e.message) || 'unknown error', companyId: (req && req.apiPrincipal && req.apiPrincipal.companyId) || (req && req.workUser && req.workUser.companyId) || null, call: (req && req.path) || null }) } catch { /* never fail on logging */ }
+}
+registerApiAdminRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, onInternal: recordApiIncident })
+registerV1Routes(app, {
+  store, queryBrain, BrainQueryError, publicBase: PUBLIC_BASE, onInternal: recordApiIncident,
+  requireApiKey: makeRequireApiKey({
+    resolve: store.resolveApiKey, recordUse: store.recordApiKeyUse, ipOf: (req) => req.ip,
+    keyLimiter: createRateLimiter({ perMinute: Number(process.env.WORK_API_RATE_PER_MIN) || 120 }),
+    companyLimiter: createRateLimiter({ perMinute: Number(process.env.WORK_API_COMPANY_RATE_PER_MIN) || 600 }),
+    ipLimiter: createRateLimiter({ perMinute: 30 }),
+  }),
+})
 registerWorkPracticeRoutes(app, { store, requireWorkAuth, wrap })
 registerTeamProjectRoutes(app, { store, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError })
 registerWorkImageRoutes(app, { store, ai, requireWorkAuth, wrap, resolveWorkRuntime })
@@ -3689,6 +3905,9 @@ app.use('/api', (req, res) => res.status(404).json({ error: 'Unknown API route' 
 
 // ---- static SPA -----------------------------------------------------------
 if (fs.existsSync(DIST)) {
+  // The built SPA must carry this server's capability stamp (logged with the
+  // fix when it does not; server/spa_stamp_check.js).
+  checkSpaStamp(DIST, caps.list())
   app.use(express.static(DIST, {
     etag: true,
     setHeaders: (res, filePath) => {
@@ -3721,7 +3940,10 @@ async function sweepIdleWorkSessions() {
       try {
         const rt = store.getWorkUserRuntime(s.workUserId)
         if (rt && rt.apiKey && !s.summary && (s.steps || []).length) {
-          const summary = await work.workSummarize(ai, rt, { ...s, ...scrubForAi(s, store.workUserScrubOn(s.workUserId), s.workUserId) })
+          // A background job runs outside any request: book its AI to the session owner.
+          const owner = store.getUser(s.workUserId)
+          const summary = await runInBackgroundUsage({ companyId: (owner && owner.companyId) || null, userId: s.workUserId, kind: 'summary' },
+            () => work.workSummarize(ai, rt, { ...s, ...scrubForAi(s, store.workUserScrubOn(s.workUserId), s.workUserId) }))
           store.setWorkSessionSummary(s.workUserId, s.id, summary)
         }
         store.endWorkSession(s.workUserId, s.id)
@@ -3767,6 +3989,10 @@ export function start({ port } = {}) {
       runRetention()
       const workRetentionTimer = setInterval(runRetention, 60 * 60 * 1000)
       if (workRetentionTimer.unref) workRetentionTimer.unref()
+      // Webhooks: deliver queued events (durable in the store) with retries.
+      try { startWebhookWorker({ store, log: (m, d) => console.warn(`[work] ${m}: ${d || ''}`) }) } catch (e) { console.warn(`[work] webhook worker error: ${e.message}`) }
+      // Orphan workflow-frame sweep: shortly after boot, then daily (counts only in the log).
+      scheduleFrameSweep(() => { try { const r = store.sweepOrphanWorkflowFrames(); if (r.removed) console.log(`[work] workflow frames: removed ${r.removed} orphan frame(s)`) } catch (e) { console.warn(`[work] workflow frame sweep error: ${e.message}`) } })
       // Periodic AI-model research (owner directive): on a daily cadence, recompute
       // the best/cheapest recommendation across the configured providers against
       // their LIVE catalogs, so the superadmin's "AI Research" view stays current

@@ -6,5 +6,13 @@
 export default {
   policyNote: {
     cleanBody: 'This guidance was checked against your company security policy and nothing was flagged.',
+    headFlag: 'Company policy: review before you use this',
+    headClean_one: 'Company policy: clear (checked against {n} rule)',
+    headClean_other: 'Company policy: clear (checked against {n} rules)',
+    forbid: 'Prohibited: {title}.',
+    forbidAny: 'Prohibited: a prohibited practice.',
+    require: 'Required: {title}.',
+    requireAny: 'Required: a required practice.',
+    per: '(per {cite})',
   },
 }

@@ -36,6 +36,11 @@ const PARTITION = 'persist:workcopilot'   // its own cookie jar, separate from t
 let SERVER_ORIGIN = ''
 try { SERVER_ORIGIN = new URL(SERVER_URL).origin } catch { SERVER_ORIGIN = SERVER_URL }
 
+// Every frameless window spreads this. Electron 43+ rounds frameless windows by
+// default; ours draw their own shape (the buddy is transparent), so they keep
+// square corners as they had before.
+const FRAMELESS = { frame: false, roundedCorners: false }
+
 // Guide redesign (owner): roughly double the comfortable default so the
 // step card reads at quality; clampBounds still fits it to a small screen.
 const BUDDY_W = 480
@@ -93,6 +98,14 @@ let guideRestore = null       // the compact bounds to return to when un-maximiz
 
 function applyOnTop() {
   if (alive(win)) win.setAlwaysOnTop(onTop, onTop ? 'screen-saver' : 'normal')
+}
+// Every programmatic move/resize of the main window goes through here. On
+// Electron 45 (Windows) a bounds change can drop TOPMOST, so a floating window
+// is put back on top after it moves (user and OS moves: see keepOnTop events).
+function placeWin(b) {
+  if (!alive(win)) return
+  win.setBounds(b)
+  if (onTop) applyOnTop()
 }
 // Keep a window rectangle fully inside the work area of the display it is on
 // (or the nearest one). Two real failures this prevents: the 820px guide
@@ -153,9 +166,9 @@ function applyGuideMax(next) {
   if (want === guideMax) return guideMax
   if (want) {
     guideRestore = win.getBounds()
-    win.setBounds(clampBounds(centeredGuideBounds()))
+    placeWin(clampBounds(centeredGuideBounds()))
   } else {
-    win.setBounds(clampBounds(guideRestore || cornerBounds(GUIDE_W, GUIDE_H)))
+    placeWin(clampBounds(guideRestore || cornerBounds(GUIDE_W, GUIDE_H)))
   }
   guideMax = want
   sendState()
@@ -184,14 +197,14 @@ function applyMode(next) {
   mode = next
   if (mode === 'guide') {
     if (win.isMaximized()) win.unmaximize()
-    onTop = true; applyOnTop()
-    win.setBounds(clampBounds(guideBounds || cornerBounds(GUIDE_W, GUIDE_H)))
+    onTop = true
+    placeWin(clampBounds(guideBounds || cornerBounds(GUIDE_W, GUIDE_H)))   // on top after the move
     // opacity + click-behind stay as the user left them: guide mode is where they matter
   } else {
     onTop = false; applyOnTop()
     setClickThrough(false)              // you cannot plan through a click-through window
     opacityIdx = 0; win.setOpacity(1)   // planning is always fully opaque
-    win.setBounds(clampBounds(planBounds || centeredPlanBounds()))
+    placeWin(clampBounds(planBounds || centeredPlanBounds()))
   }
   sendState()
   return mode
@@ -436,7 +449,7 @@ function promptForMonitor(sources) {
       width: 760,
       height: 560,
       resizable: false,
-      frame: false,
+      ...FRAMELESS,
       skipTaskbar: true,
       alwaysOnTop: true,
       backgroundColor: '#0b0b0f',
@@ -686,7 +699,7 @@ function createWindow() {
     minWidth: 380,
     minHeight: 480,
     title: 'WorkCoPilot',
-    frame: false,          // custom Fluent title bar lives in the web UI (WorkShell)
+    ...FRAMELESS,          // custom Fluent title bar lives in the web UI (WorkShell)
     center: true,
     alwaysOnTop: false,    // plan mode is the default; applyMode() controls on-top
     backgroundColor: '#0b0b0f',
@@ -749,6 +762,11 @@ function createWindow() {
   win.on('unmaximize', () => sendState())
   win.on('enter-full-screen', () => sendState())        // reflect OS-driven full screen (F11) back to the UI toggle
   win.on('leave-full-screen', () => sendState())
+  // A floating window stays on top through moves the user or the OS makes (a
+  // drag, Win+arrows, restore, leaving full screen, a display change): on
+  // Electron 45 (Windows) those can drop TOPMOST. Programmatic moves use placeWin.
+  const keepOnTop = () => { if (onTop) applyOnTop() }
+  for (const ev of ['moved', 'resized', 'restore', 'unmaximize', 'leave-full-screen', 'show']) win.on(ev, keepOnTop)
 
   // Closing the main window closes the product. Before this, the (hidden) buddy
   // and the monitor picker were separate BrowserWindows that outlived the main
@@ -840,7 +858,7 @@ function createBuddy() {
     x: pos.x,
     y: pos.y,
     show: false,
-    frame: false,
+    ...FRAMELESS,
     transparent: true,
     resizable: false,
     skipTaskbar: true,
@@ -1131,14 +1149,31 @@ async function extractDocLocally(filePath) {
   }
   throw new Error('Unsupported file type')
 }
+// The picker opens where the user last picked from. Electron 43+ defaults an
+// open dialog to Downloads; before, Windows remembered the last folder itself.
+function pickDirPath() {
+  try { return path.join(app.getPath('userData'), 'pick-doc-dir.json') } catch { return null }
+}
+function loadPickDir() {
+  try {
+    const p = pickDirPath()
+    const dir = p && fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')).dir : ''
+    return dir && fs.existsSync(dir) ? dir : undefined
+  } catch { return undefined }
+}
+function savePickDir(filePath) {
+  try { const p = pickDirPath(); if (p && filePath) fs.writeFileSync(p, JSON.stringify({ dir: path.dirname(filePath) })) } catch { /* best effort */ }
+}
 ipcMain.handle('work:pick-doc', async () => {
   try {
     const r = await dialog.showOpenDialog(win && !win.isDestroyed() ? win : undefined, {
+      defaultPath: loadPickDir(),
       title: 'Add reference documents or diagrams - they stay on this computer',
       properties: ['openFile', 'multiSelections'],
       filters: [{ name: 'Documents & diagrams', extensions: ['pdf', 'docx', 'txt', 'md', 'markdown', 'png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif', 'tif', 'tiff'] }],
     })
     if (r.canceled || !r.filePaths || !r.filePaths.length) return { ok: true, docs: [] }
+    savePickDir(r.filePaths[0])
     const out = []
     for (const fp of r.filePaths.slice(0, 8)) {
       const name = path.basename(fp)

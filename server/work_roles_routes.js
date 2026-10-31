@@ -5,8 +5,11 @@
 // persists a COMPANY project managed by the PM.
 import { planProjectMap } from './work_project_plan.js'
 import { validateBreakdown, shouldBeProject } from './work_project_validate.js'
+import { parseAudioPayload, pickTranscribeRuntime, transcribeAudio, AI_NO_TRANSCRIBE } from './ai_transcribe.js'
+import { readWorkflowStep, isWeakReading, isBetterReading, STEP_READ_CODES } from './workflow_step_reader.js'
+import { workflowToSessionSteps, workflowSessionGoal, workflowOverview, workflowRefOf } from './workflow_playback.js'
 
-export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale }) {
+export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale, beginWorkTask, runPolicyGate }) {
   // ---- PM / Sr PM / admin: projects ----
 
   // List the projects this user may see (PM: own; Sr PM / GRC / admin: all).
@@ -117,6 +120,138 @@ export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth,
   }))
   app.get('/api/work/grc/log', requireWorkAuth, wrap((req, res) => {
     res.json({ log: store.listProjectLog(req.workUser.id, { projectId: req.query.project || null, limit: Number(req.query.limit) || 500 }) })
+  }))
+
+  // ---- Teach workflows ----
+  // Authoring (create / edit / publish / revise / retire / delete) needs the
+  // trainer grant or company admin, and edit/delete also ownership; the store
+  // enforces all of it. Reads return what the acting user may see (everyone in
+  // the company sees published; authors + admins also see drafts).
+  app.get('/api/work/workflows', requireWorkAuth, wrap((req, res) => {
+    res.json({ workflows: store.listWorkflowsForUser(req.workUser.id, { state: req.query.state || null }) })
+  }))
+  app.get('/api/work/workflows/:id', requireWorkAuth, wrap((req, res) => {
+    res.json({ workflow: store.getWorkflowForUser(req.workUser.id, req.params.id) })
+  }))
+  app.post('/api/work/workflows', requireWorkAuth, wrap((req, res) => {
+    const b = req.body || {}
+    res.json({ workflow: store.createWorkflow(req.workUser.id, { meta: b.meta, steps: b.steps }) })
+  }))
+  app.patch('/api/work/workflows/:id', requireWorkAuth, wrap((req, res) => {
+    const b = req.body || {}
+    res.json({ workflow: store.updateWorkflow(req.workUser.id, req.params.id, { meta: b.meta, steps: b.steps, baseUpdatedAt: b.baseUpdatedAt }) })
+  }))
+  app.post('/api/work/workflows/:id/publish', requireWorkAuth, wrap((req, res) => {
+    res.json({ workflow: store.publishWorkflow(req.workUser.id, req.params.id) })
+  }))
+  app.post('/api/work/workflows/:id/revise', requireWorkAuth, wrap((req, res) => {
+    res.json({ workflow: store.reviseWorkflow(req.workUser.id, req.params.id) })
+  }))
+  app.post('/api/work/workflows/:id/retire', requireWorkAuth, wrap((req, res) => {
+    res.json({ workflow: store.retireWorkflow(req.workUser.id, req.params.id) })
+  }))
+  app.delete('/api/work/workflows/:id', requireWorkAuth, wrap((req, res) => {
+    res.json(store.deleteWorkflow(req.workUser.id, req.params.id))
+  }))
+  // Wave 2 capture: upload one scrubbed frame (trainer / company admin) and get a
+  // ref to put in a step's `shot`; read a frame back (company-scoped). Frames are
+  // encrypted at rest and only ever served to the frame's own tenant.
+  app.post('/api/work/workflows/frames', requireWorkAuth, wrap((req, res) => {
+    res.json(store.uploadWorkflowFrame(req.workUser.id, (req.body || {}).dataUrl))
+  }))
+  // Wave 2 capture: speech to text for one audio chunk (the trainer's mic, call
+  // audio, or a recorded video's soundtrack), on the company's OWN configured AI
+  // keys and egress rules. Authors only. Returns the text and chunk-relative
+  // segment timings, never the provider or model. A provider that cannot
+  // transcribe is switched for one on the permitted ladder (recorded), or fails
+  // with an actionable message; it never returns a silent empty.
+  app.post('/api/work/transcribe', requireWorkAuth, requireWorkSubscription, async (req, res) => {
+    try {
+      if (!store.userCanAuthorWorkflows(req.workUser.id)) return res.status(403).json({ error: 'Only a trainer or company admin can record a workflow.' })
+      const v = parseAudioPayload(req.body)
+      if (!v.ok) return res.status(v.status).json({ error: v.error })
+      const rr = await resolveWorkRuntime(req, res, { needVision: false }); if (!rr) return
+      const pick = pickTranscribeRuntime(rr.rt)
+      if (!pick) {
+        return res.status(400).json({
+          error: 'Your AI provider cannot turn speech into text, so narration cannot be captured. Add a Groq, OpenAI or Gemini key in Company, AI keys, then try again.',
+          code: AI_NO_TRANSCRIBE, needsTranscribeKey: true,
+        })
+      }
+      if (pick.switched && typeof pick.rt.onSwitch === 'function') {
+        pick.rt.onSwitch({ scope: 'transcribe', reason: 'unsupported', crossProvider: true, fromProvider: pick.fromProvider, fromModel: rr.rt.chatModel || null, toProvider: pick.rt.providerId, toModel: null })
+      }
+      const out = await transcribeAudio(pick.rt, { audio: v.buffer, mime: v.mime, language: v.language })
+      res.json({ text: out.text, segments: out.segments || null })
+    } catch (e) { sendWorkError(res, e, req) }
+  })
+  // Wave 3 part B: run a PUBLISHED workflow. Any company member who can see it
+  // (everyone, once it is published) starts a guided session whose steps are the
+  // workflow's own steps: no planning call, the trainer's control labels and done
+  // checks as written. The same usage gates as every other task start apply. A
+  // worker-flow member may run one too: a published workflow is company-approved
+  // work, not a self-invented task (owner: "immediately available for users").
+  // The title is company-authored content, so it is not run through the abuse
+  // guard (that would record the trainer's words against the employee). The steps
+  // DO go through the company-policy gate, exactly like every planned step, so an
+  // armed policy flags a published workflow that conflicts with it.
+  app.post('/api/work/workflows/:id/start', requireWorkAuth, requireWorkSubscription, async (req, res) => {
+    try {
+      const w = store.getWorkflowForUser(req.workUser.id, req.params.id)
+      if (w.state !== 'published') return res.status(409).json({ error: 'Only a published workflow can be run.', code: 'WORKFLOW_NOT_PUBLISHED' })
+      const steps = workflowToSessionSteps(w)
+      if (!steps.length) return res.status(409).json({ error: 'This workflow has no steps to follow yet.', code: 'WORKFLOW_EMPTY' })
+      if (!beginWorkTask(req, res)) return
+      const goal = workflowSessionGoal(w)
+      const session = store.createWorkSession(req.workUser.id, { title: goal, goal })
+      store.setWorkSessionSteps(req.workUser.id, session.id, steps)
+      store.setWorkSessionOverview(req.workUser.id, session.id, workflowOverview(w))
+      store.setWorkSessionWorkflowRef(req.workUser.id, session.id, workflowRefOf(w))
+      store.appendWorkEvent(req.workUser.id, session.id, { kind: 'ai', text: `Following the "${workflowRefOf(w).title}" workflow your company published.` })
+      const out = store.getWorkSession(req.workUser.id, session.id)
+      const policy = runPolicyGate ? await runPolicyGate(req.workUser.id, session.id, (out.steps || []).map((x) => `${x.text}\n${x.validate || ''}`).join('\n')) : null
+      res.json({ sessionId: session.id, steps: out.steps, taskUsage: store.getWorkTaskUsage(req.workUser.id), policy })
+    } catch (e) { sendWorkError(res, e, req) }
+  })
+  // Wave 3: read ONE step of a draft with the company's own vision model: the
+  // control's visible label and what shows once the step is done. One step per
+  // call, so the review screen shows progress and a long workflow never becomes
+  // one unbounded request. The cheap vision model reads first; the stronger one
+  // gets a single retry only when the answer is unusable or self-doubting. The
+  // result is stored as a suggestion beside the trainer's text, never over it.
+  app.post('/api/work/workflows/:id/steps/:stepId/read', requireWorkAuth, requireWorkSubscription, async (req, res) => {
+    try {
+      const input = store.prepareStepRead(req.workUser.id, req.params.id, req.params.stepId)
+      if (!input.step.shot) return res.status(400).json({ error: 'This step has no captured screen to read. Record it again or fill in the control yourself.', code: STEP_READ_CODES.NO_FRAME })
+      const rr = await resolveWorkRuntime(req, res, { needVision: true }); if (!rr) return
+      const primary = { cfg: rr.rt, visionModel: rr.visionModel }
+      const strong = rr.strong ? { cfg: rr.strong.rt, visionModel: rr.strong.visionModel } : null
+      const see = async (images, prompt) => {
+        const out = await work.escalateVision(
+          (cfg, model) => ai.analyseImages(cfg, prompt, images, model), primary, strong, isWeakReading, isBetterReading,
+        )
+        // A switch to the stronger model is recorded like every other substitution.
+        if (out.escalated && typeof primary.cfg.onSwitch === 'function') {
+          primary.cfg.onSwitch({
+            scope: 'vision', reason: out.reason, crossProvider: strong.cfg.providerId !== primary.cfg.providerId,
+            fromProvider: primary.cfg.providerId, fromModel: primary.visionModel, toProvider: strong.cfg.providerId, toModel: strong.visionModel,
+          })
+        }
+        return out.raw
+      }
+      const out = await readWorkflowStep({ ...input, see })
+      if (!out.ok) {
+        return res.status(422).json({ error: 'The screen for this step could not be read clearly. Fill in the control and the done check yourself.', code: out.code })
+      }
+      res.json({ workflow: store.saveStepReading(req.workUser.id, req.params.id, req.params.stepId, out.reading) })
+    } catch (e) { sendWorkError(res, e, req) }
+  })
+  app.get('/api/work/workflows/frames/:ref', requireWorkAuth, wrap((req, res) => {
+    const f = store.readWorkflowFrame(req.workUser.id, req.params.ref)
+    res.setHeader('Content-Type', f.mime)
+    res.setHeader('Cache-Control', 'private, max-age=300')
+    res.setHeader('X-Content-Type-Options', 'nosniff')
+    res.send(f.buffer)
   }))
 }
 

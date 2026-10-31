@@ -7,5 +7,15 @@ export default {
   securityNote: {
     cleanBody: 'No dangerous commands and no known-vulnerable libraries were found in this code.',
     dbUnreachable: 'The vulnerability database could not be reached, so library versions were not checked this time.',
+    headFlag: 'Security check: review before you use this',
+    headClean: 'Security check: no known issues',
+    vulns_one: '<b>{pkg}</b> has {n} known vulnerability.',
+    vulns_other: '<b>{pkg}</b> has {n} known vulnerabilities.',
+    vulnsIds_one: '<b>{pkg}</b> has {n} known vulnerability ({ids}).',
+    vulnsIds_other: '<b>{pkg}</b> has {n} known vulnerabilities ({ids}).',
+    idsMore: '{ids}, and more',
+    upgradeLatest: 'Update to {version} (latest).',
+    upgradeLater: 'Update to {version} or later.',
+    patchedVersion: 'a patched version',
   },
 }

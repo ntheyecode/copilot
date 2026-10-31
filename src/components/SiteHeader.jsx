@@ -40,15 +40,18 @@ import { ArrowRight, Menu, X } from 'lucide-react'
 import AdmireVedaLogo from './AdmireVedaLogo.jsx'
 import LanguageMenu from './LanguageMenu.jsx'   // globe + language picker (16 locales), lives in the header on every public page
 import { useT, useLocale } from '../i18n/index.jsx'
+import { useEditionView } from '../edition/useCaps.js'
+import { visibleLinks, startPath } from '../edition/surfaces.js'   // which links an edition shows (capability-driven)
 
 // Labels come from the locale catalog (nav.<key>) so the menu reads in the
-// visitor's language; the hrefs are never translated.
+// visitor's language; the hrefs are never translated. `needs` names what a
+// link requires (src/edition/surfaces.js); a link without it shows everywhere.
 export const SITE_LINKS = [
   { key: 'how', href: '/workcopilot/how-it-works' },
   { key: 'use', href: '/workcopilot/use-cases' },
   { key: 'fields', href: '/workcopilot/fields' },
   { key: 'security', href: '/workcopilot/security' },
-  { key: 'enterprise', href: '/workcopilot/enterprise' },
+  { key: 'enterprise', href: '/workcopilot/enterprise', needs: 'companies' },
   { key: 'pricing', href: '/workcopilot/pricing' },
   { key: 'faq', href: '/workcopilot/faq' },
 ]
@@ -66,6 +69,9 @@ function currentFromPath() {
 export default function SiteHeader({ current }) {
   const t = useT()
   const { locale } = useLocale()
+  const ed = useEditionView()
+  const links = visibleLinks(ed, SITE_LINKS)
+  const start = startPath(ed)
   const [open, setOpen] = useState(false)
   const [folded, setFolded] = useState(false)
   const rootRef = useRef(null)
@@ -128,19 +134,19 @@ export default function SiteHeader({ current }) {
         <a className="wsh-brand" href="/" aria-label={t('nav.home')}><AdmireVedaLogo size={26} idSuffix="sh" /></a>
 
         <nav className={'wsh-links' + (open ? ' open' : '')} id="wsh-menu" aria-label={t('nav.main')}>
-          {SITE_LINKS.map((l) => (
+          {links.map((l) => (
             <a key={l.key} href={l.href} className={active === l.key ? 'on' : undefined} aria-current={active === l.key ? 'page' : undefined} onClick={() => setOpen(false)}>{t('nav.' + l.key)}</a>
           ))}
           {/* Sign in lives in the menu on phones (hidden on desktop, where it sits on the right). */}
           <a className="wsh-m-only" href="/workcopilot" onClick={() => setOpen(false)}>{t('common.signIn')}</a>
-          <a className="wsh-m-only wsh-m-cta" href="/workcopilot" onClick={() => setOpen(false)}>{t('common.getStarted')} <ArrowRight size={15} aria-hidden="true" className="wsh-arrow" /></a>
+          <a className="wsh-m-only wsh-m-cta" href={start} onClick={() => setOpen(false)}>{t('common.getStarted')} <ArrowRight size={15} aria-hidden="true" className="wsh-arrow" /></a>
         </nav>
 
         <div className="wsh-cta">
           {/* Language picker: the visitor's own-language names, switches live. */}
           <LanguageMenu compact />
           <a className="wsh-ghost" href="/workcopilot">{t('common.signIn')}</a>
-          <a className="wsh-btn" href="/workcopilot">{t('common.getStarted')} <ArrowRight size={15} aria-hidden="true" className="wsh-arrow" /></a>
+          <a className="wsh-btn" href={start}>{t('common.getStarted')} <ArrowRight size={15} aria-hidden="true" className="wsh-arrow" /></a>
           <button type="button" className="wsh-burger" aria-expanded={open} aria-controls="wsh-menu" aria-label={open ? t('nav.closeMenu') : t('nav.openMenu')} onClick={() => setOpen((v) => !v)}>
             {open ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
           </button>
