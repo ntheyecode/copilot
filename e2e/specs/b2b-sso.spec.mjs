@@ -225,8 +225,10 @@ companyTest(test, 'a SCIM group mapped to project manager: adding a person to th
 
   // Before: the member has no PM dashboard.
   const member = await as.page(co.users.member, { path: '/work' })
+  // (The page's own heading is inside <main>; the top bar repeats page names.)
   await member.page.goto('/work/pm')
-  await expect(member.page.getByRole('heading', { name: 'Projects I manage' })).toHaveCount(0)
+  await member.page.waitForLoadState('networkidle')
+  await expect(member.page.getByRole('main').getByRole('heading', { name: 'Projects I manage' })).toHaveCount(0)
 
   // Okta adds the member to the group over SCIM.
   const add = await scim('PATCH', `/Groups/${groupId}`, { schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'], Operations: [{ op: 'add', path: 'members', value: [{ value: co.users.member.id }] }] })
@@ -234,7 +236,7 @@ companyTest(test, 'a SCIM group mapped to project manager: adding a person to th
 
   // The same signed-in session now gets the PM dashboard on its next load.
   await member.page.goto('/work/pm')
-  await expect(member.page.getByRole('heading', { name: 'Projects I manage' })).toBeVisible()
+  await expect(member.page.getByRole('main').getByRole('heading', { name: 'Projects I manage' })).toBeVisible()
 
   // The console shows the role as managed by the identity provider and locks it.
   await page.goto('/work/company?section=team')

@@ -21,7 +21,7 @@ companyTest(test, 'the executive dashboard shows productivity with project and p
   await page.getByRole('link', { name: 'Executive dashboard' }).click()
   await expect(page).toHaveURL(/\/work\/exec$/)
   await expect(page.getByRole('heading', { level: 1, name: 'Productivity' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Projects' }).first()).toBeVisible()
+  await expect(page.getByRole('main').getByRole('heading', { name: 'Projects' }).first()).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Top performers' }).first()).toBeVisible()
   await expect(page.getByText('Quarter close').first()).toBeVisible()
 
