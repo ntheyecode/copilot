@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
 import { nullIndirectCallZeros } from './scripts/harden-indirect-calls.mjs'
 import { obfuscationOptions } from './scripts/obfuscation_options.mjs'
@@ -105,7 +106,11 @@ const BROWSER_FLOOR = ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari14']
 // Windows and POSIX alike (the bundler sees native module ids).
 const VENDOR_RE = /[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/
 
-export const VITE_WATCH_IGNORED = ['**/out/**', '**/dist/**', '**/.claude/worktrees/**', '**/.e2e-results/**', '**/workcopilot/release-workcopilot/**', '**/workcopilot/node_modules/**']
+// Other worktrees are ignored by THIS checkout's own path (the '**/' form also
+// matched every file when the dev server itself ran inside a worktree, so a
+// worktree server never saw an edit; caught 2026-10-31).
+const CONFIG_DIR = fileURLToPath(new URL('.', import.meta.url)).replace(/\\/g, '/').replace(/\/$/, '')
+export const VITE_WATCH_IGNORED = ['**/out/**', '**/dist/**', `${CONFIG_DIR}/.claude/worktrees/**`, '**/.e2e-results/**', '**/workcopilot/release-*/**', '**/workcopilot/node_modules/**']
 
 export default defineConfig(({ mode }) => ({
   plugins: [react(), ipHardenPlugin(mode)].filter(Boolean),

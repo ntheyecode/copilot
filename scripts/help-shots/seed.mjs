@@ -37,6 +37,11 @@ const elena = mk('elena', 'member', 'Elena Fischer', 'mixed')
 const marco = mk('marco', 'project_manager', 'Marco Ruiz', 'mixed')   // a PM WITHOUT the trainer grant (help role check)
 store.updateCompanyMember(co.id, maya.id, { grants: ['trainer'] })
 store.updateCompanyMember(co.id, priya.id, { grants: ['trainer'] })
+// A personal account (no company) for the "Your brain" shots; its learnings
+// are written straight into db.json below (no AI runs in the seed).
+const riley = store.createManagedUser({ username: 'riley', password: PW, tier: 'basic' })
+store.recordLegalAcceptance(riley.id, { method: 'accept' })
+NAMES[riley.id] = 'Riley Chen'
 
 // ---- API keys + a webhook FIRST, so the publish/incident events become deliveries.
 const k1 = store.createApiKey(alex.id, { name: 'Billing sync (production)', scopes: ['workflows:read', 'incidents:read'], expiresInDays: 90 })
@@ -145,6 +150,25 @@ await new Promise((r) => setTimeout(r, 400))
 const file = path.join(DIR, 'db.json')
 const db = JSON.parse(fs.readFileSync(file, 'utf8'))
 for (const u of db.users || []) if (NAMES[u.id]) u.displayName = NAMES[u.id]
+// Riley's brain: one document already learned from, plus two notes from
+// finished sessions (the shape server/personal_brain.js keeps).
+const L = (id, text, kind, sources, at) => ({ id, text, kind, sources, at })
+db.personalBrain = db.personalBrain || {}
+db.personalBrain[riley.id] = {
+  sources: [
+    { id: 'ps_help_docs', name: 'My invoicing checklist.docx', kind: 'document', learnedAt: '2026-10-28T09:12:00.000Z' },
+    { id: 'sessions', name: 'Your sessions', kind: 'sessions', learnedAt: '2026-10-30T16:40:00.000Z' },
+  ],
+  learnings: [
+    L('pl_h1', 'Invoices go out on the first working day of the month, one per client, from the Invoices folder.', 'procedure', ['ps_help_docs'], '2026-10-28T09:12:00.000Z'),
+    L('pl_h2', 'Every invoice number is the year, a dash and a four-digit counter, for example 2026-0031.', 'term', ['ps_help_docs'], '2026-10-28T09:12:01.000Z'),
+    L('pl_h3', 'Amounts are in euros, rounded to two decimals, with VAT on a separate line.', 'preference', ['ps_help_docs'], '2026-10-28T09:12:02.000Z'),
+    L('pl_h4', 'Never send an invoice before the timesheet for that client is approved.', 'warning', ['ps_help_docs'], '2026-10-28T09:12:03.000Z'),
+    L('pl_h5', 'The hourly rate sheet lives in Clients, Rates 2026.xlsx, one tab per client.', 'fact', ['ps_help_docs'], '2026-10-28T09:12:04.000Z'),
+    L('pl_s1', 'Exporting the timesheet to CSV first, then importing it into the invoice template, saved a retyping step.', 'procedure', ['sessions'], '2026-10-29T11:05:00.000Z'),
+    L('pl_s2', 'Checking the client PO number against the quote before sending avoided a rejected invoice.', 'procedure', ['sessions'], '2026-10-30T16:40:00.000Z'),
+  ],
+}
 // The failed delivery should stay terminal: no retry against the network.
 for (const d of db.webhookDeliveries || []) if (d.status === 'pending') { d.status = 'dead'; d.nextAttemptAt = null }
 fs.writeFileSync(file, JSON.stringify(db, null, 2))

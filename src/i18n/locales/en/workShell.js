@@ -29,6 +29,8 @@ export default {
       completed: 'Completed tasks',
       logs: 'Session logs',
       skills: 'Skills',
+      brain: 'Your brain',
+      brainTip: 'Teach your guide with your own documents; only what it learned is kept',
       help: 'Help',
       helpTip: 'Help & how-to',
       howto: 'How-to',

@@ -485,6 +485,15 @@ export const api = {
   workTeamSkillsExportUrl: () => '/api/work/team/skills/export',   // direct cookie-authed download
   workTeamSkillsImport: (skills, replace) => req('POST', '/api/work/team/skills/import', { skills, ...(replace ? { replace: true } : {}) }),
   workTeamSkillsClear: (reason) => req('POST', '/api/work/team/skills/clear', { reason }),
+  // A personal account's own brain (server/personal_brain_routes.js): what it
+  // learned by source, learn from one document (the file is never kept),
+  // forget one learning / one source / everything. Company users have the
+  // company brain (403 COMPANY_ACCOUNT here).
+  meBrain: () => req('GET', '/api/work/me/brain'),
+  meBrainLearn: (body) => req('POST', '/api/work/me/brain/learn', body || {}),   // { name, mime, dataBase64 }
+  meBrainForgetLearning: (id) => req('DELETE', `/api/work/me/brain/learnings/${encodeURIComponent(id)}`),
+  meBrainForgetSource: (id) => req('DELETE', `/api/work/me/brain/sources/${encodeURIComponent(id)}`),
+  meBrainClear: () => req('POST', '/api/work/me/brain/clear', {}),
   // Company Brain (company admin): the per-company knowledge store the desktop
   // app fills from documents scrubbed + embedded ON DEVICE. This console only
   // lists what is in it and removes sources; nothing is uploaded from the web.

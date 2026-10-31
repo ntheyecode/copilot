@@ -48,6 +48,8 @@ const Dashboard = lazy(() => import('./pages/work/Dashboard.jsx'))
 const StartTask = lazy(() => import('./pages/work/StartTask.jsx'))
 const Guiding = lazy(() => import('./pages/work/Guiding.jsx'))
 const Skills = lazy(() => import('./pages/work/Skills.jsx'))
+// Your brain: a personal account teaches its own guide with documents (company users have the company brain).
+const BrainPage = lazy(() => import('./pages/work/brain/BrainPage.jsx'))
 const Help = lazy(() => import('./pages/work/Help.jsx'))
 const Support = lazy(() => import('./pages/work/Support.jsx'))
 // A personal account's plan, payment and invoices (also where the payment-failed email sends people).
@@ -188,6 +190,7 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="start" element={<StartTask />} />
           <Route path="skills" element={<Skills />} />
+          <Route path="brain" element={<BrainPage />} />
           <Route path="help" element={<Help />} />
           <Route path="support" element={<Support />} />
           <Route path="billing" element={<Billing />} />

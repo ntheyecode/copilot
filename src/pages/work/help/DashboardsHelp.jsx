@@ -21,6 +21,7 @@ import { WORKFLOWS_HELP } from './entries/workflowsHelp.jsx'
 import { TEACH_HELP } from './entries/teachHelp.jsx'
 import { ISSUES_HELP } from './entries/issuesHelp.jsx'
 import { EXEC_HELP } from './entries/execHelp.jsx'
+import { BRAIN_HELP } from './entries/brainHelp.jsx'
 
 // One screenshot with its caption (the figure recipe the guide already uses).
 function Shot({ src, alt, caption, width = 1280, height }) {
@@ -88,6 +89,7 @@ export const DASHBOARD_HELP = [
       <Steps t={t} k="dashboardsHelp.reports.steps" />
     </>),
   },
+  BRAIN_HELP,
   {
     id: 'dash-queue', k: 'queue', icon: Inbox, show: (v) => v.showQueue,
     body: (v, t) => (<>

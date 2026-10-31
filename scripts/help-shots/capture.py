@@ -5,7 +5,7 @@ import sys
 sys.path.insert(0, __import__('os').path.dirname(__file__))
 import lib
 from lib import SHOTS, ONLY, WRITE, GEO, GEO_FILE, sync_playwright, json
-import shots_teach, shots_dashboards, shots_company  # noqa: F401 (register their shots)
+import shots_teach, shots_dashboards, shots_company, shots_brain  # noqa: F401 (register their shots)
 
 if __name__ == '__main__':
   with sync_playwright() as p:

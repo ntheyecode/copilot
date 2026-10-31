@@ -8,7 +8,7 @@
 // the dashboard overview and the start-a-task wizard live in their own pages.
 import { useEffect, useState, useCallback, useMemo, Suspense } from 'react'
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
-import { Loader2, Check, X, Plus, LogOut, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, Download, AlertTriangle, Play, Blocks, BarChart3, Settings, FolderKanban, SlidersHorizontal, Inbox, Briefcase, ShieldCheck, LayoutTemplate, GraduationCap, CreditCard } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, Download, AlertTriangle, Play, Blocks, BarChart3, Settings, FolderKanban, SlidersHorizontal, Inbox, Briefcase, ShieldCheck, LayoutTemplate, GraduationCap, CreditCard, Brain } from 'lucide-react'
 import { roleViewOf } from '../../shared/work_roles_options.js'
 import { api } from '../../api.js'
 import WorkShell from '../../workShell.jsx'
@@ -253,6 +253,7 @@ export default function WorkAppLayout() {
       import('./Dashboard.jsx'); import('./StartTask.jsx'); import('./Skills.jsx')
       import('./Help.jsx'); import('./Support.jsx'); import('./MyTasks.jsx')
       import('./Completed.jsx'); import('./Logs.jsx'); import('./projects/Projects.jsx')
+      if (!isCompanyMember) import('./brain/BrainPage.jsx')
       if (roleView.showQueue) import('./pm/QueuePage.jsx')
       if (roleView.showPm) import('./pm/PmDashboard.jsx')
       if (roleView.showGrc) import('./pm/GrcDashboard.jsx')
@@ -401,7 +402,7 @@ export default function WorkAppLayout() {
   // `workShell.nav.*` key, so they always name the section identically in every
   // language (the help route is the one deliberate exception: rail "Help", title
   // "How-to", exactly as before).
-  const TITLES = { '/work': t('workShell.nav.dashboard'), '/work/start': t('workShell.nav.start'), '/work/projects': t('workShell.nav.projects'), '/work/tasks': t('workShell.nav.tasks'), '/work/completed': t('workShell.nav.completed'), '/work/logs': t('workShell.nav.logs'), '/work/skills': t('workShell.nav.skills'), '/work/help': t('workShell.nav.howto'), '/work/support': t('workShell.nav.support'), '/work/billing': t('workShell.nav.billing'),'/work/queue': t('workShell.nav.queue'), '/work/pm': t('workShell.nav.pm'), '/work/srpm': t('workShell.nav.srpm'), '/work/grc': t('workShell.nav.grc'), '/work/templates': t('workShell.nav.templates') }
+  const TITLES = { '/work': t('workShell.nav.dashboard'), '/work/start': t('workShell.nav.start'), '/work/projects': t('workShell.nav.projects'), '/work/tasks': t('workShell.nav.tasks'), '/work/completed': t('workShell.nav.completed'), '/work/logs': t('workShell.nav.logs'), '/work/skills': t('workShell.nav.skills'), '/work/brain': t('workShell.nav.brain'), '/work/help': t('workShell.nav.howto'), '/work/support': t('workShell.nav.support'), '/work/billing': t('workShell.nav.billing'),'/work/queue': t('workShell.nav.queue'), '/work/pm': t('workShell.nav.pm'), '/work/srpm': t('workShell.nav.srpm'), '/work/grc': t('workShell.nav.grc'), '/work/templates': t('workShell.nav.templates') }
   // A project's own view (/work/projects/:id, /work/pm/:id, /work/templates/:id) keeps its section title.
   const title = TITLES[pathname] || (/^\/work\/projects\//.test(pathname) ? t('workShell.nav.projects') : /^\/work\/pm\//.test(pathname) ? t('workShell.nav.pm') : /^\/work\/templates\//.test(pathname) ? t('workShell.nav.templates') : t('workShell.nav.dashboard'))
   const wide = /^\/work\/(help|support)$/.test(pathname)
@@ -450,6 +451,8 @@ export default function WorkAppLayout() {
             <NavLink to="/work/completed" className={navClass} title={t('workShell.nav.completed')}><Check size={18} /> <span className="wd-nav-t">{t('workShell.nav.completed')}</span></NavLink>
             <NavLink to="/work/logs" className={navClass} title={t('workShell.nav.logs')}><FileText size={18} /> <span className="wd-nav-t">{t('workShell.nav.logs')}</span></NavLink>
             <NavLink to="/work/skills" className={navClass} title={t('workShell.nav.skills')}><Blocks size={18} /> <span className="wd-nav-t">{t('workShell.nav.skills')}</span></NavLink>
+            {/* Your brain: a personal account's own learnings from its documents. Company members have the company brain and never see it. */}
+            {!isCompanyMember && <NavLink to="/work/brain" className={navClass} title={t('workShell.nav.brainTip')}><Brain size={18} /> <span className="wd-nav-t">{t('workShell.nav.brain')}</span></NavLink>}
             {/* Role-based management section: PM / Sr PM / GRC, the Teach studio
                 (trainer grant or company admin), and the company admin. */}
             {(roleView.showPm || roleView.showSrPm || roleView.showGrc || roleView.showTemplates || roleView.showTeach || roleView.showIncidents) && (<>

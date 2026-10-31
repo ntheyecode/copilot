@@ -71,7 +71,7 @@ const INDIVIDUALS_SITE = ['indiv']
 const APP = ['onboarding', 'setPasswordPage', 'helpPage', 'helpShared', 'dashboardsHelp', 'workDashboard', 'workShell', 'workStart',
   'workProjects', 'skillsPage', 'stepCard', 'guideConsole', 'usage', 'policyNote', 'billingWidget', 'errorBoundary', 'prefs',
   'buddyPage', 'fullGuide', 'answerBody', 'resultCard', 'composeCard', 'computeCard', 'floatPanel', 'readingStrip', 'guideLevel',
-  'guideFontScale', 'accentPicker', 'buddyPicker', 'downloadMenu', 'destructiveGate', 'askFocus', 'securityNote', 'scrubRules', 'supportTickets', 'legalShared']
+  'guideFontScale', 'accentPicker', 'buddyPicker', 'downloadMenu', 'destructiveGate', 'askFocus', 'securityNote', 'scrubRules', 'supportTickets', 'legalShared', 'brainPage']
 
 // The company console is read by the customer's own administrators (a role
 // dashboard, not an AdmireVeda staff tool), so the organizations site scans it
@@ -235,6 +235,12 @@ export const HIDDEN = {
     'workProjects.outcome.upgradeBody': 'needs canUpgrade', 'workStart.docsCapUpgrade': 'personal plan document cap',
     'workStart.docsCapFull': 'personal plan document cap', 'workStart.qUpgrade': 'needs canUpgrade',
     'helpPage.time.buyItems': 'Help.jsx renders the top-up lines only for a personal account where personal plans are sold (the rest of the time section applies to everyone and is scanned)',
+    // Your brain (/work/brain, its rail item and its help entry): personal
+    // accounts only (no companyId); the server answers company users with 403
+    // COMPANY_ACCOUNT and the rail never shows it to them.
+    'brainPage': 'Your brain: rendered only for a personal account (company members have the company brain)',
+    'workShell.nav.brain': 'rail item shown only to personal accounts', 'workShell.nav.brainTip': 'rail item shown only to personal accounts',
+    'dashboardsHelp.brain': 'help entry shown only to personal accounts (show: !v.company)',
     'usage.outIndividual': 'personal account only', 'usage.lowNote': 'personal account only',
     // 2026-10-30: no card and no social sign-in on the organizations site.
     'login.social': 'WorkLogin: the social sign-in tab needs social_login (off here; company accounts never use it)',
