@@ -17,6 +17,7 @@
 // ===========================================================================
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { MODEL_PRICES } from './model-prices.js'
+import { AUDIO_PRICES_PER_MIN, AUDIO_MIN_SECONDS, CALL_TOKEN_PRICES, priceAt, audioPerMinute } from './ai_call_prices.js'
 
 const als = new AsyncLocalStorage()
 // Whose key the call in progress runs on ('platform' | 'company' | 'user'), set by
@@ -60,35 +61,11 @@ export function usageFromResponse(kind, data) {
   return null
 }
 
-// ---- Audio (transcription) list prices, USD per minute ---------------------
-// Checked 2026-10-30; RE-VERIFY before invoicing. Groq bills at least 10 s per
-// request. Unknown models are "unpriced" (counted, never silently $0).
-export const AUDIO_PRICES_PER_MIN = {
-  'whisper-large-v3-turbo': 0.04 / 60,
-  'whisper-large-v3': 0.111 / 60,
-  'distil-whisper-large-v3-en': 0.02 / 60,
-  'whisper-1': 0.006,
-  'gpt-4o-transcribe': 0.006,
-  'gpt-4o-mini-transcribe': 0.003,
-}
-const AUDIO_MIN_SECONDS = { groq: 10 }
-
-// Calls that are NOT billed at the chat/vision text rate, USD per 1M tokens.
-// Checked 2026-10-30; RE-VERIFY before invoicing. A model missing here is
-// UNPRICED (counted and flagged), never priced at the wrong text rate.
-//   transcribe: token-billed speech models (audio input rate).
-//   image: image generation (output = image tokens).
-export const CALL_TOKEN_PRICES = {
-  transcribe: {
-    'gpt-4o-transcribe': { input: 6.00, output: 10.00 },
-    'gpt-4o-mini-transcribe': { input: 3.00, output: 5.00 },
-    'gemini-2.5-flash': { input: 1.00, output: 2.50 },
-  },
-  image: {
-    'gpt-image-1': { input: 5.00, output: 40.00 },
-    'gemini-2.5-flash-image': { input: 0.30, output: 30.00 },
-  },
-}
+// ---- Transcription and image list prices ------------------------------------
+// One table, with the official source and the date checked on every entry:
+// server/ai_call_prices.js. Unknown models are "unpriced" (counted, never
+// silently $0 and never priced at the text rate).
+export { AUDIO_PRICES_PER_MIN, CALL_TOKEN_PRICES }
 
 const priceOf = (model) => {
   const key = String(model || '')
@@ -101,13 +78,13 @@ const priceOf = (model) => {
 export function costOfEntry(e) {
   if (!e) return { usd: 0, priced: false }
   if (e.audioSeconds != null) {
-    const per = AUDIO_PRICES_PER_MIN[String(e.model || '').split('/').pop()]
+    const per = audioPerMinute(e.model)
     if (per == null) return { usd: 0, priced: false }
     const secs = Math.max(Number(e.audioSeconds) || 0, AUDIO_MIN_SECONDS[e.provider] || 0)
     return { usd: (secs / 60) * per, priced: true }
   }
   const special = CALL_TOKEN_PRICES[e.call]
-  const p = special ? (special[String(e.model || '').split('/').pop()] || null) : priceOf(e.model)
+  const p = special ? priceAt(special[String(e.model || '').split('/').pop()] || null, e.at) : priceOf(e.model)
   if (!p) return { usd: 0, priced: false }
   return { usd: ((e.inTokens || 0) / 1e6) * (p.input || 0) + ((e.outTokens || 0) / 1e6) * (p.output || 0), priced: true }
 }
