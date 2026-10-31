@@ -77,13 +77,13 @@ function HelpRedactShot() {
   )
 }
 // Section anchors in reading order; the nav label of each is helpPage.nav.<id>.
-const HELP_SECTION_IDS = ['flow', 'start', 'how', 'styles', 'ask', 'deep', 'float', 'where', 'time', 'record', 'safe', 'faq']
+const HELP_SECTION_IDS = ['flow', 'start', 'how', 'styles', 'ask', 'deep', 'float', 'camera', 'where', 'time', 'record', 'safe', 'faq']
 const DESKTOP_SECTION_IDS = ['desktop', 'desktopsec', 'desktopfaq']
 // The four "on screen" steps: copy under helpPage.flow.steps.<k>, image here.
 const FLOW_STEPS = [
   { k: 'start', src: '/help/user/start-task.png', w: 912, h: 584 },
   { k: 'follow', src: '/help/user/do-this-now.png', w: 670, h: 613 },
-  { k: 'tools', src: '/help/user/tools-menu.png', w: 344, h: 761, cls: 'tall' },
+  { k: 'tools', src: '/help/user/tools-menu.png', w: 321, h: 589, cls: 'tall' },
   { k: 'answer', src: '/help/user/answer.png', w: 684, h: 968, cls: 'mid' },
 ]
 // A keyed list: the array under `k` translates as a unit; inline <b> stays markup.
@@ -232,6 +232,21 @@ function HelpDocs({ onStart, roleView }) {
           <p>{t.rich('helpPage.float.p1')}</p>
           <p>{t('helpPage.float.p2')}</p>
           <p className="wd-tip"><AppWindow size={14} /> {t('helpPage.float.tip')}</p>
+        </section>
+
+        {/* The Setup tab: screen or camera (industrial, OT and physical systems
+            where screen sharing is not an option), the live view, reading
+            settings. Real screenshot under /help/user/. */}
+        <section id="help-camera"><h2>{t('helpPage.camera.h2')}</h2>
+          <p>{t.rich('helpPage.camera.lead')}</p>
+          <p>{t.rich('helpPage.camera.p1')}</p>
+          <p>{t.rich('helpPage.camera.p2')}</p>
+          <figure className="wd-figure">
+            <img src="/help/user/setup-tab.png" width={820} height={980} loading="lazy" decoding="async" alt={t('helpPage.camera.alt')} style={{ display: 'block', width: '100%', maxWidth: 620, height: 'auto', borderRadius: 12, border: '1px solid var(--line, var(--border))' }} />
+            <figcaption className="wd-figcap">{t('helpPage.camera.caption')}</figcaption>
+          </figure>
+          <p>{t.rich('helpPage.camera.p3')}</p>
+          <p className="wd-tip"><ShieldCheck size={14} /> {t('helpPage.camera.p4')}</p>
         </section>
 
         <section id="help-where"><h2>{t('helpPage.where.h2')}</h2>

@@ -44,6 +44,12 @@ async function req(method, url, body, opts) {
     if (res.status === 401 && data && data.loggedOut) {
       try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('wc:signed-out')) } catch { /* ignore */ }
     }
+    // The server refused a camera read (server/capture_sources.js, 403
+    // CAMERA_OFF: the company's camera switch is off). Announced once here so
+    // the guiding console offers the screen instead, whichever call it was.
+    if (res.status === 403 && data && data.code === 'CAMERA_OFF') {
+      try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('wc:camera-off', { detail: data })) } catch { /* ignore */ }
+    }
     const err = new Error((data && data.error) || `Request failed (${res.status})`)
     err.status = res.status
     err.data = data || null          // full response body (e.g. outOfHours, tooManyOpen + maxOpen/open, taskLimit)
@@ -180,6 +186,10 @@ export const api = {
   workDelete: (id, reason) => req('DELETE', `/api/work/sessions/${id}${reason ? `?reason=${encodeURIComponent(reason)}` : ''}`),
   workTeamActivity: () => req('GET', '/api/work/team/activity'),
   workTeamAi: () => req('GET', '/api/work/team/ai'),
+  // Camera reading (company admin): the switch that lets members guide from a
+  // camera pointed at another computer or a physical system (off by default).
+  workCompanyCapture: () => req('GET', '/api/work/company/capture'),
+  workSetCompanyCapture: (camera) => req('PUT', '/api/work/company/capture', { camera: !!camera }),
   workTeamSetAiKeys: (body) => req('POST', '/api/work/team/ai-keys', body || {}),
   // Company admin: view / backup / restore / clear the company knowledge base.
   // Clear + replace are destructive, so they require a reason (logged server-side).

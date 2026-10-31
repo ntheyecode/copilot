@@ -52,8 +52,8 @@ export const test = base.extend({
       anon: async () => { const api = await apiClient(server.baseURL); opened.push(api); return api },
       // A browser page signed in as the persona (sign-in through the real API, in
       // the page's own cookie jar), already on `path`.
-      async page(user, { path = '/work', password = user.password || 'E2e-User-Pass-123!', contextOptions = {}, locale = 'en', theme = 'light', syntheticScreen = false, pinLanguage = true } = {}) {
-        const { context } = await helper.context({ contextOptions, locale, theme, syntheticScreen })
+      async page(user, { path = '/work', password = user.password || 'E2e-User-Pass-123!', contextOptions = {}, locale = 'en', theme = 'light', syntheticScreen = false, syntheticCamera = false, pinLanguage = true } = {}) {
+        const { context } = await helper.context({ contextOptions, locale, theme, syntheticScreen, syntheticCamera })
         const api = wrap(context.request)
         await api.login(user.username, password)
         // Answer the first-run "Choose your language" question the way the
@@ -65,12 +65,12 @@ export const test = base.extend({
         return { page, context, api }
       },
       // A fresh, signed-out browser context (prepared locale/theme/consent).
-      async context({ contextOptions = {}, locale = 'en', theme = 'light', syntheticScreen = false } = {}) {
+      async context({ contextOptions = {}, locale = 'en', theme = 'light', syntheticScreen = false, syntheticCamera = false } = {}) {
         const context = await browser.newContext({ baseURL: server.baseURL, viewport: { width: 1280, height: 800 }, locale: 'en-US', ...contextOptions })
         opened.push({ dispose: () => context.close() })
         externalCalls.push(await guardBrowserEgress(context))
         await stampLikeDeploy(context, { edition: server.edition, baseURL: server.baseURL })
-        await prepContext(context, { locale, theme, syntheticScreen })
+        await prepContext(context, { locale, theme, syntheticScreen, syntheticCamera })
         return { context, page: null }
       },
     }

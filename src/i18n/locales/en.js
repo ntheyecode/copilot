@@ -437,6 +437,23 @@ export default {
       offDetail: 'Off - no screenshots are kept for any of your users.',
       changeError: 'Could not change the setting. Please try again.',
     },
+    // Camera reading (sections/CameraCapture.jsx): the company's switch for
+    // guiding from a camera pointed at another computer or a physical system.
+    capture: {
+      title: 'Camera reading',
+      desc: 'Let your people point a camera at another computer or a physical system and get guided from what it sees: for industrial and OT systems, machines and robots, anywhere screen sharing is not an option. Off by default.',
+      on: 'On',
+      off: 'Off',
+      useIndustrial: 'Industrial systems',
+      useOt: 'OT consoles',
+      usePhysical: 'Physical systems',
+      useRobots: 'Robots',
+      loading: 'Loading current setting...',
+      onDetail: 'On. Your people can choose A camera under Setup in the guide, in the browser and in the desktop app.',
+      offDetail: 'Off. The guide reads shared screens only; a camera read is refused.',
+      privacy: 'Camera frames are handled exactly like screen frames: masked on the device before anything is sent, under the same data governance policy.',
+      changeError: 'Could not change camera reading. Please try again.',
+    },
     gov: {
       actionSend: 'Send as-is',
       actionMask: 'Mask',

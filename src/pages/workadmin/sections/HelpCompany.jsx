@@ -4,7 +4,7 @@
 // Content only; it changes nothing in the console. `onOpen(sectionId)` switches
 // the console to that section from the "Open" button on each area.
 import React from 'react'
-import { KeyRound, LayoutDashboard, Users, Cpu, ShieldCheck, Receipt, ShieldAlert, Route } from 'lucide-react'
+import { KeyRound, LayoutDashboard, Users, Cpu, ShieldCheck, Receipt, ShieldAlert, Route, Camera } from 'lucide-react'
 import { HELP_CSS, HelpFlow, HelpArea } from './_help.jsx'
 import { useT } from '../../../i18n/index.jsx'
 // Newer areas (Trainer grant, API & webhooks) live in their own module and use
@@ -81,6 +81,16 @@ export default function HelpCompany({ onOpen }) {
           { src: '/help/company/security-rules.png', w: 992, h: 653, alt: t('helpCompany.governance.shots.rules.alt'), caption: t('helpCompany.governance.shots.rules.caption') },
           { src: '/help/company/governance-save.png', w: 992, h: 227, alt: t('helpCompany.governance.shots.save.alt'), caption: t('helpCompany.governance.shots.save.caption') },
         ]} />
+
+      {/* Camera reading: the switch under Data governance (sections/CameraCapture.jsx). */}
+      <HelpArea id="capture" icon={Camera} title={t('helpCompany.capture.title')} open={{ id: 'governance', label: t('helpCompany.capture.open') }} onOpen={onOpen}
+        lead={t('helpCompany.capture.lead')}
+        steps={[
+          { t: t('helpCompany.capture.steps.where.t'), d: t('helpCompany.capture.steps.where.d') },
+          { t: t('helpCompany.capture.steps.on.t'), d: t('helpCompany.capture.steps.on.d') },
+          { t: t('helpCompany.capture.steps.member.t'), d: t('helpCompany.capture.steps.member.d') },
+        ]}
+        shots={[{ src: '/help/company/camera-reading.png', w: 988, h: 200, alt: t('helpCompany.capture.shot.alt'), caption: t('helpCompany.capture.shot.caption') }]} />
 
       <HelpArea id="billing" icon={Receipt} title={t('helpCompany.billing.title')} open={{ id: 'billing', label: t('helpCompany.billing.open') }} onOpen={onOpen}
         lead={t('helpCompany.billing.lead')}

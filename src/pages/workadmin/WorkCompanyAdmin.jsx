@@ -32,6 +32,7 @@ import GuidanceDepth from './sections/GuidanceDepth.jsx'
 import Customers from './sections/Customers.jsx'
 import ApiKeys from './sections/ApiKeys.jsx'
 import Webhooks from './sections/Webhooks.jsx'
+import CameraCapture from './sections/CameraCapture.jsx'
 import { DEPTH_CHOICE_CSS } from './sections/DepthChoice.jsx'
 import { WORKADMIN_CSS } from './workadmin.css.js'
 import { Loading, ErrorBox, EmptyState, Spinning, SavedTag, RecRow, EditToggle, useReasonModal } from './sections/_shared.jsx'
@@ -1714,7 +1715,7 @@ export default function WorkCompanyAdmin() {
       case 'sso': return <SsoSetup company={company} />
       case 'ai': return <AiSection />
       case 'billing': return <CompanyBilling onOpen={setActive} />
-      case 'governance': return (<><ReportShotsCard company={company} onCompany={setCompany} /><GovernanceSection companyId={viewer && viewer.companyId} /></>)
+      case 'governance': return (<><ReportShotsCard company={company} onCompany={setCompany} /><CameraCapture /><GovernanceSection companyId={viewer && viewer.companyId} /></>)
       case 'brain': return (<><KbSpaces /><CompanyBrain /></>)
       case 'brainsecurity': return <BrainSecurity />
       case 'sessions': return <SessionsSection />

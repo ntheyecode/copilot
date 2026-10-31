@@ -102,6 +102,22 @@ export default {
         },
       },
     },
+    // Camera reading (Data governance): the switch that lets members guide
+    // from a camera pointed at another computer or a physical system.
+    capture: {
+      open: 'Data governance',
+      title: 'Turn on camera reading',
+      lead: 'For industrial and OT systems, machines and robots, where screen sharing is not an option: your people point a camera at the screen or panel and get guided from what it sees. Off until you turn it on.',
+      steps: {
+        where: { t: 'Open Data governance', d: 'The Camera reading card sits under the screenshot setting.' },
+        on: { t: 'Switch it on', d: 'One switch for the whole company. It saves at once and is recorded in Activity.' },
+        member: { t: 'What your people see', d: 'In the guide, Setup offers A camera next to My screen, with a camera picker and a live view to aim it. Frames are masked on their device like screen frames.' },
+      },
+      shot: {
+        alt: 'The Camera reading card in Data governance: the explanation, the use-case chips and the On / Off switch.',
+        caption: 'Camera reading, off by default. One switch for the company.',
+      },
+    },
     billing: {
       open: 'Billing',
       title: 'Billing',
