@@ -32,7 +32,7 @@ import { useT } from '../../i18n/index.jsx'
 import { useWorkApp } from './WorkAppContext.jsx'
 import { webFloatAllowed, desktopFloatPointer } from '../../shared/web_float.js'
 import { usageTimeLeft, usageOutOfTime, usageLowNote } from './usageCopy.js'
-import { linkHost, readContextFile, parseDataFile, frameFromVideo, signatureFromVideo, changed, isMobileUA, frameFromImageFile, WATCH_MAX_W, card, shell } from './lib.js'
+import { linkHost, readContextFile, parseDataFile, frameFromVideo, awaitFirstFrame, signatureFromVideo, changed, isMobileUA, frameFromImageFile, WATCH_MAX_W, card, shell } from './lib.js'
 // The guide view (owner redesign): ONE stylesheet + small shared modules used
 // by the console AND the floating panel, so both read identically.
 import { GUIDE_CSS, gvVars } from './guideView.css.js'
@@ -52,6 +52,10 @@ import FloatPanel from './FloatPanel.jsx'
 import { makeConfetti, confettiNodes } from './confetti.jsx'
 import { VerifyButton, VerifyVerdict } from './VerifyStep.jsx'
 import { verdictFromWatch, verdictForStep, VERIFY_DONE, VERIFY_NO_FRAME, VERIFY_ERROR } from './verifyFlow.js'
+// The planning state (goal + screen read + the step plan taking shape), its own
+// module with its own sheet; the console only hands it the real state it has.
+import PlanningLoader, { planLandingMs } from './guiding/PlanningLoader.jsx'
+import { PLANNING_LOADER_CSS } from './guiding/planningLoader.css.js'
 
 // Responsive layer for the (otherwise inline-styled) Console. Scoped to the
 // .wc wrapper so it never touches the rest of the app. On a phone it enlarges
@@ -360,7 +364,6 @@ const CONSOLE_CSS = `
 .wc-loading-orb span{position:absolute;inset:0;border-radius:50%;border:2px solid var(--track,var(--border));border-top-color:var(--em);animation:wc-orb 1s linear infinite}
 .wc-loading-orb span:nth-child(2),.wc-loading-orb span:nth-child(3){display:none}
 @keyframes wc-orb{to{transform:rotate(360deg)}}
-.wc-loading-phases{display:flex;flex-direction:column;gap:10px;width:100%;max-width:290px}
 .wc-loading-line{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;color:var(--text);animation:wc-line-in .45s cubic-bezier(.2,.8,.2,1) both}
 .wc-loading-line svg{flex-shrink:0}
 .wc-loading-line.past{color:var(--text-dim);font-weight:400}
@@ -906,31 +909,10 @@ function SharePrompt({ source }) {
   )
 }
 
-// The planning animation: phases reveal one by one while the plan is being
-// built, then the Console swaps to the step view the moment steps arrive. It
-// mounts only once the plan request is actually in flight (never while the
-// share prompt is still open), so its ticks never run ahead of reality.
-function PlanningLoader() {
-  const t = useT()
-  const PHASES = t('guideConsole.planning.phases')   // the translated ARRAY (lists translate as units)
-  const [i, setI] = useState(0)
-  useEffect(() => {
-    const id = setInterval(() => setI((n) => (n < PHASES.length - 1 ? n + 1 : n)), 1600)
-    return () => clearInterval(id)
-  }, [])   // eslint-disable-line
-  return (
-    <div className="wc-loading">
-      <div className="wc-loading-orb"><span /><span /><span /></div>
-      <div className="wc-loading-phases">
-        {PHASES.slice(0, i + 1).map((p, k) => (
-          <div key={k} className={`wc-loading-line${k === i ? ' on' : ' past'}`}>
-            {k < i ? <Check size={14} /> : <Loader2 size={14} className="spin" />}<span>{p}…</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+// The planning state lives in ./guiding/PlanningLoader.jsx: it mounts only once
+// the plan request is actually in flight (never while the share prompt is
+// open) and shows real state only (the goal, the source being read, then the
+// landed steps), never a timed list of phases.
 
 function Console({ sessionId, watchLight = false, onBack, onGuard, user = null }) {
   const [sess, setSess] = useState(null)
@@ -938,6 +920,14 @@ function Console({ sessionId, watchLight = false, onBack, onGuard, user = null }
   const [source, setSource] = useState(() => isMobileUA() ? 'camera' : 'screen')     // 'screen' | 'camera' (phones default to camera: no screen share on mobile)
   const [capturing, setCapturing] = useState(false)
   const [sharePrompt, setSharePrompt] = useState(false)   // true while the browser's share / camera prompt is open (M7)
+  // The planning state's real inputs: did a frame go with the plan request
+  // (null until the grab has happened: "getting a first look", then true or
+  // false), and the short "your steps are ready" beat that holds the planning
+  // view with the landed steps before the step card takes over (first plan only).
+  const [planFrameSent, setPlanFrameSent] = useState(null)
+  const [planLanding, setPlanLanding] = useState(false)
+  const planLandingTimer = useRef(null)
+  useEffect(() => () => { if (planLandingTimer.current) clearTimeout(planLandingTimer.current) }, [])
   const [watching, setWatching] = useState(false)
   const [status, setStatus] = useState('')
   const [observation, setObservation] = useState('')
@@ -1358,13 +1348,21 @@ function Console({ sessionId, watchLight = false, onBack, onGuard, user = null }
     // event, so only read opts when it is a plain options object.
     const o = (opts && typeof opts === 'object' && !opts.nativeEvent && !opts.target) ? opts : {}
     if (outOfMinutes()) return
-    setBusy(true); setErr('')
+    setBusy(true); setErr(''); setPlanFrameSent(null)
     setClarify(null); setClarifyText('')   // drop a stale clarify card the moment a fresh plan starts
     if (!o.fromClarify) setClarifyDone(null)   // a fresh plan moves on; the answer-strip survives only its own re-plan
     try {
       let frame = null
-      if (!capturing && !photoFrameRef.current) { const okCap = await startCapture(); if (!okCap) { setBusy(false); return } await new Promise((r) => setTimeout(r, 400)) }
+      if (!capturing && !photoFrameRef.current) {
+        const okCap = await startCapture(); if (!okCap) { setBusy(false); return }
+        // Let the fresh stream settle, then wait (bounded) until it actually has
+        // a frame to read, so the first plan sees the screen and the planning
+        // view's "reading your screen" line is true (a slow source read null).
+        await new Promise((r) => setTimeout(r, 400))
+        await awaitFirstFrame(videoRef.current)
+      }
       frame = await prepFrame(grabFrame())
+      setPlanFrameSent(!!frame)   // the planning view says "reading your screen" only when that is true
       // Desktop on-device docs: governed text held client-side for this session,
       // injected into the plan for this call only (never stored on the server).
       let docsText = ''
@@ -1376,6 +1374,17 @@ function Console({ sessionId, watchLight = false, onBack, onGuard, user = null }
       const r = await waitFor(
         api.workPlan(sessionId, { goal: goal.trim(), frame, mode, level, ...(docsText ? { docsText } : {}), ...(space ? { space } : {}), ...(o.reason ? { reason: o.reason } : {}), ...(o.keepProgress ? { keepProgress: true } : {}), ...(o.fromClarify ? { fromClarify: true } : {}) }),
         t('guideConsole.err.planSlow'))
+      // First plan landing: hold the planning view for one short beat with the
+      // real steps filled in, then the step card takes over (a re-plan already
+      // shows steps, so it never goes through this).
+      const firstPlan = ((sess && sess.steps) || []).length === 0
+      const landed = !!(r.session && Array.isArray(r.session.steps) && r.session.steps.length)
+      const hold = (firstPlan && landed) ? planLandingMs() : 0
+      if (hold > 0) {
+        setPlanLanding(true)
+        if (planLandingTimer.current) clearTimeout(planLandingTimer.current)
+        planLandingTimer.current = setTimeout(() => { planLandingTimer.current = null; setPlanLanding(false) }, hold)
+      }
       noteStrong(r); setSess(r.session); setGuidance(''); setHowTo({})
       // Company-policy findings on the plan surface immediately as cited flags, so
       // the person sees which company rule a step breaks and the compliant fix.
@@ -2112,7 +2121,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard, user = null }
       ? { label: t('guideConsole.chip.guiding'), title: t('guideConsole.chip.guidingTip') }
       : sharePrompt
         ? { label: source === 'screen' ? t('guideConsole.chip.shareScreen') : t('guideConsole.chip.camera'), title: source === 'screen' ? t('guideConsole.chip.shareScreenTip') : t('guideConsole.chip.cameraTip') }
-        : (busy && steps.length === 0)
+        : ((busy && steps.length === 0) || planLanding)
           ? { label: t('guideConsole.chip.planning'), title: t('guideConsole.chip.planningTip') }
           : { label: t('guideConsole.chip.ready'), title: t('guideConsole.chip.readyTip') }
   // #2 Wrong-place gate: the mismatch signal the watch response carries (the
@@ -2124,7 +2133,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard, user = null }
     <div className="wc wd-tokens" style={{ ...shell, minHeight: 0, height: 'auto', flex: '1 1 auto', display: 'flex', flexDirection: 'column', overflow: 'hidden', '--wc-fs': `calc(var(--wc-fs-app, 1) * ${fsScale})` }}>
       {/* The console renders outside the app shell, so it carries the ONE token
           sheet itself (wd-tokens on the root): Light / Dark / Heavy + a11y. */}
-      <style>{WD_TOKENS_CSS}{CONSOLE_CSS}{GUIDE_CSS}</style>
+      <style>{WD_TOKENS_CSS}{CONSOLE_CSS}{PLANNING_LOADER_CSS}{GUIDE_CSS}</style>
       {/* FIXED HEADER (#new): the menu/title bar stays pinned; only the content
           between it and the fixed Ask footer scrolls. */}
       <div className="wc-fixedhead"><div className="wc-shellw">
@@ -2220,7 +2229,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard, user = null }
           re-plan) and a RIGHT rail (status, minutes, pause/resume, make, screen
           reads, full guide, end). The rails collapse on narrower widths, where
           the header Tools menu already carries every control. */}
-      {(() => { const rails = !!(sess && steps.length > 0 && !ended); const ci = rails ? steps.findIndex((s) => s.status === 'current') : -1; return (
+      {(() => { const rails = !!(sess && steps.length > 0 && !ended && !planLanding); const ci = rails ? steps.findIndex((s) => s.status === 'current') : -1; return (
       <div className="wc-scroll"><div className={`wc-shellw${rails ? ' wc-stagegrid' : ''}`}>
         {rails && (
           <aside className="wc-rail wc-rail-l" aria-label={t('guideConsole.rail.plan')}>
@@ -2361,12 +2370,15 @@ function Console({ sessionId, watchLight = false, onBack, onGuard, user = null }
             <div className="wc-loading-orb"><span /><span /><span /></div>
             <div className="wc-loading-line on"><Loader2 size={14} className="spin" /><span>{t('guideConsole.load.opening')}</span></div>
           </div>
-        ) : steps.length === 0 ? (
-          busy ? (
+        ) : (steps.length === 0 || planLanding) ? (
+          (busy || planLanding) ? (
             // First the share prompt (nothing is claimed until the person has
-            // shared), then planning: the thinking animation reveals phases, and
-            // the view swaps to the step card the moment the plan is ready.
-            sharePrompt ? <SharePrompt source={source} /> : <PlanningLoader />
+            // shared), then planning: the goal, the screen being read and the
+            // step plan taking shape; when the plan lands the skeleton fills
+            // with the real steps for a beat, then the step card takes over.
+            sharePrompt
+              ? <SharePrompt source={source} />
+              : <PlanningLoader goal={goal} title={sess && sess.title} source={source} frameSent={planFrameSent} ready={planLanding} steps={steps} />
           ) : (
             // Not planning yet (first frame) or screen-share was declined: the
             // goal starter + Plan button as a clean fallback.

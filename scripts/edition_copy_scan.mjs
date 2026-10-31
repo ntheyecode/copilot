@@ -397,5 +397,4 @@ export const LOCAL_REVIEWED = {
     'helpPage.desktopfaq.items.1.a': 'as above',
   },
   zh: { 'workDashboard.ai.solo': '"支持团队" = our support team (the English says contact support)' },
-  hi: { 'guideConsole.planning.phases.4': 'renders "Working with multimodal vision"; no company meaning' },
 }

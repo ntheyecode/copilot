@@ -69,9 +69,27 @@ export default {
       slowScreen: 'Still waiting for the share prompt. If you do not see it, look for a browser dialog behind this window. Cancelling it brings you back here, where <b>Plan the steps</b> asks again.',
       slowCamera: 'Still waiting for the camera prompt. If you do not see it, look for a browser dialog behind this window. Cancelling it brings you back here, where <b>Plan the steps</b> asks again.',
     },
-    // the planning animation phases (an ellipsis is appended in the UI)
+    // the planning state (src/pages/work/guiding/PlanningLoader.jsx): the goal,
+    // what is being read, the step plan taking shape, what the person gets
     planning: {
-      phases: ['Understanding your goal', 'Thinking', 'Preparing the plan', 'Thinking deep', 'Working with multimodal vision', 'Writing your steps'],
+      title: 'Building your plan',
+      ready: 'Your steps are ready',
+      readyCount_one: '{n} step',
+      readyCount_other: '{n} steps',
+      goalK: 'Your goal',
+      stepsAria: 'Your step plan, taking shape',
+      readWait: 'Getting a first look at what you shared',
+      readScreen: 'Reading what is on your screen right now',
+      readCamera: 'Reading what your camera can see',
+      readNone: 'No screen read yet. Starting from your goal.',
+      writing: 'Working out the steps for your goal, with a check for each one',
+      more_one: '+{n} more step',
+      more_other: '+{n} more steps',
+      promiseK: 'What you get',
+      promise1: 'Your exact next step, on your screen',
+      promise2: 'A check that each step worked',
+      promise3: 'A nudge back on track if you take a wrong turn',
+      slow: 'Still working. Larger tasks take a little longer.',
     },
     // session load states
     load: {
