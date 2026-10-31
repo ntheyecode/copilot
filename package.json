@@ -55,5 +55,10 @@
     "@vitejs/plugin-react": "^6.1.2",
     "javascript-obfuscator": "^5.2.1",
     "vite": "^8.3.5"
+  },
+  "overrides": {
+    "multimatch": {
+      "minimatch": "^11.0.3"
+    }
   }
 }
