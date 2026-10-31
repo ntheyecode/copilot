@@ -5,6 +5,7 @@ import { capsOf, needCap } from '../support/editions.mjs'
 import { LANDING, SUPERADMIN } from '../support/personas.mjs'
 import { LoginPage } from '../pages/LoginPage.mjs'
 import { WorkShell } from '../pages/WorkShell.mjs'
+import { LegalGate } from '../pages/LegalGate.mjs'
 
 test('the edition endpoint reports exactly the registry capabilities', async ({ as, edition }) => {
   const anon = await as.anon()
@@ -69,6 +70,23 @@ test.describe('sign in through the login page', () => {
     expect(me.data.user.language).toBe('de')
     await page.reload()
     await expect(page.getByRole('dialog', { name: /./ }).filter({ has: page.locator('#lpm-title') })).toHaveCount(0)
+  })
+
+  test('an account that has not accepted the agreements meets the consent gate once', async ({ as, seed, edition }) => {
+    const user = capsOf(edition).has('saas_companies')
+      ? (await seed.company({ personas: ['member'], legal: false })).users.member
+      : await seed.solo({ legal: false })
+    const { page, api } = await as.page(user)
+    const gate = new LegalGate(page)
+    await expect(gate.dialog()).toBeVisible()
+    // Guided work is refused until accepted.
+    const before = await api.post('/api/work/sessions', { goal: 'Anything' })
+    expect(before.status).toBe(403)
+    expect(before.data.legalRequired).toBe(true)
+    await gate.accept()
+    await page.reload()
+    await expect(page.getByRole('heading', { level: 1 }).first()).toHaveText(/^Hello/)
+    await expect(gate.dialog()).toHaveCount(0)
   })
 
   test('a wrong password is refused with a message and no session', async ({ as, seed, edition }) => {
