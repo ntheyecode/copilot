@@ -700,6 +700,21 @@ export default {
           before: "Rédigée plus tard, quand elle l'est.",
           now: "Chaque étape journalisée. <em>Prêt pour l'audit.</em>",
         },
+        {
+          t: 'Charge de travail',
+          before: 'Les tâches en attente s\'accumulent sur les mêmes personnes.',
+          now: 'Le retard se résorbe, <em>étape par étape, avec un guide</em>.',
+        },
+        {
+          t: 'Stress',
+          before: 'De longues soirées bloqué sur un travail que personne n\'a le temps d\'expliquer.',
+          now: 'De l\'aide à l\'écran, au bon moment. <em>Moins de stress.</em>',
+        },
+        {
+          t: 'Garder les bons éléments',
+          before: 'Les équipes surchargées s\'épuisent et partent.',
+          now: 'Une charge allégée et une vraie progression au travail. <em>Moins de raisons de partir.</em>',
+        },
       ],
       controlsLbl: "Contrôles d'entreprise, inclus",
       note: "Lecture seule par conception : il guide vos équipes et ne clique, ne tape et n'exécute jamais rien à leur place.",

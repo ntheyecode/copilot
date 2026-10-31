@@ -700,6 +700,21 @@ export default {
           before: 'Se escribe después, si es que se escribe.',
           now: 'Cada paso registrado. <em>Listo para auditoría.</em>',
         },
+        {
+          t: 'Carga de trabajo',
+          before: 'Las tareas pendientes se acumulan en las mismas pocas personas.',
+          now: 'El atraso se despeja, <em>paso a paso y con guía</em>.',
+        },
+        {
+          t: 'Estrés',
+          before: 'Tardes largas atascados en trabajo que nadie tiene tiempo de explicar.',
+          now: 'Ayuda en pantalla justo cuando hace falta. <em>Menos estrés.</em>',
+        },
+        {
+          t: 'Retener al buen talento',
+          before: 'La gente sobrecargada se quema y se va.',
+          now: 'Menos carga y crecimiento real en el trabajo. <em>Menos motivos para irse.</em>',
+        },
       ],
       controlsLbl: 'Controles de empresa, incluidos',
       note: 'Solo lectura por diseño: guía a tu gente y nunca hace clic, escribe ni ejecuta nada por ellos.',

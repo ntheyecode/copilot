@@ -700,6 +700,21 @@ export default {
           before: 'Escrita depois, se for escrita.',
           now: 'Cada passo registrado. <em>Pronto para auditoria.</em>',
         },
+        {
+          t: 'Carga de trabalho',
+          before: 'Tarefas pendentes se acumulam nas mesmas poucas pessoas.',
+          now: 'O acúmulo é resolvido, <em>um passo guiado de cada vez</em>.',
+        },
+        {
+          t: 'Estresse',
+          before: 'Noites longas travado em trabalho que ninguém tem tempo de explicar.',
+          now: 'Ajuda na tela quando é preciso. <em>Menos estresse.</em>',
+        },
+        {
+          t: 'Manter os bons profissionais',
+          before: 'Pessoas sobrecarregadas se esgotam e vão embora.',
+          now: 'Menos carga e crescimento real no trabalho. <em>Menos motivos para sair.</em>',
+        },
       ],
       controlsLbl: 'Controles de empresa, incluídos',
       note: 'Somente leitura por padrão: ele guia sua equipe e nunca clica, digita ou executa nada por ela.',

@@ -700,6 +700,21 @@ export default {
           before: 'Scritta dopo, se viene scritta.',
           now: "Ogni passo registrato. <em>Pronto per l'audit.</em>",
         },
+        {
+          t: 'Carico di lavoro',
+          before: 'Le attività in sospeso si accumulano sulle solite poche persone.',
+          now: 'L\'arretrato si smaltisce, <em>un passo guidato alla volta</em>.',
+        },
+        {
+          t: 'Stress',
+          before: 'Serate lunghe bloccati su lavori che nessuno ha tempo di spiegare.',
+          now: 'Aiuto sullo schermo quando serve. <em>Meno stress.</em>',
+        },
+        {
+          t: 'Trattenere le persone migliori',
+          before: 'Le persone sovraccariche si esauriscono e se ne vanno.',
+          now: 'Meno carico e una crescita reale sul lavoro. <em>Meno motivi per andarsene.</em>',
+        },
       ],
       controlsLbl: 'Controlli aziendali, inclusi',
       note: 'Sola lettura per progettazione: guida le tue persone e non clicca, digita o esegue mai nulla al posto loro.',

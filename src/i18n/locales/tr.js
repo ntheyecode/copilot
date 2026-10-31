@@ -1077,6 +1077,21 @@ export default {
           before: 'Sonradan yazılır, o da yazılırsa.',
           now: 'Her adım kayıt altında. <em>Denetime hazır.</em>',
         },
+        {
+          t: 'İş yükü',
+          before: 'Bekleyen işler hep aynı birkaç kişinin üstünde birikir.',
+          now: 'Birikmiş işler <em>adım adım, rehberlik eşliğinde</em> temizlenir.',
+        },
+        {
+          t: 'Stres',
+          before: 'Kimsenin açıklamaya vakti olmayan işlerde takılıp geçen uzun akşamlar.',
+          now: 'Gerektiğinde ekranda yardım. <em>Daha az stres.</em>',
+        },
+        {
+          t: 'İyi çalışanları tutmak',
+          before: 'Aşırı yüklenen çalışanlar tükenir ve ayrılır.',
+          now: 'Daha hafif yük ve işte gerçek gelişim. <em>Ayrılmak için daha az neden.</em>',
+        },
       ],
       controlsLbl: 'Kurumsal kontroller dâhil',
       note: 'Tasarımı gereği yalnızca okur: çalışanlarınızı yönlendirir, onların yerine asla tıklamaz, yazmaz ya da bir şey çalıştırmaz.',

@@ -1077,6 +1077,21 @@ export default {
           before: 'Ditulis belakangan, kalau sempat.',
           now: 'Setiap langkah dicatat. <em>Siap audit.</em>',
         },
+        {
+          t: 'Beban kerja',
+          before: 'Tugas tertunda menumpuk pada segelintir orang yang sama.',
+          now: 'Tumpukan kerja beres, <em>satu langkah terpandu demi satu</em>.',
+        },
+        {
+          t: 'Stres',
+          before: 'Malam panjang terjebak di pekerjaan yang tak sempat dijelaskan siapa pun.',
+          now: 'Bantuan di layar saat dibutuhkan. <em>Lebih sedikit stres.</em>',
+        },
+        {
+          t: 'Mempertahankan orang terbaik',
+          before: 'Karyawan yang kewalahan kelelahan lalu keluar.',
+          now: 'Beban lebih ringan dan perkembangan nyata di pekerjaan. <em>Lebih sedikit alasan untuk pergi.</em>',
+        },
       ],
       controlsLbl: 'Kontrol Enterprise, termasuk',
       note: 'Hanya-baca sejak dirancang: ia memandu orang-orang Anda dan tidak pernah mengklik, mengetik, atau menjalankan apa pun untuk mereka.',

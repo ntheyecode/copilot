@@ -1077,6 +1077,21 @@ export default {
           before: 'Später nachgeschrieben, wenn überhaupt.',
           now: 'Jeder Schritt protokolliert. <em>Audit-bereit.</em>',
         },
+        {
+          t: 'Arbeitslast',
+          before: 'Offene Aufgaben stapeln sich bei denselben wenigen Leuten.',
+          now: 'Der Rückstand wird abgearbeitet, <em>Schritt für Schritt angeleitet</em>.',
+        },
+        {
+          t: 'Stress',
+          before: 'Lange Abende, festgefahren an Arbeit, die niemand erklären kann.',
+          now: 'Hilfe direkt auf dem Bildschirm, wenn sie gebraucht wird. <em>Weniger Stress.</em>',
+        },
+        {
+          t: 'Gute Leute halten',
+          before: 'Überlastete Mitarbeitende brennen aus und gehen.',
+          now: 'Weniger Last und echtes Wachstum im Job. <em>Weniger Gründe zu gehen.</em>',
+        },
       ],
       controlsLbl: 'Unternehmenskontrollen, inklusive',
       note: 'Eine Unternehmensrichtlinie, einmal festgelegt. Ihr SOC sieht wer und welche Art, nie die Werte.',

@@ -1077,6 +1077,21 @@ export default {
           before: 'Viết sau, nếu có viết.',
           now: 'Mỗi bước đều được ghi lại. <em>Sẵn sàng kiểm toán.</em>',
         },
+        {
+          t: 'Khối lượng công việc',
+          before: 'Việc tồn đọng dồn lên vài người quen thuộc.',
+          now: 'Việc tồn được giải quyết, <em>từng bước có hướng dẫn</em>.',
+        },
+        {
+          t: 'Căng thẳng',
+          before: 'Những buổi tối dài mắc kẹt với việc không ai có thời gian giải thích.',
+          now: 'Trợ giúp ngay trên màn hình khi cần. <em>Bớt căng thẳng.</em>',
+        },
+        {
+          t: 'Giữ chân người giỏi',
+          before: 'Người quá tải kiệt sức rồi nghỉ việc.',
+          now: 'Nhẹ việc hơn và tiến bộ thật trong công việc. <em>Ít lý do để rời đi.</em>',
+        },
       ],
       controlsLbl: 'Kiểm soát Enterprise, đã bao gồm',
       note: 'Chỉ-đọc từ thiết kế: nó dẫn dắt người của bạn và không bao giờ nhấp, gõ hay chạy bất cứ gì thay họ.',

@@ -365,8 +365,9 @@ export default function WorkMarketing() {
       </section>
 
       {/* ENTERPRISE - the ONE companies-and-teams section (owner, 2026-10-26:
-          the page had two). The money argument is the focal ledger: the same
-          six budget lines a decision-maker pays for, Before -> With WorkCoPilot.
+          the page had two). The money argument is the focal ledger: the budget
+          lines a decision-maker pays for plus the people lines (workload, stress,
+          keeping good people), Before -> With WorkCoPilot.
           Qualitative outcomes only, no invented numbers; "weeks -> days" is the
           one approved relative shape. The enterprise controls are a chip row
           under the ledger (the full feature list is the enterprise page), and

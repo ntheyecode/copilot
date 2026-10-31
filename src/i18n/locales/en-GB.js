@@ -51,17 +51,15 @@ export default deepMerge(en, {
       'SSO / OAuth', 'Compliance', 'Nginx', 'Market research',
     ],
     roi: {
-      // Patch only the Onboarding row (index 3) with UK phrasing; inherit the rest
-      // by position. The en base `roi.rows` has 5 entries (0-4) - referencing [5]
-      // produced an `undefined` hole that crashed the whole app (`undefined.t` in a
-      // render .map) for every en-GB visitor (India). filter(Boolean) drops any hole
-      // so a future base-array length change degrades gracefully instead of blanking
-      // the site (SUPREME RULE I: kill the class; SUPREME RULE VIII: never blank).
-      rows: [
-        en.home.roi.rows[0], en.home.roi.rows[1], en.home.roi.rows[2],
-        { t: 'Onboarding', before: 'Months of shadowing before a new starter is trusted on real work.', now: 'Productive from their <em>first task</em>, in your apps, your way.' },
-        en.home.roi.rows[4],
-      ].filter(Boolean),
+      // Patch only the Onboarding row with UK phrasing; inherit every other row.
+      // Matched by row title, never by position: positional indexing first left an
+      // `undefined` hole that blanked the site for en-GB (India), then, once the hole
+      // was filtered, it doubled Onboarding and dropped Mistakes after the base order
+      // shifted. A title map follows any reorder or new base row automatically
+      // (SUPREME RULE I: kill the class; SUPREME RULE VIII: never blank).
+      rows: en.home.roi.rows.map((r) => (r.t === 'Onboarding'
+        ? { t: 'Onboarding', before: 'Months of shadowing before a new starter is trusted on real work.', now: 'Productive from their <em>first task</em>, in your apps, your way.' }
+        : r)),
     },
     fields: {
       cards: [
