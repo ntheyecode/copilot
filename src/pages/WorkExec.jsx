@@ -41,6 +41,7 @@ import { EXEC_DRILL_CSS } from './exec/exec.css.js'
 import { ProjectsDrilldown, PerformersDrilldown } from './exec/ExecDrilldowns.jsx'
 import BrainExportPanel from './exec/BrainExportPanel.jsx'
 import ExecIncidentsCard from './exec/ExecIncidentsCard.jsx'
+import { isExecutive } from '../shared/work_roles_options.js'
 
 const RANGES = [7, 30, 90]
 const POLL_MS = 45000
@@ -663,7 +664,7 @@ export default function WorkExec() {
           (it is an action panel, not a report) and gated strictly on the
           executive role (the exec dashboard also admits a company admin, but the
           brain download is executive-only and the server enforces it). */}
-      {me && me.companyRole === 'executive' && (
+      {me && isExecutive(me.companyRole) && (
         <div className="wx-content wx-noexport"><BrainExportPanel /></div>
       )}
     </Shell>

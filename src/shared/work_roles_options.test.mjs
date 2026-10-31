@@ -61,6 +61,24 @@ test('roleViewOf: the trainer grant opens the Teach studio, the primary role is 
   assert.equal(mem.isTrainer, false); assert.equal(mem.showTeach, false)
 })
 
+test('roleViewOf: exec dashboard for executives and company admins; Brain export and incident actions by role', () => {
+  const view = (companyRole, grants = []) => client.roleViewOf({ companyId: 'c', companyRole, workFlow: 'independent', grants })
+  for (const r of ROLES) {
+    const v = view(r)
+    assert.equal(v.showExec, r === 'executive' || r === 'company_admin', `showExec(${r})`)
+    assert.equal(v.isExecutive, r === 'executive', `isExecutive(${r})`)
+    assert.equal(v.canManageIncidents, client.canManageWorkflowIncidents(r, []), `canManageIncidents(${r})`)
+    // Every role that may act on an incident also receives it (no action without the inbox).
+    if (v.canManageIncidents) assert.equal(v.showIncidents, true, `manage implies receive (${r})`)
+  }
+  assert.equal(view('member', ['trainer']).canManageIncidents, true)
+  assert.equal(view('grc').canManageIncidents, false); assert.equal(view('grc').showIncidents, true)
+  assert.equal(view('executive').canManageIncidents, false); assert.equal(view('executive').showIncidents, true)
+  // An individual (no company) gets none of the company surfaces.
+  const solo = client.roleViewOf({ companyRole: 'executive' })
+  assert.equal(solo.showExec, false); assert.equal(solo.isExecutive, false); assert.equal(solo.canManageIncidents, false)
+})
+
 test('roleViewOf: a worker has the queue and no Start; an independent has Start and no queue; mixed has both', () => {
   const w = client.roleViewOf({ companyId: 'c', companyRole: 'member', workFlow: 'worker' })
   assert.equal(w.isWorker, true); assert.equal(w.canStart, false); assert.equal(w.showQueue, true)

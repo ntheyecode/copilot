@@ -161,12 +161,14 @@ export default function WorkAppLayout() {
   const isAdmin = !!(user && (user.role === 'superadmin' || user.role === 'admin'))
   const isCompanyMember = !!(user && user.companyId)
   const isCompanyAdmin = !!(user && user.companyRole === 'company_admin' && user.companyId)
-  const isExecutive = !!(user && user.companyId && ['executive', 'company_admin'].includes(user.companyRole))
   const covered = isAdmin || isCompanyMember || !!(user && user.canUseService)
   // Enterprise flow + role view: ONE derivation (src/shared/work_roles_options.js)
   // read by the rail, the dashboard (queue vs Start), the Start page and every
   // management page, so a role is never gated differently in two places.
   const roleView = useMemo(() => roleViewOf(user), [user])
+  // The exec dashboard link (executive or company admin) reads the same registry
+  // as the role-gated Help, so the link and its help can never disagree.
+  const isExecutive = roleView.showExec
   const hasPlan = !!(user && !user.companyId && user.subscription && ['active', 'trialing', 'past_due', 'canceled'].includes(user.subscription.status))
 
   const [company, setCompany] = useState(null)

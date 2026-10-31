@@ -5046,10 +5046,101 @@ export default {
         caption: 'Alertas, las más recientes primero.',
       },
     },
+    trainer: {
+      title: 'Da a alguien el permiso de Formador',
+      lead: 'Los formadores graban y publican los flujos de trabajo que sigue tu equipo. Da el permiso a las personas que mejor conocen una tarea.',
+      steps: {
+        open: {
+          t: 'Abre Equipo',
+          d: 'Busca a la persona en la lista de personas.',
+        },
+        tick: {
+          t: 'Marca Formador',
+          d: 'Aparece bajo el rol de miembros y jefes de proyecto, y se guarda al momento.',
+        },
+        studio: {
+          t: 'Ya puede enseñar',
+          d: 'Estudio de enseñanza e Incidencias de flujos aparecen en su menú.',
+        },
+      },
+      shots: {
+        grant: {
+          alt: 'La tabla Equipo: Maya Lin con el rol Miembro y la casilla Formador marcada debajo.',
+          caption: 'Los administradores de empresa pueden enseñar sin el permiso. Cambiar a una persona a otro rol se lo quita.',
+          marks: {
+            role: '<b>Rol.</b> El permiso funciona con el rol Miembro o Jefe de proyecto.',
+            trainer: '<b>Formador.</b> Márcalo para que esta persona pueda grabar y publicar flujos de trabajo. Desmárcalo para quitárselo.',
+          },
+        },
+      },
+    },
+    developer: {
+      open: 'API y webhooks',
+      title: 'API y webhooks',
+      lead: 'Conecta tus propias apps a WorkCoPilot: lee y ejecuta flujos de trabajo, lee incidencias de flujos de trabajo, consulta el Company Brain y entérate en el momento en que algo ocurre.',
+      steps: {
+        create: {
+          t: 'Crea una clave',
+          d: 'Ponle un nombre, marca solo los permisos que necesita la app y fija una caducidad.',
+        },
+        store: {
+          t: 'Guárdala una vez',
+          d: 'La clave completa se muestra una sola vez. Guárdala en tu gestor de secretos.',
+        },
+        rotate: {
+          t: 'Rota o revoca',
+          d: 'Rota con un breve solapamiento, o revoca al instante si se filtra una clave.',
+        },
+        hooks: {
+          t: 'Añade un webhook',
+          d: 'Elige los eventos y luego comprueba cada entrega.',
+        },
+      },
+      shots: {
+        keys: {
+          alt: 'Claves de API: el botón Crear clave y la lista de claves, una abierta con sus permisos, quién la creó, la lista de IP permitidas y los botones Rotar y Revocar.',
+          caption: 'Después de crearla, solo se muestran el prefijo y los cuatro últimos caracteres de una clave.',
+          marks: {
+            create: '<b>Crear clave.</b> Empieza una clave nueva para una app.',
+            row: '<b>Cada clave de un vistazo.</b> Estado, permisos, caducidad y cuándo se usó por última vez.',
+            acts: '<b>Rotar o Revocar.</b> Rotar emite un secreto nuevo con la misma configuración. Revocar detiene la clave al instante.',
+          },
+        },
+        create: {
+          alt: 'El formulario de nueva clave de API: el nombre, los permisos que puede usar la clave, la caducidad y la lista opcional de IP permitidas.',
+          caption: 'Una clave por tarea, para que puedas revocar una sin tocar las demás. Crear o rotar una clave puede pedirte el código de tu app de autenticación.',
+          marks: {
+            scopes: '<b>Qué puede hacer esta clave.</b> Marca solo lo que necesita la app.',
+            expiry: '<b>Caduca en.</b> Una clave que caduca es una cosa menos que recordar revocar.',
+            ip: '<b>Lista de IP permitidas.</b> Opcional. Acepta llamadas solo desde tus propias direcciones.',
+          },
+        },
+        secret: {
+          alt: 'El panel Copia tu clave ahora con una clave de ejemplo, Copiar clave y Ya la he guardado.',
+          caption: 'Ciérralo solo cuando la clave esté guardada en un lugar seguro.',
+          marks: {
+            copy: '<b>Copiar clave.</b> Es la única vez que se muestra la clave completa.',
+            done: '<b>Ya la he guardado.</b> Cierra el panel. La clave completa no se puede volver a mostrar.',
+          },
+        },
+        hooks: {
+          alt: 'Webhooks: un endpoint abierto con sus eventos, sus controles y sus entregas recientes con su estado.',
+          caption: 'Cada entrega va firmada, para que tu app pueda comprobar que viene de WorkCoPilot.',
+          marks: {
+            events: '<b>Eventos.</b> Se publicó un flujo de trabajo o se notificó una incidencia de flujo de trabajo.',
+            acts: '<b>Gestiónalo.</b> Actívalo o desactívalo, envía una prueba, rota el secreto de firma o elimínalo.',
+            deliveries: '<b>Entregas recientes.</b> Cada una con su resultado. Reintenta la que se haya abandonado.',
+          },
+        },
+      },
+    },
   },
   helpShared: {
     flowLabel: 'El flujo principal',
     open: 'Abrir {label}',
+    callout: 'Marca {n}',
+    calloutsLabel: 'Qué muestra cada número',
+    pathLabel: 'Cómo hacerlo',
   },
   helpSuper: {
     flow: {
@@ -6128,6 +6219,7 @@ export default {
       freeAccessOn: 'Acceso gratuito ✓',
       freeAccessGrant: 'Conceder acceso gratuito',
       grantHours: 'Conceder horas',
+      more: 'Más',
       grantHoursTitle: 'Conceder horas compradas',
       refundLast: 'Reembolsar último',
       refundLastTitle: 'Reembolsar el pago más reciente',
@@ -7044,6 +7136,8 @@ export default {
       support: 'Soporte',
       team: 'Equipo',
       exec: 'Panel ejecutivo',
+      teach: 'Estudio de enseñanza',
+      teachTip: 'Graba y publica los flujos de trabajo que sigue tu equipo',
       admin: 'Consola de administración',
       queue: 'Mi cola',
       queueTip: 'Tareas que te asigna un jefe de proyecto',
@@ -8726,33 +8820,207 @@ export default {
         ],
       },
     },
+    workflows: {
+      title: 'Flujos de trabajo de la empresa',
+      lead: 'Haz una tarea tal como la acordó tu equipo, con una guía en tu propia pantalla, paso a paso. Tus formadores mantienen cada flujo de trabajo al día, así que siempre sigues la versión más reciente.',
+      path: [
+        'En tu panel, búscalo en <b>Flujos de trabajo de la empresa</b>. Si la lista es larga, busca o elige una categoría.',
+        'Abre una fila para ver dónde empieza y qué debes tener a mano.',
+        'Pulsa <b>Iniciar</b>, comparte tu pantalla y sigue cada paso.',
+      ],
+      list: {
+        h: 'Encuentra el flujo de trabajo que necesitas',
+        alt: 'La sección Flujos de trabajo de la empresa del panel: un cuadro de búsqueda, un filtro de categoría, filas de flujos de trabajo con producto, categoría, pasos y tiempo, y una fila abierta con dónde empieza, qué tener a mano, quién lo mantiene y el botón Iniciar.',
+        caption: 'Cada flujo de trabajo que han publicado tus formadores, listo para iniciar.',
+        marks: {
+          search: '<b>Busca y filtra.</b> Encuentra un flujo de trabajo por su nombre o limita la lista a una categoría.',
+          details: '<b>Antes de empezar.</b> Dónde empieza, qué tener a mano y quién lo mantiene.',
+          run: '<b>Iniciar.</b> Empieza una tarea guiada con este flujo de trabajo, con todos los pasos ya planificados.',
+        },
+      },
+      guide: {
+        h: 'Sigue cada paso, con la pantalla que debes ver',
+        alt: 'La vista de guía con el flujo de trabajo Emitir un reembolso a un cliente: el plan a la izquierda, el paso actual con su comprobación de terminado, la miniatura Cómo debería verse la pantalla, la etiqueta Flujo de trabajo de la empresa y el botón Marcar como hecho.',
+        caption: 'Un flujo de trabajo sigue los pasos que grabó tu formador, en su orden.',
+        marks: {
+          plan: '<b>Todo el plan.</b> Cada paso del flujo de trabajo y en cuál estás ahora.',
+          shot: '<b>Cómo debería verse la pantalla.</b> La captura de tu formador para este paso, para que compruebes que estás en el sitio correcto.',
+          source: '<b>Flujo de trabajo de la empresa.</b> El flujo de trabajo y la versión que estás siguiendo.',
+          done: '<b>Marcar como hecho.</b> Avanza cuando el paso esté terminado, o pulsa antes Verificar en mi pantalla para comprobarlo.',
+        },
+      },
+      larger: {
+        h: 'Compara tu pantalla con la del formador',
+        alt: 'La captura del paso abierta a tamaño completo dentro de la tarjeta del paso.',
+        caption: 'Pulsa Ver más grande en cualquier paso que tenga una captura.',
+        marks: {
+          full: '<b>La captura completa.</b> Compárala con tu pantalla antes de actuar.',
+        },
+      },
+    },
+    teach: {
+      title: 'Estudio de enseñanza',
+      lead: 'Muestra una tarea una vez y todos en tu empresa podrán seguirla en su propia pantalla. Graba o escribe los pasos, revísalos, publícalos y mantenlos al día cuando cambien tus aplicaciones.',
+      path: [
+        'Pulsa <b>Nuevo flujo de trabajo</b> y completa los cuatro datos imprescindibles.',
+        'Añade los pasos: graba una demostración, importa una grabación o escríbelos.',
+        'Revisa cada paso con su captura y quédate con las sugerencias que te convenzan.',
+        'Pulsa <b>Publicar</b>. Más adelante, usa <b>Revisar</b> para actualizarlo o <b>Retirar</b> para dejar de ofrecerlo.',
+      ],
+      list: {
+        h: 'Todos tus flujos de trabajo en una lista',
+        alt: 'El Estudio de enseñanza: el botón Nuevo flujo de trabajo, Incidencias de flujos, los flujos de trabajo con su versión y estado, y un flujo publicado abierto con sus detalles, sus pasos y las acciones Revisar, Retirar y Eliminar.',
+        caption: 'Abre cualquier fila para ver sus detalles y pasos, y actuar sobre ella.',
+        marks: {
+          newWorkflow: '<b>Nuevo flujo de trabajo.</b> Abre el asistente guiado.',
+          issues: '<b>Incidencias de flujos.</b> Momentos en que una ejecución no coincidió con la pantalla. El número cuenta las nuevas.',
+          states: '<b>Borrador, Publicado o Retirado.</b> Solo un flujo de trabajo publicado llega a tu equipo.',
+          actions: '<b>Revisar, Retirar, Eliminar.</b> Revisar crea una nueva versión en borrador. La activa sigue funcionando hasta que publiques la nueva.',
+        },
+      },
+      wizard: {
+        h: 'Cinco pasos cortos, lo imprescindible primero',
+        alt: 'El asistente de nuevo flujo de trabajo en Lo básico: los cinco pasos arriba, la línea que confirma lo que estás enseñando, los campos obligatorios y los botones Guardar borrador y Publicar.',
+        caption: 'Guarda un borrador en cualquier momento y retómalo más tarde.',
+        marks: {
+          stepper: '<b>Cinco pasos.</b> Lo básico, Detalles, Alcance y privacidad, Pasos y Revisión. Puedes volver a cualquiera de ellos.',
+          reflect: '<b>Una comprobación rápida.</b> Confirma el producto y la tarea que estás enseñando.',
+          required: '<b>Cuatro datos imprescindibles.</b> Producto, título, responsable y dónde empezar. Todo lo demás es opcional.',
+          footer: '<b>Guardar borrador o Publicar.</b> Publicar se activa cuando están los datos imprescindibles, al menos un paso y la nota de alcance.',
+        },
+      },
+      scope: {
+        h: 'Sin sorpresas sobre quién lo ve',
+        alt: 'El paso Alcance y privacidad: con quién se comparte el flujo de trabajo, qué guarda, la casilla de confirmación y la opción de enmascarar.',
+        caption: 'Para publicar, primero tienes que confirmar la nota de alcance.',
+        marks: {
+          note: '<b>Quién lo ve.</b> Todos en tu empresa, una vez publicado.',
+          ack: '<b>Confírmalo una vez.</b> Marca esta casilla antes de publicar.',
+          mask: '<b>Enmascarar texto sensible.</b> Se hace en tu dispositivo, antes de guardar cualquier captura grabada. Siempre activo mientras la protección de datos de tu empresa esté activada.',
+        },
+      },
+      record: {
+        h: 'Graba una demostración en directo',
+        alt: 'La preparación de Graba una demostración: narrar con el micrófono y el idioma de la narración, capturar el audio de la llamada con su casilla de consentimiento, la nota sobre el enmascarado y el botón Compartir pantalla y empezar.',
+        caption: 'WorkCoPilot ve tu pantalla, no tus clics. Pulsa Marcar paso cada vez que deba empezar un paso nuevo.',
+        marks: {
+          narrate: '<b>Narra.</b> Lo que dices se convierte en el texto de cada paso. No se guarda ningún audio.',
+          call: '<b>Audio de la llamada.</b> Para una reunión que estés grabando. Empezar sigue desactivado hasta que confirmes que todos en la llamada lo saben.',
+          mask: '<b>Primero se enmascara.</b> El texto sensible se enmascara antes de guardar cualquier captura.',
+          start: '<b>Compartir pantalla y empezar.</b> Comparte solo la ventana de la aplicación que estás enseñando.',
+        },
+      },
+      live: {
+        h: 'Mientras grabas',
+        alt: 'La barra de grabación en directo: la insignia Grabando y el temporizador, las pantallas y los cortes de paso hasta ahora, Marcar paso, Pausar, Detener y revisar, y Descartar.',
+        caption: 'No se guarda nada hasta que te detienes. Descartar elimina la grabación.',
+        marks: {
+          time: '<b>Tiempo y progreso.</b> Cuánto llevas grabado y cuántas pantallas y cortes de paso tiene.',
+          mark: '<b>Marcar paso.</b> Empieza un paso nuevo justo aquí.',
+          stop: '<b>Detener y revisar.</b> Tus pasos se cargan en el editor, listos para revisar.',
+        },
+      },
+      import: {
+        h: 'O importa una grabación que ya tengas',
+        alt: 'Importa una grabación con un vídeo elegido: el nombre del archivo y su duración, el idioma hablado y el botón Crear pasos con este vídeo.',
+        caption: 'Sirve un vídeo de Teams o Zoom. El vídeo se lee en tu dispositivo y no se sube: solo salen de él las capturas de pantalla que usan tus pasos y fragmentos cortos de voz.',
+        marks: {
+          file: '<b>Tu vídeo.</b> Su nombre y duración, leídos en este dispositivo.',
+          lang: '<b>Idioma hablado.</b> Para que lo que se dice se convierta en texto de los pasos en el idioma correcto.',
+          start: '<b>Crear pasos con este vídeo.</b> Prepara un paso cada vez que la pantalla se detiene en algo nuevo.',
+        },
+      },
+      review: {
+        h: 'Revisa cada paso con su captura de pantalla',
+        alt: 'El editor de pasos de un borrador grabado: la tarjeta Revisa cada paso con su captura de pantalla, un paso abierto con su captura y una sugerencia marcada Probablemente bien con Volver a analizar y Usar sugerencia, y otro paso marcado Sugerencia.',
+        caption: 'Las sugerencias aparecen junto a tu propio texto. Tus pasos solo cambian cuando eliges Usar sugerencia.',
+        marks: {
+          read: '<b>Analizar pasos.</b> Analiza uno a uno cada paso que tiene captura, mientras sigues editando.',
+          shot: '<b>La captura del paso.</b> Lo que un compañero debería ver en este paso.',
+          band: '<b>Lo claro que parecía.</b> Parece claro, Probablemente bien, o Dudoso, revísalo.',
+          use: '<b>Usar sugerencia o Volver a analizar.</b> Tú decides, paso a paso.',
+          mark: '<b>Sugerencia pendiente.</b> Aparece en cada paso que tiene una por revisar.',
+        },
+      },
+    },
     issues: {
       title: 'Incidencias de flujos de trabajo',
-      lead: 'Incidencias de flujos de trabajo reúne los momentos en que un flujo de trabajo publicado no coincidía con lo que un compañero veía en pantalla: la pantalla había cambiado, apareció un error, no pudo continuar, necesitó un paso que el flujo no tiene o se omitió un paso. Cada incidencia trata sobre el flujo de trabajo, no sobre el trabajo de nadie.',
-      shot: {
-        alt: 'Incidencias de flujos de trabajo: los chips de resumen, el filtro Activas, la lista de novedades desde tu última visita y una incidencia abierta con el paso sugerido y la pantalla que vio la guía.',
-        caption: 'Incidencias de flujos de trabajo. Las repeticiones del mismo paso y tipo se suman a una sola incidencia en lugar de crear una nueva.',
-      },
-      howTo: 'Cómo gestionar las incidencias de flujos de trabajo',
-      steps: [
-        'Abre <b>Incidencias de flujos</b> desde la sección Gestión del menú o desde el Estudio de enseñanza. El número que aparece al lado cuenta las incidencias nuevas desde tu última visita.',
-        'Los chips de arriba cuentan las incidencias abiertas y en curso, y las activas por tipo. Elige <b>Activas</b>, <b>Resueltas</b>, <b>Descartadas</b> o <b>Todas</b>, y selecciona un flujo de trabajo para acotar la lista.',
-        'Haz clic en una fila para ver lo que notó la guía, la pantalla que vio y cuándo ocurrió.',
-        'Pulsa <b>Me encargo</b> en una incidencia para que el equipo sepa que alguien se ocupa. Cuando hayas actualizado el flujo de trabajo, pulsa <b>Resolver</b>. Si no hace falta cambiar nada, pulsa <b>Descartar</b> y las repeticiones dejarán de avisarse. Añade una nota para explicar el motivo.',
+      lead: 'Mira cada momento en que un flujo de trabajo publicado no coincidió con la pantalla de un compañero. Corrige el flujo una vez y todos los que lo ejecutan reciben la corrección. Cada incidencia trata sobre el flujo de trabajo, nunca sobre el trabajo de una persona.',
+      path: [
+        'Abre <b>Incidencias de flujos</b> desde el menú o desde el Estudio de enseñanza. El número cuenta las incidencias nuevas.',
+        'Filtra por estado o por flujo de trabajo y abre una incidencia.',
+        'Pulsa <b>Me encargo</b>, actualiza el flujo de trabajo y después pulsa <b>Resolver</b>. O pulsa <b>Descartar</b> si no hace falta cambiar nada.',
       ],
+      pathWatch: [
+        'Abre <b>Incidencias de flujos</b> desde el menú. El número cuenta las incidencias nuevas.',
+        'Filtra por estado o por flujo de trabajo y abre una incidencia para ver qué pasó.',
+        'Síguela hasta el final: las personas que mantienen al día el flujo de trabajo se encargan de ella, corrigen el flujo y la resuelven.',
+      ],
+      badge: {
+        h: 'Las incidencias nuevas te encuentran',
+        alt: 'El menú con Incidencias de flujos y su número de incidencias nuevas.',
+        caption: 'El número muestra las incidencias nuevas desde tu última visita.',
+        marks: {
+          badge: '<b>Incidencias de flujos.</b> Abre la bandeja. El número cuenta lo que es nuevo.',
+        },
+      },
+      inbox: {
+        h: 'Mira qué pasó y actúa',
+        alt: 'Incidencias de flujos de trabajo: los chips de resumen, el filtro de estado y una incidencia abierta con lo que notó la guía, la pantalla que vio, el paso sugerido, a quién le pasó y las acciones.',
+        caption: 'Las repeticiones del mismo paso y tipo se suman a una sola incidencia, así la lista se mantiene corta.',
+        marks: {
+          chips: '<b>De un vistazo.</b> Incidencias abiertas y en curso, e incidencias activas por tipo.',
+          filters: '<b>Filtra.</b> Activas, Resueltas, Descartadas o Todas, y un flujo de trabajo cada vez.',
+          shot: '<b>La pantalla que vio la guía.</b> Ábrela más grande para ver exactamente qué cambió.',
+          suggest: '<b>Paso sugerido.</b> El paso que necesitó un compañero y que el flujo de trabajo aún no tiene.',
+          actions: '<b>Actúa.</b> Añade el paso a un borrador, o elige Me encargo, Resolver o Descartar, con una nota que explique el motivo.',
+          actionsPlain: '<b>Actúa.</b> Elige Me encargo, Resolver o Descartar, con una nota que explique el motivo.',
+        },
+      },
       adopt: {
         h: 'Añadir un paso que falta al flujo de trabajo',
-        steps: [
-          'Cuando un compañero necesitó un paso que el flujo de trabajo no tiene, la incidencia muestra el paso sugerido.',
-          'El autor del flujo de trabajo o un administrador de empresa pulsa <b>Añadir este paso al borrador del flujo</b> y confirma. El flujo de trabajo activo sigue funcionando igual.',
-          'Abre el borrador en el Estudio de enseñanza, revisa el nuevo paso y publícalo cuando esté bien.',
-        ],
-      },
-      shotAdopt: {
         alt: 'La confirmación para añadir el paso sugerido a un borrador del flujo de trabajo.',
         caption: 'Para tu equipo no cambia nada hasta que alguien publique el borrador.',
       },
+      exec: {
+        h: 'En el panel ejecutivo',
+        alt: 'La tarjeta Incidencias de flujos de trabajo del panel ejecutivo: las incidencias activas contadas por tipo y el botón Revisar incidencias.',
+        caption: 'Mira qué flujos de trabajo necesitan atención sin abrir cada incidencia.',
+        marks: {
+          kinds: '<b>Incidencias activas por tipo.</b> Pantalla cambiada, Error en pantalla, No pudo continuar, Paso fuera del flujo, Paso omitido.',
+          review: '<b>Revisar incidencias.</b> Abre la bandeja completa.',
+        },
+      },
       watch: 'GRC y los directivos siguen cada incidencia en modo de solo lectura. Los directivos también ven las incidencias activas por tipo en el panel ejecutivo.',
+    },
+    exec: {
+      title: 'Panel ejecutivo',
+      lead: 'Mira en qué punto está cada proyecto y quién hace avanzar el trabajo, sin pedirle a nadie un informe de estado.',
+      path: [
+        'Abre <b>Panel ejecutivo</b> al final del menú.',
+        'Elige 7, 30 o 90 días y luego consulta las vistas de proyectos y personas.',
+        'Exporta un PDF, una imagen o un CSV cuando necesites compartirlo.',
+      ],
+      drill: {
+        h: 'Proyectos y personas de un vistazo',
+        alt: 'Los detalles del panel ejecutivo: las fichas de estado de los proyectos, los proyectos más grandes con jefe de proyecto, tareas, personas y barra de avance, y las personas destacadas por tareas completadas y por proyectos.',
+        caption: 'Solo lectura, y abarca toda tu empresa.',
+        marks: {
+          status: '<b>Estado de los proyectos.</b> Cuántos proyectos están en curso, terminados o en pausa.',
+          table: '<b>Los proyectos más grandes.</b> Jefe de proyecto, tareas, personas y cuánto lleva completado cada uno.',
+          people: '<b>Personas destacadas, de dos formas.</b> Por tareas guiadas completadas y por los proyectos en los que trabajan o que gestionan.',
+        },
+      },
+      brain: {
+        h: 'Descarga el Cerebro de la empresa (solo directivos)',
+        alt: 'El panel Cerebro de la empresa: la nota sobre el cifrado, el mensaje de que tu frase de contraseña de exportación está configurada con Ver frase de contraseña y Cambiar frase de contraseña, y Descargar el Cerebro de la empresa.',
+        caption: 'En el servicio alojado, ver o cambiar la frase de contraseña te pide el código de tu app de autenticación.',
+        marks: {
+          note: '<b>Cifrado con tu frase de contraseña.</b> Sin ella no se puede abrir el archivo, así que guárdala bien.',
+          key: '<b>Verla o cambiarla.</b> Configúrala una vez y luego consúltala o cámbiala cuando lo necesites.',
+          download: '<b>Descargar el Cerebro de la empresa.</b> Un único archivo .wcpx cifrado con el almacén de conocimiento de tu empresa.',
+        },
+      },
     },
     admin: {
       title: 'Flujos y roles',

@@ -2755,6 +2755,9 @@ export default {
   helpShared: {
     flowLabel: 'Der Hauptablauf',
     open: '{label} öffnen',
+    callout: 'Markierung {n}',
+    calloutsLabel: 'Was jede Zahl zeigt',
+    pathLabel: 'So geht es',
   },
   overviewAdmin: {
     loading: 'Übersicht wird geladen',
@@ -4164,6 +4167,94 @@ export default {
         caption: 'Warnungen, neueste zuerst.',
       },
     },
+    trainer: {
+      title: 'Jemandem die Trainer-Berechtigung geben',
+      lead: 'Trainer nehmen die Workflows auf, denen Ihr Team folgt, und veröffentlichen sie. Geben Sie die Berechtigung den Personen, die eine Aufgabe am besten kennen.',
+      steps: {
+        open: {
+          t: 'Team öffnen',
+          d: 'Suchen Sie die Person in der Personenliste.',
+        },
+        tick: {
+          t: 'Trainer anhaken',
+          d: 'Das Kästchen steht bei Mitgliedern und Projektmanagern unter der Rolle und wird sofort gespeichert.',
+        },
+        studio: {
+          t: 'Die Person kann schulen',
+          d: 'Schulungsstudio und Workflow-Abweichungen erscheinen in ihrem Menü.',
+        },
+      },
+      shots: {
+        grant: {
+          alt: 'Die Team-Tabelle: Maya Lin mit der Rolle Mitglied und darunter dem angehakten Kästchen Trainer.',
+          caption: 'Unternehmensadmins können ohne die Berechtigung schulen. Wechselt eine Person zu einer anderen Rolle, wird die Berechtigung entfernt.',
+          marks: {
+            role: '<b>Rolle.</b> Die Berechtigung gilt für die Rolle Mitglied oder Projektmanager.',
+            trainer: '<b>Trainer.</b> Anhaken, damit diese Person Workflows aufnehmen und veröffentlichen kann. Haken entfernen, um die Berechtigung wieder zu entziehen.',
+          },
+        },
+      },
+    },
+    developer: {
+      open: 'API & Webhooks',
+      title: 'API und Webhooks',
+      lead: 'Verbinden Sie Ihre eigenen Apps mit WorkCoPilot: Workflows lesen und starten, Workflow-Abweichungen lesen, das Company Brain abfragen und sofort erfahren, wenn etwas passiert.',
+      steps: {
+        create: {
+          t: 'Schlüssel erstellen',
+          d: 'Geben Sie ihm einen Namen, haken Sie nur an, was die App braucht, und legen Sie fest, wann er abläuft.',
+        },
+        store: {
+          t: 'Einmal sicher ablegen',
+          d: 'Der vollständige Schlüssel wird nur einmal angezeigt. Legen Sie ihn in Ihrem Secret-Manager ab.',
+        },
+        rotate: {
+          t: 'Rotieren oder widerrufen',
+          d: 'Rotieren Sie mit einer kurzen Übergangszeit, oder widerrufen Sie sofort, wenn ein Schlüssel nach außen gelangt ist.',
+        },
+        hooks: {
+          t: 'Webhook hinzufügen',
+          d: 'Wählen Sie die Ereignisse und prüfen Sie dann jede Zustellung.',
+        },
+      },
+      shots: {
+        keys: {
+          alt: 'API-Schlüssel: die Schaltfläche Schlüssel erstellen und die Liste der Schlüssel, einer davon geöffnet mit seinen Berechtigungen, der erstellenden Person, der IP-Allowlist und den Schaltflächen Rotieren und Widerrufen.',
+          caption: 'Nach dem Erstellen sind von einem Schlüssel nur noch das Präfix und die letzten vier Zeichen zu sehen.',
+          marks: {
+            create: '<b>Schlüssel erstellen.</b> Legt einen neuen Schlüssel für eine App an.',
+            row: '<b>Jeder Schlüssel auf einen Blick.</b> Status, Berechtigungen, Ablauf und wann er zuletzt genutzt wurde.',
+            acts: '<b>Rotieren oder Widerrufen.</b> Rotieren erzeugt ein neues Secret mit denselben Einstellungen. Widerrufen sperrt den Schlüssel sofort.',
+          },
+        },
+        create: {
+          alt: 'Das Formular für einen neuen API-Schlüssel: der Name, was der Schlüssel darf, der Ablauf und die optionale IP-Allowlist.',
+          caption: 'Ein Schlüssel pro Aufgabe, damit Sie einen widerrufen können, ohne die anderen anzutasten. Beim Erstellen oder Rotieren kann Ihr Authenticator-Code abgefragt werden.',
+          marks: {
+            scopes: '<b>Was dieser Schlüssel darf.</b> Haken Sie nur an, was die App braucht.',
+            expiry: '<b>Läuft ab in.</b> Ein Schlüssel, der abläuft, ist einer weniger, an dessen Widerruf Sie denken müssen.',
+            ip: '<b>IP-Allowlist.</b> Optional. Nimmt nur Aufrufe von Ihren eigenen Adressen an.',
+          },
+        },
+        secret: {
+          alt: 'Der Bereich Kopieren Sie Ihren Schlüssel jetzt mit einem Beispielschlüssel, Schlüssel kopieren und Ich habe ihn gespeichert.',
+          caption: 'Schließen Sie ihn erst, wenn der Schlüssel sicher abgelegt ist.',
+          marks: {
+            copy: '<b>Schlüssel kopieren.</b> Nur jetzt wird der vollständige Schlüssel angezeigt.',
+            done: '<b>Ich habe ihn gespeichert.</b> Schließt den Bereich. Der vollständige Schlüssel lässt sich danach nicht mehr anzeigen.',
+          },
+        },
+        hooks: {
+          alt: 'Webhooks: ein geöffneter Endpunkt mit seinen Ereignissen, seinen Steuerelementen und den letzten Zustellungen samt Status.',
+          caption: 'Jede Zustellung ist signiert, damit Ihre App prüfen kann, dass sie von WorkCoPilot kommt.',
+          marks: {
+            events: '<b>Ereignisse.</b> Ein Workflow wurde veröffentlicht, oder eine Workflow-Abweichung wurde gemeldet.',
+            acts: '<b>Verwalten.</b> Ein- oder ausschalten, einen Test senden, das Signatur-Secret rotieren oder den Endpunkt löschen.',
+            deliveries: '<b>Letzte Zustellungen.</b> Jede mit ihrem Ergebnis. Eine aufgegebene Zustellung können Sie erneut versuchen.',
+          },
+        },
+      },
+    },
   },
   helpSuper: {
     flow: {
@@ -5262,6 +5353,7 @@ export default {
       freeAccessOn: 'Freier Zugang ✓',
       freeAccessGrant: 'Freien Zugang gewähren',
       grantHours: 'Stunden gewähren',
+      more: 'Mehr',
       grantHoursTitle: 'Gekaufte Stunden gewähren',
       refundLast: 'Letzte erstatten',
       refundLastTitle: 'Die jüngste Zahlung erstatten',
@@ -6379,6 +6471,8 @@ export default {
       support: 'Support',
       team: 'Team',
       exec: 'Management-Dashboard',
+      teach: 'Schulungsstudio',
+      teachTip: 'Die Workflows aufnehmen und veröffentlichen, denen Ihr Team folgt',
       admin: 'Admin-Konsole',
     },
     update: {
@@ -8713,33 +8807,207 @@ export default {
         ],
       },
     },
+    workflows: {
+      title: 'Unternehmens-Workflows',
+      lead: 'Erledigen Sie eine Aufgabe so, wie Ihr Team es vereinbart hat, Schritt für Schritt auf Ihrem eigenen Bildschirm angeleitet. Ihre Trainer halten jeden Workflow aktuell, damit Sie immer der neuesten Version folgen.',
+      path: [
+        'Sie finden ihn auf Ihrem Dashboard unter <b>Unternehmens-Workflows</b>. Ist die Liste lang, suchen Sie oder wählen eine Kategorie.',
+        'Öffnen Sie eine Zeile, um zu sehen, wo der Workflow beginnt und was Sie bereithalten sollten.',
+        'Drücken Sie auf <b>Starten</b>, teilen Sie Ihren Bildschirm und folgen Sie jedem Schritt.',
+      ],
+      list: {
+        h: 'Den passenden Workflow finden',
+        alt: 'Der Bereich Unternehmens-Workflows im Dashboard: ein Suchfeld, ein Kategoriefilter, Workflow-Zeilen mit Produkt, Kategorie, Schritten und Dauer sowie eine geöffnete Zeile mit Startpunkt, dem, was bereitliegen sollte, der verantwortlichen Person und der Schaltfläche Starten.',
+        caption: 'Jeder Workflow, den Ihre Trainer veröffentlicht haben, sofort startbereit.',
+        marks: {
+          search: '<b>Suchen und filtern.</b> Finden Sie einen Workflow nach Namen oder grenzen Sie die Liste auf eine Kategorie ein.',
+          details: '<b>Vorher Bescheid wissen.</b> Wo es losgeht, was Sie bereithalten sollten und wer den Workflow pflegt.',
+          run: '<b>Starten.</b> Beginnt eine angeleitete Aufgabe mit diesem Workflow, alle Schritte sind bereits geplant.',
+        },
+      },
+      guide: {
+        h: 'Jedem Schritt folgen, mit dem Bildschirm, den Sie erwarten können',
+        alt: 'Die Anleitungsansicht mit dem Workflow Kundenerstattung ausstellen: links der Plan, der aktuelle Schritt mit der Angabe, woran man erkennt, dass er erledigt ist, das Vorschaubild So sollte der Bildschirm aussehen, die Kennzeichnung Unternehmens-Workflow und die Schaltfläche Als erledigt markieren.',
+        caption: 'Ein Workflow-Durchlauf folgt den Schritten, die Ihr Trainer aufgenommen hat, in derselben Reihenfolge.',
+        marks: {
+          plan: '<b>Der ganze Plan.</b> Jeder Schritt des Workflows und wo Sie gerade stehen.',
+          shot: '<b>So sollte der Bildschirm aussehen.</b> Der Screenshot Ihres Trainers zu diesem Schritt, damit Sie prüfen können, ob Sie an der richtigen Stelle sind.',
+          source: '<b>Unternehmens-Workflow.</b> Der Workflow und die Version, denen Sie folgen.',
+          done: '<b>Als erledigt markieren.</b> Weiter, sobald der Schritt fertig ist. Oder lassen Sie ihn vorher mit Auf meinem Bildschirm prüfen kontrollieren.',
+        },
+      },
+      larger: {
+        h: 'Ihren Bildschirm mit dem des Trainers vergleichen',
+        alt: 'Der Screenshot des Schritts in voller Größe in der Schrittkarte.',
+        caption: 'Drücken Sie bei jedem Schritt mit Screenshot auf Größer anzeigen.',
+        marks: {
+          full: '<b>Der ganze Screenshot.</b> Vergleichen Sie ihn mit Ihrem Bildschirm, bevor Sie etwas tun.',
+        },
+      },
+    },
+    teach: {
+      title: 'Schulungsstudio',
+      lead: 'Zeigen Sie eine Aufgabe einmal, und alle in Ihrem Unternehmen können ihr auf dem eigenen Bildschirm folgen. Nehmen Sie die Schritte auf oder schreiben Sie sie, prüfen und veröffentlichen Sie sie und halten Sie sie aktuell, wenn sich Ihre Apps ändern.',
+      path: [
+        'Drücken Sie auf <b>Neuer Workflow</b> und füllen Sie die vier Pflichtangaben aus.',
+        'Fügen Sie die Schritte hinzu: Nehmen Sie eine Vorführung auf, importieren Sie eine Aufnahme oder schreiben Sie sie selbst.',
+        'Prüfen Sie jeden Schritt anhand seines Screenshots und übernehmen Sie die Vorschläge, denen Sie zustimmen.',
+        '<b>Veröffentlichen</b> Sie ihn. Später aktualisieren Sie ihn mit <b>Überarbeiten</b> oder nehmen ihn mit <b>Zurückziehen</b> aus dem Angebot.',
+      ],
+      list: {
+        h: 'Alle Ihre Workflows in einer Liste',
+        alt: 'Das Schulungsstudio: die Schaltfläche Neuer Workflow, Workflow-Abweichungen, die Workflows mit Version und Status sowie ein geöffneter veröffentlichter Workflow mit seinen Details, seinen Schritten und den Aktionen Überarbeiten, Zurückziehen und Löschen.',
+        caption: 'Öffnen Sie eine Zeile, um Details und Schritte zu sehen und den Workflow zu bearbeiten.',
+        marks: {
+          newWorkflow: '<b>Neuer Workflow.</b> Öffnet den geführten Assistenten.',
+          issues: '<b>Workflow-Abweichungen.</b> Momente, in denen ein Durchlauf nicht zum Bildschirm passte. Die Zahl zeigt die neuen.',
+          states: '<b>Entwurf, Veröffentlicht oder Zurückgezogen.</b> Nur ein veröffentlichter Workflow erreicht Ihr Team.',
+          actions: '<b>Überarbeiten, Zurückziehen, Löschen.</b> Überarbeiten legt eine neue Entwurfsversion an. Die Live-Version läuft weiter, bis Sie die neue veröffentlichen.',
+        },
+      },
+      wizard: {
+        h: 'Fünf kurze Schritte, das Wichtigste zuerst',
+        alt: 'Der Assistent für einen neuen Workflow bei Grundlagen: oben die fünf Schritte, die Zeile, die bestätigt, was Sie vermitteln, die Pflichtfelder und die Schaltflächen Entwurf speichern und Veröffentlichen.',
+        caption: 'Speichern Sie jederzeit einen Entwurf und machen Sie später weiter.',
+        marks: {
+          stepper: '<b>Fünf Schritte.</b> Grundlagen, Details, Umfang & Datenschutz, Schritte und Überblick. Sie können zu jedem davon zurückgehen.',
+          reflect: '<b>Eine kurze Kontrolle.</b> Bestätigt das Produkt und die Aufgabe, die Sie vermitteln.',
+          required: '<b>Vier Pflichtangaben.</b> Produkt, Titel, verantwortliche Person und Startpunkt. Alles andere ist optional.',
+          footer: '<b>Entwurf speichern oder Veröffentlichen.</b> Veröffentlichen wird aktiv, sobald die Pflichtangaben, mindestens ein Schritt und die Bestätigung des Umfangshinweises vorliegen.',
+        },
+      },
+      scope: {
+        h: 'Keine Überraschungen, wer ihn sieht',
+        alt: 'Der Schritt Umfang & Datenschutz: mit wem der Workflow geteilt wird, was er speichert, das Bestätigungskästchen und die Option zum Maskieren.',
+        caption: 'Veröffentlichen ist erst möglich, wenn Sie den Umfangshinweis bestätigt haben.',
+        marks: {
+          note: '<b>Wer ihn sieht.</b> Alle in Ihrem Unternehmen, sobald er veröffentlicht ist.',
+          ack: '<b>Einmal bestätigen.</b> Setzen Sie dieses Häkchen vor dem Veröffentlichen.',
+          mask: '<b>Sensiblen Text maskieren.</b> Geschieht auf Ihrem Gerät, bevor ein aufgenommener Screenshot gespeichert wird. Immer aktiv, solange der Datenschutz Ihres Unternehmens eingeschaltet ist.',
+        },
+      },
+      record: {
+        h: 'Eine Vorführung live aufnehmen',
+        alt: 'Die Einrichtung für Vorführung aufnehmen: mit dem Mikrofon kommentieren samt Sprache des Kommentars, den Ton des Anrufs mit dem Zustimmungskästchen aufnehmen, der Hinweis zum Maskieren und die Schaltfläche Bildschirm teilen und starten.',
+        caption: 'WorkCoPilot sieht Ihren Bildschirm, nicht Ihre Klicks. Drücken Sie auf Neuer Schritt, wann immer ein neuer Schritt beginnen soll.',
+        marks: {
+          narrate: '<b>Kommentieren.</b> Was Sie sagen, wird zum Text des jeweiligen Schritts. Es wird kein Ton gespeichert.',
+          call: '<b>Ton des Anrufs.</b> Für ein Meeting, das Sie aufnehmen. Starten bleibt gesperrt, bis Sie bestätigen, dass alle Teilnehmenden Bescheid wissen.',
+          mask: '<b>Zuerst maskiert.</b> Sensibler Text wird maskiert, bevor ein Screenshot gespeichert wird.',
+          start: '<b>Bildschirm teilen und starten.</b> Teilen Sie nur das Fenster der App, die Sie vermitteln.',
+        },
+      },
+      live: {
+        h: 'Während Sie aufnehmen',
+        alt: 'Die Aufnahmeleiste: das Abzeichen Aufnahme läuft mit Timer, die bisherigen Bildschirme und Schrittwechsel, Neuer Schritt, Pausieren, Beenden und prüfen sowie Verwerfen.',
+        caption: 'Gespeichert wird erst, wenn Sie beenden. Verwerfen löscht die Aufnahme.',
+        marks: {
+          time: '<b>Zeit und Fortschritt.</b> Wie lange Sie schon aufnehmen und wie viele Bildschirme und Schrittwechsel es bisher gibt.',
+          mark: '<b>Neuer Schritt.</b> Beginnt genau hier einen neuen Schritt.',
+          stop: '<b>Beenden und prüfen.</b> Ihre Schritte landen im Editor, bereit zur Prüfung.',
+        },
+      },
+      import: {
+        h: 'Oder eine vorhandene Aufnahme importieren',
+        alt: 'Aufnahme importieren mit einem ausgewählten Video: Dateiname und Länge, die gesprochene Sprache und die Schaltfläche Schritte aus diesem Video erstellen.',
+        caption: 'Ein Teams- oder Zoom-Video eignet sich. Das Video wird auf Ihrem Gerät gelesen und nicht hochgeladen: Nur die Screenshots, die Ihre Schritte verwenden, und kurze Sprachausschnitte verlassen das Gerät.',
+        marks: {
+          file: '<b>Ihr Video.</b> Name und Länge, auf diesem Gerät gelesen.',
+          lang: '<b>Gesprochene Sprache.</b> Damit das Gesagte in der richtigen Sprache zum Schritttext wird.',
+          start: '<b>Schritte aus diesem Video erstellen.</b> Legt jedes Mal einen Schrittentwurf an, wenn der Bildschirm bei etwas Neuem zur Ruhe kommt.',
+        },
+      },
+      review: {
+        h: 'Jeden Schritt anhand seines Screenshots prüfen',
+        alt: 'Der Schritte-Editor eines aufgenommenen Entwurfs: die Karte Prüfe jeden Schritt anhand seines Screenshots, ein geöffneter Schritt mit Screenshot und einem Vorschlag mit der Einstufung Vermutlich richtig samt Erneut auswerten und Vorschlag übernehmen sowie ein weiterer Schritt mit der Markierung Vorschlag.',
+        caption: 'Vorschläge stehen neben Ihrem eigenen Text. Ihre Schritte ändern sich nur, wenn Sie Vorschlag übernehmen wählen.',
+        marks: {
+          read: '<b>Schritte auswerten.</b> Wertet jeden Schritt mit Screenshot nacheinander aus, während Sie weiter bearbeiten.',
+          shot: '<b>Der Screenshot des Schritts.</b> Was ein Teammitglied bei diesem Schritt sehen sollte.',
+          band: '<b>Wie eindeutig es wirkte.</b> Wirkt eindeutig, Vermutlich richtig oder Unsicher, prüfen.',
+          use: '<b>Vorschlag übernehmen oder Erneut auswerten.</b> Sie entscheiden, Schritt für Schritt.',
+          mark: '<b>Vorschlag wartet.</b> Erscheint bei jedem Schritt, für den ein Vorschlag zur Prüfung bereitliegt.',
+        },
+      },
+    },
     issues: {
       title: 'Workflow-Abweichungen',
-      lead: 'Unter Workflow-Abweichungen landen die Momente, in denen ein veröffentlichter Workflow nicht zu dem passte, was ein Teammitglied auf dem Bildschirm sah: Der Bildschirm hatte sich geändert, ein Fehler wurde angezeigt, es ging nicht weiter, ein Schritt fehlte im Workflow oder ein Schritt wurde übersprungen. Jede Abweichung betrifft den Workflow, nicht die Arbeit einer Person.',
-      shot: {
-        alt: 'Workflow-Abweichungen: Übersichts-Chips, der Filter Aktiv, die Liste der Neuigkeiten seit dem letzten Besuch und eine geöffnete Abweichung mit dem vorgeschlagenen Schritt und dem Bildschirm, den die Anleitung gesehen hat.',
-        caption: 'Workflow-Abweichungen. Wiederholungen bei gleichem Schritt und gleicher Art werden zu einer Abweichung zusammengefasst, statt eine neue anzulegen.',
-      },
-      howTo: 'So bearbeiten Sie Workflow-Abweichungen',
-      steps: [
-        'Öffnen Sie <b>Workflow-Abweichungen</b> im Menübereich Verwaltung oder aus dem Schulungsstudio. Die Zahl daneben zeigt, wie viele Abweichungen seit Ihrem letzten Besuch neu sind.',
-        'Die Chips oben zählen offene und zur Kenntnis genommene Abweichungen sowie aktive Abweichungen nach Art. Wählen Sie <b>Aktiv</b>, <b>Behoben</b>, <b>Verworfen</b> oder <b>Alle</b> und grenzen Sie die Liste bei Bedarf auf einen Workflow ein.',
-        'Klicken Sie auf eine Zeile, um zu sehen, was die Anleitung bemerkt hat, welchen Bildschirm sie gesehen hat und wann es passiert ist.',
-        'Mit <b>Zur Kenntnis nehmen</b> weiß das Team, dass sich jemand darum kümmert. Nachdem Sie den Workflow aktualisiert haben, wählen Sie <b>Abschließen</b>. Muss nichts geändert werden, wählen Sie <b>Verwerfen</b>, dann werden Wiederholungen nicht mehr gemeldet. Halten Sie in einer Notiz fest, warum.',
+      lead: 'Sehen Sie jeden Moment, in dem ein veröffentlichter Workflow nicht zum Bildschirm eines Teammitglieds passte. Korrigieren Sie den Workflow einmal, und alle, die ihn ausführen, bekommen die Korrektur. Jede Abweichung betrifft den Workflow, nie die Arbeit einer Person.',
+      path: [
+        'Öffnen Sie <b>Workflow-Abweichungen</b> im Menü oder im Schulungsstudio. Die Zahl zeigt die neuen Abweichungen.',
+        'Filtern Sie nach Status oder Workflow und öffnen Sie dann eine Abweichung.',
+        'Wählen Sie <b>Zur Kenntnis nehmen</b>, aktualisieren Sie den Workflow und wählen Sie dann <b>Abschließen</b>. Oder wählen Sie <b>Verwerfen</b>, wenn sich nichts ändern muss.',
       ],
+      pathWatch: [
+        'Öffnen Sie <b>Workflow-Abweichungen</b> im Menü. Die Zahl zeigt die neuen Abweichungen.',
+        'Filtern Sie nach Status oder Workflow und öffnen Sie dann eine Abweichung, um zu sehen, was passiert ist.',
+        'Verfolgen Sie sie bis zum Abschluss: Die Personen, die den Workflow aktuell halten, nehmen sie zur Kenntnis, passen den Workflow an und schließen sie ab.',
+      ],
+      badge: {
+        h: 'Neue Abweichungen finden Sie',
+        alt: 'Das Menü mit Workflow-Abweichungen und der Zahl neuer Abweichungen.',
+        caption: 'Die Zahl zeigt Abweichungen, die seit Ihrem letzten Besuch neu sind.',
+        marks: {
+          badge: '<b>Workflow-Abweichungen.</b> Öffnet den Eingang. Die Zahl zeigt, was neu ist.',
+        },
+      },
+      inbox: {
+        h: 'Sehen, was passiert ist, und handeln',
+        alt: 'Workflow-Abweichungen: die Übersichts-Chips, der Statusfilter und eine geöffnete Abweichung mit dem, was die Anleitung bemerkt hat, dem Bildschirm, den sie gesehen hat, dem vorgeschlagenen Schritt, wer darauf gestoßen ist, und den Aktionen.',
+        caption: 'Wiederholungen bei gleichem Schritt und gleicher Art laufen in einer Abweichung zusammen, so bleibt die Liste kurz.',
+        marks: {
+          chips: '<b>Auf einen Blick.</b> Offene und zur Kenntnis genommene Abweichungen sowie aktive Abweichungen nach Art.',
+          filters: '<b>Filtern.</b> Aktiv, Behoben, Verworfen oder Alle, und jeweils ein Workflow.',
+          shot: '<b>Der Bildschirm, den die Anleitung sah.</b> Öffnen Sie ihn größer, um genau zu sehen, was sich geändert hat.',
+          suggest: '<b>Vorgeschlagener Schritt.</b> Der Schritt, den ein Teammitglied brauchte und den der Workflow noch nicht enthält.',
+          actions: '<b>Handeln.</b> Den Schritt zu einem Entwurf hinzufügen, Zur Kenntnis nehmen, Abschließen oder Verwerfen, mit einer Notiz zur Begründung.',
+          actionsPlain: '<b>Handeln.</b> Zur Kenntnis nehmen, Abschließen oder Verwerfen, mit einer Notiz zur Begründung.',
+        },
+      },
       adopt: {
         h: 'Einen fehlenden Schritt zum Workflow hinzufügen',
-        steps: [
-          'Wenn ein Teammitglied einen Schritt brauchte, den der Workflow nicht enthält, zeigt die Abweichung den vorgeschlagenen Schritt.',
-          'Die Person, die den Workflow erstellt hat, oder ein Unternehmensadmin drückt auf <b>Diesen Schritt zum Workflow-Entwurf hinzufügen</b> und bestätigt. Der Live-Workflow läuft unverändert weiter.',
-          'Öffnen Sie den Entwurf im Schulungsstudio, prüfen Sie den neuen Schritt und veröffentlichen Sie, wenn alles stimmt.',
-        ],
-      },
-      shotAdopt: {
         alt: 'Die Bestätigung, mit der der vorgeschlagene Schritt zu einem Entwurf des Workflows hinzugefügt wird.',
         caption: 'Für Ihr Team ändert sich nichts, bis jemand den Entwurf veröffentlicht.',
       },
+      exec: {
+        h: 'Im Management-Dashboard',
+        alt: 'Die Karte Workflow-Abweichungen im Management-Dashboard: aktive Abweichungen nach Art und die Schaltfläche Abweichungen ansehen.',
+        caption: 'Sehen Sie, wo Workflows Aufmerksamkeit brauchen, ohne jede Abweichung zu öffnen.',
+        marks: {
+          kinds: '<b>Aktive Abweichungen nach Art.</b> Bildschirm geändert, Fehler auf dem Bildschirm, Kam nicht weiter, Schritt nicht im Workflow, Schritt übersprungen.',
+          review: '<b>Abweichungen ansehen.</b> Öffnet den vollständigen Eingang.',
+        },
+      },
       watch: 'GRC und Führungskräfte verfolgen jede Abweichung mit Lesezugriff. Führungskräfte sehen die aktiven Abweichungen nach Art außerdem im Management-Dashboard.',
+    },
+    exec: {
+      title: 'Management-Dashboard',
+      lead: 'Sehen Sie, wo jedes Projekt steht und wer die Arbeit voranbringt, ohne jemanden um einen Statusbericht zu bitten.',
+      path: [
+        'Öffnen Sie <b>Management-Dashboard</b> unten im Menü.',
+        'Wählen Sie 7, 30 oder 90 Tage und sehen Sie sich dann die Ansichten zu Projekten und Personen an.',
+        'Exportieren Sie ein PDF, ein Bild oder eine CSV-Datei, wenn Sie die Ansicht teilen möchten.',
+      ],
+      drill: {
+        h: 'Projekte und Personen auf einen Blick',
+        alt: 'Die Detailansichten des Management-Dashboards: Kacheln zum Projektstatus, die größten Projekte mit Projektmanager, Aufgaben, Personen und Fortschrittsbalken sowie die Top-Mitwirkenden nach erledigten Aufgaben und nach Projekten.',
+        caption: 'Nur zum Lesen, und es umfasst Ihr gesamtes Unternehmen.',
+        marks: {
+          status: '<b>Projektstatus.</b> Wie viele Projekte laufend, erledigt oder pausiert sind.',
+          table: '<b>Größte Projekte.</b> Projektmanager, Aufgaben, Personen und wie weit jedes Projekt ist.',
+          people: '<b>Top-Mitwirkende, auf zwei Arten.</b> Nach erledigten angeleiteten Aufgaben und nach den Projekten, an denen sie mitarbeiten oder die sie leiten.',
+        },
+      },
+      brain: {
+        h: 'Das Unternehmens-Brain herunterladen (nur Führungskräfte)',
+        alt: 'Der Bereich Unternehmens-Brain: der Hinweis zur Verschlüsselung, die Meldung, dass Ihre Export-Passphrase festgelegt ist, mit Passphrase anzeigen und Passphrase ersetzen, sowie Unternehmens-Brain herunterladen.',
+        caption: 'Im gehosteten Dienst wird beim Anzeigen oder Ersetzen der Passphrase Ihr Authenticator-Code abgefragt.',
+        marks: {
+          note: '<b>Mit Ihrer Passphrase verschlüsselt.</b> Ohne sie lässt sich die Datei nicht öffnen, bewahren Sie sie also sicher auf.',
+          key: '<b>Anzeigen oder ersetzen.</b> Einmal festlegen, dann jederzeit ansehen oder ändern.',
+          download: '<b>Unternehmens-Brain herunterladen.</b> Eine verschlüsselte .wcpx-Datei mit dem Wissensspeicher Ihres Unternehmens.',
+        },
+      },
     },
     admin: {
       title: 'Abläufe und Rollen',

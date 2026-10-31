@@ -3957,10 +3957,101 @@ export default {
         caption: "Alertes, les plus récentes d'abord.",
       },
     },
+    trainer: {
+      title: 'Donner l\'autorisation Formateur à quelqu\'un',
+      lead: 'Les formateurs enregistrent et publient les workflows que suit votre équipe. Donnez cette autorisation aux personnes qui connaissent le mieux une tâche.',
+      steps: {
+        open: {
+          t: 'Ouvrez Équipe',
+          d: 'Trouvez la personne dans la liste.',
+        },
+        tick: {
+          t: 'Cochez Formateur',
+          d: 'La case apparaît sous le rôle des membres et des chefs de projet, et s\'enregistre immédiatement.',
+        },
+        studio: {
+          t: 'La personne peut former',
+          d: 'Studio de formation et Écarts de workflow apparaissent dans son menu.',
+        },
+      },
+      shots: {
+        grant: {
+          alt: 'Le tableau Équipe : Maya Lin avec le rôle Membre et la case Formateur cochée en dessous.',
+          caption: 'Les administrateurs d\'entreprise peuvent former sans cette autorisation. Passer une personne à un autre rôle la lui retire.',
+          marks: {
+            role: '<b>Rôle.</b> L\'autorisation fonctionne avec le rôle Membre ou Chef de projet.',
+            trainer: '<b>Formateur.</b> Cochez pour permettre à cette personne d\'enregistrer et de publier des workflows. Décochez pour la lui retirer.',
+          },
+        },
+      },
+    },
+    developer: {
+      open: 'API et webhooks',
+      title: 'API et webhooks',
+      lead: 'Connectez vos propres applications à WorkCoPilot : lisez et lancez des workflows, lisez les écarts de workflow, interrogez le Company Brain et soyez prévenu dès que quelque chose se passe.',
+      steps: {
+        create: {
+          t: 'Créez une clé',
+          d: 'Nommez-la, cochez uniquement les portées dont l\'application a besoin et fixez une date d\'expiration.',
+        },
+        store: {
+          t: 'Rangez-la une fois',
+          d: 'La clé complète ne s\'affiche qu\'une seule fois. Placez-la dans votre gestionnaire de secrets.',
+        },
+        rotate: {
+          t: 'Renouvelez ou révoquez',
+          d: 'Renouvelez avec un court chevauchement, ou révoquez immédiatement si une clé a fuité.',
+        },
+        hooks: {
+          t: 'Ajoutez un webhook',
+          d: 'Choisissez les événements, puis vérifiez chaque livraison.',
+        },
+      },
+      shots: {
+        keys: {
+          alt: 'Clés API : le bouton Créer une clé et la liste des clés, l\'une ouverte avec ses portées, son créateur, ses adresses IP autorisées et les boutons Renouveler et Révoquer.',
+          caption: 'Après la création, seuls le préfixe et les quatre derniers caractères d\'une clé sont affichés.',
+          marks: {
+            create: '<b>Créer une clé.</b> Crée une nouvelle clé pour une application.',
+            row: '<b>Chaque clé en un coup d\'œil.</b> État, portées, expiration et date de dernière utilisation.',
+            acts: '<b>Renouveler ou Révoquer.</b> Renouveler émet un nouveau secret avec les mêmes réglages. Révoquer bloque la clé immédiatement.',
+          },
+        },
+        create: {
+          alt: 'Le formulaire de nouvelle clé API : le nom, les portées que la clé peut utiliser, l\'expiration et la liste facultative d\'adresses IP autorisées.',
+          caption: 'Une clé par usage, pour pouvoir en révoquer une sans toucher aux autres. Créer ou renouveler une clé peut demander votre code d\'authentification.',
+          marks: {
+            scopes: '<b>Ce que cette clé peut faire.</b> Cochez uniquement ce dont l\'application a besoin.',
+            expiry: '<b>Expire dans.</b> Une clé qui expire, c\'est une révocation de moins à ne pas oublier.',
+            ip: '<b>Adresses IP autorisées.</b> Facultatif. N\'acceptez que les appels venant de vos propres adresses.',
+          },
+        },
+        secret: {
+          alt: 'Le panneau Copiez votre clé maintenant avec une clé d\'exemple, Copier la clé et Je l\'ai enregistrée.',
+          caption: 'Ne le fermez qu\'une fois la clé rangée en lieu sûr.',
+          marks: {
+            copy: '<b>Copier la clé.</b> C\'est la seule fois où la clé complète est affichée.',
+            done: '<b>Je l\'ai enregistrée.</b> Ferme le panneau. La clé complète ne pourra plus être affichée.',
+          },
+        },
+        hooks: {
+          alt: 'Webhooks : un point de terminaison ouvert avec ses événements, ses commandes et ses livraisons récentes avec leur état.',
+          caption: 'Chaque livraison est signée, pour que votre application puisse vérifier qu\'elle vient bien de WorkCoPilot.',
+          marks: {
+            events: '<b>Événements.</b> Un workflow a été publié, ou un écart de workflow a été signalé.',
+            acts: '<b>Gérez-le.</b> Activez-le ou désactivez-le, envoyez un test, renouvelez le secret de signature ou supprimez-le.',
+            deliveries: '<b>Livraisons récentes.</b> Chacune avec son résultat. Relancez celle qui a été abandonnée.',
+          },
+        },
+      },
+    },
   },
   helpShared: {
     flowLabel: 'Le parcours principal',
     open: 'Ouvrir {label}',
+    callout: 'Repère {n}',
+    calloutsLabel: 'Ce que montre chaque numéro',
+    pathLabel: 'Comment faire',
   },
   helpSuper: {
     flow: {
@@ -5039,6 +5130,7 @@ export default {
       freeAccessOn: 'Accès gratuit ✓',
       freeAccessGrant: "Accorder l'accès gratuit",
       grantHours: 'Accorder des heures',
+      more: 'Plus',
       grantHoursTitle: 'Accorder des heures achetées',
       refundLast: 'Rembourser le dernier',
       refundLastTitle: 'Rembourser le paiement le plus récent',
@@ -7044,6 +7136,8 @@ export default {
       support: 'Assistance',
       team: 'Équipe',
       exec: 'Tableau de bord de direction',
+      teach: 'Studio de formation',
+      teachTip: 'Enregistrez et publiez les workflows que suit votre équipe',
       admin: 'Console d’administration',
       queue: 'Ma file',
       queueTip: 'Tâches qui vous sont attribuées par un chef de projet',
@@ -8726,33 +8820,207 @@ export default {
         ],
       },
     },
+    workflows: {
+      title: 'Workflows de l\'entreprise',
+      lead: 'Réalisez une tâche comme votre équipe l\'a convenu, avec un guidage sur votre propre écran, une étape à la fois. Vos formateurs tiennent chaque workflow à jour : vous suivez toujours la dernière version.',
+      path: [
+        'Sur votre tableau de bord, retrouvez-le sous <b>Workflows de l\'entreprise</b>. Si la liste est longue, cherchez ou choisissez une catégorie.',
+        'Ouvrez une ligne pour voir où il commence et ce qu\'il faut avoir sous la main.',
+        'Cliquez sur <b>Lancer</b>, partagez votre écran et suivez chaque étape.',
+      ],
+      list: {
+        h: 'Trouvez le workflow qu\'il vous faut',
+        alt: 'La section Workflows de l\'entreprise du tableau de bord : un champ de recherche, un filtre par catégorie, des lignes de workflow avec produit, catégorie, étapes et durée, et une ligne ouverte avec le point de départ, ce qu\'il faut avoir sous la main, qui le tient à jour et le bouton Lancer.',
+        caption: 'Chaque workflow publié par vos formateurs, prêt à être lancé.',
+        marks: {
+          search: '<b>Recherche et filtre.</b> Trouvez un workflow par son nom, ou limitez la liste à une catégorie.',
+          details: '<b>À savoir avant de commencer.</b> Où il commence, ce qu\'il faut avoir sous la main et qui le tient à jour.',
+          run: '<b>Lancer.</b> Démarre une tâche guidée à partir de ce workflow, avec toutes les étapes déjà prévues.',
+        },
+      },
+      guide: {
+        h: 'Suivez chaque étape, avec l\'écran attendu',
+        alt: 'La vue de guidage qui déroule le workflow Émettre un remboursement client : le plan à gauche, l\'étape en cours avec son critère de fin, la miniature Ce que l\'écran devrait afficher, l\'étiquette Workflow de l\'entreprise et le bouton Marquer comme fait.',
+        caption: 'Un workflow suit les étapes enregistrées par votre formateur, dans leur ordre.',
+        marks: {
+          plan: '<b>Tout le plan.</b> Chaque étape du workflow, et où vous en êtes.',
+          shot: '<b>Ce que l\'écran devrait afficher.</b> La capture d\'écran de votre formateur pour cette étape, pour vérifier que vous êtes au bon endroit.',
+          source: '<b>Workflow de l\'entreprise.</b> Le workflow et la version que vous suivez.',
+          done: '<b>Marquer comme fait.</b> Passez à la suite une fois l\'étape terminée, ou cliquez d\'abord sur Vérifier sur mon écran pour la contrôler.',
+        },
+      },
+      larger: {
+        h: 'Comparez votre écran à celui du formateur',
+        alt: 'La capture d\'écran de l\'étape affichée en grand dans la carte de l\'étape.',
+        caption: 'Cliquez sur Agrandir sur toute étape qui a une capture d\'écran.',
+        marks: {
+          full: '<b>La capture complète.</b> Comparez-la à votre écran avant d\'agir.',
+        },
+      },
+    },
+    teach: {
+      title: 'Studio de formation',
+      lead: 'Montrez une tâche une fois, et toute votre entreprise peut la suivre sur son propre écran. Enregistrez ou rédigez les étapes, vérifiez-les, publiez, et tenez-les à jour quand vos applications évoluent.',
+      path: [
+        'Cliquez sur <b>Nouveau workflow</b> et remplissez les quatre informations essentielles.',
+        'Ajoutez les étapes : enregistrez une démonstration, importez un enregistrement ou rédigez-les.',
+        'Vérifiez chaque étape avec sa capture d\'écran et gardez les suggestions qui vous conviennent.',
+        'Cliquez sur <b>Publier</b>. Plus tard, utilisez <b>Réviser</b> pour le mettre à jour ou <b>Retirer</b> pour ne plus le proposer.',
+      ],
+      list: {
+        h: 'Tous vos workflows dans une seule liste',
+        alt: 'Le Studio de formation : le bouton Nouveau workflow, Écarts de workflow, les workflows avec leur version et leur état, et un workflow publié ouvert avec ses détails, ses étapes et les actions Réviser, Retirer et Supprimer.',
+        caption: 'Ouvrez une ligne pour voir ses détails et ses étapes, et agir dessus.',
+        marks: {
+          newWorkflow: '<b>Nouveau workflow.</b> Ouvre l\'assistant guidé.',
+          issues: '<b>Écarts de workflow.</b> Les moments où un déroulé ne correspondait pas à l\'écran. Le nombre compte les nouveaux.',
+          states: '<b>Brouillon, Publié ou Retiré.</b> Seul un workflow publié arrive jusqu\'à votre équipe.',
+          actions: '<b>Réviser, Retirer, Supprimer.</b> Réviser crée une nouvelle version en brouillon. La version en service continue de fonctionner jusqu\'à ce que vous publiiez la nouvelle.',
+        },
+      },
+      wizard: {
+        h: 'Cinq étapes courtes, l\'essentiel d\'abord',
+        alt: 'L\'assistant de nouveau workflow sur Essentiel : les cinq étapes en haut, la ligne qui confirme ce que vous enseignez, les champs obligatoires et les boutons Enregistrer le brouillon et Publier.',
+        caption: 'Enregistrez un brouillon à tout moment et reprenez-le plus tard.',
+        marks: {
+          stepper: '<b>Cinq étapes.</b> Essentiel, Détails, Portée et confidentialité, Étapes et Récapitulatif. Vous pouvez revenir à chacune.',
+          reflect: '<b>Une vérification rapide.</b> Confirme le produit et la tâche que vous enseignez.',
+          required: '<b>Quatre informations essentielles.</b> Produit, titre, responsable et point de départ. Tout le reste est facultatif.',
+          footer: '<b>Enregistrer le brouillon ou Publier.</b> Publier devient disponible dès que les informations essentielles, au moins une étape et la note de portée sont en place.',
+        },
+      },
+      scope: {
+        h: 'Aucune surprise sur qui le voit',
+        alt: 'L\'étape Portée et confidentialité : avec qui le workflow est partagé, ce qu\'il conserve, la case de confirmation et l\'option de masquage.',
+        caption: 'La publication attend que vous ayez confirmé la note de portée.',
+        marks: {
+          note: '<b>Qui le voit.</b> Toute votre entreprise, une fois qu\'il est publié.',
+          ack: '<b>Confirmez une fois.</b> Cochez cette case avant de publier.',
+          mask: '<b>Masquer le texte sensible.</b> Fait sur votre appareil, avant qu\'une capture enregistrée ne soit conservée. Toujours actif tant que la protection des données de votre entreprise est activée.',
+        },
+      },
+      record: {
+        h: 'Enregistrez une démonstration en direct',
+        alt: 'L\'écran de préparation Enregistrez une démonstration : commenter avec le micro et la langue du commentaire, capturer le son de l\'appel avec sa case de consentement, la note sur le masquage et le bouton Partager l\'écran et démarrer.',
+        caption: 'WorkCoPilot voit votre écran, pas vos clics. Cliquez sur Marquer l\'étape chaque fois qu\'une nouvelle étape doit commencer.',
+        marks: {
+          narrate: '<b>Commentez.</b> Ce que vous dites devient le texte de chaque étape. Aucun son n\'est conservé.',
+          call: '<b>Son de l\'appel.</b> Pour une réunion que vous enregistrez. Le démarrage reste bloqué tant que vous n\'avez pas confirmé que tous les participants sont au courant.',
+          mask: '<b>Masqué d\'abord.</b> Le texte sensible est masqué avant qu\'une capture ne soit conservée.',
+          start: '<b>Partager l\'écran et démarrer.</b> Partagez uniquement la fenêtre de l\'application que vous enseignez.',
+        },
+      },
+      live: {
+        h: 'Pendant l\'enregistrement',
+        alt: 'La barre d\'enregistrement en direct : le badge Enregistrement et le chronomètre, les écrans et les changements d\'étape jusqu\'ici, Marquer l\'étape, Pause, Arrêter et vérifier, et Abandonner.',
+        caption: 'Rien n\'est conservé avant l\'arrêt. Abandonner supprime l\'enregistrement.',
+        marks: {
+          time: '<b>Durée et progression.</b> Depuis combien de temps vous enregistrez, et combien d\'écrans et de changements d\'étape il contient.',
+          mark: '<b>Marquer l\'étape.</b> Démarre une nouvelle étape à cet endroit précis.',
+          stop: '<b>Arrêter et vérifier.</b> Vos étapes arrivent dans l\'éditeur, prêtes à être vérifiées.',
+        },
+      },
+      import: {
+        h: 'Ou importez un enregistrement existant',
+        alt: 'Importez un enregistrement avec une vidéo choisie : le nom du fichier et sa durée, la langue parlée et le bouton Créer les étapes depuis cette vidéo.',
+        caption: 'Une vidéo Teams ou Zoom convient. La vidéo est lue sur votre appareil et n\'est pas envoyée en ligne : seules les captures d\'écran utilisées par vos étapes et de courts extraits de voix quittent l\'appareil.',
+        marks: {
+          file: '<b>Votre vidéo.</b> Son nom et sa durée, lus sur cet appareil.',
+          lang: '<b>Langue parlée.</b> Pour que ce qui est dit devienne le texte des étapes dans la bonne langue.',
+          start: '<b>Créer les étapes depuis cette vidéo.</b> Prépare une étape chaque fois que l\'écran se fixe sur quelque chose de nouveau.',
+        },
+      },
+      review: {
+        h: 'Vérifiez chaque étape avec sa capture d\'écran',
+        alt: 'L\'éditeur d\'étapes d\'un brouillon enregistré : la carte Vérifiez chaque étape avec sa capture d\'écran, une étape ouverte avec sa capture et une suggestion marquée Sans doute juste avec Analyser à nouveau et Utiliser la suggestion, et une autre étape marquée Suggestion.',
+        caption: 'Les suggestions s\'affichent à côté de votre propre texte. Vos étapes ne changent que si vous choisissez Utiliser la suggestion.',
+        marks: {
+          read: '<b>Analyser les étapes.</b> Analyse chaque étape qui a une capture, une à la fois, pendant que vous continuez à modifier.',
+          shot: '<b>La capture de l\'étape.</b> Ce qu\'un collègue devrait voir à cette étape.',
+          band: '<b>Le degré de clarté.</b> Semble clair, Sans doute juste, ou Incertain, à vérifier.',
+          use: '<b>Utiliser la suggestion ou Analyser à nouveau.</b> C\'est vous qui décidez, une étape à la fois.',
+          mark: '<b>Suggestion en attente.</b> S\'affiche sur chaque étape qui en a une à vérifier.',
+        },
+      },
+    },
     issues: {
       title: 'Écarts de workflow',
-      lead: 'La page Écarts de workflow rassemble les moments où un workflow publié ne correspondait pas à ce qu\'un collègue voyait à l\'écran : l\'écran avait changé, une erreur s\'est affichée, il n\'a pas pu continuer, il lui fallait une étape absente du workflow, ou une étape a été sautée. Chaque écart concerne le workflow, pas le travail de quelqu\'un.',
-      shot: {
-        alt: 'Écarts de workflow : les pastilles de résumé, le filtre Actifs, la liste des nouveautés depuis votre dernière visite, et un écart ouvert avec l\'étape suggérée et l\'écran vu par le guide.',
-        caption: 'Écarts de workflow. Les répétitions sur la même étape et du même type s\'ajoutent à un seul écart au lieu d\'en créer un nouveau.',
-      },
-      howTo: 'Comment traiter les écarts de workflow',
-      steps: [
-        'Ouvrez <b>Écarts de workflow</b> depuis la section Gestion du menu, ou depuis le Studio de formation. Le nombre affiché à côté compte les écarts apparus depuis votre dernière visite.',
-        'Les pastilles en haut comptent les écarts ouverts et pris en compte, ainsi que les écarts actifs par type. Choisissez <b>Actifs</b>, <b>Résolus</b>, <b>Ignorés</b> ou <b>Tous</b>, et sélectionnez un workflow pour affiner la liste.',
-        'Cliquez sur une ligne pour voir ce que le guide a remarqué, l\'écran qu\'il a vu et quand c\'est arrivé.',
-        '<b>Prendre en compte</b> un écart indique à l\'équipe que quelqu\'un s\'en occupe. Après avoir mis à jour le workflow, cliquez sur <b>Résoudre</b>. Si rien ne doit changer, cliquez sur <b>Ignorer</b> : les répétitions ne seront plus signalées. Ajoutez une note pour expliquer pourquoi.',
+      lead: 'Voyez chaque moment où un workflow publié ne correspondait pas à l\'écran d\'un collègue. Corrigez le workflow une fois, et tous ceux qui le lancent en profitent. Chaque écart concerne le workflow, jamais le travail de quelqu\'un.',
+      path: [
+        'Ouvrez <b>Écarts de workflow</b> depuis le menu ou le Studio de formation. Le nombre compte les nouveaux écarts.',
+        'Filtrez par état ou par workflow, puis ouvrez un écart.',
+        'Cliquez sur <b>Prendre en compte</b>, mettez le workflow à jour, puis cliquez sur <b>Résoudre</b>. Ou cliquez sur <b>Ignorer</b> si rien ne doit changer.',
       ],
+      pathWatch: [
+        'Ouvrez <b>Écarts de workflow</b> depuis le menu. Le nombre compte les nouveaux écarts.',
+        'Filtrez par état ou par workflow, puis ouvrez un écart pour voir ce qui s\'est passé.',
+        'Suivez-le jusqu\'au bout : les personnes qui tiennent le workflow à jour le prennent en compte, corrigent le workflow et le résolvent.',
+      ],
+      badge: {
+        h: 'Les nouveaux écarts viennent à vous',
+        alt: 'Le menu avec Écarts de workflow et son nombre de nouveaux écarts.',
+        caption: 'Le nombre indique les écarts apparus depuis votre dernière visite.',
+        marks: {
+          badge: '<b>Écarts de workflow.</b> Ouvre la boîte de réception. Le nombre compte les nouveautés.',
+        },
+      },
+      inbox: {
+        h: 'Voyez ce qui s\'est passé et agissez',
+        alt: 'Écarts de workflow : les pastilles de résumé, le filtre par état, et un écart ouvert avec ce que le guide a remarqué, l\'écran qu\'il a vu, l\'étape suggérée, qui l\'a rencontré et les actions.',
+        caption: 'Les répétitions sur la même étape et du même type s\'ajoutent à un seul écart : la liste reste courte.',
+        marks: {
+          chips: '<b>En un coup d\'œil.</b> Les écarts ouverts et pris en compte, et les écarts actifs par type.',
+          filters: '<b>Filtre.</b> Actifs, Résolus, Ignorés ou Tous, et un workflow à la fois.',
+          shot: '<b>L\'écran vu par le guide.</b> Ouvrez-le en grand pour voir exactement ce qui a changé.',
+          suggest: '<b>Étape suggérée.</b> L\'étape dont un collègue avait besoin et que le workflow ne contient pas encore.',
+          actions: '<b>Agissez.</b> Ajoutez l\'étape à un brouillon, ou choisissez Prendre en compte, Résoudre ou Ignorer, avec une note pour expliquer pourquoi.',
+          actionsPlain: '<b>Agissez.</b> Choisissez Prendre en compte, Résoudre ou Ignorer, avec une note pour expliquer pourquoi.',
+        },
+      },
       adopt: {
         h: 'Ajouter une étape manquante au workflow',
-        steps: [
-          'Quand un collègue a eu besoin d\'une étape absente du workflow, l\'écart affiche l\'étape suggérée.',
-          'L\'auteur du workflow ou un administrateur d\'entreprise clique sur <b>Ajouter cette étape au brouillon du workflow</b> et confirme. Le workflow en service continue de fonctionner tel quel.',
-          'Ouvrez le brouillon dans le Studio de formation, vérifiez la nouvelle étape et publiez quand tout est juste.',
-        ],
-      },
-      shotAdopt: {
         alt: 'La confirmation pour ajouter l\'étape suggérée à un brouillon du workflow.',
         caption: 'Rien ne change pour votre équipe tant que personne n\'a publié le brouillon.',
       },
+      exec: {
+        h: 'Sur le tableau de bord de direction',
+        alt: 'La carte Écarts de workflow du tableau de bord de direction : les écarts actifs comptés par type et le bouton Voir les écarts de workflow.',
+        caption: 'Voyez quels workflows demandent de l\'attention sans ouvrir chaque écart.',
+        marks: {
+          kinds: '<b>Écarts actifs par type.</b> Écran modifié, Erreur à l\'écran, Impossible de continuer, Étape hors workflow, Étape sautée.',
+          review: '<b>Voir les écarts de workflow.</b> Ouvre la boîte de réception complète.',
+        },
+      },
       watch: 'La GRC et les dirigeants suivent chaque écart en lecture seule. Les dirigeants voient aussi les écarts actifs par type sur le tableau de bord de direction.',
+    },
+    exec: {
+      title: 'Tableau de bord de direction',
+      lead: 'Voyez où en est chaque projet et qui fait avancer le travail, sans demander de point d\'avancement à personne.',
+      path: [
+        'Ouvrez <b>Tableau de bord de direction</b> en bas du menu.',
+        'Choisissez 7, 30 ou 90 jours, puis consultez les vues projets et personnes.',
+        'Exportez un PDF, une image ou un CSV quand vous devez le partager.',
+      ],
+      drill: {
+        h: 'Projets et personnes en un coup d\'œil',
+        alt: 'Les vues détaillées du tableau de bord de direction : les tuiles d\'état des projets, les plus gros projets avec chef de projet, tâches, personnes et barre d\'avancement, et les meilleurs contributeurs par tâches terminées et par projets.',
+        caption: 'En lecture seule, et pour toute votre entreprise.',
+        marks: {
+          status: '<b>État des projets.</b> Combien de projets sont en cours, terminés ou en attente.',
+          table: '<b>Les plus gros projets.</b> Chef de projet, tâches, personnes et taux d\'avancement de chacun.',
+          people: '<b>Meilleurs contributeurs, sous deux angles.</b> Par tâches guidées terminées, et par projets auxquels ils participent ou qu\'ils gèrent.',
+        },
+      },
+      brain: {
+        h: 'Téléchargez le Cerveau de l\'entreprise (dirigeants uniquement)',
+        alt: 'Le panneau Cerveau de l\'entreprise : la note sur le chiffrement, le message indiquant que votre phrase secrète d\'export est définie avec Afficher la phrase secrète et Remplacer la phrase secrète, et Télécharger le Cerveau de l\'entreprise.',
+        caption: 'Sur le service hébergé, afficher ou remplacer la phrase secrète demande votre code d\'authentification.',
+        marks: {
+          note: '<b>Chiffré avec votre phrase secrète.</b> Sans elle, le fichier ne peut pas être ouvert : conservez-la en lieu sûr.',
+          key: '<b>Affichez-la ou remplacez-la.</b> Définissez-la une fois, puis consultez-la ou changez-la quand vous en avez besoin.',
+          download: '<b>Télécharger le Cerveau de l\'entreprise.</b> Un seul fichier .wcpx chiffré contenant la base de connaissances de votre entreprise.',
+        },
+      },
     },
     admin: {
       title: 'Flux et rôles',

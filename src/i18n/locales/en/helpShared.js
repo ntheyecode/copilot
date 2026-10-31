@@ -8,5 +8,9 @@ export default {
   helpShared: {
     flowLabel: 'The main flow',
     open: 'Open {label}',
+    // Annotated screenshots (src/pages/work/help/AnnotatedShot.jsx).
+    callout: 'Callout {n}',
+    calloutsLabel: 'What each number shows',
+    pathLabel: 'How to do it',
   },
 }

@@ -215,33 +215,218 @@ export default {
         ],
       },
     },
+    // Company workflows (help/entries/workflowsHelp.jsx): every company member.
+    // Annotated shots: each <id> has h, alt, caption and marks.<key> (one rich
+    // line per numbered callout, read in the order the entry lists them).
+    workflows: {
+      title: 'Company workflows',
+      lead: 'Do a task the way your team agreed, guided on your own screen one step at a time. Your trainers keep each workflow current, so you always follow the latest version.',
+      path: [
+        'On your dashboard, find it under <b>Company workflows</b>. Search or pick a category when the list is long.',
+        'Open a row to see where it starts and what to have ready.',
+        'Press <b>Run</b>, share your screen, and follow each step.',
+      ],
+      list: {
+        h: 'Find the workflow you need',
+        alt: 'The Company workflows section of the dashboard: a search box, a category filter, workflow rows with product, category, steps and time, and one row opened with where it starts, what to have ready, who maintains it and the Run button.',
+        caption: 'Every workflow your trainers published, ready to run.',
+        marks: {
+          search: '<b>Search and filter.</b> Find a workflow by name, or narrow the list to one category.',
+          details: '<b>Know before you start.</b> Where it starts, what to have ready and who maintains it.',
+          run: '<b>Run.</b> Starts a guided task from this workflow, with every step already planned.',
+        },
+      },
+      guide: {
+        h: 'Follow each step, with the screen to expect',
+        alt: 'The guiding view running the Issue a customer refund workflow: the plan on the left, the current step with its done check, the What the screen should look like thumbnail, the Company workflow tag and the Mark done button.',
+        caption: 'A workflow run follows the steps your trainer recorded, in their order.',
+        marks: {
+          plan: '<b>The whole plan.</b> Every step of the workflow, and where you are now.',
+          shot: '<b>What the screen should look like.</b> Your trainer\'s screenshot of this step, so you can check you are in the right place.',
+          source: '<b>Company workflow.</b> The workflow and version you are following.',
+          done: '<b>Mark done.</b> Move on when the step is finished, or press Verify on my screen to check it first.',
+        },
+      },
+      larger: {
+        h: 'Compare your screen with the trainer\'s',
+        alt: 'The step screenshot opened at full size inside the step card.',
+        caption: 'Press Show larger on any step that has a screenshot.',
+        marks: {
+          full: '<b>The full screenshot.</b> Compare it with your screen before you act.',
+        },
+      },
+    },
+    // Teach studio (help/entries/teachHelp.jsx): trainers and company admins.
+    teach: {
+      title: 'Teach studio',
+      lead: 'Show a task once and everyone in your company can follow it on their own screen. Record or write the steps, check them, publish, and keep them current as your apps change.',
+      path: [
+        'Press <b>New workflow</b> and fill in the four essentials.',
+        'Add the steps: record a demonstration, import a recording, or write them.',
+        'Check each step against its screenshot and keep the suggestions you agree with.',
+        '<b>Publish</b>. Later, <b>Revise</b> to update it or <b>Retire</b> to stop offering it.',
+      ],
+      list: {
+        h: 'All your workflows in one list',
+        alt: 'The Teach studio: the New workflow button, Workflow issues, the workflows with their version and state, and one published workflow opened with its details, its steps and the Revise, Retire and Delete actions.',
+        caption: 'Open any row to see its details and steps, and act on it.',
+        marks: {
+          newWorkflow: '<b>New workflow.</b> Opens the guided wizard.',
+          issues: '<b>Workflow issues.</b> Moments when a run did not match the screen. The number counts new ones.',
+          states: '<b>Draft, Published or Retired.</b> Only a published workflow reaches your team.',
+          actions: '<b>Revise, Retire, Delete.</b> Revise starts a new draft version. The live one keeps running until you publish the new one.',
+        },
+      },
+      wizard: {
+        h: 'Five short steps, essentials first',
+        alt: 'The new workflow wizard on Basics: the five steps across the top, the line confirming what you are teaching, the required fields and the Save draft and Publish buttons.',
+        caption: 'Save a draft at any point and come back to it later.',
+        marks: {
+          stepper: '<b>Five steps.</b> Basics, Details, Scope and privacy, Steps and Review. Go back to any of them.',
+          reflect: '<b>A quick check.</b> Confirms the product and the task you are teaching.',
+          required: '<b>Four essentials.</b> Product, title, owner and where to start. Everything else is optional.',
+          footer: '<b>Save draft or Publish.</b> Publish turns on once the essentials, at least one step and the scope note are in place.',
+        },
+      },
+      scope: {
+        h: 'No surprises about who sees it',
+        alt: 'The Scope and privacy step: who the workflow is shared with, what it stores, the confirmation checkbox and the masking option.',
+        caption: 'Publishing waits until you confirm the scope note.',
+        marks: {
+          note: '<b>Who sees it.</b> Everyone in your company, once it is published.',
+          ack: '<b>Confirm once.</b> Tick this before you publish.',
+          mask: '<b>Mask sensitive text.</b> Done on your device, before any recorded screenshot is saved. Always on while your company\'s data protection is on.',
+        },
+      },
+      record: {
+        h: 'Record a live demonstration',
+        alt: 'The Record a demonstration setup: narrate with the microphone and the narration language, capture the call audio with its consent checkbox, the masking note and the Share screen and start button.',
+        caption: 'WorkCoPilot sees your screen, not your clicks. Press Mark step whenever a new step should begin.',
+        marks: {
+          narrate: '<b>Narrate.</b> What you say becomes the text of each step. No audio is kept.',
+          call: '<b>Call audio.</b> For a meeting you are recording. Start stays off until you confirm everyone on the call knows.',
+          mask: '<b>Masked first.</b> Sensitive text is masked before any screenshot is saved.',
+          start: '<b>Share screen and start.</b> Share only the window of the app you are teaching.',
+        },
+      },
+      live: {
+        h: 'While you record',
+        alt: 'The live recording bar: the Recording badge and timer, the screens and step breaks so far, Mark step, Pause, Stop and review, and Discard.',
+        caption: 'Nothing is saved until you stop. Discard throws the recording away.',
+        marks: {
+          time: '<b>Time and progress.</b> How long you have recorded, and how many screens and step breaks it has.',
+          mark: '<b>Mark step.</b> Starts a new step right here.',
+          stop: '<b>Stop and review.</b> Your steps load into the editor, ready to check.',
+        },
+      },
+      import: {
+        h: 'Or import a recording you already have',
+        alt: 'Import a recording with a video chosen: the file name and length, the language spoken and the Build steps from this video button.',
+        caption: 'A Teams or Zoom video works. The video is read on your device and is not uploaded: only the screenshots your steps use and short clips of speech leave it.',
+        marks: {
+          file: '<b>Your video.</b> Its name and length, read on this device.',
+          lang: '<b>Language spoken.</b> So what is said becomes step text in the right language.',
+          start: '<b>Build steps from this video.</b> Drafts a step each time the screen settles on something new.',
+        },
+      },
+      review: {
+        h: 'Check each step against its screenshot',
+        alt: 'The Steps editor of a recorded draft: the Check each step against its screenshot card, one step opened with its screenshot and a suggestion marked Probably right with Read again and Use suggestion, and another step marked Suggestion.',
+        caption: 'Suggestions sit beside your own text. Your steps change only when you choose Use suggestion.',
+        marks: {
+          read: '<b>Read steps.</b> Reads each step that has a screenshot, one at a time, while you keep editing.',
+          shot: '<b>The step\'s screenshot.</b> What a teammate should see at this step.',
+          band: '<b>How clear it looked.</b> Looks clear, Probably right, or Not sure, check it.',
+          use: '<b>Use suggestion or Read again.</b> You decide, one step at a time.',
+          mark: '<b>Suggestion waiting.</b> Shows on every step that has one to check.',
+        },
+      },
+    },
+    // Workflow issues (help/entries/issuesHelp.jsx): trainers, PMs, Sr PMs, GRC,
+    // company admins and executives. `watch` is the note GRC and executives
+    // read (they follow, others act); the action callouts show to those who act.
     issues: {
       title: 'Workflow issues',
-      lead: 'Workflow issues collects the moments when a published workflow did not match what a teammate saw on screen: the screen changed, an error showed, they could not continue, they needed a step the workflow does not have, or a step was skipped. Each issue is about the workflow, not about anyone\'s work.',
-      shot: {
-        alt: 'Workflow issues: summary chips, the Active filter, the new-since-your-last-visit list, and one issue opened with the suggested step and the screen the guide saw.',
-        caption: 'Workflow issues. Repeats of the same step and kind add to one issue instead of a new one.',
-      },
-      howTo: 'How to work through workflow issues',
-      steps: [
-        'Open <b>Workflow issues</b> from the Manage section of the menu, or from the Teach studio. The number beside it counts issues that are new since your last visit.',
-        'The chips at the top count open and acknowledged issues, and active issues by kind. Choose <b>Active</b>, <b>Resolved</b>, <b>Dismissed</b> or <b>All</b>, and pick one workflow to narrow the list.',
-        'Click a row to see what the guide noticed, the screen it saw and when it happened.',
-        '<b>Acknowledge</b> an issue so the team knows someone is on it. After you update the workflow, <b>Resolve</b> it. If nothing needs to change, <b>Dismiss</b> it and repeats stay quiet. Add a note to say why.',
+      lead: 'See every moment a published workflow did not match a teammate\'s screen. Fix the workflow once and everyone who runs it gets the fix. Each issue is about the workflow, never about a person\'s work.',
+      path: [
+        'Open <b>Workflow issues</b> from the menu or the Teach studio. The number counts new issues.',
+        'Filter by state or workflow, then open an issue.',
+        '<b>Acknowledge</b> it, update the workflow, then <b>Resolve</b> it. Or <b>Dismiss</b> it if nothing needs to change.',
       ],
+      // GRC and executives follow issues read-only, so their path has no actions.
+      pathWatch: [
+        'Open <b>Workflow issues</b> from the menu. The number counts new issues.',
+        'Filter by state or workflow, then open an issue to see what happened.',
+        'Follow it through: the people who keep the workflow current acknowledge it, fix the workflow and resolve it.',
+      ],
+      badge: {
+        h: 'New issues find you',
+        alt: 'The menu with Workflow issues and its count of new issues.',
+        caption: 'The count shows issues that are new since your last visit.',
+        marks: {
+          badge: '<b>Workflow issues.</b> Opens the inbox. The number counts what is new.',
+        },
+      },
+      inbox: {
+        h: 'See what happened and act on it',
+        alt: 'Workflow issues: the summary chips, the state filter, and one issue opened with what the guide noticed, the screen it saw, the suggested step, who ran into it and the actions.',
+        caption: 'Repeats of the same step and kind add to one issue, so the list stays short.',
+        marks: {
+          chips: '<b>At a glance.</b> Open and acknowledged issues, and active issues by kind.',
+          filters: '<b>Filter.</b> Active, Resolved, Dismissed or All, and one workflow at a time.',
+          shot: '<b>The screen the guide saw.</b> Open it larger to see exactly what changed.',
+          suggest: '<b>Suggested step.</b> The step a teammate needed that the workflow does not have yet.',
+          actions: '<b>Act on it.</b> Add the step to a draft, Acknowledge, Resolve or Dismiss, with a note to say why.',
+          // For people who act on issues but cannot add a step (only the workflow's author or a company admin can).
+          actionsPlain: '<b>Act on it.</b> Acknowledge, Resolve or Dismiss, with a note to say why.',
+        },
+      },
       adopt: {
         h: 'Add a missing step to the workflow',
-        steps: [
-          'When a teammate needed a step the workflow does not have, the issue shows the suggested step.',
-          'The workflow\'s author or a company admin presses <b>Add this step to the workflow draft</b> and confirms. The live workflow keeps running as it is.',
-          'Open the draft in the Teach studio, check the new step and publish when it reads right.',
-        ],
-      },
-      shotAdopt: {
         alt: 'The confirmation to add the suggested step to a draft of the workflow.',
         caption: 'Nothing changes for your team until someone publishes the draft.',
       },
+      exec: {
+        h: 'On the executive dashboard',
+        alt: 'The Workflow issues card on the executive dashboard: active issues counted by kind and the Review workflow issues button.',
+        caption: 'See where workflows need attention without opening every issue.',
+        marks: {
+          kinds: '<b>Active issues by kind.</b> Screen changed, error on screen, could not continue, step not in workflow, step skipped.',
+          review: '<b>Review workflow issues.</b> Opens the full inbox.',
+        },
+      },
       watch: 'GRC and executives follow every issue read-only. Executives also see the active issues by kind on the executive dashboard.',
+    },
+    // Executive dashboard (help/entries/execHelp.jsx): executives and company
+    // admins; the Company Brain export part shows to executives only.
+    exec: {
+      title: 'Executive dashboard',
+      lead: 'See where every project stands and who is moving work forward, without asking anyone for a status report.',
+      path: [
+        'Open <b>Executive dashboard</b> at the bottom of the menu.',
+        'Pick 7, 30 or 90 days, then read the projects and people views.',
+        'Export a PDF, an image or a CSV when you need to share it.',
+      ],
+      drill: {
+        h: 'Projects and people at a glance',
+        alt: 'The executive dashboard drill-downs: project status tiles, the biggest projects with manager, tasks, people and a completion bar, and the top performers by tasks completed and by projects.',
+        caption: 'Read-only, and it covers your whole company.',
+        marks: {
+          status: '<b>Project status.</b> How many projects are ongoing, done or on hold.',
+          table: '<b>Biggest projects.</b> Manager, tasks, people and how complete each one is.',
+          people: '<b>Top performers, two ways.</b> By guided tasks completed, and by the projects they work on or manage.',
+        },
+      },
+      brain: {
+        h: 'Download the Company Brain (executives only)',
+        alt: 'The Company Brain panel: the encryption note, the message that your export passphrase is set with View passphrase and Replace passphrase, and Download Company Brain.',
+        caption: 'On the hosted service, viewing or replacing the passphrase asks for your authenticator code.',
+        marks: {
+          note: '<b>Encrypted with your passphrase.</b> Without it the file cannot be opened, so keep it safe.',
+          key: '<b>View or replace it.</b> Set it once, then view or change it whenever you need to.',
+          download: '<b>Download Company Brain.</b> One encrypted .wcpx file of your company\'s knowledge store.',
+        },
+      },
     },
     admin: {
       title: 'Flows and roles',
