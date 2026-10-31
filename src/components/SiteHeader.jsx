@@ -72,7 +72,7 @@ export default function SiteHeader({ current }) {
   // Where the public site is the individuals site, EVERY public page (legal
   // pages, sign-in, contact, demo) carries that site's header, so the chrome
   // never switches between two sites mid-visit.
-  if (shows(ed, 'individualSite') && ed.individualSite) return <IndivHeader />
+  if (ed.individualSite && shows(ed, 'individualSite')) return <IndivHeader />
   return <OrgHeader current={current} ed={ed} />
 }
 

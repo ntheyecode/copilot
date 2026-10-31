@@ -41,7 +41,7 @@ const GROUPS = [
 export default function SiteFooter({ dark = true }) {
   const ed = useEditionView()
   // Same rule as SiteHeader: the individuals site's footer on every public page.
-  if (shows(ed, 'individualSite') && ed.individualSite) return <IndivFooter />
+  if (ed.individualSite && shows(ed, 'individualSite')) return <IndivFooter />
   return <OrgFooter dark={dark} ed={ed} />
 }
 
