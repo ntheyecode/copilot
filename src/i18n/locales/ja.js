@@ -90,6 +90,7 @@ export default {
       back: '戻る',
       next: '次へ',
       errSave: '下書きを保存できませんでした。もう一度お試しください。',
+      errChanged: 'この下書きは、開いた後に別のタブまたは他の人によって変更されたため、保存は反映されませんでした。必要な内容をコピーしてから閉じ、もう一度開いて最新版を確認してください。',
       errPublish: '公開できませんでした。必須項目とステップを確認してから、もう一度お試しください。',
       publishedOk: '公開しました。チームがすぐにガイドを受けられます。',
       draftSavedOk: '下書きを保存しました。',
@@ -785,6 +786,7 @@ export default {
       eyebrow: 'あなたのワークスペース',
       poweredBy: '提供',
       exec: '経営層ダッシュボード',
+      logoAlt: '{company} のロゴ',
     },
     hello: 'こんにちは、{name} さん',
     plan: {
@@ -1484,6 +1486,16 @@ export default {
       copyCommand: 'コマンドをコピー',
       copyAria: 'クリップボードにコピー',
       copiedAria: 'クリップボードにコピーしました',
+      copyAll: 'すべてコピー',
+    },
+    download: {
+      file: 'ファイルをダウンロード',
+      csv: 'CSV をダウンロード',
+      md: '.md をダウンロード',
+    },
+    fullScreen: {
+      enter: 'フルスクリーン',
+      exit: 'フルスクリーンを終了',
     },
     blocks: {
       terminal: 'ターミナル',
@@ -2333,6 +2345,7 @@ export default {
       checking: 'あなたの組織のサインインを確認中…',
     },
     form: {
+      agreeDocs: '{docs}を読み、同意します。',
       ariaCreate: 'アカウント作成',
       ariaLogin: 'ログイン',
       fullName: '氏名',
@@ -2416,6 +2429,7 @@ export default {
       verifyContinue: '確認して続ける',
     },
     err: {
+      acceptAgreements: 'アカウントを作成するには、規約に同意してください。',
       timedOut: 'サインインセッションがタイムアウトしました。もう一度やり直してください。',
       finishFail: 'サインインを完了できませんでした。もう一度お試しください。',
       enterName: '氏名を入力してください。',
@@ -7919,6 +7933,29 @@ export default {
     youAsked: 'あなたの質問:',
     planUpdated: 'プランを更新しました。',
     followUp: '追加で質問する',
+    offerOpen: 'このステップがしばらく開いたままです。何が妨げになっているか教えてください。別の方法で説明することもできます。',
+    offerOpenStep: 'このステップがしばらく開いたままです: <step></step>。何が妨げになっているか教えてください。別の方法で説明することもできます。',
+    explainAgain: 'このステップをもう一度説明',
+    working: {
+      research: '調べています',
+      analyze: '画面を読み取っています',
+      stuck: 'このステップを詳しく確認しています',
+      question: 'ご質問に取り組んでいます',
+    },
+    label: {
+      research: '調べてわかったこと',
+      analyze: '見えていること',
+      betterWay: 'もっと良い進め方',
+      explained: 'このステップの解説',
+    },
+    resumeAt: '「続ける」でステップ {n} から再開します。',
+    resumeAtStep: '「続ける」でステップ {n} から再開します: <step></step>',
+    continue: {
+      plan: '更新したプランで続ける',
+      step: 'わかりました、ステップに戻る',
+      guiding: '案内を続ける',
+    },
+    backToStep: 'ステップ {n} に戻ります。',
   },
   benchmarkPage: {
     eyebrow: '精度ベンチマーク',
@@ -8135,6 +8172,25 @@ export default {
   composeCard: {
     emptyBody: 'ドキュメントは返されませんでした。',
     basedOn: '根拠にしたもの',
+    eyebrow: 'あなた向けに作成',
+    formats: {
+      prompt: 'AI 用プロンプト',
+      code: 'コード',
+      outline: 'アウトライン',
+      bullets: '箇条書き',
+      table: '表',
+      notes: 'メモ',
+      draft: '下書き',
+    },
+    untitled: {
+      prompt: 'あなたの AI 用プロンプト',
+      code: 'あなたのコード',
+      outline: 'あなたのアウトライン',
+      bullets: 'あなたの箇条書き',
+      table: 'あなたの表',
+      notes: 'あなたのメモ',
+      draft: 'あなたの下書き',
+    },
   },
   computeCard: {
     cmp: {
@@ -8767,6 +8823,7 @@ export default {
   destructiveGate: {
     label: '取り消せない操作です。',
     reveal: '理解しました。コマンドを表示',
+    body: '影響: {why}。実行する前によく読んでください。',
   },
   disclaimerPage: {
     seo: {
@@ -8894,6 +8951,16 @@ export default {
     triggerTip: 'このセッションをダウンロード',
     menuAria: 'ダウンロード形式',
     heading: 'ダウンロード形式',
+    label: 'ダウンロード',
+    formats: {
+      pdf: 'PDF レポート',
+      pdfHint: '書式付き、スクリーンショット入り',
+      txt: 'テキストレポート（.txt）',
+      txtHint: 'プレーンテキスト、内容は同じです',
+      log: '監査ログ（.log）',
+      logHint: 'AI へのすべての送信を記録',
+    },
+    errDownload: 'ダウンロードできませんでした。もう一度お試しください。',
   },
   dpaPage: {
     seo: {
@@ -9966,6 +10033,28 @@ export default {
     closeAria: 'プラン全体を閉じる',
     yourGoal: 'あなたの目標',
     now: '今',
+    runThis: 'これを実行',
+    calm: {
+      loading: {
+        t: '接続中',
+        d: '起動して、あなたのタスクを探しています。',
+      },
+      error: {
+        t: 'サーバーに接続できません',
+        d: '再試行しています。セッションは安全です。',
+      },
+      signin: {
+        t: 'WorkCoPilot にログイン',
+        d: 'メインウィンドウでログインすると、ここにタスクが表示されます。',
+      },
+      empty: {
+        t: '進行中のタスクはまだありません',
+        d: 'WorkCoPilot を開いてタスクを始めてください。この画面がステップごとに案内します。',
+      },
+    },
+    hoursOutTip: '今月のプラン時間を使い切りました',
+    hoursLeftTip: '今月の残りプラン時間',
+    readingNext: '次の操作に向けて画面を読み取っています',
   },
   guideConsole: {
     source: {
@@ -10378,6 +10467,26 @@ export default {
   },
   guideLevel: {
     groupAria: '案内の強さ',
+    levels: {
+      easy: {
+        label: 'かんたん',
+        title: 'やさしい言葉で、クリックひとつずつ丁寧に説明',
+      },
+      medium: {
+        label: '標準',
+        title: '要点を押さえたわかりやすいステップ',
+      },
+      technical: {
+        label: '技術者向け',
+        title: 'コマンド、パス、値まで正確に',
+        short: '技術',
+      },
+      executive: {
+        label: '経営層向け',
+        title: '短く、成果を先に、大事なことだけ',
+        short: '経営',
+      },
+    },
   },
   helpPage: {
     nav: {
@@ -10825,6 +10934,14 @@ export default {
   },
   policyNote: {
     cleanBody: 'この案内はあなたの会社のセキュリティポリシーに照らしてチェックされ、何も指摘されませんでした。',
+    headFlag: '会社のポリシー: 使う前に確認してください',
+    headClean_one: '会社のポリシー: 問題なし（{n} 件のルールで確認済み）',
+    headClean_other: '会社のポリシー: 問題なし（{n} 件のルールで確認済み）',
+    forbid: '禁止: {title}。',
+    forbidAny: '禁止: 禁止されている行為があります。',
+    require: '必須: {title}。',
+    requireAny: '必須: 必須とされている行為があります。',
+    per: '（{cite} に基づく）',
   },
   privacyPage: {
     seo: {
@@ -11181,6 +11298,12 @@ export default {
   },
   readingStrip: {
     notRightPlace: 'まだ正しい場所ではありません。',
+    readingScreen: '画面を読み取っています',
+    readingCamera: 'カメラを読み取っています',
+    iCanSee: '見えているもの',
+    lastRead: '最終読み取り',
+    showRead: 'ガイドが画面から読み取った内容を表示',
+    hideRead: 'ガイドが画面から読み取った内容を非表示',
   },
   refundPage: {
     seo: {
@@ -11305,6 +11428,24 @@ export default {
     need: '必要なもの:',
     howIGotIt: 'たどり着いた経緯',
     verifyBy: '検証方法',
+    eyebrow: '結果',
+    eyebrowDraft: '下書き、入力が必要です',
+    titleDraft: '確かな答えではなく、下書きです',
+    kinds: {
+      number: '数値',
+      table: '表',
+      code: 'コード',
+      text: '回答',
+      analysis: '分析',
+    },
+    confidence: '信頼度',
+    confidenceAria: '信頼度 {pct} パーセント',
+    band: {
+      draft: '下書き',
+      high: '高',
+      fair: '中',
+      low: '低',
+    },
   },
   scrubRules: {
     builtin: ['メール', '電話番号', 'カード番号', 'SSN', 'IBAN', 'API キーとトークン', 'IP アドレス', 'プライベートホスト'],
@@ -11341,6 +11482,16 @@ export default {
   securityNote: {
     cleanBody: 'このコードに、危険なコマンドや既知の脆弱性を持つライブラリは見つかりませんでした。',
     dbUnreachable: '脆弱性データベースに接続できなかったため、今回はライブラリのバージョンを確認できませんでした。',
+    headFlag: 'セキュリティチェック: 使う前に確認してください',
+    headClean: 'セキュリティチェック: 既知の問題はありません',
+    vulns_one: '<b>{pkg}</b> には既知の脆弱性が {n} 件あります。',
+    vulns_other: '<b>{pkg}</b> には既知の脆弱性が {n} 件あります。',
+    vulnsIds_one: '<b>{pkg}</b> には既知の脆弱性が {n} 件あります（{ids}）。',
+    vulnsIds_other: '<b>{pkg}</b> には既知の脆弱性が {n} 件あります（{ids}）。',
+    idsMore: '{ids} ほか',
+    upgradeLatest: '{version}（最新）にアップグレードしてください。',
+    upgradeLater: '{version} 以降にアップグレードしてください。',
+    patchedVersion: '修正済みのバージョン',
   },
   setPasswordPage: {
     byBrand: 'by AdmireVeda',
@@ -11386,6 +11537,18 @@ export default {
     buddyTip: 'バディカードに縮小します（Ctrl+Shift+Alt+B）',
     minimize: '最小化',
     close: '閉じる',
+    shareHiddenTip: '画面共有には表示されません。クリックすると共有に表示します（Ctrl+Shift+Alt+S）',
+    shareVisibleTip: '画面共有に表示されています。クリックすると再び非表示にします（Ctrl+Shift+Alt+S）',
+    shareHidden: '非表示',
+    shareOn: '共有に表示',
+    seeThrough: '透過',
+    clickBehindOnTip: 'クリック透過がオンです: クリックは下にあるアプリに届きます。このバーは引き続きクリックできます。オフにするには、ここをクリックするか Ctrl+Shift+Alt+W を押してください。',
+    clickBehindOffTip: 'クリック透過: クリックを下にあるアプリに届けます。このバーはクリックできるままなので、いつでもオフに戻せます（Ctrl+Shift+Alt+W）。',
+    clickBehindIdleTip: 'クリック透過は案内中に使えます',
+    restore: '元のサイズに戻す',
+    maximize: '最大化',
+    maximizeCentered: '最大化（中央）',
+    fullScreenTip: 'フルスクリーン（画面全体に表示、セカンドモニターに最適）',
   },
   skillsPage: {
     sectionAria: 'スキル',

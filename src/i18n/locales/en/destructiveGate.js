@@ -8,5 +8,6 @@ export default {
   destructiveGate: {
     label: 'Destructive step.',
     reveal: 'I understand, show the command',
+    body: 'This {why}. Read it carefully before you run it.',
   },
 }

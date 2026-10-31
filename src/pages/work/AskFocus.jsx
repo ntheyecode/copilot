@@ -41,10 +41,12 @@ export default function AskFocus({ ask, steps, stepText, onAsk, onDismiss, onCon
         <section className="gv-ask-card gv-offer" aria-labelledby="gv-offer-h" role="dialog">
           <span className="gv-k" style={{ color: 'var(--gv-accent)', display: 'inline-flex', alignItems: 'center', gap: 6 }}><LifeBuoy size={12} aria-hidden="true" /> {t('askFocus.checkIn')}</span>
           <h2 id="gv-offer-h" className="gv-offer-h">{t('askFocus.stuckTitle')}</h2>
-          <p className="gv-offer-p">This step has been open for a while{stepText ? <>: <b><RichText text={stepText} accent="var(--gv-accent)" chips={false} /></b>.</> : '.'} Tell me what is in the way, or I can explain it another way.</p>
+          <p className="gv-offer-p">{stepText
+            ? t.rich('askFocus.offerOpenStep', null, { step: () => <b><RichText text={stepText} accent="var(--gv-accent)" chips={false} /></b> })
+            : t('askFocus.offerOpen')}</p>
           <form className="gv-offer-form" onSubmit={(e) => { e.preventDefault(); send(draft) }}>
             <input ref={boxRef} className="gv-offer-input" type="text" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={t('askFocus.inWayPlaceholder')} aria-label={t('askFocus.inWayAria')} disabled={busy} />
-            <button type="submit" className="gv-btn primary" disabled={busy}><ArrowRight size={15} strokeWidth={2.6} aria-hidden="true" /> {draft.trim() ? 'Send' : 'Explain this step again'}</button>
+            <button type="submit" className="gv-btn primary" disabled={busy}><ArrowRight size={15} strokeWidth={2.6} aria-hidden="true" /> {draft.trim() ? t('guideConsole.clarify.send') : t('askFocus.explainAgain')}</button>
           </form>
           <div className="gv-ask-actions" style={{ marginTop: 10 }}>
             <button type="button" className="gv-btn ghost" onClick={onDismiss} disabled={busy}>{t('askFocus.fine')}</button>
@@ -58,7 +60,7 @@ export default function AskFocus({ ask, steps, stepText, onAsk, onDismiss, onCon
       <div className="gv-ask" aria-live="polite">
         <div className="gv-ask-working" role="status">
           <Loader2 size={20} className="gv-spin" style={{ color: 'var(--gv-accent)' }} aria-hidden="true" />
-          <div className="gv-ask-working-t">{ask.kind === 'research' ? 'Looking this up' : ask.kind === 'analyze' ? 'Reading your screen' : ask.kind === 'stuck' ? 'Taking a closer look at this step' : 'Working on your question'}</div>
+          <div className="gv-ask-working-t">{t('askFocus.working.' + (ask.kind === 'research' || ask.kind === 'analyze' || ask.kind === 'stuck' ? ask.kind : 'question'))}</div>
           {ask.question && ask.kind !== 'stuck' && <div className="gv-ask-working-q">{ask.question}</div>}
         </div>
       </div>
@@ -68,7 +70,7 @@ export default function AskFocus({ ask, steps, stepText, onAsk, onDismiss, onCon
   const list = Array.isArray(steps) ? steps : []
   const at = Number.isInteger(ask.resumeAt) ? ask.resumeAt : null
   const resumeStep = at != null && list[at] ? list[at] : null
-  const label = ask.kind === 'research' ? 'What I found' : ask.kind === 'analyze' ? 'What I see' : ask.kind === 'stuck' ? (ask.planChanged ? 'A better way through' : 'This step, explained') : 'Answer'
+  const label = ask.kind === 'research' ? t('askFocus.label.research') : ask.kind === 'analyze' ? t('askFocus.label.analyze') : ask.kind === 'stuck' ? (ask.planChanged ? t('askFocus.label.betterWay') : t('askFocus.label.explained')) : t('guideConsole.tools.answer')
   const showQ = ask.question && !(ask.kind === 'stuck' && ask.question === STUCK_DEFAULT_QUESTION)
   return (
     <div className="gv-ask">
@@ -79,14 +81,16 @@ export default function AskFocus({ ask, steps, stepText, onAsk, onDismiss, onCon
           {renderAnswer ? renderAnswer(ask.answer) : <RichText text={ask.answer} accent="var(--gv-accent)" links />}
         </h2>
         {ask.planChanged && (
-          <div className="gv-ask-plan"><ListChecks size={15} aria-hidden="true" /><span><b>{t('askFocus.planUpdated')}</b> Continue picks up at step {at != null ? at + 1 : ''}{resumeStep ? <>: <RichText text={resumeStep.text} accent="var(--gv-accent)" chips={false} /></> : '.'}</span></div>
+          <div className="gv-ask-plan"><ListChecks size={15} aria-hidden="true" /><span><b>{t('askFocus.planUpdated')}</b> {resumeStep
+            ? t.rich('askFocus.resumeAtStep', { n: at + 1 }, { step: () => <RichText text={resumeStep.text} accent="var(--gv-accent)" chips={false} /> })
+            : t('askFocus.resumeAt', { n: at != null ? at + 1 : '' })}</span></div>
         )}
         <div className="gv-ask-actions">
           <button ref={continueRef} type="button" className="gv-btn primary" onClick={onContinue} disabled={ask.phase === ASK_RESUMING}>
-            <ArrowRight size={16} strokeWidth={2.6} aria-hidden="true" /> {ask.planChanged ? 'Continue with the updated plan' : ask.kind === 'stuck' ? 'Got it, back to the step' : 'Continue guiding'}
+            <ArrowRight size={16} strokeWidth={2.6} aria-hidden="true" /> {ask.planChanged ? t('askFocus.continue.plan') : ask.kind === 'stuck' ? t('askFocus.continue.step') : t('askFocus.continue.guiding')}
           </button>
           {onFollowUp && <button type="button" className="gv-btn ghost" onClick={onFollowUp}><MessageCircleQuestion size={15} aria-hidden="true" /> {t('askFocus.followUp')}</button>}
-          {!ask.planChanged && resumeStep && <span className="gv-ask-sub">Back to step {at + 1}.</span>}
+          {!ask.planChanged && resumeStep && <span className="gv-ask-sub">{t('askFocus.backToStep', { n: at + 1 })}</span>}
         </div>
       </section>
     </div>

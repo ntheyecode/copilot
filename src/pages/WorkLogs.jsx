@@ -64,7 +64,7 @@ export default function WorkLogs({ embedded } = {}) {
     )
     if (inShell) {
       return (
-        <SessionRow key={s.id} state={status.key} title={label(s)} overview={s.overview} projectName={s.projectName} status={t(status.labelKey, status.label)}
+        <SessionRow key={s.id} state={status.key} title={label(s)} overview={s.overview} projectName={s.projectName} status={t(status.labelKey)}
           meta={[
             when ? t(ended ? 'workShell.logs.completedOn' : 'workShell.logs.startedOn', { when }) : null,
             t.rich('workShell.tasks.steps', { done: st.done, total: st.total }, { n: (c) => <span className="wd-sess-done">{c}</span> }),
@@ -81,7 +81,7 @@ export default function WorkLogs({ embedded } = {}) {
         <div className="ws-row-main">
           <div className="ws-row-t" title={label(s)}>{label(s)}</div>
           <div className="ws-row-m">
-            <span className={`ws-st ${status.key}`}>{t(status.labelKey, status.label)}</span>
+            <span className={`ws-st ${status.key}`}>{t(status.labelKey)}</span>
             {when && <span>{t(ended ? 'workShell.logs.completedOn' : 'workShell.logs.startedOn', { when })}</span>}
             <span className="sep" aria-hidden>&middot;</span>
             <span>{t.rich('workShell.tasks.steps', { done: st.done, total: st.total }, { n: (c) => <span className="done">{c}</span> })}</span>

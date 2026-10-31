@@ -85,6 +85,7 @@ export default {
       back: 'Geri',
       next: 'İleri',
       errSave: 'Taslak kaydedilemedi. Lütfen tekrar deneyin.',
+      errChanged: 'Bu taslak, siz açtıktan sonra başka bir sekmede ya da başka biri tarafından değiştirildi, bu yüzden kaydınız uygulanmadı. İhtiyacınız olanı kopyalayın, ardından en son sürümü görmek için kapatıp yeniden açın.',
       errPublish: 'Yayımlanamadı. Gerekli alanları ve adımları kontrol edip tekrar deneyin.',
       publishedOk: 'Yayımlandı. Ekibiniz artık adım adım yönlendiriliyor.',
       draftSavedOk: 'Taslak kaydedildi.',
@@ -793,6 +794,16 @@ export default {
       copyCommand: 'Komutu kopyala',
       copyAria: 'Panoya kopyala',
       copiedAria: 'Panoya kopyalandı',
+      copyAll: 'Tümünü kopyala',
+    },
+    download: {
+      file: 'Dosyayı indir',
+      csv: 'CSV indir',
+      md: '.md indir',
+    },
+    fullScreen: {
+      enter: 'Tam ekran',
+      exit: 'Tam ekrandan çık',
     },
     blocks: {
       terminal: 'Terminal',
@@ -1699,6 +1710,7 @@ export default {
       checking: 'Kuruluşunuzun giriş yöntemi kontrol ediliyor…',
     },
     form: {
+      agreeDocs: '{docs} belgelerini okudum ve kabul ediyorum.',
       ariaCreate: 'Hesap oluştur',
       ariaLogin: 'Giriş yap',
       fullName: 'Ad soyad',
@@ -1782,6 +1794,7 @@ export default {
       verifyContinue: 'Doğrula ve devam et',
     },
     err: {
+      acceptAgreements: 'Hesabınızı oluşturmak için lütfen sözleşmeleri kabul edin.',
       timedOut: 'Giriş oturumunuz zaman aşımına uğradı. Lütfen yeniden başlayın.',
       finishFail: 'Girişiniz tamamlanamadı. Lütfen tekrar deneyin.',
       enterName: 'Adınızı ve soyadınızı girin.',
@@ -6718,6 +6731,7 @@ export default {
       eyebrow: 'Çalışma alanınız',
       poweredBy: 'çalıştıran',
       exec: 'Yönetici panosu',
+      logoAlt: '{company} logosu',
     },
     hello: 'Merhaba {name}',
     plan: {
@@ -8043,6 +8057,29 @@ export default {
     youAsked: 'Sorduğunuz:',
     planUpdated: 'Planınız güncellendi.',
     followUp: 'Bir takip sorusu sorun',
+    offerOpen: 'Bu adım bir süredir açık. Önünüzde ne engel olduğunu söyleyin ya da size başka bir yoldan anlatayım.',
+    offerOpenStep: 'Bu adım bir süredir açık: <step></step>. Önünüzde ne engel olduğunu söyleyin ya da size başka bir yoldan anlatayım.',
+    explainAgain: 'Bu adımı yeniden açıkla',
+    working: {
+      research: 'Bunu araştırıyorum',
+      analyze: 'Ekranınızı okuyorum',
+      stuck: 'Bu adıma daha yakından bakıyorum',
+      question: 'Sorunuz üzerinde çalışıyorum',
+    },
+    label: {
+      research: 'Bulduklarım',
+      analyze: 'Gördüklerim',
+      betterWay: 'Daha iyi bir yol',
+      explained: 'Bu adımın açıklaması',
+    },
+    resumeAt: 'Devam ettiğinizde {n}. adımdan sürer.',
+    resumeAtStep: 'Devam ettiğinizde {n}. adımdan sürer: <step></step>',
+    continue: {
+      plan: 'Güncellenen planla devam et',
+      step: 'Anladım, adıma dön',
+      guiding: 'Rehberliğe devam et',
+    },
+    backToStep: '{n}. adıma geri dönüldü.',
   },
   benchmarkPage: {
     eyebrow: 'Doğruluk kıyaslaması',
@@ -8263,6 +8300,25 @@ export default {
   composeCard: {
     emptyBody: 'Hiçbir belge dönmedi.',
     basedOn: 'Neye dayandırdığım',
+    eyebrow: 'Sizin için yazıldı',
+    formats: {
+      prompt: 'Yapay zekanız için komut',
+      code: 'Kod',
+      outline: 'Ana hatlar',
+      bullets: 'Maddeler',
+      table: 'Tablo',
+      notes: 'Notlar',
+      draft: 'Taslak',
+    },
+    untitled: {
+      prompt: 'Yapay zekanız için komutunuz',
+      code: 'Kodunuz',
+      outline: 'Ana hatlarınız',
+      bullets: 'Maddeleriniz',
+      table: 'Tablonuz',
+      notes: 'Notlarınız',
+      draft: 'Taslağınız',
+    },
   },
   computeCard: {
     cmp: {
@@ -8895,6 +8951,7 @@ export default {
   destructiveGate: {
     label: 'Geri alınamaz adım.',
     reveal: 'Anladım, komutu göster',
+    body: 'Etkisi: {why}. Çalıştırmadan önce dikkatle okuyun.',
   },
   disclaimerPage: {
     seo: {
@@ -9022,6 +9079,16 @@ export default {
     triggerTip: 'Bu oturumu indir',
     menuAria: 'İndirme biçimi',
     heading: 'Şu olarak indir',
+    label: 'İndir',
+    formats: {
+      pdf: 'PDF raporu',
+      pdfHint: 'Biçimlendirilmiş, ekran görüntüleriyle',
+      txt: 'Metin raporu (.txt)',
+      txtHint: 'Düz metin, aynı içerik',
+      log: 'Denetim günlüğü (.log)',
+      logHint: 'Yapay zekaya yapılan her gönderim',
+    },
+    errDownload: 'İndirilemedi. Lütfen tekrar deneyin.',
   },
   dpaPage: {
     seo: {
@@ -10094,6 +10161,28 @@ export default {
     closeAria: 'Tam planı kapat',
     yourGoal: 'Hedefiniz',
     now: 'Şimdi',
+    runThis: 'Bunu çalıştır',
+    calm: {
+      loading: {
+        t: 'Bağlanıyor',
+        d: 'Hazırlanıyor ve göreviniz bulunuyor.',
+      },
+      error: {
+        t: 'Sunucuya ulaşılamıyor',
+        d: 'Yeniden deneniyor. Oturumunuz güvende.',
+      },
+      signin: {
+        t: 'WorkCoPilot\'a giriş yapın',
+        d: 'Ana pencerede giriş yapın, göreviniz burada görünür.',
+      },
+      empty: {
+        t: 'Henüz etkin bir görev yok',
+        d: 'WorkCoPilot\'u açın ve bir görev başlatın. Ardından bu ekran size adım adım rehberlik eder.',
+      },
+    },
+    hoursOutTip: 'Bu ayki plan saatleriniz bitti',
+    hoursLeftTip: 'Bu ay kalan plan saatleri',
+    readingNext: 'Sonraki hamle için ekranınız okunuyor',
   },
   guideConsole: {
     source: {
@@ -10513,6 +10602,26 @@ export default {
   },
   guideLevel: {
     groupAria: 'Rehberlik gücü',
+    levels: {
+      easy: {
+        label: 'Kolay',
+        title: 'Sade sözcükler, her tıklama tek tek anlatılır',
+      },
+      medium: {
+        label: 'Orta',
+        title: 'Önemli ayrıntılarla net adımlar',
+      },
+      technical: {
+        label: 'Teknik',
+        title: 'Komutlar, yollar ve değerlerle kesin anlatım',
+        short: 'Teknik',
+      },
+      executive: {
+        label: 'Yönetici',
+        title: 'Kısa, önce sonuç, yalnızca önemli olan',
+        short: 'Yönetici',
+      },
+    },
   },
   helpPage: {
     nav: {
@@ -10960,6 +11069,14 @@ export default {
   },
   policyNote: {
     cleanBody: 'Bu rehberlik şirket güvenlik politikanıza göre denetlendi ve hiçbir şey işaretlenmedi.',
+    headFlag: 'Şirket politikası: kullanmadan önce gözden geçirin',
+    headClean_one: 'Şirket politikası: sorun yok ({n} kurala göre denetlendi)',
+    headClean_other: 'Şirket politikası: sorun yok ({n} kurala göre denetlendi)',
+    forbid: 'Yasak: {title}.',
+    forbidAny: 'Yasak: yasaklanmış bir uygulama.',
+    require: 'Zorunlu: {title}.',
+    requireAny: 'Zorunlu: zorunlu bir uygulama.',
+    per: '({cite} uyarınca)',
   },
   privacyPage: {
     seo: {
@@ -11316,6 +11433,12 @@ export default {
   },
   readingStrip: {
     notRightPlace: 'Henüz doğru yer değil.',
+    readingScreen: 'Ekranınız okunuyor',
+    readingCamera: 'Kamera okunuyor',
+    iCanSee: 'Gördüğüm',
+    lastRead: 'Son okuma',
+    showRead: 'Rehberin ekranınızda okuduklarını göster',
+    hideRead: 'Rehberin ekranınızda okuduklarını gizle',
   },
   refundPage: {
     seo: {
@@ -11440,6 +11563,24 @@ export default {
     need: 'İhtiyacım olan:',
     howIGotIt: 'Bunu nasıl elde ettim',
     verifyBy: 'Şununla doğrulayın',
+    eyebrow: 'Sonuç',
+    eyebrowDraft: 'Taslak, bilgi gerekiyor',
+    titleDraft: 'Bir taslak, kesin bir yanıt değil',
+    kinds: {
+      number: 'Sayı',
+      table: 'Tablo',
+      code: 'Kod',
+      text: 'Yanıt',
+      analysis: 'Çözümleme',
+    },
+    confidence: 'Güven',
+    confidenceAria: 'Güven yüzde {pct}',
+    band: {
+      draft: 'Taslak',
+      high: 'Yüksek',
+      fair: 'Orta',
+      low: 'Düşük',
+    },
   },
   scrubRules: {
     builtin: [
@@ -11485,6 +11626,16 @@ export default {
   securityNote: {
     cleanBody: 'Bu kodda tehlikeli komut ve bilinen zafiyetli kütüphane bulunmadı.',
     dbUnreachable: 'Zafiyet veritabanına ulaşılamadı, bu nedenle kütüphane sürümleri bu sefer denetlenmedi.',
+    headFlag: 'Güvenlik denetimi: kullanmadan önce gözden geçirin',
+    headClean: 'Güvenlik denetimi: bilinen sorun yok',
+    vulns_one: '<b>{pkg}</b> içinde {n} bilinen zafiyet var.',
+    vulns_other: '<b>{pkg}</b> içinde {n} bilinen zafiyet var.',
+    vulnsIds_one: '<b>{pkg}</b> içinde {n} bilinen zafiyet var ({ids}).',
+    vulnsIds_other: '<b>{pkg}</b> içinde {n} bilinen zafiyet var ({ids}).',
+    idsMore: '{ids} ve daha fazlası',
+    upgradeLatest: 'Şu sürüme yükseltin: {version} (en son sürüm).',
+    upgradeLater: 'Şu sürüme yükseltin: {version} ya da daha yenisi.',
+    patchedVersion: 'yamalı bir sürüm',
   },
   setPasswordPage: {
     byBrand: 'AdmireVeda tarafından',
@@ -11530,6 +11681,18 @@ export default {
     buddyTip: 'Dost kartına küçült (Ctrl+Shift+Alt+B)',
     minimize: 'Simge durumuna küçült',
     close: 'Kapat',
+    shareHiddenTip: 'Ekran paylaşımlarından gizli - paylaşımda göstermek için tıklayın (Ctrl+Shift+Alt+S)',
+    shareVisibleTip: 'Ekran paylaşımlarında görünür - yeniden gizlemek için tıklayın (Ctrl+Shift+Alt+S)',
+    shareHidden: 'Gizli',
+    shareOn: 'Paylaşımda',
+    seeThrough: 'Şeffaf',
+    clickBehindOnTip: 'Arkaya tıklama açık: tıklamalarınız alttaki uygulamaya geçer. Bu çubuk yine de tıklamaları alır. Kapatmak için buraya tıklayın ya da Ctrl+Shift+Alt+W tuşlarına basın.',
+    clickBehindOffTip: 'Arkaya tıklama: tıklamalarınızın alttaki uygulamaya geçmesine izin verin. Bu çubuk tıklanabilir kalır, böylece özelliği yeniden kapatabilirsiniz (Ctrl+Shift+Alt+W).',
+    clickBehindIdleTip: 'Arkaya tıklama, rehberlik sırasında kullanılabilir',
+    restore: 'Geri yükle',
+    maximize: 'Ekranı kapla',
+    maximizeCentered: 'Ekranı kapla (ortalanmış)',
+    fullScreenTip: 'Tam ekran (ekranı doldurur, ikinci bir monitörde kullanışlıdır)',
   },
   skillsPage: {
     sectionAria: 'Beceriler',

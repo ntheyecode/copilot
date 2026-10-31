@@ -695,6 +695,18 @@ export default {
       copyCommand: 'Copy the command',
       copyAria: 'Copy to clipboard',
       copiedAria: 'Copied to clipboard',
+      copyAll: 'Copy all',
+    },
+    // Download buttons on the result / document cards (ResultCard, ComposeCard).
+    download: {
+      file: 'Download file',
+      csv: 'Download CSV',
+      md: 'Download .md',
+    },
+    // Full-screen toggles (desktop title bar, full-screen guide).
+    fullScreen: {
+      enter: 'Full screen',
+      exit: 'Exit full screen',
     },
     // The shared step blocks (StepBlocks.jsx): the terminal header, the link-out
     // and the copy row a step carries, in the guiding console and the widget.
@@ -1384,6 +1396,8 @@ export default {
       checking: 'Checking your organization\'s sign-in…',
     },
     form: {
+      // Signup clickwrap: {docs} is the linked agreement list, joined per locale.
+      agreeDocs: 'I have read and agree to the {docs}.',
       ariaCreate: 'Create account',
       ariaLogin: 'Log in',
       fullName: 'Full name',
@@ -1468,6 +1482,7 @@ export default {
       verifyContinue: 'Verify and continue',
     },
     err: {
+      acceptAgreements: 'Please accept the agreements to create your account.',
       timedOut: 'Your sign-in session timed out. Please start again.',
       finishFail: 'Could not finish signing you in. Please try again.',
       enterName: 'Enter your full name.',

@@ -89,10 +89,11 @@ const HANDLING_META = [
 // the sector groups are named; everything else (attestations, management systems,
 // security frameworks, government, secure development) reads as a Standard, so a
 // newly added framework is never silently dropped from the roll-call.
-const SECTOR_CATEGORIES = ['Healthcare', 'Payments', 'Financial reporting', 'Financial privacy']
+// Matched case-insensitively against the registry's category (data tokens, never shown).
+const SECTOR_CATEGORIES = ['healthcare', 'payments', 'financial reporting', 'financial privacy']
 function groupOf(category) {
   if (category === 'Privacy') return 'privacy'
-  if (SECTOR_CATEGORIES.includes(category)) return 'sector'
+  if (SECTOR_CATEGORIES.includes(String(category || '').toLowerCase())) return 'sector'
   return 'standards'
 }
 

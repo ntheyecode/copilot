@@ -91,6 +91,7 @@ export default {
       back: '上一步',
       next: '下一步',
       errSave: '无法保存草稿，请重试。',
+      errChanged: '自您打开此草稿以来，它已在其他标签页中或被他人修改，因此您的保存未生效。请先复制您需要的内容，然后关闭并重新打开，查看最新版本。',
       errPublish: '无法发布。请检查必填字段和步骤后重试。',
       publishedOk: '已发布，团队现在会获得逐步引导。',
       draftSavedOk: '草稿已保存。',
@@ -786,6 +787,7 @@ export default {
       eyebrow: '您的工作区',
       poweredBy: '技术支持',
       exec: '高管仪表板',
+      logoAlt: '{company} 徽标',
     },
     hello: '您好,{name}',
     plan: {
@@ -1485,6 +1487,16 @@ export default {
       copyCommand: '复制命令',
       copyAria: '复制到剪贴板',
       copiedAria: '已复制到剪贴板',
+      copyAll: '全部复制',
+    },
+    download: {
+      file: '下载文件',
+      csv: '下载 CSV',
+      md: '下载 .md',
+    },
+    fullScreen: {
+      enter: '全屏',
+      exit: '退出全屏',
     },
     blocks: {
       terminal: '终端',
@@ -2327,6 +2339,7 @@ export default {
       checking: '正在检查您组织的登录方式…',
     },
     form: {
+      agreeDocs: '我已阅读并同意{docs}。',
       ariaCreate: '创建账户',
       ariaLogin: '登录',
       fullName: '全名',
@@ -2410,6 +2423,7 @@ export default {
       verifyContinue: '验证并继续',
     },
     err: {
+      acceptAgreements: '请先同意相关协议，再创建您的账户。',
       timedOut: '您的登录会话已超时。请重新开始。',
       finishFail: '无法完成登录。请重试。',
       enterName: '请输入您的全名。',
@@ -7892,6 +7906,29 @@ export default {
     youAsked: '您问道:',
     planUpdated: '您的计划已更新。',
     followUp: '追问一个问题',
+    offerOpen: '这一步已经停留了一段时间。告诉我遇到了什么阻碍，或者我换一种方式为您讲解。',
+    offerOpenStep: '这一步已经停留了一段时间：<step></step>。告诉我遇到了什么阻碍，或者我换一种方式为您讲解。',
+    explainAgain: '再讲解一遍这一步',
+    working: {
+      research: '正在查找资料',
+      analyze: '正在读取您的屏幕',
+      stuck: '正在仔细查看这一步',
+      question: '正在处理您的问题',
+    },
+    label: {
+      research: '我找到的内容',
+      analyze: '我看到的内容',
+      betterWay: '更好的做法',
+      explained: '这一步的讲解',
+    },
+    resumeAt: '点击“继续”将从第 {n} 步接着进行。',
+    resumeAtStep: '点击“继续”将从第 {n} 步接着进行：<step></step>',
+    continue: {
+      plan: '按更新后的计划继续',
+      step: '明白了，回到这一步',
+      guiding: '继续引导',
+    },
+    backToStep: '回到第 {n} 步。',
   },
   benchmarkPage: {
     eyebrow: '准确度基准测试',
@@ -8108,6 +8145,25 @@ export default {
   composeCard: {
     emptyBody: '没有返回任何文档。',
     basedOn: '我依据的内容',
+    eyebrow: '为您撰写',
+    formats: {
+      prompt: 'AI 提示词',
+      code: '代码',
+      outline: '大纲',
+      bullets: '要点',
+      table: '表格',
+      notes: '笔记',
+      draft: '草稿',
+    },
+    untitled: {
+      prompt: '您的 AI 提示词',
+      code: '您的代码',
+      outline: '您的大纲',
+      bullets: '您的要点',
+      table: '您的表格',
+      notes: '您的笔记',
+      draft: '您的草稿',
+    },
   },
   computeCard: {
     cmp: {
@@ -8731,6 +8787,7 @@ export default {
   destructiveGate: {
     label: '破坏性步骤。',
     reveal: '我已了解，显示命令',
+    body: '影响：{why}。运行前请仔细阅读。',
   },
   disclaimerPage: {
     seo: {
@@ -8858,6 +8915,16 @@ export default {
     triggerTip: '下载此会话',
     menuAria: '下载格式',
     heading: '下载为',
+    label: '下载',
+    formats: {
+      pdf: 'PDF 报告',
+      pdfHint: '排版精美，附截图',
+      txt: '文本报告（.txt）',
+      txtHint: '纯文本，内容相同',
+      log: '审计日志（.log）',
+      logHint: '记录每一次 AI 传输',
+    },
+    errDownload: '无法下载，请重试。',
   },
   dpaPage: {
     seo: {
@@ -9914,6 +9981,28 @@ export default {
     closeAria: '关闭完整计划',
     yourGoal: '您的目标',
     now: '当前',
+    runThis: '运行此项',
+    calm: {
+      loading: {
+        t: '正在连接',
+        d: '正在启动并查找您的任务。',
+      },
+      error: {
+        t: '无法连接到服务器',
+        d: '正在重试。您的会话安然无恙。',
+      },
+      signin: {
+        t: '登录 WorkCoPilot',
+        d: '在主窗口登录后，您的任务就会显示在这里。',
+      },
+      empty: {
+        t: '暂无进行中的任务',
+        d: '打开 WorkCoPilot 并开始一个任务，此屏幕随后会一步一步引导您。',
+      },
+    },
+    hoursOutTip: '您本月的套餐时长已用完',
+    hoursLeftTip: '本月剩余套餐时长',
+    readingNext: '正在读取您的屏幕，准备下一步',
   },
   guideConsole: {
     source: {
@@ -10326,6 +10415,26 @@ export default {
   },
   guideLevel: {
     groupAria: '引导强度',
+    levels: {
+      easy: {
+        label: '简单',
+        title: '用通俗的话说明，每一次点击都讲清楚',
+      },
+      medium: {
+        label: '适中',
+        title: '步骤清晰，附关键细节',
+      },
+      technical: {
+        label: '技术',
+        title: '精确，附命令、路径和数值',
+        short: '技术',
+      },
+      executive: {
+        label: '高管',
+        title: '简短，结果优先，只讲要点',
+        short: '高管',
+      },
+    },
   },
   helpPage: {
     nav: {
@@ -10773,6 +10882,14 @@ export default {
   },
   policyNote: {
     cleanBody: '此引导已对照您的公司安全政策进行检查，未发现任何需标记的问题。',
+    headFlag: '公司政策：使用前请先审阅',
+    headClean_one: '公司政策：无问题（已对照 {n} 条规则检查）',
+    headClean_other: '公司政策：无问题（已对照 {n} 条规则检查）',
+    forbid: '禁止：{title}。',
+    forbidAny: '禁止：一项被禁止的做法。',
+    require: '要求：{title}。',
+    requireAny: '要求：一项必须遵循的做法。',
+    per: '（依据 {cite}）',
   },
   privacyPage: {
     seo: {
@@ -11129,6 +11246,12 @@ export default {
   },
   readingStrip: {
     notRightPlace: '还不是正确的位置。',
+    readingScreen: '正在读取您的屏幕',
+    readingCamera: '正在读取摄像头画面',
+    iCanSee: '我能看到',
+    lastRead: '上次读取',
+    showRead: '显示引导在您屏幕上读取到的内容',
+    hideRead: '隐藏引导在您屏幕上读取到的内容',
   },
   refundPage: {
     seo: {
@@ -11253,6 +11376,24 @@ export default {
     need: '我需要:',
     howIGotIt: '我是如何得出的',
     verifyBy: '验证方法',
+    eyebrow: '结果',
+    eyebrowDraft: '草稿，需要您补充信息',
+    titleDraft: '这是一份草稿，还不是有把握的答案',
+    kinds: {
+      number: '数值',
+      table: '表格',
+      code: '代码',
+      text: '答案',
+      analysis: '分析',
+    },
+    confidence: '置信度',
+    confidenceAria: '置信度百分之 {pct}',
+    band: {
+      draft: '草稿',
+      high: '高',
+      fair: '中',
+      low: '低',
+    },
   },
   scrubRules: {
     builtin: ['电子邮箱', '电话号码', '卡号', 'SSN', 'IBAN', 'API 密钥和令牌', 'IP 地址', '私有主机'],
@@ -11289,6 +11430,16 @@ export default {
   securityNote: {
     cleanBody: '此代码中未发现危险命令,也未发现已知易受攻击的库。',
     dbUnreachable: '无法连接到漏洞数据库,因此本次未检查库版本。',
+    headFlag: '安全检查：使用前请先审阅',
+    headClean: '安全检查：未发现已知问题',
+    vulns_one: '<b>{pkg}</b> 存在 {n} 个已知漏洞。',
+    vulns_other: '<b>{pkg}</b> 存在 {n} 个已知漏洞。',
+    vulnsIds_one: '<b>{pkg}</b> 存在 {n} 个已知漏洞（{ids}）。',
+    vulnsIds_other: '<b>{pkg}</b> 存在 {n} 个已知漏洞（{ids}）。',
+    idsMore: '{ids} 等',
+    upgradeLatest: '请升级到 {version}（最新版本）。',
+    upgradeLater: '请升级到 {version} 或更高版本。',
+    patchedVersion: '已修复的版本',
   },
   setPasswordPage: {
     byBrand: '由 AdmireVeda 提供',
@@ -11334,6 +11485,18 @@ export default {
     buddyTip: '收缩为伙伴卡片（Ctrl+Shift+Alt+B）',
     minimize: '最小化',
     close: '关闭',
+    shareHiddenTip: '在屏幕共享中已隐藏：点击可在共享中显示（Ctrl+Shift+Alt+S）',
+    shareVisibleTip: '在屏幕共享中可见：点击可再次隐藏（Ctrl+Shift+Alt+S）',
+    shareHidden: '已隐藏',
+    shareOn: '共享可见',
+    seeThrough: '透视',
+    clickBehindOnTip: '点击穿透已开启：您的点击会传递到下方的应用。此栏仍可接收点击。点击此处或按 Ctrl+Shift+Alt+W 即可关闭。',
+    clickBehindOffTip: '点击穿透：让您的点击传递到下方的应用。此栏始终可点击，方便您随时关闭（Ctrl+Shift+Alt+W）。',
+    clickBehindIdleTip: '点击穿透在引导过程中可用',
+    restore: '还原',
+    maximize: '最大化',
+    maximizeCentered: '最大化（居中）',
+    fullScreenTip: '全屏（铺满整个屏幕，适合在第二台显示器上使用）',
   },
   skillsPage: {
     sectionAria: '技能',

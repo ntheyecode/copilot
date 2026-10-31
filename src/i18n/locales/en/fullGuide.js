@@ -27,5 +27,27 @@ export default {
     closeAria: 'Close full plan',
     yourGoal: 'Your goal',
     now: 'Now',
+    runThis: 'Run this',
+    calm: {
+      loading: {
+        t: 'Connecting',
+        d: 'Waking up and finding your task.',
+      },
+      error: {
+        t: 'Cannot reach the server',
+        d: 'Retrying. Your session is safe.',
+      },
+      signin: {
+        t: 'Sign in to WorkCoPilot',
+        d: 'Sign in on the main window and your task appears here.',
+      },
+      empty: {
+        t: 'No active task yet',
+        d: 'Open WorkCoPilot and start a task. This screen then guides you, step by step.',
+      },
+    },
+    hoursOutTip: 'Your plan hours for this month are used up',
+    hoursLeftTip: 'Plan hours left this month',
+    readingNext: 'Reading your screen for the next move',
   },
 }

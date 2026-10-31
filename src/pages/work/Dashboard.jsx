@@ -125,7 +125,7 @@ export default function Dashboard() {
         return (
           <section className="wd-cobrand" aria-label={t('workDashboard.cobrand.aria', { company: company.name })}>
             {company.logo
-              ? <span className="wd-cobrand-logo"><img src={company.logo} alt={`${company.name} logo`} /></span>
+              ? <span className="wd-cobrand-logo"><img src={company.logo} alt={t('workDashboard.cobrand.logoAlt', { company: company.name })} /></span>
               : <span className="wd-cobrand-logo mono" aria-hidden>{initials ? <b>{initials}</b> : <Building2 size={20} />}</span>}
             <div className="wd-cobrand-id">
               <span className="wd-cobrand-eyebrow">{t('workDashboard.cobrand.eyebrow')}</span>

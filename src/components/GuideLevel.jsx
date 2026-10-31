@@ -12,11 +12,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useT } from '../i18n/index.jsx'
 
+// The level ids, in order. Labels and descriptions are keyed per id under
+// guideLevel.levels.<id> (label / title / short), read at render time.
 export const LEVELS = [
-  { id: 'easy', label: 'Easy', title: 'Plain words, every click spelled out' },
-  { id: 'medium', label: 'Medium', title: 'Clear steps with the key details' },
-  { id: 'technical', label: 'Technical', title: 'Precise, with commands, paths and values' },
-  { id: 'executive', label: 'Executive', title: 'Short, outcome-first, only what matters' },
+  { id: 'easy' },
+  { id: 'medium' },
+  { id: 'technical' },
+  { id: 'executive' },
 ]
 export const LEVEL_DEFAULT = 'medium'
 export const levelKey = (sessionId) => `wc-guide-level:${sessionId || 'default'}`
@@ -74,7 +76,7 @@ export default function GuideLevelControl({ level, onChange, theme, compact = fa
       {LEVELS.map((l) => {
         const on = l.id === cur
         return (
-          <button key={l.id} type="button" role="radio" aria-checked={on} tabIndex={on ? 0 : -1} title={l.title}
+          <button key={l.id} type="button" role="radio" aria-checked={on} tabIndex={on ? 0 : -1} title={t(`guideLevel.levels.${l.id}.title`)}
             onClick={() => onChange && onChange(l.id)}
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: 26, minWidth: 0, padding: compact ? '0 7px' : '0 9px',
@@ -84,7 +86,7 @@ export default function GuideLevelControl({ level, onChange, theme, compact = fa
             }}
             onFocus={(e) => { e.currentTarget.style.outline = 'none'; e.currentTarget.style.boxShadow = `0 0 0 2px ${accent}` }}
             onBlur={(e) => { e.currentTarget.style.boxShadow = on ? `0 0 0 1px ${accent} inset` : 'none' }}
-          >{compact && l.id === 'technical' ? 'Tech' : compact && l.id === 'executive' ? 'Exec' : l.label}</button>
+          >{compact && (l.id === 'technical' || l.id === 'executive') ? t(`guideLevel.levels.${l.id}.short`) : t(`guideLevel.levels.${l.id}.label`)}</button>
         )
       })}
     </div>

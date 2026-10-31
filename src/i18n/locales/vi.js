@@ -85,6 +85,7 @@ export default {
       back: 'Quay lại',
       next: 'Tiếp theo',
       errSave: 'Không thể lưu bản nháp. Vui lòng thử lại.',
+      errChanged: 'Bản nháp này đã bị thay đổi ở một thẻ khác hoặc bởi người khác kể từ khi bạn mở nó, nên nội dung bạn lưu chưa được áp dụng. Hãy sao chép những gì bạn cần, sau đó đóng và mở lại để xem phiên bản mới nhất.',
       errPublish: 'Không thể phát hành. Hãy kiểm tra các trường và bước bắt buộc, rồi thử lại.',
       publishedOk: 'Đã phát hành. Nhóm của bạn được hướng dẫn qua nó ngay bây giờ.',
       draftSavedOk: 'Đã lưu bản nháp.',
@@ -793,6 +794,16 @@ export default {
       copyCommand: 'Sao chép lệnh',
       copyAria: 'Sao chép vào bộ nhớ tạm',
       copiedAria: 'Đã sao chép vào bộ nhớ tạm',
+      copyAll: 'Sao chép tất cả',
+    },
+    download: {
+      file: 'Tải tệp xuống',
+      csv: 'Tải CSV',
+      md: 'Tải .md',
+    },
+    fullScreen: {
+      enter: 'Toàn màn hình',
+      exit: 'Thoát toàn màn hình',
     },
     blocks: {
       terminal: 'Terminal',
@@ -1699,6 +1710,7 @@ export default {
       checking: 'Đang kiểm tra cách đăng nhập của tổ chức bạn…',
     },
     form: {
+      agreeDocs: 'Tôi đã đọc và đồng ý với {docs}.',
       ariaCreate: 'Tạo tài khoản',
       ariaLogin: 'Đăng nhập',
       fullName: 'Họ và tên',
@@ -1782,6 +1794,7 @@ export default {
       verifyContinue: 'Xác minh và tiếp tục',
     },
     err: {
+      acceptAgreements: 'Vui lòng chấp nhận các thỏa thuận để tạo tài khoản của bạn.',
       timedOut: 'Phiên đăng nhập của bạn đã hết hạn. Vui lòng bắt đầu lại.',
       finishFail: 'Không thể hoàn tất đăng nhập. Vui lòng thử lại.',
       enterName: 'Nhập họ và tên của bạn.',
@@ -6714,6 +6727,7 @@ export default {
       eyebrow: 'Không gian làm việc của bạn',
       poweredBy: 'vận hành bởi',
       exec: 'Bảng điều khiển điều hành',
+      logoAlt: 'Logo {company}',
     },
     hello: 'Xin chào {name}',
     plan: {
@@ -8039,6 +8053,29 @@ export default {
     youAsked: 'Bạn đã hỏi:',
     planUpdated: 'Kế hoạch của bạn đã được cập nhật.',
     followUp: 'Hỏi thêm một câu',
+    offerOpen: 'Bước này đã mở khá lâu rồi. Hãy cho tôi biết điều gì đang cản trở bạn, hoặc tôi có thể giải thích theo cách khác.',
+    offerOpenStep: 'Bước này đã mở khá lâu rồi: <step></step>. Hãy cho tôi biết điều gì đang cản trở bạn, hoặc tôi có thể giải thích theo cách khác.',
+    explainAgain: 'Giải thích lại bước này',
+    working: {
+      research: 'Đang tra cứu',
+      analyze: 'Đang đọc màn hình của bạn',
+      stuck: 'Đang xem kỹ hơn bước này',
+      question: 'Đang xử lý câu hỏi của bạn',
+    },
+    label: {
+      research: 'Những gì tôi tìm thấy',
+      analyze: 'Những gì tôi thấy',
+      betterWay: 'Một cách làm tốt hơn',
+      explained: 'Giải thích bước này',
+    },
+    resumeAt: 'Khi tiếp tục, bạn sẽ quay lại bước {n}.',
+    resumeAtStep: 'Khi tiếp tục, bạn sẽ quay lại bước {n}: <step></step>',
+    continue: {
+      plan: 'Tiếp tục với kế hoạch đã cập nhật',
+      step: 'Đã hiểu, quay lại bước',
+      guiding: 'Tiếp tục hướng dẫn',
+    },
+    backToStep: 'Quay lại bước {n}.',
   },
   benchmarkPage: {
     eyebrow: 'Chuẩn đo độ chính xác',
@@ -8259,6 +8296,25 @@ export default {
   composeCard: {
     emptyBody: 'Không có tài liệu nào được trả về.',
     basedOn: 'Căn cứ tôi dựa vào',
+    eyebrow: 'Được soạn cho bạn',
+    formats: {
+      prompt: 'Prompt cho AI của bạn',
+      code: 'Mã',
+      outline: 'Dàn ý',
+      bullets: 'Gạch đầu dòng',
+      table: 'Bảng',
+      notes: 'Ghi chú',
+      draft: 'Bản nháp',
+    },
+    untitled: {
+      prompt: 'Prompt của bạn cho AI',
+      code: 'Mã của bạn',
+      outline: 'Dàn ý của bạn',
+      bullets: 'Các gạch đầu dòng của bạn',
+      table: 'Bảng của bạn',
+      notes: 'Ghi chú của bạn',
+      draft: 'Bản nháp của bạn',
+    },
   },
   computeCard: {
     cmp: {
@@ -8891,6 +8947,7 @@ export default {
   destructiveGate: {
     label: 'Bước có tính phá hủy.',
     reveal: 'Tôi hiểu, hiển thị lệnh',
+    body: 'Tác động: {why}. Hãy đọc kỹ trước khi chạy.',
   },
   disclaimerPage: {
     seo: {
@@ -9018,6 +9075,16 @@ export default {
     triggerTip: 'Tải phiên này xuống',
     menuAria: 'Định dạng tải xuống',
     heading: 'Tải xuống dạng',
+    label: 'Tải xuống',
+    formats: {
+      pdf: 'Báo cáo PDF',
+      pdfHint: 'Có định dạng, kèm ảnh chụp màn hình',
+      txt: 'Báo cáo văn bản (.txt)',
+      txtHint: 'Văn bản thuần, cùng nội dung',
+      log: 'Nhật ký kiểm toán (.log)',
+      logHint: 'Mọi lần gửi dữ liệu tới AI',
+    },
+    errDownload: 'Không thể tải xuống. Vui lòng thử lại.',
   },
   dpaPage: {
     seo: {
@@ -10090,6 +10157,28 @@ export default {
     closeAria: 'Đóng kế hoạch đầy đủ',
     yourGoal: 'Mục tiêu của bạn',
     now: 'Bây giờ',
+    runThis: 'Chạy lệnh này',
+    calm: {
+      loading: {
+        t: 'Đang kết nối',
+        d: 'Đang khởi động và tìm công việc của bạn.',
+      },
+      error: {
+        t: 'Không thể kết nối tới máy chủ',
+        d: 'Đang thử lại. Phiên của bạn vẫn an toàn.',
+      },
+      signin: {
+        t: 'Đăng nhập WorkCoPilot',
+        d: 'Đăng nhập ở cửa sổ chính, công việc của bạn sẽ hiện ở đây.',
+      },
+      empty: {
+        t: 'Chưa có công việc nào đang chạy',
+        d: 'Mở WorkCoPilot và bắt đầu một công việc. Màn hình này sẽ hướng dẫn bạn từng bước.',
+      },
+    },
+    hoursOutTip: 'Bạn đã dùng hết số giờ của gói trong tháng này',
+    hoursLeftTip: 'Số giờ của gói còn lại trong tháng này',
+    readingNext: 'Đang đọc màn hình của bạn để tìm bước tiếp theo',
   },
   guideConsole: {
     source: {
@@ -10509,6 +10598,26 @@ export default {
   },
   guideLevel: {
     groupAria: 'Mức độ hướng dẫn',
+    levels: {
+      easy: {
+        label: 'Dễ',
+        title: 'Lời lẽ đơn giản, từng cú nhấp đều được chỉ rõ',
+      },
+      medium: {
+        label: 'Vừa',
+        title: 'Các bước rõ ràng kèm những chi tiết chính',
+      },
+      technical: {
+        label: 'Kỹ thuật',
+        title: 'Chính xác, kèm lệnh, đường dẫn và giá trị',
+        short: 'Kỹ thuật',
+      },
+      executive: {
+        label: 'Lãnh đạo',
+        title: 'Ngắn gọn, kết quả trước, chỉ điều quan trọng',
+        short: 'Lãnh đạo',
+      },
+    },
   },
   helpPage: {
     nav: {
@@ -10956,6 +11065,14 @@ export default {
   },
   policyNote: {
     cleanBody: 'Hướng dẫn này đã được đối chiếu với chính sách bảo mật của công ty bạn và không có gì bị gắn cờ.',
+    headFlag: 'Chính sách công ty: hãy xem lại trước khi dùng',
+    headClean_one: 'Chính sách công ty: đạt (đã đối chiếu với {n} quy tắc)',
+    headClean_other: 'Chính sách công ty: đạt (đã đối chiếu với {n} quy tắc)',
+    forbid: 'Bị cấm: {title}.',
+    forbidAny: 'Bị cấm: một cách làm bị cấm.',
+    require: 'Bắt buộc: {title}.',
+    requireAny: 'Bắt buộc: một cách làm bắt buộc.',
+    per: '(theo {cite})',
   },
   privacyPage: {
     seo: {
@@ -11312,6 +11429,12 @@ export default {
   },
   readingStrip: {
     notRightPlace: 'Chưa phải đúng chỗ.',
+    readingScreen: 'Đang đọc màn hình của bạn',
+    readingCamera: 'Đang đọc camera',
+    iCanSee: 'Tôi thấy',
+    lastRead: 'Lần đọc gần nhất',
+    showRead: 'Hiện những gì WorkCoPilot đã đọc trên màn hình của bạn',
+    hideRead: 'Ẩn những gì WorkCoPilot đã đọc trên màn hình của bạn',
   },
   refundPage: {
     seo: {
@@ -11436,6 +11559,24 @@ export default {
     need: 'Tôi cần:',
     howIGotIt: 'Cách tôi có được',
     verifyBy: 'Xác minh bằng',
+    eyebrow: 'Kết quả',
+    eyebrowDraft: 'Bản nháp, cần thêm thông tin',
+    titleDraft: 'Đây là bản nháp, chưa phải câu trả lời chắc chắn',
+    kinds: {
+      number: 'Con số',
+      table: 'Bảng',
+      code: 'Đoạn mã',
+      text: 'Câu trả lời',
+      analysis: 'Phân tích',
+    },
+    confidence: 'Độ tin cậy',
+    confidenceAria: 'Độ tin cậy {pct} phần trăm',
+    band: {
+      draft: 'Bản nháp',
+      high: 'Cao',
+      fair: 'Khá',
+      low: 'Thấp',
+    },
   },
   scrubRules: {
     builtin: [
@@ -11481,6 +11622,16 @@ export default {
   securityNote: {
     cleanBody: 'Không tìm thấy lệnh nguy hiểm nào và không có thư viện nào có lỗ hổng đã biết trong đoạn mã này.',
     dbUnreachable: 'Không thể kết nối tới cơ sở dữ liệu lỗ hổng, vì vậy lần này các phiên bản thư viện chưa được kiểm tra.',
+    headFlag: 'Kiểm tra bảo mật: hãy xem lại trước khi dùng',
+    headClean: 'Kiểm tra bảo mật: không có vấn đề nào đã biết',
+    vulns_one: '<b>{pkg}</b> có {n} lỗ hổng đã biết.',
+    vulns_other: '<b>{pkg}</b> có {n} lỗ hổng đã biết.',
+    vulnsIds_one: '<b>{pkg}</b> có {n} lỗ hổng đã biết ({ids}).',
+    vulnsIds_other: '<b>{pkg}</b> có {n} lỗ hổng đã biết ({ids}).',
+    idsMore: '{ids} và các mã khác',
+    upgradeLatest: 'Nâng cấp lên {version} (mới nhất).',
+    upgradeLater: 'Nâng cấp lên {version} hoặc mới hơn.',
+    patchedVersion: 'một phiên bản đã vá',
   },
   setPasswordPage: {
     byBrand: 'bởi AdmireVeda',
@@ -11526,6 +11677,18 @@ export default {
     buddyTip: 'Thu nhỏ về thẻ Buddy (Ctrl+Shift+Alt+B)',
     minimize: 'Thu nhỏ',
     close: 'Đóng',
+    shareHiddenTip: 'Đang ẩn khỏi chia sẻ màn hình - nhấp để hiện khi chia sẻ (Ctrl+Shift+Alt+S)',
+    shareVisibleTip: 'Đang hiện khi chia sẻ màn hình - nhấp để ẩn lại (Ctrl+Shift+Alt+S)',
+    shareHidden: 'Ẩn',
+    shareOn: 'Khi chia sẻ',
+    seeThrough: 'Xuyên thấu',
+    clickBehindOnTip: 'Nhấp xuyên qua đang bật: các cú nhấp của bạn đi xuống ứng dụng bên dưới. Thanh này vẫn nhận cú nhấp. Nhấp vào đây hoặc nhấn Ctrl+Shift+Alt+W để tắt.',
+    clickBehindOffTip: 'Nhấp xuyên qua: cho các cú nhấp của bạn đi xuống ứng dụng bên dưới. Thanh này vẫn nhấp được để bạn có thể tắt lại (Ctrl+Shift+Alt+W).',
+    clickBehindIdleTip: 'Nhấp xuyên qua dùng được khi đang hướng dẫn',
+    restore: 'Khôi phục',
+    maximize: 'Phóng to',
+    maximizeCentered: 'Phóng to (căn giữa)',
+    fullScreenTip: 'Toàn màn hình (lấp đầy màn hình, hợp với màn hình thứ hai)',
   },
   skillsPage: {
     sectionAria: 'Kỹ năng',

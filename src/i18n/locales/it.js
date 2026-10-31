@@ -85,6 +85,7 @@ export default {
       back: 'Indietro',
       next: 'Avanti',
       errSave: 'Non è stato possibile salvare la bozza. Riprova.',
+      errChanged: 'Questa bozza è stata modificata in un\'altra scheda o da qualcun altro dopo che l\'hai aperta, quindi il salvataggio non è stato applicato. Copia ciò che ti serve, poi chiudila e riaprila per vedere la versione più recente.',
       errPublish: 'Non è stato possibile pubblicare. Controlla i campi obbligatori e i passaggi, poi riprova.',
       publishedOk: 'Pubblicato. Ora il tuo team viene guidato passo dopo passo.',
       draftSavedOk: 'Bozza salvata.',
@@ -416,6 +417,16 @@ export default {
       copyCommand: 'Copia il comando',
       copyAria: 'Copia negli appunti',
       copiedAria: 'Copiato negli appunti',
+      copyAll: 'Copia tutto',
+    },
+    download: {
+      file: 'Scarica file',
+      csv: 'Scarica CSV',
+      md: 'Scarica .md',
+    },
+    fullScreen: {
+      enter: 'Schermo intero',
+      exit: 'Esci dallo schermo intero',
     },
     blocks: {
       terminal: 'Terminale',
@@ -1344,6 +1355,7 @@ export default {
       checking: "Verifica dell'accesso della tua organizzazione…",
     },
     form: {
+      agreeDocs: 'Ho letto e accetto i seguenti documenti: {docs}.',
       ariaCreate: 'Crea account',
       ariaLogin: 'Accedi',
       fullName: 'Nome completo',
@@ -1427,6 +1439,7 @@ export default {
       verifyContinue: 'Verifica e continua',
     },
     err: {
+      acceptAgreements: 'Accetta gli accordi per creare il tuo account.',
       timedOut: 'La sessione di accesso è scaduta. Ricomincia.',
       finishFail: "Non siamo riusciti a completare l'accesso. Riprova.",
       enterName: 'Inserisci il tuo nome completo.',
@@ -6367,6 +6380,7 @@ export default {
       eyebrow: 'Il tuo spazio di lavoro',
       poweredBy: 'con tecnologia',
       exec: 'Dashboard direzionale',
+      logoAlt: 'Logo di {company}',
     },
     hello: 'Ciao {name}',
     plan: {
@@ -8069,6 +8083,29 @@ export default {
     youAsked: 'Lei ha chiesto:',
     planUpdated: "Il suo piano e' stato aggiornato.",
     followUp: 'Poni una domanda di approfondimento',
+    offerOpen: 'È su questo passo da un po\'. Mi dica cosa la blocca, oppure posso spiegarlo in un altro modo.',
+    offerOpenStep: 'È su questo passo da un po\': <step></step>. Mi dica cosa la blocca, oppure posso spiegarlo in un altro modo.',
+    explainAgain: 'Spiega di nuovo questo passo',
+    working: {
+      research: 'Sto cercando',
+      analyze: 'Sto leggendo il suo schermo',
+      stuck: 'Sto esaminando meglio questo passo',
+      question: 'Sto lavorando alla sua domanda',
+    },
+    label: {
+      research: 'Cosa ho trovato',
+      analyze: 'Cosa vedo',
+      betterWay: 'Una strada migliore',
+      explained: 'Questo passo, spiegato',
+    },
+    resumeAt: 'Continua riprende dal passo {n}.',
+    resumeAtStep: 'Continua riprende dal passo {n}: <step></step>',
+    continue: {
+      plan: 'Continua con il piano aggiornato',
+      step: 'Ho capito, torna al passo',
+      guiding: 'Continua la guida',
+    },
+    backToStep: 'Si torna al passo {n}.',
   },
   benchmarkPage: {
     eyebrow: 'Benchmark di accuratezza',
@@ -8289,6 +8326,25 @@ export default {
   composeCard: {
     emptyBody: 'Non è tornato alcun documento.',
     basedOn: 'Su cosa mi sono basato',
+    eyebrow: 'Scritto per lei',
+    formats: {
+      prompt: 'Prompt per la sua IA',
+      code: 'Codice',
+      outline: 'Scaletta',
+      bullets: 'Elenco puntato',
+      table: 'Tabella',
+      notes: 'Note',
+      draft: 'Bozza',
+    },
+    untitled: {
+      prompt: 'Il suo prompt per l\'IA',
+      code: 'Il suo codice',
+      outline: 'La sua scaletta',
+      bullets: 'Il suo elenco puntato',
+      table: 'La sua tabella',
+      notes: 'Le sue note',
+      draft: 'La sua bozza',
+    },
   },
   computeCard: {
     cmp: {
@@ -8921,6 +8977,7 @@ export default {
   destructiveGate: {
     label: 'Passo distruttivo.',
     reveal: 'Ho capito, mostra il comando',
+    body: 'Impatto: {why}. Lo legga con attenzione prima di eseguirlo.',
   },
   disclaimerPage: {
     seo: {
@@ -9048,6 +9105,16 @@ export default {
     triggerTip: 'Scarica questa sessione',
     menuAria: 'Formato di download',
     heading: 'Scarica come',
+    label: 'Scarica',
+    formats: {
+      pdf: 'Report PDF',
+      pdfHint: 'Impaginato, con screenshot',
+      txt: 'Report di testo (.txt)',
+      txtHint: 'Testo semplice, stesso contenuto',
+      log: 'Log di audit (.log)',
+      logHint: 'Ogni trasmissione all\'IA',
+    },
+    errDownload: 'Impossibile scaricare. Riprovi.',
   },
   dpaPage: {
     seo: {
@@ -10120,6 +10187,28 @@ export default {
     closeAria: 'Chiudi il piano completo',
     yourGoal: 'Il suo obiettivo',
     now: 'Adesso',
+    runThis: 'Esegua questo',
+    calm: {
+      loading: {
+        t: 'Connessione in corso',
+        d: 'Avvio e ricerca della sua attività.',
+      },
+      error: {
+        t: 'Impossibile raggiungere il server',
+        d: 'Nuovo tentativo in corso. La sua sessione è al sicuro.',
+      },
+      signin: {
+        t: 'Acceda a WorkCoPilot',
+        d: 'Acceda dalla finestra principale e la sua attività comparirà qui.',
+      },
+      empty: {
+        t: 'Ancora nessuna attività in corso',
+        d: 'Apra WorkCoPilot e avvii un\'attività. Questa schermata la guiderà poi passo dopo passo.',
+      },
+    },
+    hoursOutTip: 'Le ore del piano di questo mese sono esaurite',
+    hoursLeftTip: 'Ore del piano rimaste questo mese',
+    readingNext: 'Sto leggendo il suo schermo per la prossima mossa',
   },
   guideConsole: {
     source: {
@@ -10539,6 +10628,26 @@ export default {
   },
   guideLevel: {
     groupAria: "Intensita' della guida",
+    levels: {
+      easy: {
+        label: 'Facile',
+        title: 'Parole semplici, ogni clic spiegato',
+      },
+      medium: {
+        label: 'Medio',
+        title: 'Passi chiari con i dettagli chiave',
+      },
+      technical: {
+        label: 'Tecnico',
+        title: 'Preciso, con comandi, percorsi e valori',
+        short: 'Tec.',
+      },
+      executive: {
+        label: 'Dirigenziale',
+        title: 'Breve, orientato al risultato, solo l\'essenziale',
+        short: 'Dir.',
+      },
+    },
   },
   helpPage: {
     nav: {
@@ -10986,6 +11095,14 @@ export default {
   },
   policyNote: {
     cleanBody: 'Questa guida è stata verificata rispetto alla politica di sicurezza della sua azienda e non è stato segnalato nulla.',
+    headFlag: 'Politica aziendale: verifichi prima dell\'uso',
+    headClean_one: 'Politica aziendale: tutto a posto (verificato con {n} regola)',
+    headClean_other: 'Politica aziendale: tutto a posto (verificato con {n} regole)',
+    forbid: 'Vietato: {title}.',
+    forbidAny: 'Vietato: una pratica vietata.',
+    require: 'Obbligatorio: {title}.',
+    requireAny: 'Obbligatorio: una pratica obbligatoria.',
+    per: '(secondo {cite})',
   },
   privacyPage: {
     seo: {
@@ -11342,6 +11459,12 @@ export default {
   },
   readingStrip: {
     notRightPlace: 'Non ancora il punto giusto.',
+    readingScreen: 'Sto leggendo il suo schermo',
+    readingCamera: 'Sto leggendo la fotocamera',
+    iCanSee: 'Vedo',
+    lastRead: 'Ultima lettura',
+    showRead: 'Mostra cosa ha letto la guida sul suo schermo',
+    hideRead: 'Nascondi cosa ha letto la guida sul suo schermo',
   },
   refundPage: {
     seo: {
@@ -11466,6 +11589,24 @@ export default {
     need: 'Mi serve:',
     howIGotIt: 'Come ci sono arrivato',
     verifyBy: 'Verifica tramite',
+    eyebrow: 'Risultato',
+    eyebrowDraft: 'Bozza, servono altri dati',
+    titleDraft: 'Una bozza, non una risposta certa',
+    kinds: {
+      number: 'Il numero',
+      table: 'La tabella',
+      code: 'Il codice',
+      text: 'La risposta',
+      analysis: 'L\'analisi',
+    },
+    confidence: 'Affidabilità',
+    confidenceAria: 'Affidabilità {pct} per cento',
+    band: {
+      draft: 'Bozza',
+      high: 'Alta',
+      fair: 'Discreta',
+      low: 'Bassa',
+    },
   },
   scrubRules: {
     builtin: [
@@ -11511,6 +11652,16 @@ export default {
   securityNote: {
     cleanBody: 'In questo codice non sono stati trovati comandi pericolosi né librerie con vulnerabilità note.',
     dbUnreachable: 'Non è stato possibile raggiungere il database delle vulnerabilità, quindi questa volta le versioni delle librerie non sono state controllate.',
+    headFlag: 'Controllo di sicurezza: verifichi prima dell\'uso',
+    headClean: 'Controllo di sicurezza: nessun problema noto',
+    vulns_one: '<b>{pkg}</b> ha {n} vulnerabilità nota.',
+    vulns_other: '<b>{pkg}</b> ha {n} vulnerabilità note.',
+    vulnsIds_one: '<b>{pkg}</b> ha {n} vulnerabilità nota ({ids}).',
+    vulnsIds_other: '<b>{pkg}</b> ha {n} vulnerabilità note ({ids}).',
+    idsMore: '{ids} e altre',
+    upgradeLatest: 'Aggiorni a {version} (la più recente).',
+    upgradeLater: 'Aggiorni a {version} o successiva.',
+    patchedVersion: 'una versione corretta',
   },
   setPasswordPage: {
     byBrand: 'di AdmireVeda',
@@ -11556,6 +11707,18 @@ export default {
     buddyTip: 'Riduci alla scheda buddy (Ctrl+Shift+Alt+B)',
     minimize: 'Riduci a icona',
     close: 'Chiudi',
+    shareHiddenTip: 'Nascosto nelle condivisioni dello schermo: fai clic per mostrarlo in condivisione (Ctrl+Shift+Alt+S)',
+    shareVisibleTip: 'Visibile nelle condivisioni dello schermo: fai clic per nasconderlo di nuovo (Ctrl+Shift+Alt+S)',
+    shareHidden: 'Nascosto',
+    shareOn: 'Visibile',
+    seeThrough: 'Trasparenza',
+    clickBehindOnTip: 'Clic dietro è attivo: i tuoi clic passano all\'app sottostante. Questa barra riceve comunque i clic. Fai clic qui o premi Ctrl+Shift+Alt+W per disattivarlo.',
+    clickBehindOffTip: 'Clic dietro: lascia passare i tuoi clic all\'app sottostante. Questa barra resta cliccabile, così puoi disattivarlo di nuovo (Ctrl+Shift+Alt+W).',
+    clickBehindIdleTip: 'Clic dietro è disponibile durante la guida',
+    restore: 'Ripristina',
+    maximize: 'Ingrandisci',
+    maximizeCentered: 'Ingrandisci (centrato)',
+    fullScreenTip: 'Schermo intero (riempie lo schermo, ideale su un secondo monitor)',
   },
   skillsPage: {
     sectionAria: 'Skill',

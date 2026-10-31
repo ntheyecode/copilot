@@ -85,6 +85,7 @@ export default {
       back: 'رجوع',
       next: 'التالي',
       errSave: 'تعذّر حفظ المسودة. يُرجى المحاولة مرة أخرى.',
+      errChanged: 'تغيّرت هذه المسودة في علامة تبويب أخرى أو من قِبل شخص آخر منذ أن فتحتها، لذا لم يُطبَّق حفظك. انسخ ما تحتاجه، ثم أغلقها وافتحها مجددًا لترى أحدث إصدار.',
       errPublish: 'تعذّر النشر. تحقق من الحقول والخطوات المطلوبة، ثم حاول مرة أخرى.',
       publishedOk: 'تم النشر. يُرشَد فريقك خلاله الآن.',
       draftSavedOk: 'تم حفظ المسودة.',
@@ -780,6 +781,7 @@ export default {
       eyebrow: 'مساحة عملك',
       poweredBy: 'مدعوم بـ',
       exec: 'لوحة القيادة التنفيذية',
+      logoAlt: 'شعار {company}',
     },
     hello: 'مرحبًا {name}',
     plan: {
@@ -1462,6 +1464,16 @@ export default {
       copyCommand: 'نسخ الأمر',
       copyAria: 'نسخ إلى الحافظة',
       copiedAria: 'تم النسخ إلى الحافظة',
+      copyAll: 'نسخ الكل',
+    },
+    download: {
+      file: 'تنزيل الملف',
+      csv: 'تنزيل CSV',
+      md: 'تنزيل .md',
+    },
+    fullScreen: {
+      enter: 'ملء الشاشة',
+      exit: 'الخروج من ملء الشاشة',
     },
     blocks: {
       terminal: 'الطرفية',
@@ -2362,6 +2374,7 @@ export default {
       checking: 'جارٍ التحقق من تسجيل دخول مؤسستك…',
     },
     form: {
+      agreeDocs: 'لقد قرأت {docs} وأوافق عليها.',
       ariaCreate: 'إنشاء حساب',
       ariaLogin: 'تسجيل الدخول',
       fullName: 'الاسم الكامل',
@@ -2445,6 +2458,7 @@ export default {
       verifyContinue: 'تحقق وتابع',
     },
     err: {
+      acceptAgreements: 'يُرجى قبول الاتفاقيات لإنشاء حسابك.',
       timedOut: 'انتهت مهلة جلسة تسجيل الدخول. يرجى البدء من جديد.',
       finishFail: 'تعذّر إكمال تسجيل دخولك. يرجى المحاولة مرة أخرى.',
       enterName: 'أدخل اسمك الكامل.',
@@ -7979,6 +7993,29 @@ export default {
     youAsked: 'لقد سألت:',
     planUpdated: 'تم تحديث خطتك.',
     followUp: 'اطرح سؤالًا للمتابعة',
+    offerOpen: 'هذه الخطوة مفتوحة منذ مدة. أخبرني بما يعيقك، أو أشرحها لك بطريقة أخرى.',
+    offerOpenStep: 'هذه الخطوة مفتوحة منذ مدة: <step></step>. أخبرني بما يعيقك، أو أشرحها لك بطريقة أخرى.',
+    explainAgain: 'اشرح هذه الخطوة مرة أخرى',
+    working: {
+      research: 'أبحث عن هذا',
+      analyze: 'أقرأ شاشتك',
+      stuck: 'أنظر في هذه الخطوة عن قرب',
+      question: 'أعمل على سؤالك',
+    },
+    label: {
+      research: 'ما وجدته',
+      analyze: 'ما أراه',
+      betterWay: 'طريقة أفضل للإنجاز',
+      explained: 'هذه الخطوة، بشرح أوضح',
+    },
+    resumeAt: 'عند المتابعة تستأنف من الخطوة {n}.',
+    resumeAtStep: 'عند المتابعة تستأنف من الخطوة {n}: <step></step>',
+    continue: {
+      plan: 'تابِع بالخطة المحدَّثة',
+      step: 'فهمت، العودة إلى الخطوة',
+      guiding: 'تابِع الإرشاد',
+    },
+    backToStep: 'العودة إلى الخطوة {n}.',
   },
   benchmarkPage: {
     eyebrow: 'مقياس الدقة',
@@ -8195,6 +8232,25 @@ export default {
   composeCard: {
     emptyBody: 'لم يُعَد أي مستند.',
     basedOn: 'ما استندت إليه',
+    eyebrow: 'مكتوب لك',
+    formats: {
+      prompt: 'موجّه للذكاء الاصطناعي لديك',
+      code: 'شيفرة',
+      outline: 'مخطط',
+      bullets: 'نقاط',
+      table: 'جدول',
+      notes: 'ملاحظات',
+      draft: 'مسودة',
+    },
+    untitled: {
+      prompt: 'موجّهك للذكاء الاصطناعي لديك',
+      code: 'شيفرتك',
+      outline: 'مخططك',
+      bullets: 'نقاطك',
+      table: 'جدولك',
+      notes: 'ملاحظاتك',
+      draft: 'مسودتك',
+    },
   },
   computeCard: {
     cmp: {
@@ -8827,6 +8883,7 @@ export default {
   destructiveGate: {
     label: 'خطوة قد تسبب فقدانًا لا رجعة فيه.',
     reveal: 'أفهم ذلك، أظهِر الأمر',
+    body: 'الأثر: {why}. اقرأ الأمر بعناية قبل تشغيله.',
   },
   disclaimerPage: {
     seo: {
@@ -8954,6 +9011,16 @@ export default {
     triggerTip: 'تنزيل هذه الجلسة',
     menuAria: 'صيغة التنزيل',
     heading: 'تنزيل بصيغة',
+    label: 'تنزيل',
+    formats: {
+      pdf: 'تقرير PDF',
+      pdfHint: 'منسّق، مع لقطات الشاشة',
+      txt: 'تقرير نصي (.txt)',
+      txtHint: 'نص عادي، بالمحتوى نفسه',
+      log: 'سجل التدقيق (.log)',
+      logHint: 'كل ما أُرسل إلى الذكاء الاصطناعي',
+    },
+    errDownload: 'تعذّر التنزيل. يُرجى المحاولة مرة أخرى.',
   },
   dpaPage: {
     seo: {
@@ -10026,6 +10093,28 @@ export default {
     closeAria: 'إغلاق الخطة الكاملة',
     yourGoal: 'هدفك',
     now: 'الآن',
+    runThis: 'شغّل هذا',
+    calm: {
+      loading: {
+        t: 'جارٍ الاتصال',
+        d: 'جارٍ التشغيل والعثور على مهمتك.',
+      },
+      error: {
+        t: 'تعذّر الوصول إلى الخادم',
+        d: 'نعيد المحاولة. جلستك في أمان.',
+      },
+      signin: {
+        t: 'سجّل الدخول إلى WorkCoPilot',
+        d: 'سجّل الدخول في النافذة الرئيسية وستظهر مهمتك هنا.',
+      },
+      empty: {
+        t: 'لا توجد مهمة نشطة بعد',
+        d: 'افتح WorkCoPilot وابدأ مهمة. ستُرشدك هذه الشاشة بعدها خطوة بخطوة.',
+      },
+    },
+    hoursOutTip: 'نفدت ساعات خطتك لهذا الشهر',
+    hoursLeftTip: 'ساعات الخطة المتبقية هذا الشهر',
+    readingNext: 'أقرأ شاشتك لتحديد الخطوة التالية',
   },
   guideConsole: {
     source: {
@@ -10445,6 +10534,26 @@ export default {
   },
   guideLevel: {
     groupAria: 'قوة الإرشاد',
+    levels: {
+      easy: {
+        label: 'سهل',
+        title: 'كلمات بسيطة، وكل نقرة موضّحة',
+      },
+      medium: {
+        label: 'متوسط',
+        title: 'خطوات واضحة مع التفاصيل الأساسية',
+      },
+      technical: {
+        label: 'تقني',
+        title: 'دقيق، مع الأوامر والمسارات والقيم',
+        short: 'تقني',
+      },
+      executive: {
+        label: 'تنفيذي',
+        title: 'موجز، النتيجة أولًا، وما يهم فقط',
+        short: 'تنفيذي',
+      },
+    },
   },
   helpPage: {
     nav: {
@@ -10892,6 +11001,14 @@ export default {
   },
   policyNote: {
     cleanBody: 'جرى فحص هذا الإرشاد مقابل سياسة شركتك الأمنية ولم يُشَر إلى أي شيء.',
+    headFlag: 'سياسة الشركة: راجِع هذا قبل استخدامه',
+    headClean_one: 'سياسة الشركة: لا ملاحظات (عدد القواعد المفحوصة: {n})',
+    headClean_other: 'سياسة الشركة: لا ملاحظات (عدد القواعد المفحوصة: {n})',
+    forbid: 'محظور: {title}.',
+    forbidAny: 'محظور: ممارسة محظورة.',
+    require: 'مطلوب: {title}.',
+    requireAny: 'مطلوب: ممارسة مطلوبة.',
+    per: '(وفقًا لـ {cite})',
   },
   privacyPage: {
     seo: {
@@ -11248,6 +11365,12 @@ export default {
   },
   readingStrip: {
     notRightPlace: 'ليس المكان الصحيح بعد.',
+    readingScreen: 'أقرأ شاشتك',
+    readingCamera: 'أقرأ الكاميرا',
+    iCanSee: 'أرى الآن',
+    lastRead: 'آخر قراءة',
+    showRead: 'أظهِر ما قرأه الدليل على شاشتك',
+    hideRead: 'أخفِ ما قرأه الدليل على شاشتك',
   },
   refundPage: {
     seo: {
@@ -11372,6 +11495,24 @@ export default {
     need: 'أحتاج:',
     howIGotIt: 'كيف وصلت إليها',
     verifyBy: 'تحقّق عبر',
+    eyebrow: 'النتيجة',
+    eyebrowDraft: 'مسودة، تحتاج إلى مدخلات',
+    titleDraft: 'مسودة، وليست إجابة مؤكدة',
+    kinds: {
+      number: 'الرقم',
+      table: 'الجدول',
+      code: 'الشيفرة',
+      text: 'الإجابة',
+      analysis: 'التحليل',
+    },
+    confidence: 'الثقة',
+    confidenceAria: 'الثقة {pct} بالمئة',
+    band: {
+      draft: 'مسودة',
+      high: 'عالية',
+      fair: 'مقبولة',
+      low: 'منخفضة',
+    },
   },
   scrubRules: {
     builtin: [
@@ -11417,6 +11558,16 @@ export default {
   securityNote: {
     cleanBody: 'لم يُعثَر على أوامر خطِرة ولا مكتبات معروفة بثغراتها في هذه الشيفرة.',
     dbUnreachable: 'تعذّر الوصول إلى قاعدة بيانات الثغرات، لذا لم تُفحص إصدارات المكتبات هذه المرة.',
+    headFlag: 'فحص الأمان: راجِع هذا قبل استخدامه',
+    headClean: 'فحص الأمان: لا مشكلات معروفة',
+    vulns_one: 'عدد الثغرات المعروفة في <b>{pkg}</b>: {n}.',
+    vulns_other: 'عدد الثغرات المعروفة في <b>{pkg}</b>: {n}.',
+    vulnsIds_one: 'عدد الثغرات المعروفة في <b>{pkg}</b>: {n} ({ids}).',
+    vulnsIds_other: 'عدد الثغرات المعروفة في <b>{pkg}</b>: {n} ({ids}).',
+    idsMore: '{ids}، وغيرها',
+    upgradeLatest: 'حدِّث إلى {version} (الأحدث).',
+    upgradeLater: 'حدِّث إلى {version} أو أحدث.',
+    patchedVersion: 'إصدار مُصحَّح',
   },
   setPasswordPage: {
     byBrand: 'من AdmireVeda',
@@ -11462,6 +11613,18 @@ export default {
     buddyTip: 'انكمش إلى بطاقة الرفيق (Ctrl+Shift+Alt+B)',
     minimize: 'تصغير',
     close: 'إغلاق',
+    shareHiddenTip: 'مخفية عن مشاركة الشاشة - انقر لإظهارها في المشاركة (Ctrl+Shift+Alt+S)',
+    shareVisibleTip: 'ظاهرة في مشاركة الشاشة - انقر لإخفائها مجددًا (Ctrl+Shift+Alt+S)',
+    shareHidden: 'مخفية',
+    shareOn: 'في المشاركة',
+    seeThrough: 'شفافة',
+    clickBehindOnTip: 'النقر الخلفي مفعّل: تمر نقراتك إلى التطبيق الموجود خلفها. يظل هذا الشريط يستقبل النقرات. انقر هنا أو اضغط Ctrl+Shift+Alt+W لإيقافه.',
+    clickBehindOffTip: 'النقر الخلفي: دع نقراتك تمر إلى التطبيق الموجود خلفها. يبقى هذا الشريط قابلًا للنقر لتتمكن من إيقافه مجددًا (Ctrl+Shift+Alt+W).',
+    clickBehindIdleTip: 'النقر الخلفي متاح أثناء الإرشاد',
+    restore: 'استعادة',
+    maximize: 'تكبير',
+    maximizeCentered: 'تكبير (في المنتصف)',
+    fullScreenTip: 'ملء الشاشة (يملأ الشاشة، مناسب لشاشة ثانية)',
   },
   skillsPage: {
     sectionAria: 'المهارات',

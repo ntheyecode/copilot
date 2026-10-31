@@ -85,6 +85,7 @@ export default {
       back: 'Kembali',
       next: 'Berikutnya',
       errSave: 'Tidak dapat menyimpan draf. Silakan coba lagi.',
+      errChanged: 'Draf ini telah diubah di tab lain atau oleh orang lain sejak Anda membukanya, jadi simpanan Anda tidak diterapkan. Salin apa pun yang Anda perlukan, lalu tutup dan buka lagi untuk melihat versi terbaru.',
       errPublish: 'Tidak dapat menerbitkan. Periksa bidang dan langkah yang wajib, lalu coba lagi.',
       publishedOk: 'Diterbitkan. Tim Anda dipandu melaluinya sekarang.',
       draftSavedOk: 'Draf tersimpan.',
@@ -793,6 +794,16 @@ export default {
       copyCommand: 'Salin perintah',
       copyAria: 'Salin ke papan klip',
       copiedAria: 'Tersalin ke papan klip',
+      copyAll: 'Salin semua',
+    },
+    download: {
+      file: 'Unduh file',
+      csv: 'Unduh CSV',
+      md: 'Unduh .md',
+    },
+    fullScreen: {
+      enter: 'Layar penuh',
+      exit: 'Keluar dari layar penuh',
     },
     blocks: {
       terminal: 'Terminal',
@@ -1699,6 +1710,7 @@ export default {
       checking: 'Memeriksa cara masuk organisasi Anda…',
     },
     form: {
+      agreeDocs: 'Saya telah membaca dan menyetujui {docs}.',
       ariaCreate: 'Buat akun',
       ariaLogin: 'Masuk',
       fullName: 'Nama lengkap',
@@ -1782,6 +1794,7 @@ export default {
       verifyContinue: 'Verifikasi dan lanjutkan',
     },
     err: {
+      acceptAgreements: 'Harap setujui perjanjian untuk membuat akun Anda.',
       timedOut: 'Sesi masuk Anda habis. Silakan mulai lagi.',
       finishFail: 'Tidak bisa menyelesaikan proses masuk. Silakan coba lagi.',
       enterName: 'Masukkan nama lengkap Anda.',
@@ -6710,6 +6723,7 @@ export default {
       eyebrow: 'Ruang kerja Anda',
       poweredBy: 'didukung oleh',
       exec: 'Dasbor eksekutif',
+      logoAlt: 'Logo {company}',
     },
     hello: 'Halo {name}',
     plan: {
@@ -8035,6 +8049,29 @@ export default {
     youAsked: 'Anda bertanya:',
     planUpdated: 'Rencana Anda telah diperbarui.',
     followUp: 'Ajukan pertanyaan lanjutan',
+    offerOpen: 'Langkah ini sudah terbuka cukup lama. Beri tahu saya apa yang menghalangi, atau saya bisa menjelaskannya dengan cara lain.',
+    offerOpenStep: 'Langkah ini sudah terbuka cukup lama: <step></step>. Beri tahu saya apa yang menghalangi, atau saya bisa menjelaskannya dengan cara lain.',
+    explainAgain: 'Jelaskan langkah ini lagi',
+    working: {
+      research: 'Mencari informasinya',
+      analyze: 'Membaca layar Anda',
+      stuck: 'Melihat langkah ini lebih teliti',
+      question: 'Mengerjakan pertanyaan Anda',
+    },
+    label: {
+      research: 'Yang saya temukan',
+      analyze: 'Yang saya lihat',
+      betterWay: 'Cara yang lebih baik',
+      explained: 'Penjelasan langkah ini',
+    },
+    resumeAt: 'Lanjutkan akan dimulai dari langkah {n}.',
+    resumeAtStep: 'Lanjutkan akan dimulai dari langkah {n}: <step></step>',
+    continue: {
+      plan: 'Lanjutkan dengan rencana yang diperbarui',
+      step: 'Oke, kembali ke langkah',
+      guiding: 'Lanjutkan panduan',
+    },
+    backToStep: 'Kembali ke langkah {n}.',
   },
   benchmarkPage: {
     eyebrow: 'Tolok ukur akurasi',
@@ -8255,6 +8292,25 @@ export default {
   composeCard: {
     emptyBody: 'Tidak ada dokumen yang dikembalikan.',
     basedOn: 'Apa yang menjadi dasarnya',
+    eyebrow: 'Ditulis untuk Anda',
+    formats: {
+      prompt: 'Prompt untuk AI Anda',
+      code: 'Kode',
+      outline: 'Kerangka',
+      bullets: 'Poin-poin',
+      table: 'Tabel',
+      notes: 'Catatan',
+      draft: 'Draf',
+    },
+    untitled: {
+      prompt: 'Prompt Anda untuk AI',
+      code: 'Kode Anda',
+      outline: 'Kerangka Anda',
+      bullets: 'Poin-poin Anda',
+      table: 'Tabel Anda',
+      notes: 'Catatan Anda',
+      draft: 'Draf Anda',
+    },
   },
   computeCard: {
     cmp: {
@@ -8887,6 +8943,7 @@ export default {
   destructiveGate: {
     label: 'Langkah merusak.',
     reveal: 'Saya mengerti, tampilkan perintahnya',
+    body: 'Dampaknya: {why}. Baca dengan saksama sebelum Anda menjalankannya.',
   },
   disclaimerPage: {
     seo: {
@@ -9014,6 +9071,16 @@ export default {
     triggerTip: 'Unduh sesi ini',
     menuAria: 'Format unduhan',
     heading: 'Unduh sebagai',
+    label: 'Unduh',
+    formats: {
+      pdf: 'Laporan PDF',
+      pdfHint: 'Terformat, dengan tangkapan layar',
+      txt: 'Laporan teks (.txt)',
+      txtHint: 'Teks biasa, isi yang sama',
+      log: 'Log audit (.log)',
+      logHint: 'Setiap pengiriman ke AI',
+    },
+    errDownload: 'Tidak dapat mengunduh. Silakan coba lagi.',
   },
   dpaPage: {
     seo: {
@@ -10086,6 +10153,28 @@ export default {
     closeAria: 'Tutup rencana lengkap',
     yourGoal: 'Tujuan Anda',
     now: 'Sekarang',
+    runThis: 'Jalankan ini',
+    calm: {
+      loading: {
+        t: 'Menghubungkan',
+        d: 'Menyiapkan dan mencari tugas Anda.',
+      },
+      error: {
+        t: 'Tidak dapat menjangkau server',
+        d: 'Mencoba lagi. Sesi Anda aman.',
+      },
+      signin: {
+        t: 'Masuk ke WorkCoPilot',
+        d: 'Masuk di jendela utama, lalu tugas Anda muncul di sini.',
+      },
+      empty: {
+        t: 'Belum ada tugas aktif',
+        d: 'Buka WorkCoPilot dan mulai sebuah tugas. Layar ini lalu memandu Anda, langkah demi langkah.',
+      },
+    },
+    hoursOutTip: 'Jam paket Anda bulan ini sudah habis',
+    hoursLeftTip: 'Sisa jam paket bulan ini',
+    readingNext: 'Membaca layar Anda untuk langkah berikutnya',
   },
   guideConsole: {
     source: {
@@ -10505,6 +10594,26 @@ export default {
   },
   guideLevel: {
     groupAria: 'Kekuatan panduan',
+    levels: {
+      easy: {
+        label: 'Mudah',
+        title: 'Bahasa sederhana, setiap klik dijelaskan',
+      },
+      medium: {
+        label: 'Sedang',
+        title: 'Langkah yang jelas dengan detail penting',
+      },
+      technical: {
+        label: 'Teknis',
+        title: 'Tepat, dengan perintah, path, dan nilai',
+        short: 'Teknis',
+      },
+      executive: {
+        label: 'Eksekutif',
+        title: 'Singkat, hasil lebih dulu, hanya yang penting',
+        short: 'Eksek',
+      },
+    },
   },
   helpPage: {
     nav: {
@@ -10952,6 +11061,14 @@ export default {
   },
   policyNote: {
     cleanBody: 'Panduan ini telah diperiksa terhadap kebijakan keamanan perusahaan Anda dan tidak ada yang ditandai.',
+    headFlag: 'Kebijakan perusahaan: tinjau sebelum Anda memakainya',
+    headClean_one: 'Kebijakan perusahaan: aman (diperiksa terhadap {n} aturan)',
+    headClean_other: 'Kebijakan perusahaan: aman (diperiksa terhadap {n} aturan)',
+    forbid: 'Dilarang: {title}.',
+    forbidAny: 'Dilarang: sebuah praktik yang dilarang.',
+    require: 'Wajib: {title}.',
+    requireAny: 'Wajib: sebuah praktik yang diwajibkan.',
+    per: '(menurut {cite})',
   },
   privacyPage: {
     seo: {
@@ -11308,6 +11425,12 @@ export default {
   },
   readingStrip: {
     notRightPlace: 'Belum tempat yang tepat.',
+    readingScreen: 'Membaca layar Anda',
+    readingCamera: 'Membaca kamera',
+    iCanSee: 'Yang saya lihat',
+    lastRead: 'Terakhir dibaca',
+    showRead: 'Tampilkan apa yang dibaca pemandu di layar Anda',
+    hideRead: 'Sembunyikan apa yang dibaca pemandu di layar Anda',
   },
   refundPage: {
     seo: {
@@ -11432,6 +11555,24 @@ export default {
     need: 'Saya butuh:',
     howIGotIt: 'Bagaimana saya memperolehnya',
     verifyBy: 'Verifikasi dengan',
+    eyebrow: 'Hasil',
+    eyebrowDraft: 'Draf, perlu masukan',
+    titleDraft: 'Ini draf, belum jawaban yang pasti',
+    kinds: {
+      number: 'Angkanya',
+      table: 'Tabelnya',
+      code: 'Kodenya',
+      text: 'Jawabannya',
+      analysis: 'Analisisnya',
+    },
+    confidence: 'Tingkat keyakinan',
+    confidenceAria: 'Tingkat keyakinan {pct} persen',
+    band: {
+      draft: 'Draf',
+      high: 'Tinggi',
+      fair: 'Cukup',
+      low: 'Rendah',
+    },
   },
   scrubRules: {
     builtin: [
@@ -11477,6 +11618,16 @@ export default {
   securityNote: {
     cleanBody: 'Tidak ada perintah berbahaya dan tidak ada pustaka yang diketahui rentan ditemukan dalam kode ini.',
     dbUnreachable: 'Basis data kerentanan tidak dapat dijangkau, jadi versi pustaka tidak diperiksa kali ini.',
+    headFlag: 'Pemeriksaan keamanan: tinjau sebelum Anda memakainya',
+    headClean: 'Pemeriksaan keamanan: tidak ada masalah yang diketahui',
+    vulns_one: '<b>{pkg}</b> memiliki {n} kerentanan yang diketahui.',
+    vulns_other: '<b>{pkg}</b> memiliki {n} kerentanan yang diketahui.',
+    vulnsIds_one: '<b>{pkg}</b> memiliki {n} kerentanan yang diketahui ({ids}).',
+    vulnsIds_other: '<b>{pkg}</b> memiliki {n} kerentanan yang diketahui ({ids}).',
+    idsMore: '{ids}, dan lainnya',
+    upgradeLatest: 'Perbarui ke {version} (terbaru).',
+    upgradeLater: 'Perbarui ke {version} atau yang lebih baru.',
+    patchedVersion: 'versi yang sudah ditambal',
   },
   setPasswordPage: {
     byBrand: 'oleh AdmireVeda',
@@ -11522,6 +11673,18 @@ export default {
     buddyTip: 'Kecilkan menjadi kartu buddy (Ctrl+Shift+Alt+B)',
     minimize: 'Minimalkan',
     close: 'Tutup',
+    shareHiddenTip: 'Tersembunyi dari berbagi layar - klik untuk menampilkannya saat berbagi (Ctrl+Shift+Alt+S)',
+    shareVisibleTip: 'Terlihat saat berbagi layar - klik untuk menyembunyikannya lagi (Ctrl+Shift+Alt+S)',
+    shareHidden: 'Tersembunyi',
+    shareOn: 'Saat berbagi',
+    seeThrough: 'Transparan',
+    clickBehindOnTip: 'Klik-tembus aktif: klik Anda diteruskan ke aplikasi di bawahnya. Bilah ini tetap menerima klik. Klik di sini atau tekan Ctrl+Shift+Alt+W untuk mematikannya.',
+    clickBehindOffTip: 'Klik-tembus: teruskan klik Anda ke aplikasi di bawahnya. Bilah ini tetap bisa diklik agar Anda bisa mematikannya lagi (Ctrl+Shift+Alt+W).',
+    clickBehindIdleTip: 'Klik-tembus tersedia saat sedang memandu',
+    restore: 'Pulihkan',
+    maximize: 'Maksimalkan',
+    maximizeCentered: 'Maksimalkan (di tengah)',
+    fullScreenTip: 'Layar penuh (memenuhi layar, cocok untuk monitor kedua)',
   },
   skillsPage: {
     sectionAria: 'Skill',

@@ -19,6 +19,7 @@ export default {
       eyebrow: 'Your workspace',
       poweredBy: 'powered by',
       exec: 'Executive dashboard',
+      logoAlt: '{company} logo',
     },
 
     // ---- Hello + plan line (the single h1). {time} is the compact time left.

@@ -24,7 +24,6 @@ export default function ReadingStrip({ watching, analyzing, offTrack, observatio
   const [open, setOpen] = useState(false)
   const obs = String(observation || '').trim()
   const fl = String(flag || '').trim()
-  const what = source === 'camera' ? 'the camera' : 'your screen'
   const prominent = readingIsProminent({ offTrack, flag: fl, observation: obs })
 
   if (prominent) {
@@ -47,9 +46,9 @@ export default function ReadingStrip({ watching, analyzing, offTrack, observatio
   if (!analyzing && !obs) return null
   // Honest label: "I can see" only while live; after a pause or a reload the
   // last observation is shown as exactly that, the last read.
-  const k = analyzing ? `Reading ${what}` : watching ? 'I can see' : 'Last read'
+  const k = analyzing ? t(source === 'camera' ? 'readingStrip.readingCamera' : 'readingStrip.readingScreen') : watching ? t('readingStrip.iCanSee') : t('readingStrip.lastRead')
   return (
-    <button type="button" className={`gv-glance${open ? ' open' : ''}${analyzing ? ' is-analyzing' : ''}`} onClick={() => setOpen((v) => !v)} aria-expanded={open} title={open ? 'Hide what the guide read on your screen' : 'Show what the guide read on your screen'}>
+    <button type="button" className={`gv-glance${open ? ' open' : ''}${analyzing ? ' is-analyzing' : ''}`} onClick={() => setOpen((v) => !v)} aria-expanded={open} title={open ? t('readingStrip.hideRead') : t('readingStrip.showRead')}>
       <span className="gv-glance-ic" aria-hidden="true">{analyzing ? <span className="gv-ana"><i /><i /><i /></span> : <Eye size={12} strokeWidth={2.4} />}</span>
       <span className="gv-glance-k">{k}</span>
       {!analyzing && <span className="gv-glance-t"><RichText text={obs} accent="var(--gv-muted)" chips={false} /></span>}
