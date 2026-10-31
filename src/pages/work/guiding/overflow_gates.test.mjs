@@ -43,3 +43,11 @@ test('the admin table base class has no min-width; a select in a cell shrinks wi
   assert.match(sel, /min-width:\s*0/, 'a select may shrink')
   assert.match(sel, /max-width:\s*100%/, 'a select never exceeds its box')
 })
+
+// The collapsed console rail (64px) keeps an item's badge on the icon's corner
+// (an Alerts count ran past the rail at 380px, 2026-10-31).
+test('the collapsed admin rail pins item badges to the icon corner', async () => {
+  const { readFileSync } = await import('node:fs')
+  const css = readFileSync(new URL('../../workadmin/workadmin.css.js', import.meta.url), 'utf8')
+  assert.match(css, /\.wka-nav-item > :not\(svg\):not\(\.label\) \{ position: absolute;/)
+})

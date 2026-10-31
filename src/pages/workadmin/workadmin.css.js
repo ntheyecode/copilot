@@ -424,6 +424,10 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: calc(13px *
 @media (max-width: 760px) {
   .wka-nav { width: 64px; padding: 14px 8px; }
   .wka-nav-item span.label { display: none; }
+  /* Collapsed to icons: anything else an item carries (a count badge, a dot)
+     sits on the icon's corner instead of running past the 64px rail. */
+  .wka-nav-item { position: relative; justify-content: center; }
+  .wka-nav-item > :not(svg):not(.label) { position: absolute; top: 2px; right: 2px; margin: 0; transform: scale(.85); transform-origin: top right; }
   .wka-nav-foot { display: none; }
   .wka-main { padding: 20px 16px 40px; }
 }
