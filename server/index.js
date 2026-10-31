@@ -34,6 +34,7 @@ import { scheduleFrameSweep } from './workflow_frame_sweep.js'
 import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
 import { registerPersonalBrainRoutes } from './personal_brain_routes.js'
+import { registerCompanyBrainDocumentRoutes } from './company_brain_documents.js'
 import { sessionLearning } from './personal_brain_rules.js'
 import { captureSourceOf, CAPTURE_HEADER } from './capture_sources.js'
 import { verifyResponse } from './work_verify.js'
@@ -3824,6 +3825,7 @@ registerWorkAdminRoutes(app, { store, work, ai, requireAuth, requireAdmin, requi
 registerWorkShotRoutes(app, { store, requireWorkAuth, wrap })
 registerWorkDocsRoutes(app, { store, requireWorkAuth, wrap, extractDocText: docs.extractText })
 registerPersonalBrainRoutes(app, { store, requireWorkAuth, wrap })
+registerCompanyBrainDocumentRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap, extractText: docs.extractText })
 registerWorkCustomerRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap })
 registerKbSpaceRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap })
 registerGuidanceDepthRoutes(app, { store, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
