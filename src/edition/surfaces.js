@@ -16,6 +16,10 @@ export function shows(view, needs) {
   if (needs === 'companies') return !!view.companies
   if (needs === 'individualPlans') return !!view.individualPlans
   if (needs === 'soloSignup') return !!view.soloSignup
+  // The affiliate program pays a share of a referred person's first personal
+  // plan payment through Stripe: it exists only where both do (the same rule
+  // as the server, server/admin_sections.js and edition_route_gates.js).
+  if (needs === 'affiliates') return !!(view.individualPlans && view.stripe)
   throw new Error(`[editions] unknown surface requirement "${needs}"`)
 }
 

@@ -157,8 +157,8 @@ export default function App() {
       {/* Public FAQ (AEO-optimized, with FAQPage structured data), linked from the footer. */}
       <Route path="/workcopilot/faq" element={<WorkFaq />} />
       <Route path="/workcopilot/contact" element={<WorkContact />} />
-      <Route path="/affliate" element={<AffiliatePage />} />
-      <Route path="/affiliate" element={<AffiliatePage />} />
+      <Route path="/affliate" element={<EditionRoute needs="affiliates"><AffiliatePage /></EditionRoute>} />
+      <Route path="/affiliate" element={<EditionRoute needs="affiliates"><AffiliatePage /></EditionRoute>} />
       {/* Public token-based password set page (not signed in): stays ungated. */}
       <Route path="/work/set-password" element={<WorkSetPassword />} />
       {/* All signed-in surfaces render through the legal consent gate (one place). */}
