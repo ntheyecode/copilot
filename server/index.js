@@ -49,6 +49,10 @@ import { registerWorkPracticeRoutes } from './work_practices_routes.js'
 import { registerTeamProjectRoutes } from './work_team_projects_routes.js'
 import { registerSsoRoutes } from './sso.js'
 import { registerSocialRoutes, socialConfigured } from './social.js'
+import { registerSamlRoutes } from './saml_sso.js'
+import { registerScimRoutes } from './scim.js'
+import { registerSsoAdminRoutes } from './sso_admin_routes.js'
+import { registerB2bRoutes } from './b2b_routes.js'
 import { registerOnboardingRoutes } from './onboarding.js'
 // Legal consent (clickwrap): the current agreements + version every account must
 // accept to use the platform. ONE source of truth (SUPREME RULE II); the signup
@@ -92,6 +96,7 @@ import { PUBLIC_BASE } from './public_url.js'
 // for a capability, never an edition name.
 import { caps, publicEdition, soloSignupRefusal } from './edition.js'
 import { editionRouteGate } from './edition_route_gates.js'
+import { passwordSignInRefusal } from './sign_in_rules.js'
 import { companyTenancy } from './edition_registry.js'
 import { checkSpaStamp } from './spa_stamp_check.js'
 
@@ -108,6 +113,13 @@ const WORK_TAVILY_KEY = process.env.WORK_TAVILY_KEY || ''
 
 const app = express()
 app.disable('x-powered-by')
+// Edition route gates (server/edition_route_gates.js): personal-plan purchase,
+// company-only, Stripe, social sign-in and superadmin-section route families,
+// each refused where the edition lacks the capability. Mounted FIRST, ahead of
+// every route and body parser (it reads only the method and path), so a route
+// registered early (the Stripe webhook, which needs the raw body) is covered
+// too. The default edition passes everything through untouched.
+app.use(editionRouteGate())
 // Stripe webhook MUST read the RAW body to verify the signature, so it is
 // mounted BEFORE the json parser (otherwise express.json consumes the body and
 // the signature check fails). Guarded so a missing key never crashes anything.
@@ -230,11 +242,6 @@ app.use(session({
   cookie: { httpOnly: true, sameSite: 'lax', secure: HOSTED, maxAge: 1000 * 60 * 60 * 8 }, // 8h
 }))
 
-// Edition route gates: personal-plan purchase routes need individual_plans,
-// company-only route families need company tenancy. ONE middleware ahead of
-// every route (server/edition_route_gates.js holds both lists); the default
-// edition passes everything through untouched.
-app.use(editionRouteGate())
 
 // ---- helpers --------------------------------------------------------------
 // Turn any thrown error into a user-safe response. SYSTEM errors (AI provider
@@ -1097,6 +1104,11 @@ app.post('/api/work/login', wrap((req, res) => {
   // A superadmin-disabled account cannot sign in (its sessions were already
   // invalidated when it was disabled). Clear message, not a confusing password error.
   if (u.disabled) return res.status(403).json({ error: 'This account has been disabled. Please contact your administrator.' })
+  // A company that requires single sign-on refuses password sign-in for every
+  // one of its accounts (sign_in_rules.js; checked after the password so the
+  // answer never reveals whether an account exists).
+  const ssoOnly = passwordSignInRefusal(u, u.companyId ? store.getCompany(u.companyId) : null)
+  if (ssoOnly) return res.status(ssoOnly.status).json(ssoOnly.body)
   // Break-glass: if MFA is globally disabled (operator env flag), sign in the old
   // way so a broken rollout can be recovered without locking everyone out.
   if (!store.mfaGloballyEnabled()) { establishSession(req, u); return res.json({ user: store.publicWorkUser(u) }) }
@@ -1116,7 +1128,10 @@ function pendingMfaUser(req) {
   const uid = req.session && req.session.pendingMfaUid
   const at = req.session && req.session.pendingMfaAt
   if (!uid || !at || (Date.now() - at) > MFA_PENDING_TTL_MS) return null
-  return store.getUser(uid)
+  const u = store.getUser(uid)
+  // "SSO required" switched on mid-login also ends a pending password sign-in.
+  if (u && passwordSignInRefusal(u, u.companyId ? store.getCompany(u.companyId) : null)) return null
+  return u
 }
 function clearPendingMfa(req) { if (req.session) { delete req.session.pendingMfaUid; delete req.session.pendingMfaAt } }
 
@@ -1557,7 +1572,11 @@ app.post('/api/work/admin/grant-minutes', requireAuth, requireSuperAdmin, wrap((
 // AdmireVeda sets the monthly pool, task policy, overage price, timezone,
 // month-end behavior, and the request/Stripe toggles against each company.
 app.post('/api/work/admin/companies/:id/enterprise', requireAuth, requireSuperAdmin, wrap((req, res) => {
-  const out = store.setCompanyEnterprise(req.params.id, req.body || {})
+  // Where Stripe is off (contract + invoice billing), paying for extra hours by
+  // card can never be switched on: the toggle is forced off, not just hidden.
+  const body = { ...(req.body || {}) }
+  if (!caps.has('stripe_billing')) body.stripeEnabled = false
+  const out = store.setCompanyEnterprise(req.params.id, body)
   store.recordAdminAction({ companyId: req.params.id, action: 'set_enterprise', reason: req.body && req.body.reason || '', detail: 'enterprise pool/policy updated' })
   res.json(out)
 }))
@@ -3829,6 +3848,12 @@ registerSsoRoutes(app, { store, establishSession, requireAuth, requireWorkAuth, 
 // Social sign-in for individual users (Google + Microsoft OIDC, Facebook OAuth2).
 // Reuses the OIDC machinery and the same MFA gate as password + SSO login.
 registerSocialRoutes(app, { store, establishSession, wrap })
+// SAML 2.0 sign-in, SCIM 2.0 provisioning, their console setup routes, and
+// AdmireVeda's contract + invoice billing of companies (each its own module).
+registerSamlRoutes(app, { store, establishSession, wrap, hosted: HOSTED })
+registerScimRoutes(app, { store })
+registerSsoAdminRoutes(app, { store, requireAuth, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap, hosted: HOSTED })
+registerB2bRoutes(app, { store, requireAuth, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
 // Subscribe onboarding: create account -> verify email -> pay -> welcome -> app.
 // Runs on the onboarding marker / full session; the app entry reuses the MFA
 // gate above (pendingMfaUid + /api/work/login/mfa*), so no login path is bypassed.
