@@ -125,9 +125,16 @@ export function createWorkflows(ctx) {
     return publicShape(rec)
   }
 
-  function updateWorkflow(userId, wid, { meta, steps } = {}) {
+  // baseUpdatedAt: the updatedAt the editor last loaded. When given and the draft
+  // has changed since (another tab, a co-author, an adopted incident step), the
+  // save is refused instead of silently replacing the newer steps. Omitted, the
+  // save applies as before (integration callers).
+  function updateWorkflow(userId, wid, { meta, steps, baseUpdatedAt } = {}) {
     const { w } = mustAct(userId, wid)
     if (!wf.canEditContent(w.state)) throw httpErr(409, 'Only a draft can be edited. Revise a published workflow to make a new version.')
+    if (baseUpdatedAt != null && String(baseUpdatedAt) !== String(w.updatedAt)) {
+      throw Object.assign(httpErr(409, 'This draft was changed somewhere else since you opened it. Open it again to see the latest version.'), { code: 'WORKFLOW_CHANGED' })
+    }
     if (meta !== undefined) {
       const v = wf.validateMeta({ ...w.meta, ...meta })
       if (!v.ok) throw httpErr(400, `Missing required fields: ${v.missing.join(', ')}.`)

@@ -8,7 +8,7 @@
 // useStepReader), which suggests each control and done check for the trainer to
 // accept per step. Presentational + its own save round-trips; it never changes
 // backend logic.
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import {
   GraduationCap, ChevronLeft, ChevronRight, Check, Plus,
   Info, AlertTriangle, ShieldCheck, X, ListChecks,
@@ -46,6 +46,10 @@ export default function WorkflowWizard({ initial, onCancel, onSaved }) {
   const [meta, setMeta] = useState(() => (editing ? metaToForm(initial.meta) : emptyMeta()))
   const [steps, setSteps] = useState(() => withRowKeys(editing && Array.isArray(initial.steps) && initial.steps.length ? stepsToForm(initial.steps) : [emptyStep()]))
   const stepsRef = useRef(steps)                                    // the latest rows, for saves started mid-render
+  // The draft version this editor last loaded or saved (its updatedAt); sent
+  // with every update so a stale tab cannot overwrite newer work.
+  const baseRef = useRef((initial && initial.updatedAt) || null)
+  const keepBase = useCallback((w) => { if (w && w.updatedAt) baseRef.current = w.updatedAt }, [])
   stepsRef.current = steps
   const [open, setOpen] = useState(() => initialOpenKeys(steps))   // which step rows are expanded
   const [maskFrames, setMaskFrames] = useState(true)                // mask sensitive text in recorded screenshots
@@ -97,10 +101,13 @@ export default function WorkflowWizard({ initial, onCancel, onSaved }) {
     const sent = stepsRef.current                                   // the rows this save sends
     const body = { meta: metaToPayload(meta), steps: stepsToPayload(sent) }
     try {
-      const r = id ? await api.workflowUpdate(id, body) : await api.workflowCreate(body)
+      // An update names the version this editor last saw, so a save from a
+      // stale tab is refused instead of erasing newer steps (WORKFLOW_CHANGED).
+      const r = id ? await api.workflowUpdate(id, { ...body, baseUpdatedAt: baseRef.current }) : await api.workflowCreate(body)
       const w = r && r.workflow
       const savedId = (w && w.id) || id || null
       if (!id) setId(savedId)
+      if (w && w.updatedAt) baseRef.current = w.updatedAt
       if (w && Array.isArray(w.steps)) {
         // Ids line up with the rows SENT; carry them to the latest rows by key,
         // so edits made while the save was in flight cannot shift them.
@@ -110,7 +117,7 @@ export default function WorkflowWizard({ initial, onCancel, onSaved }) {
       }
       return savedId
     } catch (e) {
-      setErr(friendlyError(e, t('teach.wizard.errSave')))
+      setErr(e && e.data && e.data.code === 'WORKFLOW_CHANGED' ? t('teach.wizard.errChanged') : friendlyError(e, t('teach.wizard.errSave')))
       return null
     }
   }
@@ -120,6 +127,7 @@ export default function WorkflowWizard({ initial, onCancel, onSaved }) {
   const reader = useStepReader({
     save: async () => { setErr(''); const savedId = await persist(); return savedId ? { id: savedId, rows: stepsRef.current } : null },
     setRows: setSteps,
+    onWorkflow: keepBase,
   })
   const acceptStep = (i) => setSteps((list) => list.map((s, j) => (j === i ? acceptReading(s) : s)))
   // A recording or a read pass holds navigation and saving until it finishes.

@@ -259,6 +259,9 @@ function sendWorkError(res, e, req) {
     return res.status(503).json({ error: `The system is busy right now${ref}. Please try again in a little while.${extra}`, busy: true, code: (e && e.code) || null })
   }
   const body = { error: (e && e.message) || 'Server error' }
+  // A deliberate refusal may carry a machine code (e.g. WORKFLOW_CHANGED), so a
+  // client words it in the reader's language instead of matching the English.
+  if (e && typeof e.code === 'string' && /^[A-Z][A-Z0-9_]{2,}$/.test(e.code)) body.code = e.code
   if (e && e.locked) { body.locked = true; body.stepUp = e.stepUp || null }   // AI-config OTP step-up lapsed
   return res.status((e && e.status) || 500).json(body)
 }
