@@ -7,5 +7,24 @@ export default {
   composeCard: {
     emptyBody: 'No document came back.',
     basedOn: 'What I based it on',
+    eyebrow: 'Written for you',
+    formats: {
+      prompt: 'Prompt for your AI',
+      code: 'Code',
+      outline: 'Outline',
+      bullets: 'Bullets',
+      table: 'Table',
+      notes: 'Notes',
+      draft: 'Draft',
+    },
+    untitled: {
+      prompt: 'Your prompt for your AI',
+      code: 'Your code',
+      outline: 'Your outline',
+      bullets: 'Your bullets',
+      table: 'Your table',
+      notes: 'Your notes',
+      draft: 'Your draft',
+    },
   },
 }

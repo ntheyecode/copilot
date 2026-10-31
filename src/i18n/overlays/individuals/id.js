@@ -281,6 +281,12 @@ export default {
     }
   },
   policyNote: {
+    headFlag: "Kebijakan Anda: tinjau sebelum Anda memakainya",
+    headClean_one: "Kebijakan Anda: aman (diperiksa terhadap {n} aturan)",
+    headClean_other: "Kebijakan Anda: aman (diperiksa terhadap {n} aturan)",
     cleanBody: "Panduan ini telah diperiksa terhadap kebijakan keamanan Anda dan tidak ada yang ditandai."
-  }
+  },
+  guideLevel: {
+    levels: { executive: { label: "Ringkas", short: "Ringkas" } },
+  },
 }

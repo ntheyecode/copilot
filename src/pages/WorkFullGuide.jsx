@@ -53,9 +53,9 @@ function Mono({ lines, label, theme, fs = 1 }) {
   return (
     <div style={{ marginTop: 10, borderRadius: 10, overflow: 'hidden', border: `1px solid ${c.codeBorder}`, background: c.codeBg }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '6px 11px', borderBottom: `1px solid ${c.codeBorder}`, fontSize: 11.5, fontWeight: 600, color: c.codeMuted, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label || 'Run this'}</span>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label || t('fullGuide.runThis')}</span>
         <button onClick={copy} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'transparent', border: `1px solid ${c.codeBorder}`, color: copied ? c.accent : c.codeMuted, borderRadius: 6, padding: '2px 9px', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
-          {copied ? <><Check size={12} /> {t('fullGuide.copied')}</> : 'Copy'}
+          {copied ? <><Check size={12} /> {t('fullGuide.copied')}</> : t('widgets.copy.copy')}
         </button>
       </div>
       <pre style={{ margin: 0, padding: '11px 13px', fontSize: Math.round(13 * fs * 10) / 10, lineHeight: 1.55, color: c.codeText, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', overflowX: 'auto', whiteSpace: 'pre' }}>{text}</pre>
@@ -187,10 +187,9 @@ export default function WorkFullGuide() {
   const c = dark ? THEME.dark : THEME.light
   const S = styles(c, wide, scale)
 
-  const calm = status === 'loading' ? { t: 'Connecting', d: 'Waking up and finding your task.' }
-    : status === 'error' ? { t: 'Cannot reach the server', d: 'Retrying. Your session is safe.' }
-    : status === 'signin' ? { t: 'Sign in to WorkCoPilot', d: 'Sign in on the main window and your task appears here.' }
-    : { t: 'No active task yet', d: 'Open WorkCoPilot and start a task. This screen then guides you, step by step.' }
+  // The calm idle screen, keyed per status (fullGuide.calm.<state>.t / .d).
+  const calmKey = status === 'loading' || status === 'error' || status === 'signin' ? status : 'empty'
+  const calm = { t: t(`fullGuide.calm.${calmKey}.t`), d: t(`fullGuide.calm.${calmKey}.d`) }
 
   return (
     <div style={S.root}>
@@ -206,13 +205,13 @@ export default function WorkFullGuide() {
               {paused ? <><Pause size={13} /> {t('fullGuide.paused')}</> : <><span style={{ ...S.live }} /> {t('fullGuide.live')}</>}
             </span>
           )}
-          <span style={{ ...S.time, color: exhausted ? c.warn : c.muted }} title={exhausted ? 'Your plan hours for this month are used up' : 'Plan hours left this month'}><Clock size={14} /> {timeLeft || '--'}</span>
+          <span style={{ ...S.time, color: exhausted ? c.warn : c.muted }} title={exhausted ? t('fullGuide.hoursOutTip') : t('fullGuide.hoursLeftTip')}><Clock size={14} /> {timeLeft || '--'}</span>
           {tasksLine && <span style={S.time} title={t('fullGuide.tasksTip')}><ListChecks size={14} /> {tasksLine}</span>}
           {status === 'ok' && <GuideLevelControl level={level} onChange={setLevel} compact={!wide} theme={{ border: c.border, muted: c.muted, panel: c.panel, accent: c.accent, accentSoft: c.accentSoft }} />}
           <GuideFontControl scale={scale} dec={dec} inc={inc} reset={reset} atMin={atMin} atMax={atMax}
             theme={{ border: c.border, text: c.text, muted: c.muted, panel: c.panel, accent: c.accent }} />
           <button style={S.iconBtn} onClick={() => setDark((d) => !d)} title={t('fullGuide.themeTip')} aria-label={t('fullGuide.themeAria')}>{dark ? <Sun size={16} /> : <Moon size={16} />}</button>
-          {!inDesktop && <button style={S.iconBtn} onClick={toggleFs} title={fs ? 'Exit full screen' : 'Full screen'} aria-label={t('fullGuide.fullScreenAria')}>{fs ? <Minimize size={16} /> : <Maximize size={16} />}</button>}
+          {!inDesktop && <button style={S.iconBtn} onClick={toggleFs} title={fs ? t('widgets.fullScreen.exit') : t('widgets.fullScreen.enter')} aria-label={t('fullGuide.fullScreenAria')}>{fs ? <Minimize size={16} /> : <Maximize size={16} />}</button>}
         </div>
       </div>
 
@@ -243,7 +242,7 @@ export default function WorkFullGuide() {
                         ) : (
                           <>
                             {prominent && reading}
-                            <StepCard step={cur || { text: guidance || 'Reading your screen for the next move' }} index={cur ? curIdx : null} total={total} guidance={cur ? guidance : ''}
+                            <StepCard step={cur || { text: guidance || t('fullGuide.readingNext') }} index={cur ? curIdx : null} total={total} guidance={cur ? guidance : ''}
                               hint={paused ? <span className="gv-step-hint">{t('fullGuide.pausedHint')}</span> : <span className="gv-step-hint">{t('fullGuide.liveHint')}</span>} />
                             {!prominent && reading}
                           </>

@@ -19,7 +19,10 @@ const IDLE = { phase: 'idle', done: 0, total: 0, currentId: null, stopping: fals
 
 // save(): persist the draft -> { id, rows } (rows carry server ids) or null.
 // setRows(fn): the wizard's functional row setter.
-export function useStepReader({ save, setRows }) {
+// onWorkflow(workflow): optional, called with the draft each read returns (a read
+// stores its suggestion, so the draft's version moves; the editor keeps its own
+// save base in step with it).
+export function useStepReader({ save, setRows, onWorkflow }) {
   const [run, setRun] = useState(IDLE)
   const [notes, setNotes] = useState({})            // stepId -> { kind, shot }
   const [globalKind, setGlobalKind] = useState(null)
@@ -57,6 +60,7 @@ export function useStepReader({ save, setRows }) {
       try {
         const res = await api.workflowReadStep(saved.id, row.id)
         if (!alive.current) return
+        if (onWorkflow && res && res.workflow) onWorkflow(res.workflow)
         const reading = readingFromWorkflow(res && res.workflow, row.id)
         if (reading) {
           setRows((rows) => applyStepReading(rows, row.id, reading))
@@ -75,7 +79,7 @@ export function useStepReader({ save, setRows }) {
     if (!alive.current) return
     setRun(IDLE)
     setLast({ read, total, stopped })
-  }, [save, setRows])
+  }, [save, setRows, onWorkflow])
 
   // Every saved step with a screenshot that has no suggestion yet (force: all of them).
   const readAll = useCallback((force = false) => start((rows) => rowsToRead(rows, { force })), [start])

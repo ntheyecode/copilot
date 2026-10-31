@@ -6,6 +6,7 @@ import MfaGate from '../components/MfaGate.jsx'
 import GuideConsole from '../components/GuideConsole.jsx'   // the live guide console (watch -> step -> correct -> confirm) in the brand aside
 import { api } from '../api.js'
 import { LEGAL_FALLBACK_DOCS } from '../components/LegalConsentGate.jsx'   // shared fallback agreement list
+import AgreementLinks from '../components/AgreementLinks.jsx'   // the keyed "I have read and agree to ..." sentence
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
 import SocialMark from '../components/SocialMark.jsx'   // Google / Microsoft / Facebook marks (shared with the subscribe onboarding)
 import WorkShell from '../workShell.jsx'
@@ -311,7 +312,7 @@ export default function WorkLogin() {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(sEmail.trim())) { setErr(t('login.err.validEmail')); return }
       // The agreements must be accepted to create an account (clickwrap). The
       // button is also disabled, this is the submit-time backstop.
-      if (!accepted) { setErr('Please accept the agreements to create your account.'); return }
+      if (!accepted) { setErr(t('login.err.acceptAgreements')); return }
     }
     setBusy(true); setErr('')
     try {
@@ -571,9 +572,7 @@ export default function WorkLogin() {
                       aria-invalid={err && !accepted ? 'true' : undefined}
                     />
                     <label htmlFor="wl-accept">
-                      I have read and agree to the {acceptDocs.map((d, i) => (
-                        <span key={d.key}>{i > 0 ? (i === acceptDocs.length - 1 ? ' and ' : ', ') : ''}<a href={d.path} target="_blank" rel="noopener">{d.title}</a></span>
-                      ))}.
+                      <AgreementLinks docs={acceptDocs} />
                     </label>
                   </div>
                 )}

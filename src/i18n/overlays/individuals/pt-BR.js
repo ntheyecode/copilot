@@ -281,6 +281,12 @@ export default {
     }
   },
   policyNote: {
+    headFlag: "Sua política: revise antes de usar",
+    headClean_one: "Sua política: tudo certo (verificado com {n} regra)",
+    headClean_other: "Sua política: tudo certo (verificado com {n} regras)",
     cleanBody: "Esta orientação foi verificada em relação à sua política de segurança e nada foi sinalizado."
-  }
+  },
+  guideLevel: {
+    levels: { executive: { label: "Resumo", short: "Resumo" } },
+  },
 }

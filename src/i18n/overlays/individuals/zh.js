@@ -281,6 +281,12 @@ export default {
     }
   },
   policyNote: {
+    headFlag: "您的政策：使用前请先审阅",
+    headClean_one: "您的政策：无问题（已对照 {n} 条规则检查）",
+    headClean_other: "您的政策：无问题（已对照 {n} 条规则检查）",
     cleanBody: "此引导已对照您的安全政策进行检查，未发现任何需标记的问题。"
-  }
+  },
+  guideLevel: {
+    levels: { executive: { label: "简要", short: "简要" } },
+  },
 }

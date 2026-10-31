@@ -281,6 +281,12 @@ export default {
     }
   },
   policyNote: {
+    headFlag: "내 정책: 사용하기 전에 검토하세요",
+    headClean_one: "내 정책: 문제 없음 (규칙 {n}개로 확인)",
+    headClean_other: "내 정책: 문제 없음 (규칙 {n}개로 확인)",
     cleanBody: "이 안내는 당신의 보안 정책에 대해 점검되었으며 표시된 것이 없습니다."
-  }
+  },
+  guideLevel: {
+    levels: { executive: { label: "요약", short: "요약" } },
+  },
 }

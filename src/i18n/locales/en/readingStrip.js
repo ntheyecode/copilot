@@ -6,5 +6,11 @@
 export default {
   readingStrip: {
     notRightPlace: 'Not the right place yet.',
+    readingScreen: 'Reading your screen',
+    readingCamera: 'Reading the camera',
+    iCanSee: 'I can see',
+    lastRead: 'Last read',
+    showRead: 'Show what the guide read on your screen',
+    hideRead: 'Hide what the guide read on your screen',
   },
 }

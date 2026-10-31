@@ -281,6 +281,12 @@ export default {
     }
   },
   policyNote: {
+    headFlag: "Chính sách của bạn: hãy xem lại trước khi dùng",
+    headClean_one: "Chính sách của bạn: đạt (đã đối chiếu với {n} quy tắc)",
+    headClean_other: "Chính sách của bạn: đạt (đã đối chiếu với {n} quy tắc)",
     cleanBody: "Hướng dẫn này đã được đối chiếu với chính sách bảo mật của bạn và không có gì bị gắn cờ."
-  }
+  },
+  guideLevel: {
+    levels: { executive: { label: "Ngắn gọn", short: "Ngắn gọn" } },
+  },
 }

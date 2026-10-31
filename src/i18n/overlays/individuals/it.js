@@ -281,6 +281,12 @@ export default {
     }
   },
   policyNote: {
+    headFlag: "La Sua policy: verifichi prima dell'uso",
+    headClean_one: "La Sua policy: tutto a posto (verificato con {n} regola)",
+    headClean_other: "La Sua policy: tutto a posto (verificato con {n} regole)",
     cleanBody: "Questa guida è stata verificata rispetto alla sua politica di sicurezza e non è stato segnalato nulla."
-  }
+  },
+  guideLevel: {
+    levels: { executive: { label: "Sintetico", short: "Sintesi" } },
+  },
 }

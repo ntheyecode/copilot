@@ -281,6 +281,12 @@ export default {
     }
   },
   policyNote: {
+    headFlag: "Votre politique : à vérifier avant utilisation",
+    headClean_one: "Votre politique : conforme (vérifié selon {n} règle)",
+    headClean_other: "Votre politique : conforme (vérifié selon {n} règles)",
     cleanBody: "Ce conseil a été vérifié au regard de votre politique de sécurité et rien n'a été signalé."
-  }
+  },
+  guideLevel: {
+    levels: { executive: { label: "Bref", short: "Bref" } },
+  },
 }

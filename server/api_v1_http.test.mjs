@@ -85,7 +85,10 @@ test('the console: only a company admin manages keys; the secret is shown once a
   assert.deepEqual(list.data.scopes.map((s) => s.id), ALL)
   assert.equal(list.data.stepUp.required, false)
   assert.ok(list.data.keys.length >= 1)
-  assert.ok(!JSON.stringify(list.data).includes(keyA.split('_').pop()), 'secret never listed')
+  // The whole secret part: base64url can itself contain '_', so split('_').pop()
+  // could yield a 1-3 character fragment that appears anywhere by chance.
+  const secretPart = keyA.match(/^wcp_live_[0-9a-f]{16}_(.+)$/)[1]
+  assert.ok(!JSON.stringify(list.data).includes(secretPart), 'secret never listed')
   const bad = await call(jA, 'POST', '/api/work/company/api-keys', { name: 'x', scopes: ['billing:write'] })
   assert.deepEqual([bad.status, bad.data.code], [400, 'BAD_SCOPES'])
   assert.ok(store.listAdminActions({ limit: 50 }).some((a) => a.action === 'api_key_create'), 'creation audited')
@@ -103,7 +106,9 @@ test('tenant isolation: company A key sees only A, and B ids answer 404', async 
   assert.equal(wl.status, 200)
   assert.deepEqual(wl.data.workflows.map((w) => w.id), [A.w.id], 'published only, own company only')
   const json = JSON.stringify(wl.data)
-  for (const leak of ['authorId', 'Pat Owner', 'pat@x.test', B.w.id]) assert.ok(!json.includes(leak), leak)
+  // B's id is short and numeric (e.g. "14"), so match it as an id value, never as
+  // a bare substring (a timestamp can contain the same digits).
+  for (const leak of ['authorId', 'Pat Owner', 'pat@x.test', `"id":"${B.w.id}"`]) assert.ok(!json.includes(leak), leak)
   const one = await withKey(keyA, 'GET', `/api/v1/workflows/${A.w.id}`)
   assert.deepEqual(one.data.workflow.steps.map((s) => s.instruction), ['Open the refund tab', 'Press Refund'])
   assert.ok(!JSON.stringify(one.data).includes('shot'))

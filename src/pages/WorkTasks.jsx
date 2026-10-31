@@ -165,10 +165,9 @@ export const WS_CSS = `
 // ---- Helpers shared by both pages --------------------------------------------
 // The dashboard hides the auto-generated "Session <date>" title in favor of the
 // goal; the same rule applies here so a task reads the same everywhere.
-// `untitled` is the translated placeholder (callers pass
-// t('workDashboard.del.untitled'), the dashboard's own key); the English default
-// keeps the helper usable outside React.
-export function sessionLabel(s, untitled = 'Untitled session') {
+// `untitled` is the translated placeholder (every caller passes
+// t('workDashboard.del.untitled'), the dashboard's own key).
+export function sessionLabel(s, untitled = '') {
   if (!s) return untitled
   return (s.title && !/^Session \d/.test(s.title)) ? s.title : (s.goal || s.title || untitled)
 }
@@ -372,7 +371,7 @@ function SessionList({ mode, embedded }) {
       // The shared compact row (SessionRow): tinted icon tile, status chip,
       // date, steps, a slim bar for work in progress, ghost-pill actions.
       return (
-        <SessionRow key={s.id} state={status.key} title={label} overview={s.overview} projectName={s.projectName} status={t(status.labelKey, status.label)} meta={[when, stepsText]} pct={!isDone && st.total > 0 ? st.pct : undefined}>
+        <SessionRow key={s.id} state={status.key} title={label} overview={s.overview} projectName={s.projectName} status={t(status.labelKey)} meta={[when, stepsText]} pct={!isDone && st.total > 0 ? st.pct : undefined}>
           <button type="button" className="wd-resume" onClick={() => open(s.id)}>{openLabel} <ArrowRight size={14} /></button>
           {isDone && <DownloadMenu sessionId={s.id} className="wd-resume" label={t('workShell.tasks.download')} onError={setDlErr} />}
         </SessionRow>
@@ -384,7 +383,7 @@ function SessionList({ mode, embedded }) {
         <div className="ws-row-main">
           <div className="ws-row-t" title={label}>{label}</div>
           <div className="ws-row-m">
-            <span className={`ws-st ${status.key}`}>{t(status.labelKey, status.label)}</span>
+            <span className={`ws-st ${status.key}`}>{t(status.labelKey)}</span>
             {when && <><span className="sep" aria-hidden>&middot;</span><span>{when}</span></>}
             <span className="sep" aria-hidden>&middot;</span>
             <span>{stepsText}</span>
@@ -423,11 +422,11 @@ export default function WorkTasks({ embedded } = {}) { return <SessionList mode=
 export function CompletedTasks({ embedded } = {}) { return <SessionList mode="completed" embedded={embedded} /> }
 
 // Exported for WorkLogs (status chip + icon share one rule with this page).
-// `label` is the English fallback; render t(labelKey, label) for the user's
-// language (pure function, so it stays usable outside React).
+// Render t(labelKey) for the user's language (pure function, so it stays usable
+// outside React; the text itself lives only in the catalog).
 export function statusOf(s) {
-  if (!s) return { key: 'active', label: 'In progress', labelKey: 'workShell.tasks.status.active', Icon: Play }
-  if (s.status === 'ended') return { key: 'ended', label: 'Completed', labelKey: 'workShell.tasks.status.ended', Icon: Check }
-  if (s.paused) return { key: 'paused', label: 'Paused', labelKey: 'workShell.tasks.status.paused', Icon: Pause }
-  return { key: 'active', label: 'In progress', labelKey: 'workShell.tasks.status.active', Icon: Play }
+  if (!s) return { key: 'active', labelKey: 'workShell.tasks.status.active', Icon: Play }
+  if (s.status === 'ended') return { key: 'ended', labelKey: 'workShell.tasks.status.ended', Icon: Check }
+  if (s.paused) return { key: 'paused', labelKey: 'workShell.tasks.status.paused', Icon: Pause }
+  return { key: 'active', labelKey: 'workShell.tasks.status.active', Icon: Play }
 }

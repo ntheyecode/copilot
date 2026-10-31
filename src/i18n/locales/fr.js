@@ -85,6 +85,7 @@ export default {
       back: 'Retour',
       next: 'Suivant',
       errSave: 'Impossible d\'enregistrer le brouillon. Veuillez réessayer.',
+      errChanged: 'Ce brouillon a été modifié dans un autre onglet ou par quelqu\'un d\'autre depuis que vous l\'avez ouvert, votre enregistrement n\'a donc pas été appliqué. Copiez ce dont vous avez besoin, puis fermez-le et rouvrez-le pour voir la dernière version.',
       errPublish: 'Impossible de publier. Vérifiez les champs obligatoires et les étapes, puis réessayez.',
       publishedOk: 'Publié. Votre équipe est désormais guidée pas à pas.',
       draftSavedOk: 'Brouillon enregistré.',
@@ -416,6 +417,16 @@ export default {
       copyCommand: 'Copier la commande',
       copyAria: 'Copier dans le presse-papiers',
       copiedAria: 'Copié dans le presse-papiers',
+      copyAll: 'Tout copier',
+    },
+    download: {
+      file: 'Télécharger le fichier',
+      csv: 'Télécharger le CSV',
+      md: 'Télécharger le .md',
+    },
+    fullScreen: {
+      enter: 'Plein écran',
+      exit: 'Quitter le plein écran',
     },
     blocks: {
       terminal: 'Terminal',
@@ -1359,6 +1370,7 @@ export default {
       checking: 'Vérification de la connexion de votre organisation…',
     },
     form: {
+      agreeDocs: 'J\'ai lu et j\'accepte les documents suivants : {docs}.',
       ariaCreate: 'Créer un compte',
       ariaLogin: 'Se connecter',
       fullName: 'Nom complet',
@@ -1442,6 +1454,7 @@ export default {
       verifyContinue: 'Vérifier et continuer',
     },
     err: {
+      acceptAgreements: 'Veuillez accepter les conditions pour créer votre compte.',
       timedOut: 'Votre session de connexion a expiré. Recommencez.',
       finishFail: 'Impossible de finaliser votre connexion. Réessayez.',
       enterName: 'Saisissez votre nom complet.',
@@ -5914,6 +5927,10 @@ export default {
       totalForCompany: 'Total pour votre entreprise',
       noDataYet: "Aucune donnée pour l'instant",
       aiNotConfigured: "L'IA n'est pas encore configurée.",
+      aiReason: {
+        keysMissing: 'Votre entreprise utilise ses propres clés d\'IA, mais aucune n\'est encore définie.',
+        sourceUnset: 'Choisissez la source de votre IA : la plateforme ou les clés de votre entreprise.',
+      },
       aiSetKeys: "Ouvrir les clés d'IA",
       licensesByPlan: 'Licences par offre',
       licensesByPlanHelp: "Combien de chaque offre votre entreprise a achetées, et combien sont attribuées. Attribuer au-delà de l'allocation d'une offre est bloqué.",
@@ -6470,6 +6487,7 @@ export default {
       eyebrow: 'Votre espace de travail',
       poweredBy: 'propulsé par',
       exec: 'Tableau de bord de direction',
+      logoAlt: 'Logo de {company}',
     },
     hello: 'Bonjour {name}',
     plan: {
@@ -8174,6 +8192,29 @@ export default {
     youAsked: 'Vous avez demandé :',
     planUpdated: 'Votre plan a été mis à jour.',
     followUp: 'Poser une question complémentaire',
+    offerOpen: 'Cette étape est ouverte depuis un moment. Dites-moi ce qui bloque, ou je peux l\'expliquer autrement.',
+    offerOpenStep: 'Cette étape est ouverte depuis un moment : <step></step>. Dites-moi ce qui bloque, ou je peux l\'expliquer autrement.',
+    explainAgain: 'Réexpliquer cette étape',
+    working: {
+      research: 'Recherche en cours',
+      analyze: 'Lecture de votre écran',
+      stuck: 'J\'examine cette étape de plus près',
+      question: 'Je travaille sur votre question',
+    },
+    label: {
+      research: 'Ce que j\'ai trouvé',
+      analyze: 'Ce que je vois',
+      betterWay: 'Une meilleure façon de procéder',
+      explained: 'Cette étape, expliquée',
+    },
+    resumeAt: '« Continuer » reprend à l\'étape {n}.',
+    resumeAtStep: '« Continuer » reprend à l\'étape {n} : <step></step>',
+    continue: {
+      plan: 'Continuer avec le plan mis à jour',
+      step: 'Compris, retour à l\'étape',
+      guiding: 'Continuer le guidage',
+    },
+    backToStep: 'Retour à l\'étape {n}.',
   },
   benchmarkPage: {
     eyebrow: 'Benchmark de précision',
@@ -8381,10 +8422,38 @@ export default {
   },
   buddyPicker: {
     groupAria: 'Choisissez votre acolyte',
+    surprise: 'Surprise (un animal au hasard)',
+    buddyAria: 'Acolyte WorkCoPilot ({name})',
+    characters: {
+      boy: 'Garçon',
+      girl: 'Fille',
+      dog: 'Chien',
+      cat: 'Chat',
+      bot: 'Bot',
+    },
   },
   composeCard: {
     emptyBody: "Aucun document n'est revenu.",
     basedOn: 'Ce sur quoi je me suis appuyé',
+    eyebrow: 'Rédigé pour vous',
+    formats: {
+      prompt: 'Prompt pour votre IA',
+      code: 'Code',
+      outline: 'Structure',
+      bullets: 'Liste à puces',
+      table: 'Tableau',
+      notes: 'Notes',
+      draft: 'Brouillon',
+    },
+    untitled: {
+      prompt: 'Votre prompt, prêt pour votre IA',
+      code: 'Votre code',
+      outline: 'Votre structure',
+      bullets: 'Votre liste à puces',
+      table: 'Votre tableau',
+      notes: 'Vos notes',
+      draft: 'Votre brouillon',
+    },
   },
   computeCard: {
     cmp: {
@@ -9191,6 +9260,7 @@ export default {
   destructiveGate: {
     label: 'Étape destructrice.',
     reveal: "J'ai compris, afficher la commande",
+    body: 'Effet : {why}. Lisez-la attentivement avant de l\'exécuter.',
   },
   disclaimerPage: {
     seo: {
@@ -9318,6 +9388,16 @@ export default {
     triggerTip: 'Télécharger cette session',
     menuAria: 'Format de téléchargement',
     heading: 'Télécharger au format',
+    label: 'Télécharger',
+    formats: {
+      pdf: 'Rapport PDF',
+      pdfHint: 'Mis en forme, avec captures d\'écran',
+      txt: 'Rapport texte (.txt)',
+      txtHint: 'Texte brut, même contenu',
+      log: 'Journal d\'audit (.log)',
+      logHint: 'Chaque échange avec l\'IA',
+    },
+    errDownload: 'Téléchargement impossible. Veuillez réessayer.',
   },
   dpaPage: {
     seo: {
@@ -10441,6 +10521,28 @@ export default {
     closeAria: 'Fermer le plan complet',
     yourGoal: 'Votre objectif',
     now: 'Maintenant',
+    runThis: 'Exécuter ceci',
+    calm: {
+      loading: {
+        t: 'Connexion',
+        d: 'Démarrage et recherche de votre tâche.',
+      },
+      error: {
+        t: 'Serveur injoignable',
+        d: 'Nouvelle tentative en cours. Votre session est en sécurité.',
+      },
+      signin: {
+        t: 'Connectez-vous à WorkCoPilot',
+        d: 'Connectez-vous dans la fenêtre principale et votre tâche s\'affichera ici.',
+      },
+      empty: {
+        t: 'Aucune tâche active pour l\'instant',
+        d: 'Ouvrez WorkCoPilot et lancez une tâche. Cet écran vous guidera ensuite, étape par étape.',
+      },
+    },
+    hoursOutTip: 'Vos heures de forfait de ce mois sont épuisées',
+    hoursLeftTip: 'Heures de forfait restantes ce mois-ci',
+    readingNext: 'Lecture de votre écran pour l\'action suivante',
   },
   guideConsole: {
     source: {
@@ -10860,6 +10962,26 @@ export default {
   },
   guideLevel: {
     groupAria: 'Force du guidage',
+    levels: {
+      easy: {
+        label: 'Simple',
+        title: 'Des mots simples, chaque clic détaillé',
+      },
+      medium: {
+        label: 'Intermédiaire',
+        title: 'Des étapes claires avec les détails clés',
+      },
+      technical: {
+        label: 'Technique',
+        title: 'Précis, avec commandes, chemins et valeurs',
+        short: 'Tech',
+      },
+      executive: {
+        label: 'Direction',
+        title: 'Court, centré sur le résultat, l\'essentiel seulement',
+        short: 'Dir.',
+      },
+    },
   },
   helpPage: {
     nav: {
@@ -11061,13 +11183,15 @@ export default {
       ],
     },
     time: {
+      buyItems: [
+        'Le temps de recharge acheté n\'expire jamais et n\'est utilisé qu\'une fois vos minutes quotidiennes épuisées.',
+        'Besoin de plus maintenant ? Utilisez <b>Ajouter du temps</b> en haut du Tableau de bord.',
+      ],
       h2: 'Votre temps et la mise en pause',
       lead: "Votre offre vous donne des heures de guidage en direct chaque jour, comptées uniquement pendant qu'il guide activement, jamais à l'inactivité. La pastille <b>min restantes</b> en haut montre le temps qu'il reste aujourd'hui, et elle passe à l'ambre pour vous avertir avant d'être à court.",
       items: [
         'Touchez <b>Pause</b> pour figer le chrono et votre session pendant que vous vous absentez ou faites autre chose, puis <b>Reprendre</b> à votre retour.',
-        "Les minutes quotidiennes se réinitialisent à <b>23 h 59, heure de l'Est</b>.",
-        "Le temps de recharge acheté n'expire jamais et n'est utilisé qu'une fois vos minutes quotidiennes épuisées.",
-        'Besoin de plus maintenant ? Utilisez <b>Ajouter du temps</b> en haut du Tableau de bord.',
+        'Les minutes quotidiennes se réinitialisent à <b>23 h 59, heure de l\'Est</b>.',
       ],
     },
     record: {
@@ -11307,6 +11431,14 @@ export default {
   },
   policyNote: {
     cleanBody: "Ce conseil a été vérifié au regard de la politique de sécurité de votre entreprise et rien n'a été signalé.",
+    headFlag: 'Politique de l\'entreprise : à vérifier avant utilisation',
+    headClean_one: 'Politique de l\'entreprise : conforme (vérifié selon {n} règle)',
+    headClean_other: 'Politique de l\'entreprise : conforme (vérifié selon {n} règles)',
+    forbid: 'Interdit : {title}.',
+    forbidAny: 'Interdit : une pratique interdite.',
+    require: 'Obligatoire : {title}.',
+    requireAny: 'Obligatoire : une pratique requise.',
+    per: '(selon {cite})',
   },
   privacyPage: {
     seo: {
@@ -11663,6 +11795,12 @@ export default {
   },
   readingStrip: {
     notRightPlace: 'Pas encore le bon endroit.',
+    readingScreen: 'Lecture de votre écran',
+    readingCamera: 'Lecture de la caméra',
+    iCanSee: 'Je vois',
+    lastRead: 'Dernière lecture',
+    showRead: 'Afficher ce que le guide a lu sur votre écran',
+    hideRead: 'Masquer ce que le guide a lu sur votre écran',
   },
   refundPage: {
     seo: {
@@ -11787,6 +11925,24 @@ export default {
     need: "J'ai besoin :",
     howIGotIt: "Comment je l'ai obtenu",
     verifyBy: 'Vérifier par',
+    eyebrow: 'Résultat',
+    eyebrowDraft: 'Brouillon, à compléter',
+    titleDraft: 'Un brouillon, pas une réponse sûre',
+    kinds: {
+      number: 'Le chiffre',
+      table: 'Le tableau',
+      code: 'Le code',
+      text: 'La réponse',
+      analysis: 'L\'analyse',
+    },
+    confidence: 'Confiance',
+    confidenceAria: 'Confiance : {pct} pour cent',
+    band: {
+      draft: 'Brouillon',
+      high: 'Élevée',
+      fair: 'Moyenne',
+      low: 'Faible',
+    },
   },
   scrubRules: {
     builtin: [
@@ -11832,6 +11988,16 @@ export default {
   securityNote: {
     cleanBody: "Aucune commande dangereuse et aucune bibliothèque connue comme vulnérable n'a été trouvée dans ce code.",
     dbUnreachable: "La base de données de vulnérabilités n'a pas pu être jointe, les versions des bibliothèques n'ont donc pas été vérifiées cette fois.",
+    headFlag: 'Contrôle de sécurité : à vérifier avant utilisation',
+    headClean: 'Contrôle de sécurité : aucun problème connu',
+    vulns_one: '<b>{pkg}</b> présente {n} vulnérabilité connue.',
+    vulns_other: '<b>{pkg}</b> présente {n} vulnérabilités connues.',
+    vulnsIds_one: '<b>{pkg}</b> présente {n} vulnérabilité connue ({ids}).',
+    vulnsIds_other: '<b>{pkg}</b> présente {n} vulnérabilités connues ({ids}).',
+    idsMore: '{ids}, et d\'autres',
+    upgradeLatest: 'Mettez à jour vers {version} (la plus récente).',
+    upgradeLater: 'Mettez à jour vers {version} ou ultérieure.',
+    patchedVersion: 'une version corrigée',
   },
   setPasswordPage: {
     byBrand: 'par AdmireVeda',
@@ -11877,6 +12043,18 @@ export default {
     buddyTip: 'Rétrécir vers la carte acolyte (Ctrl+Shift+Alt+B)',
     minimize: 'Réduire',
     close: 'Fermer',
+    shareHiddenTip: 'Masqué lors des partages d\'écran - cliquez pour l\'afficher dans un partage (Ctrl+Shift+Alt+S)',
+    shareVisibleTip: 'Visible lors des partages d\'écran - cliquez pour le masquer à nouveau (Ctrl+Shift+Alt+S)',
+    shareHidden: 'Masqué',
+    shareOn: 'Partagé',
+    seeThrough: 'Transparence',
+    clickBehindOnTip: 'Le clic traversant est activé : vos clics passent à l\'application en dessous. Cette barre reste cliquable. Cliquez ici ou appuyez sur Ctrl+Shift+Alt+W pour le désactiver.',
+    clickBehindOffTip: 'Clic traversant : laissez vos clics passer à l\'application en dessous. Cette barre reste cliquable pour que vous puissiez le désactiver (Ctrl+Shift+Alt+W).',
+    clickBehindIdleTip: 'Le clic traversant est disponible pendant le guidage',
+    restore: 'Restaurer',
+    maximize: 'Agrandir',
+    maximizeCentered: 'Agrandir (centré)',
+    fullScreenTip: 'Plein écran (occupe tout l\'écran, idéal sur un second moniteur)',
   },
   skillsPage: {
     sectionAria: 'Compétences',
@@ -11921,6 +12099,11 @@ export default {
     plan: 'Plan',
     doneWhen: 'Terminé quand',
     markDoneTip: 'Marquer cette étape comme faite et passer à la suivante',
+    stepOf: 'Étape {n} sur {total}',
+    stepN: 'Étape {n}',
+    confirmed: 'Étape {n} confirmée',
+    yourPlan: 'Votre plan',
+    collapse: 'Réduire',
     shot: {
       label: 'Ce que l\'écran devrait afficher',
       larger: 'Agrandir',

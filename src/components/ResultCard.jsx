@@ -84,15 +84,17 @@ function downloadText(text, filename, type) {
 }
 
 const KIND_META = {
-  number: { icon: Hash, label: 'The number' },
-  table: { icon: Table, label: 'The table' },
-  code: { icon: Code2, label: 'The code' },
-  text: { icon: FileText, label: 'The answer' },
-  analysis: { icon: Sparkles, label: 'The analysis' },
+  number: { icon: Hash, kind: 'number' },
+  table: { icon: Table, kind: 'table' },
+  code: { icon: Code2, kind: 'code' },
+  text: { icon: FileText, kind: 'text' },
+  analysis: { icon: Sparkles, kind: 'analysis' },
 }
 
 // A self-contained copy control, so the card owns its own clipboard feedback.
-function CopyAction({ text, label = 'Copy' }) {
+// `label` defaults to the translated "Copy".
+function CopyAction({ text, label }) {
+  const t = useT()
   const [done, setDone] = useState(false)
   const copy = async () => {
     try { await navigator.clipboard.writeText(text || ''); setDone(true); setTimeout(() => setDone(false), 1500) }
@@ -100,7 +102,7 @@ function CopyAction({ text, label = 'Copy' }) {
   }
   return (
     <button type="button" className="rc-act" onClick={copy}>
-      {done ? <Check size={13} /> : <Copy size={13} />} {done ? 'Copied' : label}
+      {done ? <Check size={13} /> : <Copy size={13} />} {done ? t('widgets.copy.copied') : (label || t('widgets.copy.copy'))}
     </button>
   )
 }
@@ -115,7 +117,7 @@ export default function ResultCard({ result, security = null, policy = null, cla
   const pct = Math.max(0, Math.min(100, Math.round((Number(confidence) || 0) * 100)))
   // Confidence band only colors the LABEL wording; the meter fill uses the
   // card tone so a draft is unmistakably amber end to end.
-  const band = draft ? 'Draft' : pct >= 75 ? 'High' : pct >= 50 ? 'Fair' : 'Low'
+  const band = t('resultCard.band.' + (draft ? 'draft' : pct >= 75 ? 'high' : pct >= 50 ? 'fair' : 'low'))
   const bodyStr = (body == null) ? '' : (typeof body === 'string' ? body : String(body))
   const tone = draft ? 'amber' : (kind === 'code' ? 'cyan' : undefined)
 
@@ -162,8 +164,8 @@ export default function ResultCard({ result, security = null, policy = null, cla
       <WorkCard.Head
         icon={meta.icon}
         align="start"
-        eyebrow={draft ? 'Draft, needs input' : 'Result'}
-        title={draft ? 'A draft, not a confident answer' : meta.label}
+        eyebrow={draft ? t('resultCard.eyebrowDraft') : t('resultCard.eyebrow')}
+        title={draft ? t('resultCard.titleDraft') : t('resultCard.kinds.' + meta.kind)}
       />
 
       {/* NEED - when the engine says what it is missing, that leads, so the
@@ -179,10 +181,10 @@ export default function ResultCard({ result, security = null, policy = null, cla
 
       {/* Actions - the result is handed over to copy or use, never auto-filled. */}
       <div className="rc-actions">
-        <CopyAction text={bodyStr} label="Copy" />
+        <CopyAction text={bodyStr} />
         {canDownload && (
           <button type="button" className="rc-act" onClick={downloadBody}>
-            <Download size={13} /> Download {kind === 'code' ? 'file' : 'CSV'}
+            <Download size={13} /> {t(kind === 'code' ? 'widgets.download.file' : 'widgets.download.csv')}
           </button>
         )}
       </div>
@@ -190,8 +192,8 @@ export default function ResultCard({ result, security = null, policy = null, cla
       {/* THE HONESTY CONTRACT - always on screen under the body. */}
       <div className="rc-trust">
         <div className="rc-meterrow">
-          <span className="rc-trust-k">{draft ? <AlertTriangle size={12} /> : <ShieldCheck size={12} />} Confidence</span>
-          <span className="rc-meter" role="meter" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={'Confidence ' + pct + ' percent'}>
+          <span className="rc-trust-k">{draft ? <AlertTriangle size={12} /> : <ShieldCheck size={12} />} {t('resultCard.confidence')}</span>
+          <span className="rc-meter" role="meter" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={t('resultCard.confidenceAria', { pct })}>
             <span className="rc-meter-fill" style={{ width: pct + '%' }} />
           </span>
           <span className="rc-meter-val">{pct}% <i>{band}</i></span>

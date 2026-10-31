@@ -281,6 +281,12 @@ export default {
     }
   },
   policyNote: {
+    headFlag: "سياستك: راجِع هذا قبل استخدامه",
+    headClean_one: "سياستك: لا ملاحظات (عدد القواعد المفحوصة: {n})",
+    headClean_other: "سياستك: لا ملاحظات (عدد القواعد المفحوصة: {n})",
     cleanBody: "جرى فحص هذا الإرشاد مقابل سياستك الأمنية ولم يُشَر إلى أي شيء."
-  }
+  },
+  guideLevel: {
+    levels: { executive: { label: "موجز", short: "موجز" } },
+  },
 }

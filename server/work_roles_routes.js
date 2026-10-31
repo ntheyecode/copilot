@@ -139,7 +139,7 @@ export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth,
   }))
   app.patch('/api/work/workflows/:id', requireWorkAuth, wrap((req, res) => {
     const b = req.body || {}
-    res.json({ workflow: store.updateWorkflow(req.workUser.id, req.params.id, { meta: b.meta, steps: b.steps }) })
+    res.json({ workflow: store.updateWorkflow(req.workUser.id, req.params.id, { meta: b.meta, steps: b.steps, baseUpdatedAt: b.baseUpdatedAt }) })
   }))
   app.post('/api/work/workflows/:id/publish', requireWorkAuth, wrap((req, res) => {
     res.json({ workflow: store.publishWorkflow(req.workUser.id, req.params.id) })

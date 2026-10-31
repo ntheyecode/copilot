@@ -83,6 +83,7 @@ export default {
       back: 'Back',
       next: 'Next',
       errSave: 'Could not save the draft. Please try again.',
+      errChanged: 'This draft was changed in another tab or by someone else since you opened it, so your save was not applied. Copy anything you need, then close it and open it again to see the latest version.',
       errPublish: 'Could not publish. Check the required fields and steps, then try again.',
       publishedOk: 'Published. Your team is guided through it now.',
       draftSavedOk: 'Draft saved.',

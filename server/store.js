@@ -1334,6 +1334,11 @@ function publicCompany(c) {
     aiReason: c.aiSource === 'company'
       ? ((c.companyAi && c.companyAi.apiKey) ? null : 'Company uses its own AI keys, but none are set yet.')
       : (c.aiSource === 'platform' ? null : 'AI source not selected yet (choose platform or company keys).'),
+    // The same reason as a code, so a console words it in the reader's language
+    // (aiReason stays the English text for API readers and logs).
+    aiReasonCode: c.aiSource === 'company'
+      ? ((c.companyAi && c.companyAi.apiKey) ? null : 'keysMissing')
+      : (c.aiSource === 'platform' ? null : 'sourceUnset'),
     imageGen: !!c.imageGen,
     trial: t ? { sessions: t.sessions || 0, used: t.used || 0, remaining: Math.max(0, (t.sessions || 0) - (t.used || 0)), minutesPer: t.minutesPer || 60 } : null,
     hasCompanyAi: !!(c.companyAi && c.companyAi.apiKey),
@@ -2970,16 +2975,21 @@ export function newSessionSecret() {
   if (!db.sessionSecret) { db.sessionSecret = crypto.randomBytes(24).toString('hex'); persist() }
   return db.sessionSecret
 }
+// Session records are stored and handed out as SNAPSHOTS (a JSON copy), like any
+// serializing store. Keeping the live req.session object let express-session's
+// per-request touch() slide the stored expiry forward on every request, so a
+// session in use never expired server-side (gate: session_store_snapshot.test.mjs).
+const sessionSnapshot = (rec) => JSON.parse(JSON.stringify(rec))
 export function getSessionRecord(sid) {
   const rec = (db.sessions || {})[sid]
   if (!rec) return null
   const exp = rec.cookie?.expires
   if (exp && new Date(exp).getTime() <= Date.now()) { delete db.sessions[sid]; persist(); return null }
-  return rec
+  return sessionSnapshot(rec)
 }
 export function setSessionRecord(sid, data) {
   if (!db.sessions) db.sessions = {}
-  db.sessions[sid] = data
+  db.sessions[sid] = sessionSnapshot(data)
   persist()
 }
 export function destroySessionRecord(sid) {

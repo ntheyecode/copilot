@@ -22,7 +22,10 @@
     "db:export": "node server/storage/cli.js export",
     "compose": "node build/compose.mjs",
     "stamp:spa": "node build/stamp_spa.mjs",
-    "start": "npm run build && node server/index.js"
+    "start": "npm run build && node server/index.js",
+    "e2e": "playwright test -c e2e/playwright.config.mjs",
+    "e2e:web": "playwright test -c e2e/playwright.config.mjs --project=all --project=saas --project=paid",
+    "e2e:floater": "playwright test -c e2e/playwright.config.mjs --project=floater"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.0.18",
@@ -48,6 +51,7 @@
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.13",
     "@electric-sql/pglite-socket": "^0.2.16",
+    "@playwright/test": "^1.64.1",
     "@vitejs/plugin-react": "^6.1.2",
     "javascript-obfuscator": "^5.2.1",
     "vite": "^8.3.5"

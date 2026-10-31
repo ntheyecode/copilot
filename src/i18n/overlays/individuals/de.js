@@ -281,6 +281,12 @@ export default {
     }
   },
   policyNote: {
+    headFlag: "Ihre Richtlinie: vor der Verwendung prüfen",
+    headClean_one: "Ihre Richtlinie: unbedenklich (gegen {n} Regel geprüft)",
+    headClean_other: "Ihre Richtlinie: unbedenklich (gegen {n} Regeln geprüft)",
     cleanBody: "Diese Anleitung wurde gegen Ihre Sicherheitsrichtlinie geprüft, und nichts wurde beanstandet."
-  }
+  },
+  guideLevel: {
+    levels: { executive: { label: "Kurz", short: "Kurz" } },
+  },
 }

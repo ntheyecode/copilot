@@ -281,6 +281,12 @@ export default {
     }
   },
   policyNote: {
+    headFlag: "Tu política: revísalo antes de usarlo",
+    headClean_one: "Tu política: todo en orden (comprobado con {n} regla)",
+    headClean_other: "Tu política: todo en orden (comprobado con {n} reglas)",
     cleanBody: "Esta guía se contrastó con tu política de seguridad y no se marcó nada."
-  }
+  },
+  guideLevel: {
+    levels: { executive: { label: "Breve", short: "Breve" } },
+  },
 }

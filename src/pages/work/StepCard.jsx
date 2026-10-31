@@ -31,8 +31,8 @@ export default function StepCard({
   return (
     <section className="gv-step" aria-labelledby={`gv-step-h-${n || 0}`}>
       <div className="gv-step-top">
-        {n != null && <span className="gv-step-n"><ArrowRight size={11} strokeWidth={2.8} aria-hidden="true" /> Step {n}{total ? ` of ${total}` : ''}</span>}
-        {confirmN > 0 && <span className="gv-confirm" role="status"><Check size={11} strokeWidth={3} aria-hidden="true" /> Step {confirmN} confirmed</span>}
+        {n != null && <span className="gv-step-n"><ArrowRight size={11} strokeWidth={2.8} aria-hidden="true" /> {total ? t('stepCard.stepOf', { n, total }) : t('stepCard.stepN', { n })}</span>}
+        {confirmN > 0 && <span className="gv-confirm" role="status"><Check size={11} strokeWidth={3} aria-hidden="true" /> {t('stepCard.confirmed', { n: confirmN })}</span>}
         {hint}
       </div>
       <h2 id={`gv-step-h-${n || 0}`} className="gv-step-text" style={{ margin: 0 }}><RichText text={headline} accent="var(--gv-accent)" /></h2>

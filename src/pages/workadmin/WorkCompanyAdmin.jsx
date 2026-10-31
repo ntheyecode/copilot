@@ -528,7 +528,7 @@ function OverviewSection({ company, onOpen }) {
       </div>
 
       {company && aiReady === false && (
-        <div className="wka-note" style={{ color: 'var(--wka-amber)' }}><AlertTriangle size={14} /> {company.aiReason || t('companyAdmin.overview.aiNotConfigured')} {company.aiSource === 'company' ? <button type="button" className="wka-btn sm ghost" style={{ marginLeft: 6 }} onClick={() => onOpen && onOpen('ai')}>{t('companyAdmin.overview.aiSetKeys')}</button> : ''}</div>
+        <div className="wka-note" style={{ color: 'var(--wka-amber)' }}><AlertTriangle size={14} /> {company.aiReasonCode ? t(`companyAdmin.overview.aiReason.${company.aiReasonCode}`) : t('companyAdmin.overview.aiNotConfigured')} {company.aiSource === 'company' ? <button type="button" className="wka-btn sm ghost" style={{ marginLeft: 6 }} onClick={() => onOpen && onOpen('ai')}>{t('companyAdmin.overview.aiSetKeys')}</button> : ''}</div>
       )}
 
       <CompanyPoolCard onOpen={onOpen} />

@@ -10,6 +10,8 @@
 //              reviewer's note.
 // ===========================================================================
 
+import { stripGuideMarkup } from './guide_markup.js'
+
 const s = (v) => (v == null ? '' : String(v))
 
 export function v1WorkflowSummary(w) {
@@ -38,7 +40,7 @@ export function v1Incident(x) {
   const r = x.workflowRef || {}
   return {
     id: s(x.id), kind: s(x.kind), state: s(x.state), why: s(x.why),
-    stepIndex: Number.isInteger(x.stepIndex) ? x.stepIndex : null, stepText: s(x.stepText),
+    stepIndex: Number.isInteger(x.stepIndex) ? x.stepIndex : null, stepText: s(stripGuideMarkup(x.stepText)),
     extraStep: x.extraStep ? s(x.extraStep) : null, count: Number(x.count) || 1,
     firstAt: x.firstAt || null, lastAt: x.lastAt || null, decidedAt: x.decidedAt || null,
     workflow: { id: s(r.id), groupId: s(r.groupId), version: Number(r.version) || null, title: s(r.title) },

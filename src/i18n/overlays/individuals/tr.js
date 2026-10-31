@@ -281,6 +281,12 @@ export default {
     }
   },
   policyNote: {
+    headFlag: "Politikanız: kullanmadan önce gözden geçirin",
+    headClean_one: "Politikanız: sorun yok ({n} kurala göre denetlendi)",
+    headClean_other: "Politikanız: sorun yok ({n} kurala göre denetlendi)",
     cleanBody: "Bu rehberlik güvenlik politikanıza göre denetlendi ve hiçbir şey işaretlenmedi."
-  }
+  },
+  guideLevel: {
+    levels: { executive: { label: "Özet", short: "Özet" } },
+  },
 }

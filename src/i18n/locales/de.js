@@ -85,6 +85,7 @@ export default {
       back: 'Zurück',
       next: 'Weiter',
       errSave: 'Der Entwurf konnte nicht gespeichert werden. Bitte versuche es erneut.',
+      errChanged: 'Dieser Entwurf wurde seit dem Öffnen in einem anderen Tab oder von jemand anderem geändert, daher wurden deine Änderungen nicht gespeichert. Kopiere, was du brauchst, schließe ihn dann und öffne ihn erneut, um die neueste Version zu sehen.',
       errPublish: 'Veröffentlichen nicht möglich. Prüfe die erforderlichen Felder und Schritte und versuche es erneut.',
       publishedOk: 'Veröffentlicht. Dein Team wird jetzt Schritt für Schritt geführt.',
       draftSavedOk: 'Entwurf gespeichert.',
@@ -793,6 +794,16 @@ export default {
       copyCommand: 'Befehl kopieren',
       copyAria: 'In die Zwischenablage kopieren',
       copiedAria: 'In die Zwischenablage kopiert',
+      copyAll: 'Alles kopieren',
+    },
+    download: {
+      file: 'Datei herunterladen',
+      csv: 'CSV herunterladen',
+      md: '.md herunterladen',
+    },
+    fullScreen: {
+      enter: 'Vollbild',
+      exit: 'Vollbild beenden',
     },
     blocks: {
       terminal: 'Terminal',
@@ -1718,6 +1729,7 @@ export default {
       checking: 'Anmeldung Ihrer Organisation wird geprüft…',
     },
     form: {
+      agreeDocs: 'Ich habe Folgendes gelesen und stimme zu: {docs}.',
       ariaCreate: 'Konto erstellen',
       ariaLogin: 'Anmelden',
       fullName: 'Vollständiger Name',
@@ -1801,6 +1813,7 @@ export default {
       verifyContinue: 'Bestätigen und weiter',
     },
     err: {
+      acceptAgreements: 'Bitte stimmen Sie den Vereinbarungen zu, um Ihr Konto zu erstellen.',
       timedOut: 'Ihre Anmeldesitzung ist abgelaufen. Bitte beginnen Sie von vorn.',
       finishFail: 'Die Anmeldung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut.',
       enterName: 'Geben Sie Ihren vollständigen Namen ein.',
@@ -2125,6 +2138,10 @@ export default {
       totalForCompany: 'Gesamt für Ihr Unternehmen',
       noDataYet: 'Noch keine Daten',
       aiNotConfigured: 'Die KI ist noch nicht eingerichtet.',
+      aiReason: {
+        keysMissing: 'Ihr Unternehmen nutzt eigene KI-Schlüssel, aber es ist noch keiner hinterlegt.',
+        sourceUnset: 'Wählen Sie, woher Ihre KI kommt: von der Plattform oder aus den eigenen Schlüsseln Ihres Unternehmens.',
+      },
       aiSetKeys: 'KI-Schlüssel öffnen',
       licensesByPlan: 'Lizenzen nach Tarif',
       licensesByPlanHelp: 'Wie viele Lizenzen jedes Tarifs Ihr Unternehmen gekauft hat und wie viele zugewiesen sind. Eine Zuweisung über die Lizenzmenge eines Tarifs hinaus wird blockiert.',
@@ -5794,6 +5811,7 @@ export default {
       eyebrow: 'Ihr Arbeitsbereich',
       poweredBy: 'bereitgestellt von',
       exec: 'Management-Dashboard',
+      logoAlt: 'Logo von {company}',
     },
     hello: 'Hallo {name}',
     plan: {
@@ -8161,6 +8179,29 @@ export default {
     youAsked: 'Sie haben gefragt:',
     planUpdated: 'Ihr Plan wurde aktualisiert.',
     followUp: 'Eine Rückfrage stellen',
+    offerOpen: 'Dieser Schritt ist schon eine Weile offen. Sagen Sie mir, was im Weg steht, oder ich erkläre es auf andere Weise.',
+    offerOpenStep: 'Dieser Schritt ist schon eine Weile offen: <step></step>. Sagen Sie mir, was im Weg steht, oder ich erkläre es auf andere Weise.',
+    explainAgain: 'Diesen Schritt noch einmal erklären',
+    working: {
+      research: 'Wird nachgeschlagen',
+      analyze: 'Ihr Bildschirm wird gelesen',
+      stuck: 'Dieser Schritt wird genauer angesehen',
+      question: 'Ihre Frage wird bearbeitet',
+    },
+    label: {
+      research: 'Was ich gefunden habe',
+      analyze: 'Was ich sehe',
+      betterWay: 'Ein besserer Weg',
+      explained: 'Dieser Schritt, erklärt',
+    },
+    resumeAt: 'Mit „Weiter“ geht es bei Schritt {n} weiter.',
+    resumeAtStep: 'Mit „Weiter“ geht es bei Schritt {n} weiter: <step></step>',
+    continue: {
+      plan: 'Mit dem aktualisierten Plan weiter',
+      step: 'Verstanden, zurück zum Schritt',
+      guiding: 'Anleitung fortsetzen',
+    },
+    backToStep: 'Zurück zu Schritt {n}.',
   },
   benchmarkPage: {
     eyebrow: 'Genauigkeits-Benchmark',
@@ -8368,10 +8409,38 @@ export default {
   },
   buddyPicker: {
     groupAria: 'Wählen Sie Ihren Begleiter',
+    surprise: 'Überraschung (ein zufälliges Haustier)',
+    buddyAria: 'WorkCoPilot-Begleiter ({name})',
+    characters: {
+      boy: 'Junge',
+      girl: 'Mädchen',
+      dog: 'Hund',
+      cat: 'Katze',
+      bot: 'Bot',
+    },
   },
   composeCard: {
     emptyBody: 'Es kam kein Dokument zurück.',
     basedOn: 'Worauf ich es gestützt habe',
+    eyebrow: 'Für Sie geschrieben',
+    formats: {
+      prompt: 'Prompt für Ihre KI',
+      code: 'Code',
+      outline: 'Gliederung',
+      bullets: 'Stichpunkte',
+      table: 'Tabelle',
+      notes: 'Notizen',
+      draft: 'Entwurf',
+    },
+    untitled: {
+      prompt: 'Ihr Prompt für Ihre KI',
+      code: 'Ihr Code',
+      outline: 'Ihre Gliederung',
+      bullets: 'Ihre Stichpunkte',
+      table: 'Ihre Tabelle',
+      notes: 'Ihre Notizen',
+      draft: 'Ihr Entwurf',
+    },
   },
   computeCard: {
     cmp: {
@@ -9178,6 +9247,7 @@ export default {
   destructiveGate: {
     label: 'Unumkehrbarer Schritt.',
     reveal: 'Ich verstehe, den Befehl anzeigen',
+    body: 'Auswirkung: {why}. Lesen Sie ihn sorgfältig, bevor Sie ihn ausführen.',
   },
   disclaimerPage: {
     seo: {
@@ -9305,6 +9375,16 @@ export default {
     triggerTip: 'Diese Sitzung herunterladen',
     menuAria: 'Download-Format',
     heading: 'Herunterladen als',
+    label: 'Herunterladen',
+    formats: {
+      pdf: 'PDF-Bericht',
+      pdfHint: 'Formatiert, mit Screenshots',
+      txt: 'Textbericht (.txt)',
+      txtHint: 'Reiner Text, gleicher Inhalt',
+      log: 'Audit-Protokoll (.log)',
+      logHint: 'Jede Übertragung an die KI',
+    },
+    errDownload: 'Der Download ist fehlgeschlagen. Bitte versuchen Sie es erneut.',
   },
   dpaPage: {
     seo: {
@@ -10428,6 +10508,28 @@ export default {
     closeAria: 'Vollständigen Plan schließen',
     yourGoal: 'Ihr Ziel',
     now: 'Jetzt',
+    runThis: 'Dies ausführen',
+    calm: {
+      loading: {
+        t: 'Verbindung wird hergestellt',
+        d: 'Startet und sucht Ihre Aufgabe.',
+      },
+      error: {
+        t: 'Server nicht erreichbar',
+        d: 'Neuer Versuch läuft. Ihre Sitzung ist sicher.',
+      },
+      signin: {
+        t: 'Bei WorkCoPilot anmelden',
+        d: 'Melden Sie sich im Hauptfenster an, dann erscheint Ihre Aufgabe hier.',
+      },
+      empty: {
+        t: 'Noch keine aktive Aufgabe',
+        d: 'Öffnen Sie WorkCoPilot und starten Sie eine Aufgabe. Dieser Bildschirm führt Sie dann Schritt für Schritt.',
+      },
+    },
+    hoursOutTip: 'Ihre Planstunden für diesen Monat sind aufgebraucht',
+    hoursLeftTip: 'Verbleibende Planstunden in diesem Monat',
+    readingNext: 'Ihr Bildschirm wird für den nächsten Schritt gelesen',
   },
   guideConsole: {
     source: {
@@ -10847,6 +10949,26 @@ export default {
   },
   guideLevel: {
     groupAria: 'Stärke der Anleitung',
+    levels: {
+      easy: {
+        label: 'Einfach',
+        title: 'Einfache Worte, jeder Klick genau beschrieben',
+      },
+      medium: {
+        label: 'Mittel',
+        title: 'Klare Schritte mit den wichtigsten Details',
+      },
+      technical: {
+        label: 'Technisch',
+        title: 'Präzise, mit Befehlen, Pfaden und Werten',
+        short: 'Tech',
+      },
+      executive: {
+        label: 'Management',
+        title: 'Kurz, ergebnisorientiert, nur das Wesentliche',
+        short: 'Mgmt',
+      },
+    },
   },
   helpPage: {
     nav: {
@@ -11048,13 +11170,15 @@ export default {
       ],
     },
     time: {
+      buyItems: [
+        'Gekaufte Zusatzzeit verfällt nie und wird erst genutzt, nachdem Ihre täglichen Minuten aufgebraucht sind.',
+        'Jetzt mehr nötig? Nutzen Sie <b>Zeit hinzufügen</b> oben auf dem Dashboard.',
+      ],
       h2: 'Ihre Zeit und das Pausieren',
       lead: 'Ihr Tarif gibt Ihnen täglich Stunden Live-Anleitung, nur gezählt, während aktiv angeleitet wird, nie im Leerlauf. Das Abzeichen <b>Min. übrig</b> oben zeigt, wie viel Zeit heute noch bleibt, und es wird bernsteinfarben, um Sie zu warnen, bevor Ihnen die Zeit knapp wird.',
       items: [
         'Tippen Sie auf <b>Pausieren</b>, um die Uhr und Ihre Sitzung anzuhalten, während Sie weg sind oder andere Arbeit erledigen, dann auf <b>Fortsetzen</b>, wenn Sie zurück sind.',
         'Die täglichen Minuten setzen sich um <b>23:59 Uhr ET</b> zurück.',
-        'Gekaufte Zusatzzeit verfällt nie und wird erst genutzt, nachdem Ihre täglichen Minuten aufgebraucht sind.',
-        'Jetzt mehr nötig? Nutzen Sie <b>Zeit hinzufügen</b> oben auf dem Dashboard.',
       ],
     },
     record: {
@@ -11294,6 +11418,14 @@ export default {
   },
   policyNote: {
     cleanBody: 'Diese Anleitung wurde gegen die Sicherheitsrichtlinie Ihres Unternehmens geprüft, und nichts wurde beanstandet.',
+    headFlag: 'Unternehmensrichtlinie: vor der Verwendung prüfen',
+    headClean_one: 'Unternehmensrichtlinie: unbedenklich (gegen {n} Regel geprüft)',
+    headClean_other: 'Unternehmensrichtlinie: unbedenklich (gegen {n} Regeln geprüft)',
+    forbid: 'Verboten: {title}.',
+    forbidAny: 'Verboten: eine untersagte Praxis.',
+    require: 'Erforderlich: {title}.',
+    requireAny: 'Erforderlich: eine vorgeschriebene Praxis.',
+    per: '(gemäß {cite})',
   },
   privacyPage: {
     seo: {
@@ -11650,6 +11782,12 @@ export default {
   },
   readingStrip: {
     notRightPlace: 'Noch nicht die richtige Stelle.',
+    readingScreen: 'Ihr Bildschirm wird gelesen',
+    readingCamera: 'Die Kamera wird gelesen',
+    iCanSee: 'Ich sehe',
+    lastRead: 'Zuletzt gelesen',
+    showRead: 'Anzeigen, was der Guide auf Ihrem Bildschirm gelesen hat',
+    hideRead: 'Ausblenden, was der Guide auf Ihrem Bildschirm gelesen hat',
   },
   refundPage: {
     seo: {
@@ -11774,6 +11912,24 @@ export default {
     need: 'Ich benötige:',
     howIGotIt: 'Wie ich dazu kam',
     verifyBy: 'Prüfen durch',
+    eyebrow: 'Ergebnis',
+    eyebrowDraft: 'Entwurf, Angaben nötig',
+    titleDraft: 'Ein Entwurf, keine gesicherte Antwort',
+    kinds: {
+      number: 'Die Zahl',
+      table: 'Die Tabelle',
+      code: 'Der Code',
+      text: 'Die Antwort',
+      analysis: 'Die Analyse',
+    },
+    confidence: 'Verlässlichkeit',
+    confidenceAria: 'Verlässlichkeit {pct} Prozent',
+    band: {
+      draft: 'Entwurf',
+      high: 'Hoch',
+      fair: 'Mittel',
+      low: 'Niedrig',
+    },
   },
   scrubRules: {
     builtin: [
@@ -11819,6 +11975,16 @@ export default {
   securityNote: {
     cleanBody: 'In diesem Code wurden keine gefährlichen Befehle und keine bekannten verwundbaren Bibliotheken gefunden.',
     dbUnreachable: 'Die Schwachstellendatenbank war nicht erreichbar, daher wurden die Bibliotheksversionen diesmal nicht geprüft.',
+    headFlag: 'Sicherheitscheck: vor der Verwendung prüfen',
+    headClean: 'Sicherheitscheck: keine bekannten Probleme',
+    vulns_one: '<b>{pkg}</b> hat {n} bekannte Schwachstelle.',
+    vulns_other: '<b>{pkg}</b> hat {n} bekannte Schwachstellen.',
+    vulnsIds_one: '<b>{pkg}</b> hat {n} bekannte Schwachstelle ({ids}).',
+    vulnsIds_other: '<b>{pkg}</b> hat {n} bekannte Schwachstellen ({ids}).',
+    idsMore: '{ids} und weitere',
+    upgradeLatest: 'Aktualisieren Sie auf {version} (aktuellste Version).',
+    upgradeLater: 'Aktualisieren Sie auf {version} oder höher.',
+    patchedVersion: 'eine gepatchte Version',
   },
   setPasswordPage: {
     byBrand: 'von AdmireVeda',
@@ -11864,6 +12030,18 @@ export default {
     buddyTip: 'Auf die Begleiter-Karte verkleinern (Ctrl+Shift+Alt+B)',
     minimize: 'Minimieren',
     close: 'Schließen',
+    shareHiddenTip: 'Bei Bildschirmfreigaben ausgeblendet - klicken, um es in einer Freigabe zu zeigen (Ctrl+Shift+Alt+S)',
+    shareVisibleTip: 'Bei Bildschirmfreigaben sichtbar - klicken, um es wieder auszublenden (Ctrl+Shift+Alt+S)',
+    shareHidden: 'Ausgeblendet',
+    shareOn: 'In Freigabe',
+    seeThrough: 'Durchsichtig',
+    clickBehindOnTip: 'Durchklicken ist aktiv: Ihre Klicks gehen an die App darunter. Diese Leiste nimmt weiterhin Klicks an. Klicken Sie hier oder drücken Sie Ctrl+Shift+Alt+W, um es auszuschalten.',
+    clickBehindOffTip: 'Durchklicken: Ihre Klicks an die App darunter weitergeben. Diese Leiste bleibt anklickbar, damit Sie es wieder ausschalten können (Ctrl+Shift+Alt+W).',
+    clickBehindIdleTip: 'Durchklicken ist während der Anleitung verfügbar',
+    restore: 'Wiederherstellen',
+    maximize: 'Maximieren',
+    maximizeCentered: 'Maximieren (zentriert)',
+    fullScreenTip: 'Vollbild (füllt den Bildschirm, ideal auf einem zweiten Monitor)',
   },
   skillsPage: {
     sectionAria: 'Skills',
@@ -11908,6 +12086,11 @@ export default {
     plan: 'Plan',
     doneWhen: 'Fertig, wenn',
     markDoneTip: 'Diesen Schritt als erledigt markieren und zum nächsten gehen',
+    stepOf: 'Schritt {n} von {total}',
+    stepN: 'Schritt {n}',
+    confirmed: 'Schritt {n} bestätigt',
+    yourPlan: 'Ihr Plan',
+    collapse: 'Einklappen',
     shot: {
       label: 'So sollte der Bildschirm aussehen',
       larger: 'Größer anzeigen',

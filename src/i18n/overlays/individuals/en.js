@@ -215,6 +215,12 @@ export default {
     },
   },
   policyNote: {
+    headFlag: "Your policy: review before you use this",
+    headClean_one: "Your policy: clear (checked against {n} rule)",
+    headClean_other: "Your policy: clear (checked against {n} rules)",
     cleanBody: 'This guidance was checked against your security policy and nothing was flagged.',
+  },
+  guideLevel: {
+    levels: { executive: { label: "Brief", short: "Brief" } },
   },
 }

@@ -224,3 +224,20 @@ test('regression: deleting a workflow keeps the frames a running session still s
   assert.ok(api.readWorkflowFrame('t', f1))               // still served to the running session
   assert.throws(() => api.readWorkflowFrame('t', f2), /not found/)   // the unused one is purged
 })
+
+// E2E finding (e2e/FINDINGS.md #6): two tabs on one draft. A save based on an
+// older copy is refused with WORKFLOW_CHANGED instead of silently replacing the
+// newer steps; a save based on the current copy, or one that names no base
+// (integration callers), applies.
+test('a stale save is refused, a current one applies, and no base keeps the old behavior', () => {
+  const { api } = harness([trainer])
+  const d = api.createWorkflow('t', { meta: META, steps: [STEP] })
+  const tabA = api.updateWorkflow('t', d.id, { steps: [{ instruction: 'Tab A step' }], baseUpdatedAt: d.updatedAt })
+  assert.equal(tabA.steps[0].instruction, 'Tab A step')
+  assert.throws(() => api.updateWorkflow('t', d.id, { steps: [{ instruction: 'Tab B step' }], baseUpdatedAt: d.updatedAt }),
+    (e) => e.status === 409 && e.code === 'WORKFLOW_CHANGED')
+  assert.equal(api.getWorkflowForUser('t', d.id).steps[0].instruction, 'Tab A step', 'the newer save survives')
+  const next = api.updateWorkflow('t', d.id, { meta: { owner: 'Billing' }, baseUpdatedAt: tabA.updatedAt })
+  assert.equal(next.meta.owner, 'Billing')
+  assert.equal(api.updateWorkflow('t', d.id, { meta: { owner: 'Ops' } }).meta.owner, 'Ops')
+})

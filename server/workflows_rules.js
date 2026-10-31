@@ -11,6 +11,7 @@
 // published one in the same group, so a user mid-task on the live guide is
 // never cut off until the new version is actually published.
 // ===========================================================================
+import { stripGuideMarkup } from './guide_markup.js'
 
 export const WORKFLOW_STATES = ['draft', 'published', 'retired']
 // The metadata the Teach wizard collects at step 1; these four are required.
@@ -57,7 +58,7 @@ export function validateMeta(meta) {
 // shot changed drops its stale reading instead of showing one for another screen.
 export const CONTROL_KINDS = ['button', 'link', 'menu', 'tab', 'field', 'checkbox', 'option', 'icon', 'other', 'none']
 // One line of plain text: no control characters, no bold/backtick markup.
-const LINE = (v, n) => STR(v).replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/[*`]+/g, '').replace(/\s+/g, ' ').trim().slice(0, n)
+const LINE = (v, n) => stripGuideMarkup(STR(v).replace(/[\u0000-\u001f\u007f]+/g, ' ')).replace(/\s+/g, ' ').trim().slice(0, n)
 export function normalizeReading(r, shot) {
   if (!r || typeof r !== 'object' || !shot || r.shot !== shot) return null
   const controlLabel = LINE(r.controlLabel, 120)

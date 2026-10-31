@@ -177,6 +177,7 @@ export const HIDDEN = {
     'login.switch': 'WorkLogin: the create switch needs solo_signup', 'login.plan': 'WorkLogin: no plan hand-off',
     'login.form.ariaCreate': 'WorkLogin: the create form needs solo_signup', 'login.form.create': 'WorkLogin: the create form needs solo_signup',
     'login.form.createContinue': 'WorkLogin: the create form needs solo_signup', 'login.err.createFail': 'WorkLogin: the create form needs solo_signup',
+    'login.err.acceptAgreements': 'WorkLogin: raised only by the create form, which needs solo_signup',
     'workStart.gateCompanyTrialUsed': 'company-facing: a company trial, not a personal plan',
     'onboarding': 'the subscribe onboarding route needs solo_signup (SignupClosed renders instead)',
     'workDashboard.sub': 'Dashboard: the plan chooser needs individual_plans',
@@ -198,7 +199,7 @@ export const HIDDEN = {
     'workShell.plan.actBuy': 'needs canBuy', 'workShell.plan.actUpgrade': 'needs canUpgrade', 'workShell.buy': 'buy modal needs canBuyHours',
     'workProjects.outcome.upgradeBody': 'needs canUpgrade', 'workStart.docsCapUpgrade': 'personal plan document cap',
     'workStart.docsCapFull': 'personal plan document cap', 'workStart.qUpgrade': 'needs canUpgrade',
-    'helpPage.time': 'personal plan time rules (help section for personal accounts)',
+    'helpPage.time.buyItems': 'Help.jsx renders the top-up lines only for a personal account where personal plans are sold (the rest of the time section applies to everyone and is scanned)',
     'usage.outIndividual': 'personal account only', 'usage.lowNote': 'personal account only',
   },
 }

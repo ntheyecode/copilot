@@ -109,20 +109,25 @@ function slug(title) {
   return s || 'workcopilot-document'
 }
 
+// `kind` names the i18n leaf: composeCard.formats.<kind> is the format label and
+// composeCard.untitled.<kind> the whole-sentence title used when the document has
+// none (one keyed sentence per kind, never 'Your ' + label concatenation).
 const FORMAT_META = {
-  prompt: { icon: PenLine, label: 'Prompt for your AI', ext: 'txt' },
-  code: { icon: Code2, label: 'Code', ext: 'txt' },
-  outline: { icon: ListTree, label: 'Outline', ext: 'md' },
-  bullets: { icon: List, label: 'Bullets', ext: 'md' },
-  table: { icon: Table, label: 'Table', ext: 'csv' },
-  notes: { icon: StickyNote, label: 'Notes', ext: 'md' },
+  prompt: { icon: PenLine, kind: 'prompt', ext: 'txt' },
+  code: { icon: Code2, kind: 'code', ext: 'txt' },
+  outline: { icon: ListTree, kind: 'outline', ext: 'md' },
+  bullets: { icon: List, kind: 'bullets', ext: 'md' },
+  table: { icon: Table, kind: 'table', ext: 'csv' },
+  notes: { icon: StickyNote, kind: 'notes', ext: 'md' },
   // legacy (older sessions may still carry these; the engine no longer writes them)
-  email: { icon: Mail, label: 'Draft', ext: 'md' },
-  document: { icon: FileText, label: 'Draft', ext: 'md' },
+  email: { icon: Mail, kind: 'draft', ext: 'md' },
+  document: { icon: FileText, kind: 'draft', ext: 'md' },
 }
 
 // A self-contained copy control, so the card owns its own clipboard feedback.
-function CopyAction({ text, label = 'Copy' }) {
+// `label` defaults to the translated "Copy".
+function CopyAction({ text, label }) {
+  const t = useT()
   const [done, setDone] = useState(false)
   const copy = async () => {
     try { await navigator.clipboard.writeText(text || ''); setDone(true); setTimeout(() => setDone(false), 1500) }
@@ -130,7 +135,7 @@ function CopyAction({ text, label = 'Copy' }) {
   }
   return (
     <button type="button" className="cc-act" onClick={copy}>
-      {done ? <Check size={13} /> : <Copy size={13} />} {done ? 'Copied' : label}
+      {done ? <Check size={13} /> : <Copy size={13} />} {done ? t('widgets.copy.copied') : (label || t('widgets.copy.copy'))}
     </button>
   )
 }
@@ -194,22 +199,22 @@ export default function ComposeCard({ compose, security = null, policy = null, c
     }
     downloadText(bodyStr, base + '.md', 'text/markdown')
   }
-  const downloadLabel = fmt === 'table' ? 'Download CSV' : (fmt === 'code' ? 'Download file' : 'Download .md')
+  const downloadLabel = t(fmt === 'table' ? 'widgets.download.csv' : (fmt === 'code' ? 'widgets.download.file' : 'widgets.download.md'))
 
   return (
     <WorkCard theme="light" tone={tone} reveal={false} texture={false} className={'cc-card ' + className}>
       <WorkCard.Head
         icon={meta.icon}
         align="start"
-        eyebrow={<span className="cc-eyebrow-in"><PenLine size={11} /> Written for you{' · '}{meta.label}</span>}
-        title={title && String(title).trim() ? String(title).trim() : 'Your ' + meta.label.toLowerCase()}
+        eyebrow={<span className="cc-eyebrow-in"><PenLine size={11} /> {t('composeCard.eyebrow')}{' · '}{t('composeCard.formats.' + meta.kind)}</span>}
+        title={title && String(title).trim() ? String(title).trim() : t('composeCard.untitled.' + meta.kind)}
       />
 
       <div className="cc-bodywrap">{renderBody()}</div>
 
       {/* Actions - the document is handed over to copy or use, never auto-filled. */}
       <div className="cc-actions">
-        <CopyAction text={copyText} label="Copy all" />
+        <CopyAction text={copyText} label={t('widgets.copy.copyAll')} />
         <button type="button" className="cc-act" onClick={downloadDoc}>
           <Download size={13} /> {downloadLabel}
         </button>

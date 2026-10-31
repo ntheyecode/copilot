@@ -281,6 +281,12 @@ export default {
     }
   },
   policyNote: {
+    headFlag: "あなたのポリシー: 使う前に確認してください",
+    headClean_one: "あなたのポリシー: 問題なし（{n} 件のルールで確認済み）",
+    headClean_other: "あなたのポリシー: 問題なし（{n} 件のルールで確認済み）",
     cleanBody: "この案内はあなたのセキュリティポリシーに照らしてチェックされ、何も指摘されませんでした。"
-  }
+  },
+  guideLevel: {
+    levels: { executive: { label: "要点", short: "要点" } },
+  },
 }

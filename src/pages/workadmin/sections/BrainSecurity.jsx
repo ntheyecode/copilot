@@ -43,23 +43,22 @@ export function passStrength(p) {
   if (classes >= 3) score++
   if (/(.)\1{2,}/.test(s) || /^(password|passphrase|12345678|qwerty)/i.test(s)) score = Math.min(score, 1)
   const n = Math.min(4, Math.max(0, score - 1))
-  const label = s.length < 8 ? 'Too short' : ['Weak', 'Fair', 'Good', 'Strong', 'Very strong'][n]
+  const label = s.length < 8 ? 'tooShort' : ['weak', 'fair', 'good', 'strong', 'veryStrong'][n]
   return { score: n, label, pct: s.length < 8 ? 12 : [28, 48, 70, 88, 100][n] }
 }
 
-// passStrength() keeps its English labels as internal values (they are compared
-// in logic below); the i18n key is looked up only here, at display time.
-const STRENGTH_LABEL_KEY = { 'Too short': 'tooShort', Weak: 'weak', Fair: 'fair', Good: 'good', Strong: 'strong', 'Very strong': 'veryStrong' }
+// passStrength() returns its label as the i18n leaf (brainSecurity.strength.<label>);
+// the logic below compares that id, and the text is looked up only at display time.
 
 function StrengthBar({ value }) {
   const t = useT()
   const st = passStrength(value)
   if (!value) return null
-  const tone = st.label === 'Too short' || st.score === 0 ? 'var(--wka-red)' : st.score === 1 ? 'var(--wka-amber)' : 'var(--wka-emerald)'
+  const tone = st.label === 'tooShort' || st.score === 0 ? 'var(--wka-red)' : st.score === 1 ? 'var(--wka-amber)' : 'var(--wka-emerald)'
   return (
     <div className="wcb-strength" aria-live="polite">
       <div className="track"><div className="fill" style={{ width: `${st.pct}%`, background: tone }} /></div>
-      <span style={{ color: tone }}>{t(`brainSecurity.strength.${STRENGTH_LABEL_KEY[st.label]}`)}</span>
+      <span style={{ color: tone }}>{t(`brainSecurity.strength.${st.label}`)}</span>
     </div>
   )
 }
@@ -169,7 +168,7 @@ function EnableWizard({ onDone, onCancel }) {
           {err ? <div style={{ margin: '10px 0' }}><ErrorBox error={err} /></div> : null}
           <div className="wcb-actions">
             <button type="button" className="wka-btn ghost" onClick={onCancel} disabled={busy}><X size={14} /> {t('brainSecurity.common.cancel')}</button>
-            <button type="button" className="wka-btn primary" onClick={enable} disabled={!canEnable} title={!ack ? t('brainSecurity.wizard.tickAck') : st.label === 'Too short' ? t('brainSecurity.common.atLeast8') : ''}>
+            <button type="button" className="wka-btn primary" onClick={enable} disabled={!canEnable} title={!ack ? t('brainSecurity.wizard.tickAck') : st.label === 'tooShort' ? t('brainSecurity.common.atLeast8') : ''}>
               {busy ? <Spinning /> : <Lock size={14} />} {t('brainSecurity.wizard.enable')}
             </button>
           </div>

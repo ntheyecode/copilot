@@ -90,6 +90,7 @@ export default {
       back: '이전',
       next: '다음',
       errSave: '초안을 저장하지 못했습니다. 다시 시도해 주세요.',
+      errChanged: '이 초안은 연 이후에 다른 탭에서 또는 다른 사람이 변경하여 저장 내용이 적용되지 않았습니다. 필요한 내용을 복사한 뒤 닫고 다시 열어 최신 버전을 확인하세요.',
       errPublish: '게시하지 못했습니다. 필수 항목과 단계를 확인한 후 다시 시도해 주세요.',
       publishedOk: '게시했습니다. 이제 팀이 단계별 안내를 받습니다.',
       draftSavedOk: '초안을 저장했습니다.',
@@ -785,6 +786,7 @@ export default {
       eyebrow: '내 워크스페이스',
       poweredBy: '제공',
       exec: '경영진 대시보드',
+      logoAlt: '{company} 로고',
     },
     hello: '{name}님, 안녕하세요',
     plan: {
@@ -1484,6 +1486,16 @@ export default {
       copyCommand: '명령어 복사',
       copyAria: '클립보드에 복사',
       copiedAria: '클립보드에 복사됨',
+      copyAll: '모두 복사',
+    },
+    download: {
+      file: '파일 다운로드',
+      csv: 'CSV 다운로드',
+      md: '.md 다운로드',
+    },
+    fullScreen: {
+      enter: '전체 화면',
+      exit: '전체 화면 종료',
     },
     blocks: {
       terminal: '터미널',
@@ -2344,6 +2356,7 @@ export default {
       checking: '조직의 로그인 방식을 확인하는 중…',
     },
     form: {
+      agreeDocs: '{docs}의 내용을 읽었으며 이에 동의합니다.',
       ariaCreate: '계정 만들기',
       ariaLogin: '로그인',
       fullName: '전체 이름',
@@ -2427,6 +2440,7 @@ export default {
       verifyContinue: '확인하고 계속',
     },
     err: {
+      acceptAgreements: '계정을 만들려면 약관에 동의해 주세요.',
       timedOut: '로그인 세션이 만료되었습니다. 다시 시작해 주세요.',
       finishFail: '로그인을 마치지 못했습니다. 다시 시도해 주세요.',
       enterName: '전체 이름을 입력하세요.',
@@ -3697,6 +3711,10 @@ export default {
       totalForCompany: '회사 전체 합계',
       noDataYet: '아직 데이터 없음',
       aiNotConfigured: 'AI가 아직 구성되지 않았습니다.',
+      aiReason: {
+        keysMissing: '회사가 자체 AI 키를 사용하지만 아직 설정된 키가 없습니다.',
+        sourceUnset: 'AI를 어디서 가져올지 선택하세요: 플랫폼 또는 회사 자체 키.',
+      },
       aiSetKeys: 'AI 키 열기',
       licensesByPlan: '요금제별 라이선스',
       licensesByPlanHelp: '회사가 각 요금제를 몇 개 구매했고 몇 개 배정했는지입니다. 요금제 할당량을 초과한 배정은 차단됩니다.',
@@ -8024,6 +8042,29 @@ export default {
     youAsked: '질문하신 내용:',
     planUpdated: '계획이 업데이트되었습니다.',
     followUp: '추가 질문하기',
+    offerOpen: '이 단계에 시간이 꽤 걸리고 있네요. 무엇이 막고 있는지 알려 주세요. 다른 방식으로 설명해 드릴 수도 있어요.',
+    offerOpenStep: '이 단계에 시간이 꽤 걸리고 있네요: <step></step>. 무엇이 막고 있는지 알려 주세요. 다른 방식으로 설명해 드릴 수도 있어요.',
+    explainAgain: '이 단계 다시 설명하기',
+    working: {
+      research: '찾아보는 중',
+      analyze: '화면을 읽는 중',
+      stuck: '이 단계를 자세히 살펴보는 중',
+      question: '질문을 처리하는 중',
+    },
+    label: {
+      research: '찾은 내용',
+      analyze: '보이는 내용',
+      betterWay: '더 나은 방법',
+      explained: '이 단계 설명',
+    },
+    resumeAt: '\'계속\'을 누르면 {n}단계부터 이어집니다.',
+    resumeAtStep: '\'계속\'을 누르면 {n}단계부터 이어집니다: <step></step>',
+    continue: {
+      plan: '업데이트된 계획으로 계속',
+      step: '알겠어요, 단계로 돌아가기',
+      guiding: '안내 계속하기',
+    },
+    backToStep: '{n}단계로 돌아갑니다.',
   },
   benchmarkPage: {
     eyebrow: '정확도 벤치마크',
@@ -8227,10 +8268,38 @@ export default {
   },
   buddyPicker: {
     groupAria: '버디 선택',
+    surprise: '깜짝 선택 (무작위 반려동물)',
+    buddyAria: 'WorkCoPilot 버디 ({name})',
+    characters: {
+      boy: '소년',
+      girl: '소녀',
+      dog: '강아지',
+      cat: '고양이',
+      bot: '봇',
+    },
   },
   composeCard: {
     emptyBody: '돌아온 문서가 없습니다.',
     basedOn: '근거로 삼은 내용',
+    eyebrow: '맞춤 작성',
+    formats: {
+      prompt: 'AI용 프롬프트',
+      code: '코드',
+      outline: '개요',
+      bullets: '요점 목록',
+      table: '표',
+      notes: '메모',
+      draft: '초안',
+    },
+    untitled: {
+      prompt: '내 AI용 프롬프트',
+      code: '내 코드',
+      outline: '내 개요',
+      bullets: '내 요점 목록',
+      table: '내 표',
+      notes: '내 메모',
+      draft: '내 초안',
+    },
   },
   computeCard: {
     cmp: {
@@ -9037,6 +9106,7 @@ export default {
   destructiveGate: {
     label: '되돌리기 어려운 단계.',
     reveal: '이해했습니다, 명령어 표시',
+    body: '영향: {why}. 실행하기 전에 주의 깊게 읽어 보세요.',
   },
   disclaimerPage: {
     seo: {
@@ -9164,6 +9234,16 @@ export default {
     triggerTip: '이 세션 다운로드',
     menuAria: '다운로드 형식',
     heading: '다음으로 다운로드',
+    label: '다운로드',
+    formats: {
+      pdf: 'PDF 보고서',
+      pdfHint: '서식 적용, 스크린샷 포함',
+      txt: '텍스트 보고서 (.txt)',
+      txtHint: '일반 텍스트, 동일한 내용',
+      log: '감사 로그 (.log)',
+      logHint: '모든 AI 전송 기록',
+    },
+    errDownload: '다운로드하지 못했습니다. 다시 시도해 주세요.',
   },
   dpaPage: {
     seo: {
@@ -10276,6 +10356,28 @@ export default {
     closeAria: '전체 계획 닫기',
     yourGoal: '당신의 목표',
     now: '지금',
+    runThis: '실행하기',
+    calm: {
+      loading: {
+        t: '연결 중',
+        d: '준비하고 작업을 찾는 중입니다.',
+      },
+      error: {
+        t: '서버에 연결할 수 없습니다',
+        d: '다시 시도하는 중입니다. 세션은 안전합니다.',
+      },
+      signin: {
+        t: 'WorkCoPilot에 로그인',
+        d: '메인 창에서 로그인하면 여기에 작업이 표시됩니다.',
+      },
+      empty: {
+        t: '아직 진행 중인 작업이 없습니다',
+        d: 'WorkCoPilot을 열고 작업을 시작하세요. 그러면 이 화면이 단계별로 안내합니다.',
+      },
+    },
+    hoursOutTip: '이번 달 플랜 시간을 모두 사용했습니다',
+    hoursLeftTip: '이번 달 남은 플랜 시간',
+    readingNext: '다음 동작을 위해 화면을 읽는 중',
   },
   guideConsole: {
     source: {
@@ -10688,6 +10790,26 @@ export default {
   },
   guideLevel: {
     groupAria: '안내 강도',
+    levels: {
+      easy: {
+        label: '쉬움',
+        title: '쉬운 말로, 클릭 하나하나까지 자세히',
+      },
+      medium: {
+        label: '보통',
+        title: '핵심 정보를 담은 명확한 단계',
+      },
+      technical: {
+        label: '기술',
+        title: '명령어, 경로, 값까지 정확하게',
+        short: '기술',
+      },
+      executive: {
+        label: '경영진',
+        title: '짧게, 결과 먼저, 중요한 것만',
+        short: '경영',
+      },
+    },
   },
   helpPage: {
     nav: {
@@ -10889,13 +11011,15 @@ export default {
       ],
     },
     time: {
+      buyItems: [
+        '구매한 추가 시간은 만료되지 않으며 일일 분이 다 떨어진 후에만 사용됩니다.',
+        '지금 더 필요하세요? 대시보드 상단의 <b>시간 추가</b>를 사용하세요.',
+      ],
       h2: '시간과 일시 중지',
       lead: '당신의 요금제는 매일 실시간 안내 시간을 제공하며, 적극적으로 안내하는 동안에만 계산되고 유휴 중에는 결코 계산되지 않습니다. 상단의 <b>남은 분</b> 배지가 오늘 남은 시간을 보여 주며, 부족해지기 전에 황색으로 바뀌어 경고합니다.',
       items: [
         '자리를 비우거나 다른 작업을 할 때 <b>일시 중지</b>를 탭해 시계와 세션을 멈추고, 돌아오면 <b>재개</b>하세요.',
         '일일 분은 <b>오후 11:59 ET</b>에 초기화됩니다.',
-        '구매한 추가 시간은 만료되지 않으며 일일 분이 다 떨어진 후에만 사용됩니다.',
-        '지금 더 필요하세요? 대시보드 상단의 <b>시간 추가</b>를 사용하세요.',
       ],
     },
     record: {
@@ -11135,6 +11259,14 @@ export default {
   },
   policyNote: {
     cleanBody: '이 안내는 당신 회사의 보안 정책에 대해 점검되었으며 표시된 것이 없습니다.',
+    headFlag: '회사 정책: 사용하기 전에 검토하세요',
+    headClean_one: '회사 정책: 문제 없음 (규칙 {n}개로 확인)',
+    headClean_other: '회사 정책: 문제 없음 (규칙 {n}개로 확인)',
+    forbid: '금지: {title}.',
+    forbidAny: '금지: 금지된 관행이 있습니다.',
+    require: '필수: {title}.',
+    requireAny: '필수: 지켜야 할 관행이 있습니다.',
+    per: '({cite} 기준)',
   },
   privacyPage: {
     seo: {
@@ -11491,6 +11623,12 @@ export default {
   },
   readingStrip: {
     notRightPlace: '아직 올바른 위치가 아닙니다.',
+    readingScreen: '화면을 읽는 중',
+    readingCamera: '카메라를 읽는 중',
+    iCanSee: '보이는 내용',
+    lastRead: '마지막 읽기',
+    showRead: '가이드가 화면에서 읽은 내용 보기',
+    hideRead: '가이드가 화면에서 읽은 내용 숨기기',
   },
   refundPage: {
     seo: {
@@ -11615,6 +11753,24 @@ export default {
     need: '필요한 것:',
     howIGotIt: '도달 과정',
     verifyBy: '검증 방법',
+    eyebrow: '결과',
+    eyebrowDraft: '초안, 입력 필요',
+    titleDraft: '확실한 답이 아닌 초안입니다',
+    kinds: {
+      number: '수치',
+      table: '표',
+      code: '코드',
+      text: '답변',
+      analysis: '분석',
+    },
+    confidence: '신뢰도',
+    confidenceAria: '신뢰도 {pct}퍼센트',
+    band: {
+      draft: '초안',
+      high: '높음',
+      fair: '보통',
+      low: '낮음',
+    },
   },
   scrubRules: {
     builtin: ['이메일', '전화번호', '카드 번호', 'SSN', 'IBAN', 'API 키 및 토큰', 'IP 주소', '비공개 호스트'],
@@ -11651,6 +11807,16 @@ export default {
   securityNote: {
     cleanBody: '이 코드에서 위험한 명령어와 알려진 취약 라이브러리가 발견되지 않았습니다.',
     dbUnreachable: '취약점 데이터베이스에 연결할 수 없어, 이번에는 라이브러리 버전을 확인하지 못했습니다.',
+    headFlag: '보안 점검: 사용하기 전에 검토하세요',
+    headClean: '보안 점검: 알려진 문제 없음',
+    vulns_one: '<b>{pkg}</b>에 알려진 취약점이 {n}개 있습니다.',
+    vulns_other: '<b>{pkg}</b>에 알려진 취약점이 {n}개 있습니다.',
+    vulnsIds_one: '<b>{pkg}</b>에 알려진 취약점이 {n}개 있습니다 ({ids}).',
+    vulnsIds_other: '<b>{pkg}</b>에 알려진 취약점이 {n}개 있습니다 ({ids}).',
+    idsMore: '{ids} 외',
+    upgradeLatest: '업그레이드 권장: {version} (최신).',
+    upgradeLater: '업그레이드 권장: {version} 이상.',
+    patchedVersion: '패치된 버전',
   },
   setPasswordPage: {
     byBrand: 'AdmireVeda 제공',
@@ -11696,6 +11862,18 @@ export default {
     buddyTip: '버디 카드로 줄이기 (Ctrl+Shift+Alt+B)',
     minimize: '최소화',
     close: '닫기',
+    shareHiddenTip: '화면 공유에서 숨겨져 있습니다. 클릭하면 공유 화면에 표시됩니다 (Ctrl+Shift+Alt+S)',
+    shareVisibleTip: '화면 공유에 표시되고 있습니다. 클릭하면 다시 숨깁니다 (Ctrl+Shift+Alt+S)',
+    shareHidden: '숨김',
+    shareOn: '공유에 표시',
+    seeThrough: '투명',
+    clickBehindOnTip: '클릭 통과 켜짐: 클릭이 아래에 있는 앱으로 전달됩니다. 이 막대는 계속 클릭할 수 있습니다. 끄려면 여기를 클릭하거나 Ctrl+Shift+Alt+W를 누르세요.',
+    clickBehindOffTip: '클릭 통과: 클릭이 아래에 있는 앱으로 전달되게 합니다. 이 막대는 계속 클릭할 수 있어 언제든 다시 끌 수 있습니다 (Ctrl+Shift+Alt+W).',
+    clickBehindIdleTip: '클릭 통과는 안내 중에 사용할 수 있습니다',
+    restore: '이전 크기로 복원',
+    maximize: '최대화',
+    maximizeCentered: '최대화 (가운데)',
+    fullScreenTip: '전체 화면 (화면 전체를 채우며, 보조 모니터에 적합)',
   },
   skillsPage: {
     sectionAria: '스킬',
@@ -11740,6 +11918,11 @@ export default {
     plan: '계획',
     doneWhen: '완료 조건',
     markDoneTip: '이 단계를 완료로 표시하고 다음으로 이동',
+    stepOf: '{total}단계 중 {n}단계',
+    stepN: '{n}단계',
+    confirmed: '{n}단계 확인됨',
+    yourPlan: '내 계획',
+    collapse: '접기',
     shot: {
       label: '예상 화면',
       larger: '크게 보기',
