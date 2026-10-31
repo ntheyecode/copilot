@@ -11370,6 +11370,8 @@ export default {
       closePopOutTip: '팝아웃 창 닫기',
       errRefusedBoth: '떠 있는 창이 브라우저 설정에 의해 거부되었고, 팝아웃도 차단되었습니다. 이 사이트에 팝업을 허용하거나, 바로 여기서 단계를 계속 따르세요.',
       errBlocked: '브라우저가 떠 있는 창을 차단했습니다. 이 사이트에 팝업을 허용하거나, 진짜 항상 위 오버레이를 위해 Chrome, Edge, Brave, Opera를 사용하세요. 단계는 바로 여기서 계속 작동합니다.',
+      desktopOnly: '데스크톱 앱으로 위에 띄우기',
+      desktopOnlyTip: '회사에서는 WorkCoPilot 데스크톱 앱으로 단계를 작업 화면 위에 띄웁니다. Windows용으로 다운로드하세요.',
     },
     fullGuide: {
       errBlocked: '브라우저가 안내 창을 차단했습니다. 이 사이트에 팝업을 허용한 다음 다시 여세요.',

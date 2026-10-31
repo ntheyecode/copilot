@@ -11536,6 +11536,8 @@ export default {
       closePopOutTip: 'Fechar a janela à parte',
       errRefusedBoth: 'A janela flutuante foi recusada pelas configurações do seu navegador, e a janela à parte também foi bloqueada. Permita pop-ups para este site, ou continue seguindo os passos aqui mesmo.',
       errBlocked: 'Seu navegador bloqueou a janela flutuante. Permita pop-ups para este site, ou use Chrome, Edge, Brave ou Opera para uma sobreposição verdadeira sempre no topo. Os passos continuam funcionando aqui mesmo.',
+      desktopOnly: 'Flutuar com o app para desktop',
+      desktopOnlyTip: 'Sua empresa mostra os passos flutuando sobre o seu trabalho com o app para desktop do WorkCoPilot. Baixe para Windows.',
     },
     fullGuide: {
       errBlocked: 'Seu navegador bloqueou a janela de orientação. Permita pop-ups para este site e abra-a novamente.',

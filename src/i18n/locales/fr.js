@@ -11542,6 +11542,8 @@ export default {
       closePopOutTip: 'Fermer la fenêtre détachée',
       errRefusedBoth: 'La fenêtre flottante a été refusée par les réglages de votre navigateur, et la fenêtre détachée a été bloquée aussi. Autorisez les fenêtres surgissantes pour ce site, ou continuez à suivre les étapes ici même.',
       errBlocked: 'Votre navigateur a bloqué la fenêtre flottante. Autorisez les fenêtres surgissantes pour ce site, ou utilisez Chrome, Edge, Brave ou Opera pour une vraie surcouche toujours au premier plan. Les étapes continuent de fonctionner ici même.',
+      desktopOnly: "Flotter avec l'app de bureau",
+      desktopOnlyTip: "Votre entreprise affiche les étapes au-dessus de votre travail avec l'app de bureau WorkCoPilot. Téléchargez-la pour Windows.",
     },
     fullGuide: {
       errBlocked: 'Votre navigateur a bloqué la fenêtre de guidage. Autorisez les fenêtres surgissantes pour ce site, puis rouvrez-la.',

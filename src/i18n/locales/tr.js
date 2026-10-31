@@ -11516,6 +11516,8 @@ export default {
       closePopOutTip: 'Ayrı pencereyi kapat',
       errRefusedBoth: 'Yüzen pencere tarayıcı ayarlarınız tarafından reddedildi ve ayrı pencere de engellendi. Bu site için açılır pencerelere izin verin ya da adımları tam buradan takip etmeyi sürdürün.',
       errBlocked: 'Tarayıcınız yüzen pencereyi engelledi. Bu site için açılır pencerelere izin verin ya da gerçek bir her-zaman-üstte katmanı için Chrome, Edge, Brave veya Opera kullanın. Adımlar tam burada çalışmayı sürdürür.',
+      desktopOnly: 'Masaüstü uygulamasıyla üstte tut',
+      desktopOnlyTip: 'Şirketiniz adımları WorkCoPilot masaüstü uygulamasıyla işinizin üstünde gösterir. Windows için indirin.',
     },
     fullGuide: {
       errBlocked: 'Tarayıcınız rehberlik penceresini engelledi. Bu site için açılır pencerelere izin verin, sonra yeniden açın.',

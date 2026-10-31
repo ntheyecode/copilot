@@ -11329,6 +11329,8 @@ export default {
       closePopOutTip: '关闭弹出窗口',
       errRefusedBoth: '浮动窗口被您的浏览器设置拒绝，弹出窗口也被拦截。请为本站点允许弹出窗口，或就在此处继续按步骤操作。',
       errBlocked: '您的浏览器拦截了浮动窗口。请为本站点允许弹出窗口，或使用 Chrome、Edge、Brave 或 Opera 以获得真正的始终置顶叠加显示。步骤仍可在此处继续使用。',
+      desktopOnly: '使用桌面应用置顶',
+      desktopOnlyTip: '贵公司通过 WorkCoPilot 桌面应用将步骤悬浮在你的工作内容上方。下载 Windows 版。',
     },
     fullGuide: {
       errBlocked: '您的浏览器拦截了引导窗口。请为本站点允许弹出窗口，然后重新打开。',

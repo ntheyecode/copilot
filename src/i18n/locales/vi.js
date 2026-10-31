@@ -11512,6 +11512,8 @@ export default {
       closePopOutTip: 'Đóng cửa sổ tách',
       errRefusedBoth: 'Cửa sổ nổi đã bị cài đặt trình duyệt của bạn từ chối, và cửa sổ tách cũng bị chặn. Hãy cho phép cửa sổ bật lên cho trang này, hoặc tiếp tục theo các bước ngay tại đây.',
       errBlocked: 'Trình duyệt của bạn đã chặn cửa sổ nổi. Hãy cho phép cửa sổ bật lên cho trang này, hoặc dùng Chrome, Edge, Brave hoặc Opera để có lớp phủ luôn ở trên cùng thực sự. Các bước vẫn hoạt động ngay tại đây.',
+      desktopOnly: 'Nổi lên trên bằng ứng dụng máy tính',
+      desktopOnlyTip: 'Công ty bạn hiển thị các bước nổi trên công việc của bạn bằng ứng dụng WorkCoPilot cho máy tính. Tải về cho Windows.',
     },
     fullGuide: {
       errBlocked: 'Trình duyệt của bạn đã chặn cửa sổ hướng dẫn. Hãy cho phép cửa sổ bật lên cho trang này, rồi mở lại.',

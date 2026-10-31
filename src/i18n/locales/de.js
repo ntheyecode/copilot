@@ -11529,6 +11529,8 @@ export default {
       closePopOutTip: 'Das herausgelöste Fenster schließen',
       errRefusedBoth: 'Das schwebende Fenster wurde durch Ihre Browsereinstellungen abgelehnt, und auch das herausgelöste Fenster wurde blockiert. Erlauben Sie Pop-ups für diese Website oder folgen Sie den Schritten einfach hier weiter.',
       errBlocked: 'Ihr Browser hat das schwebende Fenster blockiert. Erlauben Sie Pop-ups für diese Website oder verwenden Sie Chrome, Edge, Brave oder Opera für ein echtes immer-oben-Overlay. Die Schritte funktionieren hier weiter.',
+      desktopOnly: 'Im Vordergrund mit der Desktop-App',
+      desktopOnlyTip: 'Ihr Unternehmen zeigt die Schritte mit der WorkCoPilot Desktop-App im Vordergrund über Ihrer Arbeit an. Laden Sie sie für Windows herunter.',
     },
     fullGuide: {
       errBlocked: 'Ihr Browser hat das Anleitungsfenster blockiert. Erlauben Sie Pop-ups für diese Website und öffnen Sie es dann erneut.',

@@ -123,6 +123,8 @@ export default {
       closePopOutTip: 'Close the pop-out window',
       errRefusedBoth: 'The floating window was refused by your browser settings, and the pop-out was blocked too. Allow pop-ups for this site, or keep following the steps right here.',
       errBlocked: 'Your browser blocked the floating window. Allow pop-ups for this site, or use Chrome, Edge, Brave or Opera for a true always-on-top overlay. The steps keep working right here.',
+      desktopOnly: 'Float with the desktop app',
+      desktopOnlyTip: 'Your company floats the steps over your work with the WorkCoPilot desktop app. Download it for Windows.',
     },
     fullGuide: {
       errBlocked: 'Your browser blocked the guidance window. Allow pop-ups for this site, then open it again.',

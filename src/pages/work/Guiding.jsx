@@ -30,6 +30,7 @@ import { useTheme } from '../../theme.jsx'
 import { useSurfaceScheme } from '../../theme/useSurfaceScheme.js'
 import { useT } from '../../i18n/index.jsx'
 import { useWorkApp } from './WorkAppContext.jsx'
+import { webFloatAllowed, desktopFloatPointer } from '../../shared/web_float.js'
 import { usageTimeLeft, usageOutOfTime, usageLowNote } from './usageCopy.js'
 import { linkHost, readContextFile, parseDataFile, frameFromVideo, signatureFromVideo, changed, isMobileUA, frameFromImageFile, WATCH_MAX_W, card, shell } from './lib.js'
 // The guide view (owner redesign): ONE stylesheet + small shared modules used
@@ -931,7 +932,7 @@ function PlanningLoader() {
   )
 }
 
-function Console({ sessionId, watchLight = false, onBack, onGuard }) {
+function Console({ sessionId, watchLight = false, onBack, onGuard, user = null }) {
   const [sess, setSess] = useState(null)
   const [goal, setGoal] = useState('')
   const [source, setSource] = useState(() => isMobileUA() ? 'camera' : 'screen')     // 'screen' | 'camera' (phones default to camera: no screen share on mobile)
@@ -1116,7 +1117,9 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   // mobile (the app is full screen; a pop-up there makes no sense).
   const isMobile = isMobileUA()
   const pipSupported = typeof window !== 'undefined' && 'documentPictureInPicture' in window
-  const floatCapable = !desktop && !isMobile && typeof window !== 'undefined' && typeof window.open === 'function'
+  // Company members float through the desktop app only (src/shared/web_float.js).
+  const floatCapable = webFloatAllowed({ user, desktop: !!desktop, mobile: isMobile }) && typeof window !== 'undefined' && typeof window.open === 'function'
+  const floatViaDesktop = desktopFloatPointer({ user, desktop: !!desktop, mobile: isMobile })
   // Microsoft-Learn / Docs reading treatment, same as the console + full guide:
   // a compact 13.5px base that scales off --fp-fs (the reader's A- / A / A+
   // choice, shared via the wc-guide-fontscale key). --wc-fs mirrors it so the
@@ -2151,6 +2154,10 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           {floatCapable && sess && !ended && (pipWin
             ? <button className="wc-tbtn on" title={floatIsPip ? t('guideConsole.float.unfloatTip') : t('guideConsole.float.closePopOutTip')} aria-label={t('guideConsole.float.unfloat')} onClick={closeFloat}><PictureInPicture2 size={15} /> <span className="wc-lbl">{floatIsPip ? t('guideConsole.float.unfloat') : t('guideConsole.float.closePopOut')}</span></button>
             : <button className="wc-tbtn primary" title={pipSupported ? t('guideConsole.float.floatTip') : t('guideConsole.float.popOutTip')} aria-label={t('guideConsole.float.floatOnTop')} onClick={openFloat}><PictureInPicture2 size={15} /> <span className="wc-lbl">{pipSupported ? t('guideConsole.float.floatOnTop') : t('guideConsole.float.popOut')}</span></button>)}
+          {/* Company members float the steps with the desktop app, never a web window. */}
+          {floatViaDesktop && sess && !ended && (
+            <a className="wc-tbtn primary" href="/api/work/desktop-setup.exe" title={t('guideConsole.float.desktopOnlyTip')} aria-label={t('guideConsole.float.desktopOnly')}><Monitor size={15} /> <span className="wc-lbl">{t('guideConsole.float.desktopOnly')}</span></a>
+          )}
           {/* TOOLS: one dropdown for everything that need not sit on screen.
               Make something opens a focused modal; the rest run their existing
               handlers. Pause/Resume, Float and End stay as the visible essentials. */}
@@ -2930,5 +2937,5 @@ export default function Guiding() {
   const navigate = useNavigate()
   const { user, sess, showGuard } = useWorkApp()
   const watchLight = !!((user && user.watchLight) || (sess && sess.watchLight))
-  return <Console sessionId={id} watchLight={watchLight} onBack={() => navigate('/work')} onGuard={showGuard} />
+  return <Console sessionId={id} watchLight={watchLight} onBack={() => navigate('/work')} onGuard={showGuard} user={user} />
 }

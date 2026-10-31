@@ -11542,6 +11542,8 @@ export default {
       closePopOutTip: 'Cierra la ventana aparte',
       errRefusedBoth: 'La ventana flotante fue rechazada por los ajustes de tu navegador, y la ventana aparte también se bloqueó. Permite las ventanas emergentes para este sitio, o sigue los pasos aquí mismo.',
       errBlocked: 'Tu navegador bloqueó la ventana flotante. Permite las ventanas emergentes para este sitio, o usa Chrome, Edge, Brave u Opera para una superposición siempre visible de verdad. Los pasos siguen funcionando aquí mismo.',
+      desktopOnly: 'Flotar con la app de escritorio',
+      desktopOnlyTip: 'Tu empresa muestra los pasos flotando sobre tu trabajo con la app de escritorio de WorkCoPilot. Descárgala para Windows.',
     },
     fullGuide: {
       errBlocked: 'Tu navegador bloqueó la ventana de guía. Permite las ventanas emergentes para este sitio, y luego ábrela de nuevo.',

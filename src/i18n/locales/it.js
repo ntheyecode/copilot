@@ -11542,6 +11542,8 @@ export default {
       closePopOutTip: 'Chiudi la finestra separata',
       errRefusedBoth: 'La finestra fluttuante è stata rifiutata dalle impostazioni del browser e anche la finestra separata è stata bloccata. Consenta i pop-up per questo sito, oppure continui a seguire i passi proprio qui.',
       errBlocked: 'Il browser ha bloccato la finestra fluttuante. Consenta i pop-up per questo sito, oppure usi Chrome, Edge, Brave o Opera per una vera sovrapposizione sempre in primo piano. I passi continuano a funzionare proprio qui.',
+      desktopOnly: "In primo piano con l'app desktop",
+      desktopOnlyTip: "La tua azienda mostra i passaggi in primo piano sul tuo lavoro con l'app desktop di WorkCoPilot. Scaricala per Windows.",
     },
     fullGuide: {
       errBlocked: 'Il browser ha bloccato la finestra della guida. Consenta i pop-up per questo sito, poi la riapra.',

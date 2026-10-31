@@ -127,6 +127,8 @@ const WORK_CONTENT = {
 // Shown only to company members, company admins or platform staff, so an
 // individuals-only edition (no company tenants) never renders them.
 const COMPANY_MEMBER_ONLY = [
+  // the desktop-app float pointer: shown only to company members (src/shared/web_float.js)
+  'guideConsole.float.desktopOnly', 'guideConsole.float.desktopOnlyTip',
   'workDashboard.cobrand', 'workDashboard.plan.companyLeft', 'workDashboard.plan.yourCompany', 'workDashboard.plan.admin', 'workDashboard.meters.tipAdmin',
   'workDashboard.meters.allowance', 'workDashboard.meters.pool', 'workDashboard.meters.tasks.tipLimit', 'workDashboard.meters.state.pool',
   'workDashboard.meters.state.ceiling', 'workDashboard.meters.state.exhaustedCompany', 'workDashboard.meters.state.lowCompany', 'workDashboard.meters.state.tasksLimit',

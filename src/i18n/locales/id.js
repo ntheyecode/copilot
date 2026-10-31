@@ -11508,6 +11508,8 @@ export default {
       closePopOutTip: 'Tutup jendela terpisah',
       errRefusedBoth: 'Jendela mengambang ditolak oleh pengaturan browser Anda, dan jendela terpisah juga diblokir. Izinkan pop-up untuk situs ini, atau terus ikuti langkah-langkah di sini saja.',
       errBlocked: 'Browser Anda memblokir jendela mengambang. Izinkan pop-up untuk situs ini, atau gunakan Chrome, Edge, Brave, atau Opera untuk overlay yang benar-benar selalu di atas. Langkah-langkah tetap berfungsi di sini.',
+      desktopOnly: 'Mengambang dengan aplikasi desktop',
+      desktopOnlyTip: 'Perusahaan Anda menampilkan langkah-langkah mengambang di atas pekerjaan Anda dengan aplikasi desktop WorkCoPilot. Unduh untuk Windows.',
     },
     fullGuide: {
       errBlocked: 'Browser Anda memblokir jendela panduan. Izinkan pop-up untuk situs ini, lalu buka lagi.',
