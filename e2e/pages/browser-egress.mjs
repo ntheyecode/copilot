@@ -1,5 +1,5 @@
 // Browser-side network boundary. The SPA loads two things from public CDNs on
-// demand: the OCR engine that masks recorded screenshots (tesseract.js 5.1.1 +
+// demand: the OCR engine that masks recorded screenshots (tesseract.js, version in src/shared/ocr_engine.js, +
 // its core) and the English language data. The suite serves the SAME versions
 // from the repo's local copies (the desktop app bundles them), so a run never
 // depends on, or leaks to, a third party. Every other non-local request is
@@ -8,12 +8,15 @@ import fs from 'node:fs'
 import path from 'node:path'
 import zlib from 'node:zlib'
 import { REPO } from '../support/server.mjs'
+import { OCR_DIST, OCR_CORE, OCR_LANG } from '../../src/shared/ocr_engine.js'
 
 const WC = path.join(REPO, 'workcopilot')
+// The URLs come from the app's one OCR module, so a version bump moves both.
+const lit = (s) => s.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')
 const MAP = [
-  [/^https:\/\/cdn\.jsdelivr\.net\/npm\/tesseract\.js@5\.1\.1\/dist\/([\w.-]+)$/, (m) => path.join(WC, 'node_modules', 'tesseract.js', 'dist', m[1])],
-  [/^https:\/\/cdn\.jsdelivr\.net\/npm\/tesseract\.js-core@5\.1\.1\/([\w.-]+)$/, (m) => path.join(WC, 'node_modules', 'tesseract.js-core', m[1])],
-  [/^https:\/\/tessdata\.projectnaptha\.com\/4\.0\.0\/eng\.traineddata(\.gz)?$/, () => path.join(WC, 'ocr-lang', 'eng.traineddata')],
+  [new RegExp(`^${lit(OCR_DIST)}/([\\w.-]+)$`), (m) => path.join(WC, 'node_modules', 'tesseract.js', 'dist', m[1])],
+  [new RegExp(`^${lit(OCR_CORE)}/([\\w.-]+)$`), (m) => path.join(WC, 'node_modules', 'tesseract.js-core', m[1])],
+  [new RegExp(`^${lit(OCR_LANG)}/eng\\.traineddata(\\.gz)?$`), () => path.join(WC, 'ocr-lang', 'eng.traineddata')],
 ]
 
 const TYPES = { '.js': 'application/javascript', '.wasm': 'application/wasm', '.map': 'application/json' }

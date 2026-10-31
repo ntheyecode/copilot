@@ -51,7 +51,7 @@ The desktop app is a thin Electron wrapper that loads the live web console
 
 | Package | Version | Where used | Why |
 |---|---|---|---|
-| `tesseract.js` | ^5.1.1 | `workcopilot/main.js` (+ the web path, see note) | On-device OCR for the screen-redaction privacy feature and for reading images/diagrams in documents - entirely on the user's machine, offline-capable. |
+| `tesseract.js` | ^7.0.0 | `workcopilot/main.js` (+ the web path, see note) | On-device OCR for the screen-redaction privacy feature and for reading images/diagrams in documents - entirely on the user's machine, offline-capable. The web path loads the same version from the CDN; both come from `src/shared/ocr_engine.js` (OCR_VERSION), and `src/shared/ocr_engine.test.mjs` fails if the bundle and the CDN pin drift. Since 6.x, line boxes come only from the requested `blocks` output (read with `ocrLines`). |
 | `mammoth` | ^1.12.1 | desktop document reading | `.docx` text extraction on the device, so the original file never leaves the machine. |
 | `pdf-parse` | ^2.4.5 | desktop document reading | PDF text extraction on the device, same privacy boundary. |
 | `electron-updater` | ^6.8.11 | `workcopilot/main.js` | Signed auto-update against the generic update feed. |

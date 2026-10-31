@@ -33,6 +33,11 @@ export async function prepContext(context, { locale = 'en', theme = 'light', syn
         for (let r = 0; r < 8; r++) g.fillText(`Row ${r + 1}   Month ${((r + state) % 12) + 1}   Amount ${(r + 1) * 125}.00`, 40, 110 + r * 44)
         g.fillStyle = state % 2 ? '#cf222e' : '#2da44e'; g.fillRect(40 + state * 120, 500, 360, 120)
         g.fillStyle = '#2da44e'; g.fillRect(1080, 640, 160, 48); g.fillStyle = '#fff'; g.fillText('Save', 1130, 672)
+        // Optional sensitive line at a fixed spot (baseline 472, from x 40), for
+        // the on-device masking check: syntheticScreen: { sensitiveLine }.
+        if (syntheticScreen && syntheticScreen.sensitiveLine) {
+          g.fillStyle = '#222'; g.font = 'bold 28px sans-serif'; g.fillText(syntheticScreen.sensitiveLine, 40, 472)
+        }
       }
       window.__e2eScreen = { act() { state += 1; draw(); return state }, state: () => state }
       draw()
