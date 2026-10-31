@@ -1485,6 +1485,8 @@ export default {
       launch: 'جرّبه على مهمتك، مباشرة',
       launchAria: 'جرّب WorkCoPilot على مهمتك أنت، مباشرة',
       title: 'شاهده يرشدك في مهمتك',
+      brand: 'WorkCoPilot',
+      conTheme: 'وحدة تحكم داكنة',
       live: 'مباشر',
       watching: 'يراقب',
       goal: 'الهدف',

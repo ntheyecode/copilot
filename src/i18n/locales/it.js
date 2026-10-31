@@ -438,6 +438,8 @@ export default {
       launch: 'Provalo sul tuo compito, dal vivo',
       launchAria: 'Prova WorkCoPilot sul tuo compito, dal vivo',
       title: 'Guardalo guidare il tuo compito',
+      brand: 'WorkCoPilot',
+      conTheme: 'Console scura',
       live: 'IN DIRETTA',
       watching: 'In osservazione',
       goal: 'OBIETTIVO',

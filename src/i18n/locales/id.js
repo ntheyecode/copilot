@@ -815,6 +815,8 @@ export default {
       launch: 'Coba langsung dengan tugas Anda',
       launchAria: 'Coba WorkCoPilot dengan tugas Anda sendiri, secara langsung',
       title: 'Lihat cara ia memandu tugas Anda',
+      brand: 'WorkCoPilot',
+      conTheme: 'Konsol gelap',
       live: 'LANGSUNG',
       watching: 'Mengamati',
       goal: 'TUJUAN',

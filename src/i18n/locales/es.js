@@ -438,6 +438,8 @@ export default {
       launch: 'Pruébalo con tu tarea, en vivo',
       launchAria: 'Prueba WorkCoPilot con tu propia tarea, en vivo',
       title: 'Míralo guiar tu tarea',
+      brand: 'WorkCoPilot',
+      conTheme: 'Consola oscura',
       live: 'EN VIVO',
       watching: 'Observando',
       goal: 'OBJETIVO',

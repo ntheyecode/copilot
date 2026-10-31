@@ -726,6 +726,11 @@ export default {
       launch: 'Try it on your task, live',
       launchAria: 'Try WorkCoPilot on your own task, live',
       title: 'See it guide your task',
+      // The product name in the console's title bar: a brand, never translated
+      // in a locale; an edition overlay may rename it (the individuals site).
+      brand: 'WorkCoPilot',
+      // The console's theme switch (pressed = dark); light is the default.
+      conTheme: 'Dark console',
       live: 'LIVE',
       watching: 'Watching',
       goal: 'GOAL',

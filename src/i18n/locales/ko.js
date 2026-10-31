@@ -1507,6 +1507,8 @@ export default {
       launch: '내 작업으로 라이브 체험',
       launchAria: '내 작업으로 WorkCoPilot을 라이브로 체험하기',
       title: '내 작업을 안내하는 모습 보기',
+      brand: 'WorkCoPilot',
+      conTheme: '다크 콘솔',
       live: '라이브',
       watching: '지켜보는 중',
       goal: '목표',

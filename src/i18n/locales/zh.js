@@ -1508,6 +1508,8 @@ export default {
       launch: '用您的任务现场试试',
       launchAria: '用您自己的任务现场试试 WorkCoPilot',
       title: '看它如何引导您的任务',
+      brand: 'WorkCoPilot',
+      conTheme: '深色控制台',
       live: '实时',
       watching: '观察中',
       goal: '目标',

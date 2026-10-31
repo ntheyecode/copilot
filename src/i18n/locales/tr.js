@@ -815,6 +815,8 @@ export default {
       launch: 'Kendi görevinizde canlı deneyin',
       launchAria: "WorkCoPilot'u kendi görevinizde canlı deneyin",
       title: 'Görevinize nasıl yol gösterdiğini izleyin',
+      brand: 'WorkCoPilot',
+      conTheme: 'Koyu konsol',
       live: 'CANLI',
       watching: 'İzliyor',
       goal: 'HEDEF',

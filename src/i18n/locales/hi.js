@@ -815,6 +815,8 @@ export default {
       launch: 'अपने टास्क पर लाइव आज़माएँ',
       launchAria: 'WorkCoPilot को अपने टास्क पर लाइव आज़माएँ',
       title: 'देखें, यह आपके टास्क को कैसे गाइड करता है',
+      brand: 'WorkCoPilot',
+      conTheme: 'डार्क कंसोल',
       live: 'लाइव',
       watching: 'देख रहा है',
       goal: 'लक्ष्य',

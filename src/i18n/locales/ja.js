@@ -1507,6 +1507,8 @@ export default {
       launch: 'あなたのタスクでライブで試す',
       launchAria: 'あなた自身のタスクで WorkCoPilot をライブで試す',
       title: 'あなたのタスクを案内する様子を見る',
+      brand: 'WorkCoPilot',
+      conTheme: 'ダークコンソール',
       live: 'ライブ',
       watching: '見守り中',
       goal: 'ゴール',

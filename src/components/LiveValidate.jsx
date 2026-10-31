@@ -29,14 +29,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Sparkles, ScanEye, Check, AlertTriangle, TerminalSquare, ShieldCheck, ArrowRight,
-  RotateCcw, Loader2, ChevronDown, Lock, Zap, Eye, ListChecks, CheckCheck, Undo2, BadgeCheck, Footprints,
+  RotateCcw, Loader2, ChevronDown, Lock, Zap, Eye, ListChecks, CheckCheck, Undo2, BadgeCheck, Footprints, Moon, Sun,
 } from 'lucide-react'   // (Lock / ListChecks / Undo2 are still used by the CTA promise pills and the "what you get" line)
 import { cleanAlways } from '../scrub.js'   // strip PII/PHI from the scenario before it leaves the browser (public form: always on)
 import { useLocale, getLocale } from '../i18n/index.jsx'   // every visible string comes from the catalog (widgets.validate.*); the live check carries the locale
 import { countryOptions, countryNameEn } from '../shared/countries.js'   // the ONE country list (ISO alpha-2 + localised names)
 import Rich from './live_validate/rich.jsx'                 // the console's inline renderer (shared RichText with the console accent)
 import { StepCards, LockedTeaser } from './live_validate/StepTaste.jsx'   // the step cards + the locked teaser (the taste of the depth)
-import { STEP_TASTE_CSS } from './live_validate/step_taste.css.js'
+import { CONSOLE_CSS } from './live_validate/console.css.js'   // the answer console: its styles + the light / dark palettes (includes the step taste)
+import { loadConsoleTheme, saveConsoleTheme, otherConsoleTheme, CONSOLE_DARK_CLASS } from './live_validate/console_theme.js'   // light by default, the visitor's switch remembered per browser
 import { planShape, simEvents, simState, STEP_STAGGER_MS } from './live_validate/plan_model.js'   // the ONE plan derivation + preview timeline
 import { contactPrefillFrom, setContactPrefill } from '../shared/contact_prefill.js'   // corporate: the widget ends in the contact form, filled in
 import { useEditionView } from '../edition/useCaps.js'   // edition: company field only where companies exist; plan pick only where personal plans are sold
@@ -192,6 +193,10 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
   const later = (fn, ms) => { const id = setTimeout(fn, ms); timers.current.push(id); return id }
   const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = [] }
   useEffect(() => () => clearTimers(), [])
+  // The answer console's theme: light by default (owner rule), switched by the
+  // button in the dialog head and remembered per browser (console_theme.js).
+  const [conTheme, setConTheme] = useState(loadConsoleTheme)
+  const toggleConTheme = () => { const next = otherConsoleTheme(conTheme); setConTheme(next); saveConsoleTheme(next) }
   const [coach, setCoach] = useState(false)   // one-time nudge pointing at the launcher
   const dismissCoach = () => { setCoach(false); try { sessionStorage.setItem('wc_lv_coach_v1', '1') } catch { /* private window */ } }
   const openWidget = () => { setOpen(true); dismissCoach() }
@@ -449,7 +454,7 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
   const afterSteps = 420 + shown * STEP_STAGGER_MS
 
   return (
-    <div ref={rootRef} className={`lv-root${tucked ? ' lv-docked' : ''}`} data-lvtheme={theme === 'dark' ? 'dark' : 'light'}>
+    <div ref={rootRef} className={`lv-root${tucked ? ' lv-docked' : ''}${conTheme === 'dark' ? ` ${CONSOLE_DARK_CLASS}` : ''}`} data-lvtheme={theme === 'dark' ? 'dark' : 'light'}>
       <style>{LV_CSS}</style>
       {!open && coach && !tucked && (
         <div className="lv-coach" role="note">
@@ -487,7 +492,14 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
                 <span>{t('widgets.validate.title')}</span>
                 <span className="lv-live-pill"><span className="lv-live-dot" /><span className="lv-live-pill-tx">{t('widgets.validate.live')}</span></span>
               </div>
-              <button className="wm-cov-x" onClick={() => setOpen(false)} aria-label={t('widgets.validate.close')}>&times;</button>
+              <div className="wm-cov-head-r">
+                {/* The console's theme switch: pressed = dark. One label, the state is aria-pressed. */}
+                <button type="button" className="lv-theme" onClick={toggleConTheme} aria-pressed={conTheme === 'dark'} aria-label={t('widgets.validate.conTheme')} title={t('widgets.validate.conTheme')}>
+                  {conTheme === 'dark' ? <Sun size={14} aria-hidden /> : <Moon size={14} aria-hidden />}
+                  <span className="lv-theme-tx">{t('widgets.validate.conTheme')}</span>
+                </button>
+                <button className="wm-cov-x" onClick={() => setOpen(false)} aria-label={t('widgets.validate.close')}>&times;</button>
+              </div>
             </div>
 
             {/* STAGE 1 - ASK: a real task, in the visitor's words */}
@@ -544,7 +556,7 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
                   <div className="lv-console" aria-live="polite">
                     <div className="lv-con-head">
                       <span className="d r" /><span className="d y" /><span className="d g" />
-                      <b>WorkCoPilot</b>
+                      <b>{t('widgets.validate.brand')}</b>
                       <span className="lv-con-live"><i aria-hidden />{t('widgets.validate.watching')}</span>
                       {res && vm && <span className="lv-con-tag">{t('widgets.validate.live')}</span>}
                     </div>
@@ -683,7 +695,8 @@ ${s} .lv-launch-tx,${s} .lv-min,${s} .lv-coach{display:none}
 // All styles are scoped to .lv-root so the widget is identical on every page and
 // independent of the host. The colour variables are defined here (not inherited
 // from the page), light by default, dark under [data-lvtheme="dark"]. The reveal
-// console is always dark: it is the product's own surface, shown as-is.
+// console has its own palette pair (light by default, dark on the visitor's
+// switch: .lv-con-dark), defined in live_validate/console.css.js.
 const LV_CSS = `
 .lv-root{--ink:#f4f7fb;--panel:#ffffff;--line:#e2e7f0;--tx:#0c1222;--mut:#3f4a5c;--em:#0a9d66;--em2:#0a86cf;--warm:#ff9a4d;--warm2:#f26a43;--chip:rgba(10,20,40,.04);--disp:"Bricolage Grotesque","Figtree",sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace}
 .lv-root[data-lvtheme="dark"]{--ink:#070810;--panel:#12141d;--line:rgba(255,255,255,.09);--tx:#eef0f6;--mut:#9aa0b4;--em:#8cf5c4;--em2:#39d3ff;--warm:#ffb35c;--warm2:#ff7a59;--chip:rgba(255,255,255,.05)}
@@ -798,134 +811,8 @@ const LV_CSS = `
 .lv-privacy{display:flex;align-items:flex-start;gap:8px;margin:0;font-size:12px;line-height:1.5;color:var(--mut)}
 .lv-privacy svg{flex:0 0 auto;margin-top:2px;color:var(--em)}
 @media(max-width:560px){.lv-grid{grid-template-columns:1fr}.lv-field.half{grid-column:1 / -1}}
-/* ===== REVEAL: the product console ======================================= */
-.lv-reveal{padding:16px 18px 18px}
-.lv-console{background:linear-gradient(180deg,#151829 0%,#0c0e18 100%);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px 16px 16px;color:#eef0f6;box-shadow:0 34px 80px -34px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.05);min-width:0;overflow:hidden}
-.lv-con-head{display:flex;align-items:center;gap:7px;font-size:13px;padding:0 2px 12px;color:#cfd6e6;min-width:0}
-.lv-con-head .d{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
-.lv-con-head .d.r{background:#ff5f57}.lv-con-head .d.y{background:#febc2e}.lv-con-head .d.g{background:#28c840}
-.lv-con-head b{margin-inline-start:6px;font-family:var(--disp);font-weight:800;color:#fff;white-space:nowrap}
-.lv-con-live{display:inline-flex;align-items:center;gap:5px;margin-inline-start:8px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8cf5c4;white-space:nowrap}
-.lv-con-live i{width:7px;height:7px;border-radius:50%;background:#e23b3b;animation:lv-pulse 1.5s infinite}
-.lv-con-tag{margin-inline-start:auto;font-size:10px;letter-spacing:.12em;color:#8cf5c4;border:1px solid rgba(140,245,196,.3);border-radius:999px;padding:2px 9px;white-space:nowrap}
-.lv-con-goal{font-size:14px;line-height:1.5;color:#f3f5fa;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:9px 12px;overflow-wrap:anywhere}
-.lv-k{font-size:10px;letter-spacing:.14em;color:#8cf5c4;font-weight:800;margin-inline-end:8px;vertical-align:1px}
-/* planning live: three status lines that land one after another */
-.lv-scan{position:relative;margin-top:12px;display:flex;flex-direction:column;gap:10px;padding:13px 13px;border:1px solid rgba(57,211,255,.28);border-radius:13px;background:rgba(57,211,255,.05);overflow:hidden}
-.lv-scan-beam{position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(57,211,255,.14),transparent);animation:lv-beam 1.7s linear infinite;pointer-events:none}
-.lv-scan-beam.soft{opacity:.7;animation-duration:2.2s}
-@keyframes lv-beam{from{transform:translateX(-120%)}to{transform:translateX(320%)}}
-.lv-scan-row{position:relative;display:flex;align-items:center;gap:10px;font-size:13.5px;line-height:1.4;color:#7f879b;transition:color .25s}
-.lv-scan-row .tick{position:relative;width:20px;height:20px;border-radius:50%;border:1.5px solid rgba(255,255,255,.16);display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;color:transparent;transition:background .25s,border-color .25s,box-shadow .25s}
-.lv-scan-row.on{color:#eef0f6}
-.lv-scan-row.on .tick{border-color:#39d3ff;box-shadow:0 0 0 4px rgba(57,211,255,.12)}
-.lv-scan-row.on .tick:after{content:'';width:8px;height:8px;border-radius:50%;background:#39d3ff;animation:lv-blip .9s ease-in-out infinite}
-@keyframes lv-blip{0%,100%{transform:scale(.6);opacity:.5}50%{transform:scale(1);opacity:1}}
-.lv-scan-row.done{color:#cfd6e6}
-.lv-scan-row.done .tick{background:#0a9d66;border-color:#0a9d66;color:#042}
-/* verdict stamp + answer + what it sees */
-.lv-verdict{display:flex;align-items:center;gap:12px;margin-top:13px;padding:12px 14px;border-radius:14px;animation:lv-pop .55s cubic-bezier(.2,1.4,.4,1) both}
-@keyframes lv-pop{0%{opacity:0;transform:scale(.6)}55%{transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
-.lv-vbadge{width:40px;height:40px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
-.lv-vlabel{font-family:var(--disp);font-weight:800;font-size:19px;line-height:1.2;letter-spacing:-.01em;min-width:0;overflow-wrap:anywhere}
-.lv-verdict.ok{background:rgba(10,157,102,.16);border:1px solid rgba(140,245,196,.38)}
-.lv-verdict.ok .lv-vbadge{background:#0a9d66;color:#042;animation:lv-glow 1.7s ease-in-out infinite}
-.lv-verdict.ok .lv-vlabel{color:#8cf5c4}
-@keyframes lv-glow{0%,100%{box-shadow:0 0 0 5px rgba(10,157,102,.12)}50%{box-shadow:0 0 0 11px rgba(10,157,102,.18)}}
-.lv-verdict.mid{background:rgba(255,179,92,.14);border:1px solid rgba(255,179,92,.4)}
-.lv-verdict.mid .lv-vbadge{background:#ffb35c;color:#2a1206}.lv-verdict.mid .lv-vlabel{color:#ffcf8a}
-.lv-verdict.no{background:rgba(255,99,99,.12);border:1px solid rgba(255,99,99,.35)}
-.lv-verdict.no .lv-vbadge{background:#ff6363;color:#fff}.lv-verdict.no .lv-vlabel{color:#ff9b9b}
-.lv-verdict.off{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}
-.lv-verdict.off .lv-vbadge{background:rgba(255,255,255,.08);color:#cfd6e6}.lv-verdict.off .lv-vlabel{color:#cfd6e6;font-size:16px}
-.lv-answer{margin:12px 2px 0;font-size:14.5px;line-height:1.65;color:#dfe4f0;overflow-wrap:anywhere;opacity:0;animation:lv-rise .45s ease .2s forwards}
-/* Inline code / keys / links come from the shared RichText (inline styles); only
-   the focus ring is the console's. Every control in the console shows focus. */
-.lv-console a:focus-visible,.lv-console button:focus-visible,.lv-console summary:focus-visible{outline:2px solid #39d3ff;outline-offset:2px;border-radius:6px}
-.lv-sees{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:12px;padding:9px 12px;border:1px solid rgba(57,211,255,.3);background:rgba(57,211,255,.07);border-radius:11px;font-size:13px;line-height:1.5;color:#eef0f6;overflow:hidden;opacity:0;animation:lv-rise .45s ease .32s forwards}
-.lv-seek{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#39d3ff}
-.lv-seetxt{flex:1;min-width:0;overflow-wrap:anywhere}
-@keyframes lv-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-/* The step cards, "Exactly how" and the locked teaser: live_validate/step_taste.css.js */
-${STEP_TASTE_CSS}
-/* The step's link-out / copy row (shared StepLink markup, the console's look).
-   The terminal block carries its own styles (shared CmdBlock), only its font
-   scale variable is set here. Commands and paths stay LTR in RTL locales. */
-.lv-console{--wc-fs:1}
-.lv-console .wc-open{display:inline-flex;align-items:center;gap:6px;max-width:100%;margin-top:9px;padding:6px 11px 6px 10px;border-radius:9px;color:#39d3ff;background:rgba(57,211,255,.1);border:1px solid rgba(57,211,255,.35);font-size:13px;font-weight:700;text-decoration:none;overflow-wrap:anywhere;transition:background .14s}
-.lv-console .wc-open:hover,.lv-console .wc-open:focus-visible{background:rgba(57,211,255,.2);text-decoration:underline;text-underline-offset:3px}
-.lv-console .wc-open svg{flex:0 0 auto}
-.lv-console .wc-copyrow{display:flex;align-items:center;gap:8px;margin-top:9px;padding:5px 7px 5px 11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:9px;max-width:100%;min-width:0;direction:ltr;text-align:left}
-.lv-console .wc-copyrow-t{flex:1;min-width:0;font-family:var(--mono);font-size:12.5px;color:#eef0f6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lv-console .wc-copybtn{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#cfe9ff;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .14s}
-.lv-console .wc-copybtn:hover{background:rgba(255,255,255,.12)}
-.lv-console .wc-copybtn.done{color:#8cf5c4;border-color:rgba(140,245,196,.4);background:rgba(10,157,102,.18)}
-.lv-console pre{max-width:100%}
-/* ===== the live-session preview, on the plan ============================= */
-/* the one precondition line */
-.lv-ready{display:flex;align-items:flex-start;gap:8px;margin-top:12px;padding:0 2px;font-size:13px;line-height:1.5;color:#dfe4f0;overflow-wrap:anywhere;opacity:0;animation:lv-rise .45s ease .3s forwards}
-.lv-ready>svg{flex:0 0 auto;margin-top:3px;color:#8cf5c4}
-.lv-ready>span{min-width:0}
-/* the band that names what is playing: simulated, on this plan */
-.lv-sim{margin-top:14px;display:flex;flex-direction:column;gap:3px;padding:9px 12px;border-radius:11px;border:1px solid rgba(255,179,92,.38);background:rgba(255,179,92,.08);min-width:0;animation:lv-rise .4s ease both}
-.lv-sim-h{display:inline-flex;align-items:center;gap:7px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:#ffcf8a}
-.lv-sim-h i{width:7px;height:7px;border-radius:50%;background:#ffb35c;flex:0 0 auto;animation:lv-pulse-warm 1.5s infinite}
-@keyframes lv-pulse-warm{0%{box-shadow:0 0 0 0 rgba(255,179,92,.5)}70%{box-shadow:0 0 0 6px rgba(255,179,92,0)}100%{box-shadow:0 0 0 0 rgba(255,179,92,0)}}
-.lv-sim-n{font-size:12px;line-height:1.45;color:#cfd6e6;overflow-wrap:anywhere}
-/* step card states: being watched, seen done, corrected */
-.lv-step{transition:border-color .3s,background .3s,box-shadow .3s}
-.lv-step.cur{border-color:rgba(57,211,255,.6);background:rgba(57,211,255,.06);box-shadow:0 0 0 3px rgba(57,211,255,.13)}
-.lv-step.drift{border-color:rgba(255,179,92,.65);background:rgba(255,179,92,.06);box-shadow:0 0 0 3px rgba(255,179,92,.14)}
-.lv-step.ok{border-color:rgba(140,245,196,.6);background:rgba(10,157,102,.11)}
-.lv-step-l .watch{color:#39d3ff}
-.lv-step-l .ok{color:#8cf5c4}
-.lv-step-st{display:flex;align-items:flex-start;gap:7px;margin-top:9px;font-size:12.5px;line-height:1.45;color:#8cf5c4;overflow-wrap:anywhere;animation:lv-rise .35s ease both}
-.lv-step-st>svg{flex:0 0 auto;margin-top:2px}
-.lv-step-st>span{min-width:0}
-.lv-step-st b{font-weight:800}
-.lv-step-st .m{color:#cfd6e6;font-weight:500}
-.lv-step-st.watch{color:#39d3ff;align-items:center}
-.lv-step-st.watch i{width:8px;height:8px;border-radius:50%;background:#39d3ff;flex:0 0 auto;animation:lv-blip .9s ease-in-out infinite}
-/* the guide's correction bubble, in its own words */
-.lv-bubble{position:relative;margin-top:10px;padding:9px 11px 9px 38px;border-radius:12px;border:1px solid rgba(255,179,92,.45);background:rgba(255,179,92,.12);font-size:13px;line-height:1.5;color:#ffe9cf;overflow-wrap:anywhere;animation:lv-bubble-in .4s cubic-bezier(.2,.9,.3,1.2) both}
-[dir="rtl"] .lv-bubble{padding:9px 38px 9px 11px}
-.lv-bubble .av{position:absolute;inset-inline-start:10px;top:10px;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#ffb35c,#ff7a59);color:#1a0e08;display:inline-flex;align-items:center;justify-content:center}
-.lv-bubble .who{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:#ffcf8a;margin-bottom:2px}
-.lv-bubble .fix{display:flex;align-items:center;gap:5px;margin-top:7px;font-size:11.5px;font-weight:800;color:#8cf5c4;animation:lv-rise .3s ease both}
-@keyframes lv-bubble-in{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
-/* the end of the plan: seen and confirmed */
-.lv-complete{display:flex;align-items:center;gap:12px;margin-top:12px;padding:12px 14px;border-radius:14px;background:rgba(10,157,102,.16);border:1px solid rgba(140,245,196,.45);min-width:0;animation:lv-pop .55s cubic-bezier(.2,1.4,.4,1) both}
-.lv-complete .lv-vbadge{background:#0a9d66;color:#042;animation:lv-glow 1.7s ease-in-out infinite}
-.lv-complete>span:last-child{min-width:0}
-.lv-complete b{display:block;font-family:var(--disp);font-weight:800;font-size:16.5px;line-height:1.2;color:#8cf5c4;overflow-wrap:anywhere}
-.lv-complete span span{display:block;font-size:12.5px;line-height:1.4;color:#cfd6e6;margin-top:2px;overflow-wrap:anywhere}
-/* the three promises, as pills (rows on a phone, so a pill never wraps) */
-.lv-promise{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:7px}
-.lv-promise li{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:5px 11px 5px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);font-size:12px;font-weight:700;color:#eef0f6;white-space:nowrap}
-.lv-promise svg{flex:0 0 auto;color:#ffcf8a}
-/* what you get, in one line */
-.lv-val{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:#9aa0b4;opacity:0;animation:lv-rise .4s ease forwards;animation-delay:var(--d,0ms)}
-.lv-val span{display:inline-flex;align-items:center;gap:6px}
-.lv-val svg{color:#8cf5c4;flex:0 0 auto}
-/* the ask: your plan, every day */
-.lv-cta{margin-top:14px;border-radius:16px;padding:16px;background:linear-gradient(135deg,rgba(255,154,77,.18),rgba(242,106,67,.1));border:1px solid rgba(255,154,77,.42);animation:lv-ctain .5s cubic-bezier(.2,.8,.2,1) both;min-width:0}
-@keyframes lv-ctain{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
-.lv-cta-h{font-family:var(--disp);font-weight:800;font-size:20px;color:#fff;letter-spacing:-.01em;line-height:1.2}
-.lv-cta-sub{margin:5px 0 26px;font-size:13.5px;color:#dfe4f0;line-height:1.5}
-.lv-plan{position:relative;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:13px;padding:14px 13px 11px;min-width:0}
-.lv-plan-rib{position:absolute;top:-10px;inset-inline-start:12px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:#1a0e08;background:linear-gradient(135deg,#ffb35c,#ff7a59);border-radius:999px;padding:3px 9px;white-space:nowrap}
-.lv-plan-n{font-family:var(--disp);font-weight:800;font-size:19px;color:#fff}
-.lv-plan-p{font-weight:800;font-size:17px;color:#ffcf8a;white-space:nowrap}
-.lv-plan-p small{font-weight:600;font-size:12px;color:#9aa0b4;margin-inline-start:1px}
-.lv-plan-d{flex-basis:100%;font-size:12.5px;color:#cfd6e6;line-height:1.4}
-.lv-cta-btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-.lv-start{flex:1 1 230px;display:inline-flex;align-items:center;justify-content:center;gap:9px;border:none;border-radius:12px;padding:13px 18px;font:inherit;font-weight:800;font-size:15px;color:#1a0e08;background:linear-gradient(135deg,#ffb35c,#ff7a59);cursor:pointer;box-shadow:0 16px 36px -14px rgba(255,122,89,.7);transition:transform .14s,box-shadow .14s;white-space:nowrap;min-width:0}
-.lv-start:hover{transform:translateY(-1px);box-shadow:0 20px 40px -14px rgba(255,122,89,.8)}
-.lv-compare{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#eef0f6;border-radius:12px;padding:13px 16px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;transition:background .14s}
-.lv-compare:hover{background:rgba(255,255,255,.06)}
-.lv-trust{margin:11px 0 0;font-size:12px;color:#9aa0b4;display:flex;flex-wrap:wrap;gap:6px 14px}
-.lv-trust span{display:inline-flex;align-items:center;gap:5px}
-.lv-trust svg{color:#8cf5c4}
+/* The answer console (REVEAL), with its light and dark palettes: live_validate/console.css.js */
+${CONSOLE_CSS}
 /* footer bar in the reveal: try another / start */
 .wm-cov-input{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:14px 18px;border-top:1px solid var(--line)}
 .wm-cov-clear{flex:0 0 auto;height:44px;padding:0 15px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--mut);display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:color .15s,border-color .15s;white-space:nowrap}

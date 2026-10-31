@@ -815,6 +815,8 @@ export default {
       launch: 'Попробуйте на своей задаче, вживую',
       launchAria: 'Попробовать WorkCoPilot на своей задаче вживую',
       title: 'Посмотрите, как он ведёт вашу задачу',
+      brand: 'WorkCoPilot',
+      conTheme: 'Тёмная консоль',
       live: 'В ЭФИРЕ',
       watching: 'Наблюдает',
       goal: 'ЦЕЛЬ',

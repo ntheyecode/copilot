@@ -815,6 +815,8 @@ export default {
       launch: 'Live an Ihrer Aufgabe testen',
       launchAria: 'WorkCoPilot live an Ihrer eigenen Aufgabe testen',
       title: 'Sehen Sie, wie es Ihre Aufgabe führt',
+      brand: 'WorkCoPilot',
+      conTheme: 'Dunkle Konsole',
       live: 'LIVE',
       watching: 'Beobachtet',
       goal: 'ZIEL',

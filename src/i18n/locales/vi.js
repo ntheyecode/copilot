@@ -815,6 +815,8 @@ export default {
       launch: 'Thử ngay với việc của bạn, trực tiếp',
       launchAria: 'Thử WorkCoPilot với chính việc của bạn, trực tiếp',
       title: 'Xem nó hướng dẫn việc của bạn',
+      brand: 'WorkCoPilot',
+      conTheme: 'Bảng điều khiển tối',
       live: 'TRỰC TIẾP',
       watching: 'Đang theo dõi',
       goal: 'MỤC TIÊU',

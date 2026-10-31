@@ -438,6 +438,8 @@ export default {
       launch: 'Testez-le sur votre tâche, en direct',
       launchAria: 'Testez WorkCoPilot sur votre propre tâche, en direct',
       title: 'Regardez-le guider votre tâche',
+      brand: 'WorkCoPilot',
+      conTheme: 'Console sombre',
       live: 'EN DIRECT',
       watching: 'En observation',
       goal: 'OBJECTIF',

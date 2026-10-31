@@ -25,6 +25,21 @@ test('the live widget shows a three-step taste and ends where this edition sells
   await expect(cta).toBeVisible({ timeout: 30_000 })
   await expect(page.locator('.lv-step')).toHaveCount(3)
 
+  // The console is LIGHT by default; the one button in the dialog head switches
+  // it to dark (aria-pressed) and the choice is remembered per browser.
+  const root = page.locator('.lv-root')
+  const themeBtn = page.getByRole('button', { name: 'Dark console' })
+  await expect(themeBtn).toHaveAttribute('aria-pressed', 'false')
+  await expect(root).not.toHaveClass(/lv-con-dark/)
+  await themeBtn.click()
+  await expect(themeBtn).toHaveAttribute('aria-pressed', 'true')
+  await expect(root).toHaveClass(/lv-con-dark/)
+  expect(await page.evaluate(() => localStorage.getItem('wc_lv_con_theme_v1'))).toBe('dark')
+  await themeBtn.click()
+  await expect(root).not.toHaveClass(/lv-con-dark/)
+  // The console's title bar names the product through the catalog (an edition may rename it).
+  await expect(page.locator('.lv-con-head b')).not.toHaveText('')
+
   const cov = await server.ctl('ai.calls', { kind: 'coverage' })
   expect(cov.length, 'the widget asked the AI').toBeGreaterThan(0)
 
