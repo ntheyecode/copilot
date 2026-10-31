@@ -26,7 +26,11 @@ export async function guardBrowserEgress(context) {
       const m = url.match(re)
       if (!m) continue
       const file = fileOf(m)
-      if (!fs.existsSync(file)) break
+      if (!fs.existsSync(file)) {
+        // A setup gap, not a leak: say how to fix it instead of "third-party host".
+        blocked.push(`${url} (the local copy is missing: ${file}. Run: npm ci --prefix workcopilot)`)
+        return route.abort('blockedbyclient')
+      }
       let body = fs.readFileSync(file)
       if (/\.gz$/.test(url)) body = zlib.gzipSync(body)
       const ext = path.extname(file)
