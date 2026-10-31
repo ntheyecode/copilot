@@ -63,6 +63,7 @@ import { createPlanAllowance } from './plan_allowance.js'
 import { createOnboarding } from './onboarding_store.js'
 import { createWorkflows } from './workflows_store.js'
 import { isFrameRef } from './workflows_rules.js'
+import { withDestructive } from './destructive_rules.js'
 import { createWorkflowIncidents, alertInboxOf } from './workflow_incidents.js'
 import { createAiUsageLedger } from './ai_usage_ledger.js'
 import { createInbox } from './notifications.js'
@@ -5798,7 +5799,7 @@ export function setWorkSessionSteps(workUserId, sessionId, steps) {
     // A published workflow's step carries the trainer's screenshot (frame ref only).
     ...(x && isFrameRef(x.shot) ? { shot: x.shot } : {}),
     status: i === 0 ? 'current' : 'pending',
-  })).filter((x) => x.text)
+  })).filter((x) => x.text).map(withDestructive)
   s.currentStep = 0
   s.guidance = null
   s.lastActivityAt = Date.now()
@@ -5826,7 +5827,7 @@ export function replanKeepingProgress(workUserId, sessionId, newSteps) {
     ...(Array.isArray(x && x.onFail) && x.onFail.length ? { onFail: x.onFail } : {}),
     status: 'pending',
     doneAt: null,
-  })).filter((x) => x.text)
+  })).filter((x) => x.text).map(withDestructive)
   const all = [...done, ...fresh].map((x, i) => ({ ...x, n: i + 1 }))
   const curIdx = all.findIndex((x) => x.status !== 'done')
   all.forEach((x, i) => { if (x.status !== 'done') x.status = (i === curIdx ? 'current' : 'pending') })

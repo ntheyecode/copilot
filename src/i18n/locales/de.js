@@ -9247,7 +9247,22 @@ export default {
   destructiveGate: {
     label: 'Unumkehrbarer Schritt.',
     reveal: 'Ich verstehe, den Befehl anzeigen',
-    body: 'Auswirkung: {why}. Lesen Sie ihn sorgfältig, bevor Sie ihn ausführen.',
+    check: 'Lesen Sie ihn sorgfältig, bevor Sie ihn ausführen.',
+    flagged: 'Markiert:',
+    reason: {
+      deleteFiles: 'Dieser Befehl löscht Dateien endgültig. Das lässt sich nicht rückgängig machen.',
+      forceDelete: 'Dieser Befehl löscht Dateien ohne Rückfrage.',
+      dropDbObject: 'Dieser Befehl entfernt ein Datenbankobjekt samt seinen Daten.',
+      emptyTable: 'Dieser Befehl leert eine Tabelle vollständig.',
+      deleteAllRows: 'Dieser Befehl löscht alle Zeilen, weil die WHERE-Klausel fehlt.',
+      overwriteDisk: 'Dieser Befehl formatiert oder überschreibt einen Datenträger.',
+      rewriteGitHistory: 'Dieser Befehl verwirft Änderungen oder überschreibt den Git-Verlauf erzwungen.',
+      shutdown: 'Dieser Befehl fährt den Rechner herunter oder startet ihn neu.',
+      killProcesses: 'Dieser Befehl beendet laufende Prozesse zwangsweise.',
+      teardownInfra: 'Dieser Befehl baut Infrastruktur oder Cloud-Ressourcen ab.',
+      recursivePermissions: 'Dieser Befehl ändert Berechtigungen oder Eigentümer für alles in einem Ordner.',
+      unknown: 'Dieser Schritt nimmt Änderungen vor, die sich womöglich nur schwer rückgängig machen lassen.',
+    },
   },
   disclaimerPage: {
     seo: {

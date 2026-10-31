@@ -9106,7 +9106,22 @@ export default {
   destructiveGate: {
     label: '되돌리기 어려운 단계.',
     reveal: '이해했습니다, 명령어 표시',
-    body: '영향: {why}. 실행하기 전에 주의 깊게 읽어 보세요.',
+    check: '실행하기 전에 주의 깊게 읽어 보세요.',
+    flagged: '해당 부분:',
+    reason: {
+      deleteFiles: '이 명령은 파일을 영구적으로 삭제하며 되돌릴 수 없습니다.',
+      forceDelete: '이 명령은 확인 없이 파일을 강제로 삭제합니다.',
+      dropDbObject: '이 명령은 데이터베이스 개체를 그 안의 데이터와 함께 삭제합니다.',
+      emptyTable: '이 명령은 테이블을 비웁니다.',
+      deleteAllRows: '이 명령에는 WHERE 절이 없어 모든 행이 삭제됩니다.',
+      overwriteDisk: '이 명령은 디스크를 포맷하거나 덮어씁니다.',
+      rewriteGitHistory: '이 명령은 변경 사항을 버리거나 Git 기록을 강제로 덮어씁니다.',
+      shutdown: '이 명령은 컴퓨터를 종료하거나 다시 시작합니다.',
+      killProcesses: '이 명령은 실행 중인 프로세스를 강제로 종료합니다.',
+      teardownInfra: '이 명령은 인프라나 클라우드 리소스를 제거합니다.',
+      recursivePermissions: '이 명령은 폴더 안 모든 항목의 권한 또는 소유자를 변경합니다.',
+      unknown: '이 단계는 되돌리기 어려울 수 있는 변경을 합니다.',
+    },
   },
   disclaimerPage: {
     seo: {

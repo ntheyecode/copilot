@@ -9226,7 +9226,22 @@ export default {
   destructiveGate: {
     label: 'Langkah merusak.',
     reveal: 'Saya mengerti, tampilkan perintahnya',
-    body: 'Dampaknya: {why}. Baca dengan saksama sebelum Anda menjalankannya.',
+    check: 'Baca dengan saksama sebelum Anda menjalankannya.',
+    flagged: 'Ditandai:',
+    reason: {
+      deleteFiles: 'Perintah ini menghapus file secara permanen dan tidak bisa dibatalkan.',
+      forceDelete: 'Perintah ini menghapus file secara paksa tanpa meminta konfirmasi.',
+      dropDbObject: 'Perintah ini menghapus objek database beserta datanya.',
+      emptyTable: 'Perintah ini mengosongkan sebuah tabel.',
+      deleteAllRows: 'Perintah ini menghapus semua baris karena tidak ada klausa WHERE.',
+      overwriteDisk: 'Perintah ini memformat atau menimpa sebuah disk.',
+      rewriteGitHistory: 'Perintah ini membuang perubahan atau menimpa riwayat Git secara paksa.',
+      shutdown: 'Perintah ini mematikan atau memulai ulang komputer.',
+      killProcesses: 'Perintah ini menghentikan paksa proses yang sedang berjalan.',
+      teardownInfra: 'Perintah ini membongkar infrastruktur atau sumber daya cloud.',
+      recursivePermissions: 'Perintah ini mengubah izin atau kepemilikan semua isi sebuah folder.',
+      unknown: 'Langkah ini membuat perubahan yang mungkin sulit dibatalkan.',
+    },
   },
   disclaimerPage: {
     seo: {

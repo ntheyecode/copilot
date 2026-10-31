@@ -764,7 +764,7 @@ function HowDetail({ entry, onRetry }) {
               <div>{ss.text}</div>
               {ss.url && <StepLink url={ss.url} />}
               {((ss.commands && ss.commands.length > 0) || (ss.code && ss.code.content)) && (
-                <DestructiveGate why={ss.destructive ? ss.destructiveWhy : null}>
+                <DestructiveGate step={ss}>
                   {ss.commands && ss.commands.length > 0 && <CmdBlock lines={ss.commands} />}
                   {ss.code && ss.code.content && <CodeBlock file={ss.code.file} content={ss.code.content} />}
                 </DestructiveGate>
@@ -2592,7 +2592,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                         completed-only gate. */}
                     {isDone && s.url && <StepLink url={s.url} />}
                     {isDone && ((s.commands && s.commands.length > 0) || (s.code && s.code.content)) && (
-                      <DestructiveGate why={s.destructive ? s.destructiveWhy : null}>
+                      <DestructiveGate step={s}>
                         {s.commands && s.commands.length > 0 && <CmdBlock lines={s.commands} />}
                         {s.code && s.code.content && <CodeBlock file={s.code.file} content={s.code.content} />}
                       </DestructiveGate>

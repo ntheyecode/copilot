@@ -9070,7 +9070,22 @@ export default {
   destructiveGate: {
     label: '破坏性步骤。',
     reveal: '我已了解，显示命令',
-    body: '影响：{why}。运行前请仔细阅读。',
+    check: '运行前请仔细阅读。',
+    flagged: '标记内容：',
+    reason: {
+      deleteFiles: '此命令会永久删除文件，且无法撤销。',
+      forceDelete: '此命令会不经确认强制删除文件。',
+      dropDbObject: '此命令会删除一个数据库对象及其中的数据。',
+      emptyTable: '此命令会清空一张表。',
+      deleteAllRows: '此命令没有 WHERE 子句，会删除所有行。',
+      overwriteDisk: '此命令会格式化或覆盖磁盘。',
+      rewriteGitHistory: '此命令会丢弃更改或强制覆盖 Git 历史记录。',
+      shutdown: '此命令会关闭或重启计算机。',
+      killProcesses: '此命令会强制终止正在运行的进程。',
+      teardownInfra: '此命令会拆除基础设施或云资源。',
+      recursivePermissions: '此命令会更改文件夹内所有内容的权限或所有者。',
+      unknown: '此步骤所做的更改可能难以撤销。',
+    },
   },
   disclaimerPage: {
     seo: {

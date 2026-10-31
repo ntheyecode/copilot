@@ -9260,7 +9260,22 @@ export default {
   destructiveGate: {
     label: 'Étape destructrice.',
     reveal: "J'ai compris, afficher la commande",
-    body: 'Effet : {why}. Lisez-la attentivement avant de l\'exécuter.',
+    check: "Lisez-la attentivement avant de l'exécuter.",
+    flagged: 'Signalé :',
+    reason: {
+      deleteFiles: 'Cette commande supprime définitivement des fichiers, sans retour possible.',
+      forceDelete: 'Cette commande supprime des fichiers de force, sans demander de confirmation.',
+      dropDbObject: 'Cette commande supprime un objet de la base de données, avec ses données.',
+      emptyTable: 'Cette commande vide entièrement une table.',
+      deleteAllRows: "Cette commande supprime toutes les lignes, car elle n'a pas de clause WHERE.",
+      overwriteDisk: 'Cette commande formate ou écrase un disque.',
+      rewriteGitHistory: "Cette commande abandonne des modifications ou réécrit de force l'historique Git.",
+      shutdown: 'Cette commande éteint ou redémarre la machine.',
+      killProcesses: 'Cette commande arrête de force des processus en cours.',
+      teardownInfra: 'Cette commande démantèle une infrastructure ou des ressources cloud.',
+      recursivePermissions: "Cette commande modifie les droits ou le propriétaire de tout le contenu d'un dossier.",
+      unknown: 'Cette étape apporte des modifications parfois difficiles à annuler.',
+    },
   },
   disclaimerPage: {
     seo: {

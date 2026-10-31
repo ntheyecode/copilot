@@ -19,6 +19,7 @@
 // ===========================================================================
 import { scrubGuidance } from './ai_language.js'
 import { goalTokens, unicodeWords } from './goal_tokens.js'
+import { classifyDestructive } from './destructive_rules.js'
 import { methodAnchorFor } from './method_anchors.js'
 import { validateSpec, describeSpecForAI } from './compute_spec.js'
 import {
@@ -782,8 +783,7 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', l
         [WORK_SOURCE_FIELD]: cleanSource(s && s.source),
         // Irreversible/disruptive action? The app gates it behind an explicit
         // acknowledge so the person understands the impact before running it.
-        destructive: dc.destructive,
-        destructiveWhy: dc.why,
+        ...destructiveFields(dc),
         ...(branches.length ? { branches } : {}),
         ...(onFail.length ? { onFail } : {}),
       }
@@ -800,26 +800,16 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', l
 }
 // Flag a step whose command/code would irreversibly DELETE, OVERWRITE or DISRUPT,
 // so the UI can require a deliberate acknowledge (risk: users acting without
-// understanding impact). Conservative patterns; false positives just add a confirm.
-const DESTRUCTIVE_PATTERNS = [
-  { re: /\brm\s+-[a-z]*f|\brm\s+-[a-z]*r[a-z]*\b/i, why: 'permanently deletes files and cannot be undone' },
-  { re: /\brmdir\s+\/s|\bdel\s+\/[fsqa]/i, why: 'force-deletes files' },
-  { re: /\bdrop\s+(table|database|schema|collection|index)\b/i, why: 'drops a database object' },
-  { re: /\btruncate\s+table\b/i, why: 'empties a table' },
-  { re: /\bdelete\s+from\b(?![\s\S]*\bwhere\b)/i, why: 'deletes every row (no WHERE clause)' },
-  { re: /\b(mkfs|fdisk)\b|\bformat\s+[a-z]:|\bdd\s+if=\S+\s+of=\/dev/i, why: 'formats or overwrites a disk' },
-  { re: /\bgit\s+(reset\s+--hard|clean\s+-[a-z]*f|push\s+(--force\b|-f\b))/i, why: 'discards or force-overwrites git history' },
-  { re: /\b(shutdown|reboot|halt|poweroff)\b/i, why: 'shuts down or reboots the machine' },
-  { re: /\b(kill\s+-9|pkill|killall)\b/i, why: 'force-kills running processes' },
-  { re: /terraform\s+destroy|kubectl\s+delete\b|docker\s+(system\s+prune\s+-a|rm\s+-f)|aws\s+s3\s+rb\b[\s\S]*--force/i, why: 'tears down infrastructure or resources' },
-  { re: /\bchmod\s+-R\b|\bchown\s+-R\b/i, why: 'recursively changes permissions or ownership' },
-]
+// understanding impact). The rules and their reason codes live in
+// destructive_rules.js; the step carries { code, params } and the client words
+// it in the reader's language.
 export function destructiveCheck(commands, code) {
-  const text = [...(Array.isArray(commands) ? commands : []), (code && code.content) || ''].join('\n')
-  if (!text.trim()) return { destructive: false, why: null }
-  for (const d of DESTRUCTIVE_PATTERNS) if (d.re.test(text)) return { destructive: true, why: d.why }
-  return { destructive: false, why: null }
+  return classifyDestructive(commands, code)
 }
+const destructiveFields = (dc) => ({
+  destructive: dc.destructive,
+  destructiveReason: dc.destructive ? { code: dc.code, params: dc.params || {} } : null,
+})
 
 // ---- Drill-down: expand ONE action into detailed sub-steps ----------------
 // When the person asks "how?" on a step (for example "install the CA cert"),
@@ -897,8 +887,7 @@ export async function workHowTo(ai, cfg, { base, voice = '', mode = 'stepwise', 
         code,
         // Source attribution: named internal material grounding this sub-step, else ''.
         [WORK_SOURCE_FIELD]: cleanSource(s && s.source),
-        destructive: dc.destructive,
-        destructiveWhy: dc.why,
+        ...destructiveFields(dc),
       }
     }).filter((s) => s.text),
     escalated,

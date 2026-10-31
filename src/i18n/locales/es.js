@@ -9260,7 +9260,22 @@ export default {
   destructiveGate: {
     label: 'Paso destructivo.',
     reveal: 'Entiendo, muestra el comando',
-    body: 'Impacto: {why}. Léelo con atención antes de ejecutarlo.',
+    check: 'Léelo con atención antes de ejecutarlo.',
+    flagged: 'Marcado:',
+    reason: {
+      deleteFiles: 'Este comando elimina archivos de forma permanente y no se puede deshacer.',
+      forceDelete: 'Este comando fuerza la eliminación de archivos sin pedir confirmación.',
+      dropDbObject: 'Este comando elimina un objeto de la base de datos junto con sus datos.',
+      emptyTable: 'Este comando vacía una tabla.',
+      deleteAllRows: 'Este comando borra todas las filas porque no tiene cláusula WHERE.',
+      overwriteDisk: 'Este comando formatea o sobrescribe un disco.',
+      rewriteGitHistory: 'Este comando descarta cambios o sobrescribe a la fuerza el historial de Git.',
+      shutdown: 'Este comando apaga o reinicia el equipo.',
+      killProcesses: 'Este comando detiene a la fuerza procesos en ejecución.',
+      teardownInfra: 'Este comando desmantela infraestructura o recursos en la nube.',
+      recursivePermissions: 'Este comando cambia los permisos o el propietario de todo lo que hay dentro de una carpeta.',
+      unknown: 'Este paso hace cambios que pueden ser difíciles de deshacer.',
+    },
   },
   disclaimerPage: {
     seo: {
