@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
-import os from 'node:os'
+
 import { createPersonalBrain } from './personal_brain.js'
 import { mergeLearnings, parseDistilled, contextForGoal, similarity, distillParts, LIMITS } from './personal_brain_rules.js'
 
@@ -25,7 +25,6 @@ const DOC = { name: 'How I work.docx', mime: 'application/vnd.openxmlformats-off
 test('a document becomes learnings; the file and its text are never kept', async () => {
   const ai = fakeAi([[{ text: 'Reports go out every Friday afternoon.', kind: 'procedure' }, { text: 'The VPN client is Contoso Connect.', kind: 'fact' }]])
   const { brain, data, writes } = brainWith(ai)
-  const tmpBefore = fs.readdirSync(os.tmpdir()).length
   const r = await brain.learnFromDocument('u1', DOC)
   assert.equal(r.added, 2)
   assert.equal(r.fileKept, false)
@@ -34,7 +33,16 @@ test('a document becomes learnings; the file and its text are never kept', async
   const saved = writes.at(-1)
   assert.doesNotMatch(saved, /UEsDBA|jo@corp\.example|Contact jo/, 'no file bytes, no raw text, no personal data stored')
   assert.ok(!('text' in (data.personalBrain.u1.sources[0])), 'a source keeps its name, not its text')
-  assert.ok(fs.readdirSync(os.tmpdir()).length <= tmpBefore + 1, 'nothing spooled to disk')
+})
+
+// The guarantee is structural: the brain's modules cannot write a file at all
+// (no file-system access); the extractor reads the upload from memory, and
+// only persist() (the database) is ever called.
+test('the personal brain modules have no file-system access', () => {
+  for (const f of ['personal_brain.js', 'personal_brain_rules.js', 'personal_brain_routes.js', 'doc_upload.js']) {
+    const src = fs.readFileSync(new URL(`./${f}`, import.meta.url), 'utf8')
+    assert.doesNotMatch(src, /from ['"](node:)?(fs|fs\/promises)['"]|require\(['"](node:)?fs/, `${f} must not touch the file system`)
+  }
 })
 
 test('sensitive values are masked before the AI reads the document', async () => {

@@ -14,7 +14,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 
 const REPO = path.resolve(__dirname, '..', '..')
-const TARGETS = [['main.js', 'node'], ['preload.js', 'browser']]
+const TARGETS = [['main.js', 'node'], ['preload.js', 'browser'], ['brand.js', 'node']]
 
 function mapsUnder(dir) {
   const out = []

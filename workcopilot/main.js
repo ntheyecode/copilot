@@ -31,7 +31,10 @@ const { app, BrowserWindow, session, globalShortcut, desktopCapturer, shell, ipc
 const path = require('node:path')
 const fs = require('node:fs')
 
-const SERVER_URL = (process.env.WORK_SERVER || 'https://admireveda.com').replace(/\/+$/, '')
+// The brand is fixed at build time (brand.js): WorkCoPilot -> admireveda.com,
+// LinkNotes -> linknotes.com. WORK_SERVER still overrides (tests, staging).
+const { BRAND } = require('./brand.js')
+const SERVER_URL = (process.env.WORK_SERVER || BRAND.server).replace(/\/+$/, '')
 const PARTITION = 'persist:workcopilot'   // its own cookie jar, separate from the other apps
 let SERVER_ORIGIN = ''
 try { SERVER_ORIGIN = new URL(SERVER_URL).origin } catch { SERVER_ORIGIN = SERVER_URL }
@@ -426,8 +429,8 @@ function buildPickerHtml(sources) {
     button#cancel:hover { border-color:#6d6df0; color:#fff; }
   </style></head><body>
     <div class="wrap">
-      <h1>Choose the monitor WorkCoPilot watches</h1>
-      <p class="sub">More than one display was detected. Click the screen you want WorkCoPilot to read. You can change it anytime with Ctrl+Shift+Alt+M.</p>
+      <h1>Choose the monitor ${BRAND.name} watches</h1>
+      <p class="sub">More than one display was detected. Click the screen you want ${BRAND.name} to read. You can change it anytime with Ctrl+Shift+Alt+M.</p>
       <div class="grid">${tiles}</div>
       <div class="foot">
         <span class="hint">Press Esc to use the primary screen for now.</span>
@@ -627,7 +630,7 @@ function handleWindowOpen({ url }) {
       action: 'allow',
       overrideBrowserWindowOptions: {
         width: 960, height: 820, frame: true, autoHideMenuBar: true, alwaysOnTop: false,
-        backgroundColor: '#ffffff', title: 'WorkCoPilot',
+        backgroundColor: '#ffffff', title: BRAND.name,
       },
     }
   }
@@ -645,7 +648,7 @@ function handleWindowOpen({ url }) {
 // answers again (a no-cors reachability probe every 8 seconds).
 let lastTargetUrl = `${SERVER_URL}/work`
 function buildOfflineHtml(detail, target) {
-  return `<!doctype html><html><head><meta charset="utf-8"><title>WorkCoPilot</title>
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${BRAND.name}</title>
   <style>
     :root { color-scheme: dark; }
     html,body { margin:0; height:100%; background:#0b0b0f; color:#e8e8ee;
@@ -667,14 +670,14 @@ function buildOfflineHtml(detail, target) {
     .btn:hover { filter:brightness(1.1); }
     .st { margin-left:auto; font-size:12px; color:#8a8a96; }
   </style></head><body>
-    <div class="bar"><span class="dot"></span><b>WorkCoPilot</b><span class="sp"></span><button id="x" title="Close" aria-label="Close">&#x2715;</button></div>
+    <div class="bar"><span class="dot"></span><b>${BRAND.name}</b><span class="sp"></span><button id="x" title="Close" aria-label="Close">&#x2715;</button></div>
     <div class="wrap"><div class="card">
-      <h1>Cannot reach WorkCoPilot right now</h1>
+      <h1>Cannot reach ${BRAND.name} right now</h1>
       <p>Check your internet connection, VPN or proxy. This window retries by itself and opens the console the moment the server answers.</p>
       <p><code>${escapeHtml(detail || '')}</code></p>
       <div class="row">
         <button class="btn primary" id="retry">Retry now</button>
-        <button class="btn" id="close">Close WorkCoPilot</button>
+        <button class="btn" id="close">Close ${BRAND.name}</button>
         <span class="st" id="st">Retrying automatically</span>
       </div>
     </div></div>
@@ -716,7 +719,7 @@ function createWindow() {
     height: 760,
     minWidth: 380,
     minHeight: 480,
-    title: 'WorkCoPilot',
+    title: BRAND.name,
     ...FRAMELESS,          // custom Fluent title bar lives in the web UI (WorkShell)
     center: true,
     alwaysOnTop: false,    // plan mode is the default; applyMode() controls on-top
@@ -827,7 +830,7 @@ function openGuideWindow() {
     x: b.x, y: b.y, width: b.width, height: b.height,
     fullscreen: true,
     backgroundColor: '#0a0d12',
-    title: 'WorkCoPilot guidance',
+    title: `${BRAND.name} guidance`,
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -883,7 +886,7 @@ function createBuddy() {
     alwaysOnTop: true,
     hasShadow: false,
     backgroundColor: '#00000000',
-    title: 'WorkCoPilot Buddy',
+    title: `${BRAND.name} Buddy`,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),   // same bridge as the console
       contextIsolation: true,

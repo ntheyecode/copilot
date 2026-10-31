@@ -15,6 +15,30 @@ android {
         versionName "1.0.2"
     }
 
+    // One codebase, two products (owner, 2026-10-31): WorkCoPilot for
+    // admireveda.com and LinkNotes for linknotes.com (the individuals product).
+    // A flavor sets only what differs: the store id, the web origin the shell
+    // loads, and the app name; icons for a flavor live in src/<flavor>/res.
+    //   gradlew bundleWorkcopilotRelease | bundleLinknotesRelease
+    buildFeatures { buildConfig true }
+    flavorDimensions "brand"
+    productFlavors {
+        workcopilot {
+            dimension "brand"
+            applicationId "com.admireveda.workcopilot"
+            buildConfigField "String", "APP_ORIGIN", '"https://admireveda.com"'
+            resValue "string", "app_name", "WorkCoPilot"
+        }
+        linknotes {
+            dimension "brand"
+            applicationId "com.linknotes.app"
+            versionCode 1
+            versionName "1.0.0"
+            buildConfigField "String", "APP_ORIGIN", '"https://linknotes.com"'
+            resValue "string", "app_name", "LinkNotes"
+        }
+    }
+
     // Release signing is supplied via environment variables so no keystore or
     // password is ever committed. Set WC_STORE_FILE / WC_STORE_PASSWORD /
     // WC_KEY_ALIAS / WC_KEY_PASSWORD before `gradlew assembleRelease`. When they

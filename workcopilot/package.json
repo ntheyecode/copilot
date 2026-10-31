@@ -9,7 +9,8 @@
   "scripts": {
     "postinstall": "install-electron",
     "start": "electron .",
-    "dist": "electron-builder --win --x64"
+    "dist": "electron-builder --win --x64",
+    "dist:linknotes": "electron-builder --win --x64 --config build/linknotes.builder.cjs"
   },
   "dependencies": {
     "electron-updater": "^6.8.11",
@@ -38,6 +39,7 @@
     "files": [
       "main.js",
       "preload.js",
+      "brand.js",
       "ocr-lang/**/*",
       "node_modules/**/*",
       "!**/*.map"

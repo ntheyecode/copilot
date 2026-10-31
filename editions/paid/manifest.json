@@ -1,5 +1,7 @@
 {
   "edition": "paid",
-  "env": {},
-  "notes": "The individuals-only site: personal accounts on a paid plan, no free tier, no company tenants and no company wording (owner, 2026-10-30). Domain to be chosen: set WORK_PUBLIC_URL (or compose with --origin) to it. Checklist: docs/deployment-editions.md, Deploy checklist."
+  "env": {
+    "WORK_PUBLIC_URL": "https://linknotes.com"
+  },
+  "notes": "LinkNotes (linknotes.com): the individuals product, its own server and user pool, personal accounts on a paid plan with social sign-in and Stripe, no company tenants and no company wording (owner, 2026-10-30 and 2026-10-31). The brand comes from server/brand.js. Checklist: docs/deployment-editions.md, Deploy checklist."
 }

@@ -100,9 +100,10 @@ import { PUBLIC_BASE } from './public_url.js'
 // Deployment edition (server/edition_registry.js is the registry): routes ask
 // for a capability, never an edition name.
 import { caps, publicEdition, soloSignupRefusal } from './edition.js'
+import { brandForAudience } from './brand.js'
 import { editionRouteGate } from './edition_route_gates.js'
 import { passwordSignInRefusal } from './sign_in_rules.js'
-import { companyTenancy } from './edition_registry.js'
+import { companyTenancy, copyAudience } from './edition_registry.js'
 import { checkSpaStamp } from './spa_stamp_check.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -1298,9 +1299,12 @@ app.post('/api/work/ai/test', requireWorkAuth, async (req, res) => {
 })
 
 // ---- app download (gated on AI readiness) ---------------------------------
-const WORK_DESKTOP_FILE = 'WorkCoPilot-Setup.exe'
-const WORK_APK_FILE = 'WorkCoPilot.apk'
-const WORK_MSI_FILE = 'WorkCoPilot-Setup.msi'
+// Installer names follow the edition's brand (LinkNotes on the individuals
+// edition, server/brand.js): each product ships its own build.
+const APP_BRAND = brandForAudience(copyAudience(caps)).product
+const WORK_DESKTOP_FILE = `${APP_BRAND}-Setup.exe`
+const WORK_APK_FILE = `${APP_BRAND}.apk`
+const WORK_MSI_FILE = `${APP_BRAND}-Setup.msi`
 // Silent network-deploy command surfaced to company admins (and the deploy docs).
 const WORK_MSI_SILENT_CMD = `msiexec /i ${WORK_MSI_FILE} /qn /norestart`
 app.get('/api/work/app/status', requireWorkAuth, wrap((req, res) => {
@@ -3887,10 +3891,10 @@ registerAffiliateRoutes(app, { store, requireWorkAuth, requireAuth, requireAffil
 // nginx catch-all and returns the SPA HTML (a ~6 KB file renamed .exe), so it
 // MUST be served via an /api/work path that reaches this app, before the catch-all.
 app.get('/api/work/desktop-setup.exe', (req, res) => {
-  const f = path.join(ROOT, 'downloads', 'WorkCoPilot-Setup.exe')
+  const f = path.join(ROOT, 'downloads', WORK_DESKTOP_FILE)
   if (!fs.existsSync(f)) return res.status(404).json({ error: 'The installer is not published yet.' })
   res.setHeader('Content-Type', 'application/octet-stream')
-  res.setHeader('Content-Disposition', 'attachment; filename="WorkCoPilot-Setup.exe"')
+  res.setHeader('Content-Disposition', `attachment; filename="${WORK_DESKTOP_FILE}"`)
   res.sendFile(f)
 })
 
