@@ -96,8 +96,26 @@ const GUIDE_H = 960
 let guideMax = false
 let guideRestore = null       // the compact bounds to return to when un-maximized
 
+// `onTop` is the truth; the window is made to match it. On Electron 45
+// (Windows) a request can be refused under load: always-on-top-changed even
+// reports false and repeating the same call keeps failing. So the result is
+// checked after each request and, until it holds, re-applied as a clean
+// off -> on transition plus moveTop(), which takes; a bounded number of times
+// (a later applyOnTop supersedes an earlier check).
+let onTopCheck = 0
 function applyOnTop() {
-  if (alive(win)) win.setAlwaysOnTop(onTop, onTop ? 'screen-saver' : 'normal')
+  if (!alive(win)) return
+  win.setAlwaysOnTop(onTop, onTop ? 'screen-saver' : 'normal')
+  const ticket = ++onTopCheck
+  const verify = (left) => setTimeout(() => {
+    if (ticket !== onTopCheck || !alive(win)) return
+    if (win.isAlwaysOnTop() === onTop) return
+    win.setAlwaysOnTop(false)                    // a clean off -> on transition
+    win.setAlwaysOnTop(onTop, onTop ? 'screen-saver' : 'normal')
+    if (onTop) { try { win.moveTop() } catch { /* best effort */ } }
+    if (left > 1) verify(left - 1)
+  }, 120)
+  verify(8)
 }
 // Every programmatic move/resize of the main window goes through here. On
 // Electron 45 (Windows) a bounds change can drop TOPMOST, so a floating window
@@ -766,7 +784,7 @@ function createWindow() {
   // drag, Win+arrows, restore, leaving full screen, a display change): on
   // Electron 45 (Windows) those can drop TOPMOST. Programmatic moves use placeWin.
   const keepOnTop = () => { if (onTop) applyOnTop() }
-  for (const ev of ['moved', 'resized', 'restore', 'unmaximize', 'leave-full-screen', 'show']) win.on(ev, keepOnTop)
+  for (const ev of ['moved', 'resized', 'maximize', 'restore', 'unmaximize', 'leave-full-screen', 'show']) win.on(ev, keepOnTop)
 
   // Closing the main window closes the product. Before this, the (hidden) buddy
   // and the monitor picker were separate BrowserWindows that outlived the main

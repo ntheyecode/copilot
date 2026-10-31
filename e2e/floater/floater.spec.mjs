@@ -61,20 +61,24 @@ test.describe('desktop overlay', () => {
     expect(await call('setContentProtection', true)).toBe(true)
     expect(win32Probe(st.hwnd).affinity).toBe(WDA_EXCLUDEFROMCAPTURE)
 
-    // Plan mode is a normal window; guide mode floats on top.
-    expect(st.onTop).toBe(false)
-    expect(await call('setMode', 'guide')).toBe('guide')
-    st = await mainWindowState(app)
-    expect(st.onTop).toBe(true)
-    expect(win32Probe(st.hwnd).topmost, 'WS_EX_TOPMOST is set').toBe(true)
+    // The dashboard is plan mode, a normal window. The page drives the mode from
+    // its route (WorkAppLayout), so wait for it to settle before pinning; guide
+    // mode floating on top is covered by the guided-task test below.
+    await expect.poll(async () => (await page.evaluate(() => window.workDesktop.getState())).mode).toBe('plan')
+    expect((await mainWindowState(app)).onTop).toBe(false)
+    // Pin on top (the title bar's pin): the window and Windows agree. The app
+    // verifies the request and re-applies it (Electron 45 can drop one), so poll.
+    expect(await call('setAlwaysOnTop', true)).toBe(true)
+    await expect.poll(async () => (await mainWindowState(app)).onTop).toBe(true)
+    await expect.poll(() => win32Probe(st.hwnd).topmost, 'WS_EX_TOPMOST is set').toBe(true)
     expect(await call('setAlwaysOnTop', false)).toBe(false)
-    expect(win32Probe(st.hwnd).topmost).toBe(false)
+    await expect.poll(() => win32Probe(st.hwnd).topmost).toBe(false)
     await call('setAlwaysOnTop', true)
-    // Moving the floating window (guide maximize and back) keeps it on top:
-    // on Electron 45 a bounds change could drop TOPMOST (main.js placeWin).
+    // Moving a pinned window (maximize and back) keeps it on top: on Electron 45
+    // a bounds change could drop TOPMOST (main.js placeWin / keepOnTop).
     for (let i = 0; i < 2; i++) {
       await call('winMaximize')
-      await expect.poll(() => win32Probe(st.hwnd).topmost, 'still on top after a guide maximize toggle').toBe(true)
+      await expect.poll(() => win32Probe(st.hwnd).topmost, 'still on top after a maximize toggle').toBe(true)
     }
 
     // Opacity.
@@ -93,11 +97,10 @@ test.describe('desktop overlay', () => {
     expect(await call('setClickThrough', false)).toBe(false)
     expect(win32Probe(st.hwnd).transparent).toBe(false)
 
-    // Back to plan mode: never left click-through, opacity restored.
-    expect(await call('setMode', 'plan')).toBe('plan')
-    st = await mainWindowState(app)
-    expect(st.onTop).toBe(false)
-    expect(st.opacity).toBe(1)
+    // Unpinned again: a normal window, fully opaque.
+    expect(await call('setAlwaysOnTop', false)).toBe(false)
+    await expect.poll(async () => (await mainWindowState(app)).onTop).toBe(false)
+    expect((await mainWindowState(app)).opacity).toBe(1)
 
     // The shell answers screen capture itself: no browser picker. On a PC with
     // several monitors it uses the remembered one, chosen here the way the start
@@ -134,7 +137,7 @@ test.describe('desktop overlay', () => {
     // In the overlay an open session IS guide mode: compact and on top, by itself
     // (the browser's "Float on top" picture-in-picture button is not needed here).
     await expect.poll(async () => (await mainWindowState(app)).onTop).toBe(true)
-    expect(win32Probe((await mainWindowState(app)).hwnd).topmost, 'on top at the OS level while guiding').toBe(true)
+    await expect.poll(async () => win32Probe((await mainWindowState(app)).hwnd).topmost, 'on top at the OS level while guiding').toBe(true)
     expect((await page.evaluate(() => window.workDesktop.getState())).mode).toBe('guide')
     await guide.end()
     const s = await page.evaluate(async (id) => (await fetch(`/api/work/sessions/${id}`, { credentials: 'include' })).json(), sessionId)
