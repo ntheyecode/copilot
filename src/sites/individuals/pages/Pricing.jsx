@@ -14,13 +14,14 @@ import { usePricing } from '../usePricing.js'
 import { START } from '../IndivHeader.jsx'
 import { PLAN_IDS } from '../../../pricingModel.js'
 import useSeo from '../../../useSeo.js'
+import { indivSeo } from '../seo_pages.js'   // the one SEO table the prerender reads too
 import { useT } from '../../../i18n/index.jsx'
 
 const TIER_ICONS = [Clock3, FileText, Sparkles]
 
 export default function Pricing() {
   const t = useT()
-  useSeo({ title: t('indiv.pricing.seo.title'), description: t('indiv.pricing.seo.description'), path: '/workcopilot/pricing' })
+  useSeo(indivSeo(t, 'pricing'))
   const { model, loading, fallback, reload } = usePricing()
   const [sp] = useSearchParams()
   const recId = (sp.get('plan') || '').toLowerCase()

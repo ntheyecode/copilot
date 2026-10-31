@@ -84,7 +84,8 @@ companyTest(test, 'a Sr PM moves a project to another manager and a task to anot
   // The previous PM no longer sees it; the Sr PM dashboard does.
   expect((await pm.get(`/api/work/pm/projects/${project.id}`)).status).toBe(404)
   const ui = await as.page(co.users.srpm, { path: '/work/srpm' })
-  await expect(ui.page.getByRole('heading', { name: 'Project managers' })).toBeVisible()
+  // The top bar repeats the page name as a heading; the page's own is in <main>.
+  await expect(ui.page.getByRole('main').getByRole('heading', { name: 'Project managers' })).toBeVisible()
 })
 
 companyTest(test, 'GRC sees held, idle and overdue work as risks and cannot change anything', REFUSE, async ({ as, seed, server }) => {
@@ -122,7 +123,7 @@ companyTest(test, 'GRC sees held, idle and overdue work as risks and cannot chan
   expect((await grc.get('/api/work/grc/stats')).data.stats.total).toBeGreaterThan(0)
 
   const ui = await as.page(co.users.grc, { path: '/work/grc' })
-  await expect(ui.page.getByRole('heading', { name: 'Oversight' })).toBeVisible()
+  await expect(ui.page.getByRole('main').getByRole('heading', { name: 'Oversight' })).toBeVisible()
   await expect(ui.page.getByText('Quarter close').first()).toBeVisible()
 })
 

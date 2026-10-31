@@ -8,6 +8,7 @@ import IndivShell, { SectionHead } from '../IndivShell.jsx'
 import MaskVisual from '../visuals/MaskVisual.jsx'
 import { START } from '../IndivHeader.jsx'
 import useSeo from '../../../useSeo.js'
+import { indivSeo } from '../seo_pages.js'   // the one SEO table the prerender reads too
 import { useT } from '../../../i18n/index.jsx'
 import { SUPPORT_CONTACT } from '../../../components/LegalPage.jsx'
 
@@ -16,7 +17,7 @@ const C_ICONS = [Trash2, SlidersHorizontal, CreditCard]
 
 export default function Security() {
   const t = useT()
-  useSeo({ title: t('indiv.security.seo.title'), description: t('indiv.security.seo.description'), path: '/workcopilot/security' })
+  useSeo(indivSeo(t, 'security'))
   const groups = t('indiv.security.handling.groups') || []
   return (
     <IndivShell current="security">

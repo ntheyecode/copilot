@@ -14,6 +14,7 @@ import PlanCards from '../PlanCards.jsx'
 import { usePricing } from '../usePricing.js'
 import { START, SIGN_IN } from '../IndivHeader.jsx'
 import useSeo from '../../../useSeo.js'
+import { indivSeo } from '../seo_pages.js'   // the one SEO table the prerender reads too
 import { useT } from '../../../i18n/index.jsx'
 
 const WHO_ICONS = [Briefcase, GraduationCap, Search, Store, Compass]
@@ -21,7 +22,7 @@ const HOW_ICONS = [MessageSquare, MousePointerClick, ScanEye, FileCheck2]
 
 export default function Home() {
   const t = useT()
-  useSeo({ title: t('indiv.home.seo.title'), description: t('indiv.home.seo.description'), path: '/' })
+  useSeo(indivSeo(t, 'home'))
   const { model, loading } = usePricing()
   const who = t('indiv.home.who.cards') || []
   const how = t('indiv.home.how.steps') || []

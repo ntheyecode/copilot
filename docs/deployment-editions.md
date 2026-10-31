@@ -621,7 +621,11 @@ capabilities, and the page source carries the matching
   PDFs, under Billing. No Stripe webhook is registered for this server.
 - Sign-in: no social sign-in (`social_login` off). Company accounts use a
   password plus authenticator, or the company's OIDC or SAML 2.0 connection;
-  SCIM 2.0 provisioning at `/api/work/scim/v2`. `WORK_PUBLIC_URL` must be the
+  SCIM 2.0 provisioning at `/api/work/scim/v2`. A company admin can map a
+  SCIM group to a company role or grant (Company SSO, SCIM tab); membership
+  then sets the role (highest precedence wins, grants are unioned), every
+  change is audited, and the last company admin is never demoted that way
+  (`server/scim_roles.js`, rules in `server/scim_role_rules.js`). `WORK_PUBLIC_URL` must be the
   real origin: it is the base of the SAML entity id and ACS URL companies
   register in their identity provider.
 - Before the switch (owner decision): today's personal subscribers on

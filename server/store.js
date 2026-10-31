@@ -76,6 +76,8 @@ import { makeExportKey } from './export_key.js'
 import { createIntegrationState } from './integration_store.js'
 import { createSsoState } from './sso_store.js'           // SAML connection, "SSO required", the shared sign-in domain
 import { createScimState } from './scim_store.js'         // SCIM 2.0 provisioning tokens, users and groups
+import { createScimRoleSync } from './scim_roles.js'      // SCIM group -> role / grant mappings
+import { manualEditConflict, managedView } from './scim_role_rules.js'
 import { createB2bBilling } from './b2b_invoices.js'      // AdmireVeda's contract + invoice billing of companies
 import { OIDC_PROVIDER_IDS } from './idp_catalog.js'
 import { resolveDataDir } from './data_dir.js'
@@ -551,12 +553,23 @@ export const { setCompanySaml, clearCompanySaml, getCompanySamlConfig, samlStatu
 // ---- SCIM 2.0 provisioning (module: scim_store.js) ----
 // Tokens are hashed with the same peppered HMAC as the company API keys; every
 // account change goes through the store's own seat-gated, audited functions.
+// Group -> role mappings (module: scim_roles.js, rules in scim_role_rules.js):
+// group membership sets roles and grants through the same seat gate and the
+// same "your access changed" notice as a manual console edit.
+const scimRoleSync = createScimRoleSync({
+  db: () => db, persist, httpErr, audit: (a) => recordAdminAction(a),
+  assertSeat: (cid, role, u) => assertSeatAvailable(cid, role, WORK_TIERS.includes(u.tier) ? u.tier : 'basic', u.id),
+  accessChanged: (u) => emitStoreEvent('work_access_changed', { userId: u.id, role: u.companyRole || 'member', flow: u.workFlow || 'independent', grants: u.grants, companyId: u.companyId }),
+  label: (u) => u.ssoEmail || u.email || u.username || u.id,
+})
+export const { listRoleMappings: listScimRoleMappings, addRoleMapping: addScimRoleMapping, removeRoleMapping: removeScimRoleMapping } = scimRoleSync
 const scim = createScimState({
   db: () => db, persist, persistSoon, httpErr, company: _company, masterKey: encKey,
   createMember: (args) => createSsoAccount(args),
   setDisabled: (userId, disabled, opts) => setUserDisabled(userId, disabled, opts),
   setSsoEmail: (userId, email) => setUserSsoEmail(userId, email),
   audit: (a) => recordAdminAction(a),
+  syncRoles: (cid, opts) => scimRoleSync.syncUsers(cid, opts),
 })
 export const { listScimTokens, createScimToken, revokeScimToken, resolveScimToken, scimUsers, scimGroups } = scim
 // ---- B2B contract + invoice billing (module: b2b_invoices.js) ----
@@ -703,6 +716,7 @@ export function publicWorkUser(u) {
     companyId: u.companyId || null,
     companyRole: u.companyRole || null,          // member | company_admin | executive | project_manager | senior_project_manager | grc
     grants: (u.companyId ? roles.sanitizeGrants(u.companyRole, u.grants) : []),  // additive grants (trainer); only those the primary role may hold
+    idpManaged: managedView(u),   // { role, grants } the company's identity provider sets through group mappings, else null
     workFlow: (u.companyId ? (['worker', 'independent', 'mixed'].includes(u.workFlow) ? u.workFlow : 'independent') : null),  // how tasks reach a company user: worker | independent | mixed (null for individuals)
     companyName: co ? co.name : null,
     // Enterprise allocation GROUP (admin / supervisor / member) the company admin
@@ -2876,6 +2890,9 @@ export function setUserCompany(userId, companyId, companyRole, workFlow) {
   const role = companyId ? normalizeCompanyRole(companyRole) : null
   // Moving into (or re-roling within) a company takes a seat like any other path.
   if (companyId) assertSeatAvailable(companyId, role, u.tier, u.id)
+  // A role an identity provider managed belongs to the company that mapped it;
+  // a move to another company (or out of one) starts unmanaged.
+  if (String(u.companyId || '') !== String(companyId || '')) u.scimRoleManaged = null
   u.companyId = companyId || null
   u.companyRole = role
   // Work flow (worker / independent / mixed) only applies inside a company.
@@ -5350,6 +5367,15 @@ export function updateCompanyMember(adminCompanyId, targetUserId, { companyRole,
   const finalTier = tier !== undefined ? String(tier) : (WORK_TIERS.includes(u.tier) ? u.tier : 'basic')
   // Promoting into the admin pool must fit the admin seats; a member must fit the
   // target tier's allocation (ignoring their own current seat). One shared gate.
+  // A field the company's identity provider manages (a SCIM group mapped to a
+  // role or grant, scim_role_rules.js) is changed there, not here. The check
+  // sees the FINAL grants, so a role change that would drop a managed grant is
+  // refused too. Fields it does not manage (plan, work flow, an unmanaged
+  // role) stay editable.
+  const idpConflict = manualEditConflict(u, { finalRole, finalGrants: roles.sanitizeGrants(finalRole, grants !== undefined ? grants : (u.grants || [])) })
+  if (idpConflict) throw Object.assign(httpErr(409, idpConflict === 'role'
+    ? 'This person\'s role is managed by your identity provider. Change their groups there instead.'
+    : 'This person\'s grants are managed by your identity provider. Change their groups there instead.'), { code: 'IDP_MANAGED' })
   const curRole = u.companyRole === 'company_admin' ? 'company_admin' : 'member'   // legacy records may lack companyRole
   if (finalRole !== curRole || finalTier !== (WORK_TIERS.includes(u.tier) ? u.tier : 'basic')) {
     assertSeatAvailable(adminCompanyId, finalRole, finalTier, u.id)
@@ -5384,6 +5410,7 @@ export function removeCompanyMember(adminCompanyId, targetUserId, { reason = '',
   emitStoreEvent('work_member_removed', { userId: u.id, companyName: _coName })
   u.companyId = null
   u.companyRole = null
+  u.scimRoleManaged = null   // the identity provider's management ends with the membership
   bumpSessionEpoch(u.id)
   // Accountable removal: who did it, to whom, and why (platform-wide rule -
   // every destructive action is logged with a captured reason).

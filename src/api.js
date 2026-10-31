@@ -556,6 +556,10 @@ export const api = {
   workCompanyScimTokens: () => req('GET', '/api/work/company/scim/tokens'),
   workCompanyCreateScimToken: (body) => req('POST', '/api/work/company/scim/tokens', body || {}),
   workCompanyRevokeScimToken: (id) => req('DELETE', `/api/work/company/scim/tokens/${encodeURIComponent(id)}`),
+  // SCIM group -> role / grant mappings (server/scim_role_routes.js).
+  workCompanyScimRoleMappings: () => req('GET', '/api/work/company/scim/role-mappings'),
+  workCompanyAddScimRoleMapping: (body) => req('POST', '/api/work/company/scim/role-mappings', body || {}),
+  workCompanyRemoveScimRoleMapping: (id, reason) => req('DELETE', `/api/work/company/scim/role-mappings/${encodeURIComponent(id)}`, { reason: reason || '' }),
   // Company admin: contract, pool and the invoices AdmireVeda issued (server/b2b_routes.js).
   workCompanyBilling: () => req('GET', '/api/work/company/billing'),
   workCompanyInvoicePdfUrl: (id) => `/api/work/company/invoices/${encodeURIComponent(id)}.pdf`,

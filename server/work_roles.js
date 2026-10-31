@@ -26,6 +26,20 @@ export const COMPANY_ROLES = ['member', 'company_admin', 'executive', ...MGMT_RO
 // permitted combinations: user+trainer, PM+trainer).
 export const GRANTS = ['trainer']
 export function canGrantTrainer(role) { return role === 'member' || role === 'project_manager' }
+// Role PRECEDENCE, highest first: the one order every "which role wins" decision
+// reads (today: a person in several identity-provider groups mapped to roles,
+// server/scim_role_rules.js). It lists every COMPANY_ROLES id exactly once
+// (work_roles.test.mjs pins that), so a new role cannot be added without a place
+// in it. Platform roles (superadmin, admin, ...) are not company roles and never
+// appear here.
+export const ROLE_PRECEDENCE = ['company_admin', 'executive', 'senior_project_manager', 'project_manager', 'grc', 'member']
+// Higher number = higher precedence; an unknown role ranks below everything.
+export function rolePrecedence(role) { const i = ROLE_PRECEDENCE.indexOf(role); return i < 0 ? -1 : ROLE_PRECEDENCE.length - i }
+export function highestRole(list) {
+  let best = null
+  for (const r of Array.isArray(list) ? list : []) if (rolePrecedence(r) > rolePrecedence(best)) best = r
+  return rolePrecedence(best) < 0 ? null : best
+}
 export const RISK_SLA_DAYS = 5          // owner default; configurable per company
 const DAY_MS = 86400000
 
@@ -110,7 +124,7 @@ export function taskSlaRisk(task, now = Date.now(), slaDays = RISK_SLA_DAYS) {
 }
 
 export default {
-  WORK_FLOWS, MGMT_ROLES, COMPANY_ROLES, GRANTS, RISK_SLA_DAYS, normalizeFlow,
+  WORK_FLOWS, MGMT_ROLES, COMPANY_ROLES, GRANTS, ROLE_PRECEDENCE, rolePrecedence, highestRole, RISK_SLA_DAYS, normalizeFlow,
   canStartOwnTask, canReceiveAssignment,
   isSrPM, isGRC, isPM, isCompanyAdmin, hasTrainerGrant, canGrantTrainer, sanitizeGrants,
   canCreateProject, canAssignTask, canReassignTask, canReassignProject, canAssignProjectManager,

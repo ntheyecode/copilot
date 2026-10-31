@@ -193,6 +193,61 @@ companyTest(test, 'the company admin connects SAML and SCIM; a provisioned perso
   expect(after.user).toBeNull()
 })
 
+const ROLES_REFUSE = {
+  what: 'SCIM group to role mappings',
+  api: [['GET', '/api/work/company/scim/role-mappings'], ['POST', '/api/work/company/scim/role-mappings'], ['PATCH', '/api/work/scim/v2/Groups/x']],
+  pages: ['/work/company'],
+}
+
+companyTest(test, 'a SCIM group mapped to project manager: adding a person to the group gives them the PM dashboard', ROLES_REFUSE, async ({ as, seed, edition }) => {
+  const co = await seed.company({ personas: ['admin', 'member'] })
+  const { page } = await as.page(co.users.admin, { path: '/work/company?section=sso' })
+  await expect(page.getByTestId('sso-setup')).toBeVisible()
+  await page.getByTestId('sso-tab-scim').click()
+  await page.getByLabel('Token name').fill('Okta')
+  await page.getByTestId('scim-create').click()
+  const secret = (await page.getByTestId('scim-secret').locator('code').innerText()).trim()
+  const anon = await as.anon()
+  const scim = (method, p, data) => anon.ctx.fetch(`/api/work/scim/v2${p}`, { method, data, headers: { authorization: `Bearer ${secret}`, 'content-type': 'application/scim+json' }, failOnStatusCode: false })
+
+  // The identity provider pushes the group (empty), then the admin maps it in the console.
+  const g = await scim('POST', '/Groups', { schemas: ['urn:ietf:params:scim:schemas:core:2.0:Group'], displayName: 'Project managers', members: [] })
+  expect(g.status()).toBe(201)
+  const groupId = (await g.json()).id
+  await expect(page.getByTestId('scim-roles')).toBeVisible()
+  await page.getByLabel('Group in your identity provider').fill('Project managers')
+  await page.getByLabel('WorkCoPilot role or grant').selectOption('project_manager')
+  await page.getByTestId('scim-role-add').click()
+  const row = page.getByTestId('scim-role-mapping').first()
+  await expect(row).toContainText('Project managers')
+  await expect(row).toContainText('Project manager')
+  await expect(row).toContainText('People in this group: 0')
+
+  // Before: the member has no PM dashboard.
+  const member = await as.page(co.users.member, { path: '/work' })
+  // (The page's own heading is inside <main>; the top bar repeats page names.)
+  await member.page.goto('/work/pm')
+  await member.page.waitForLoadState('networkidle')
+  await expect(member.page.getByRole('main').getByRole('heading', { name: 'Projects I manage' })).toHaveCount(0)
+
+  // Okta adds the member to the group over SCIM.
+  const add = await scim('PATCH', `/Groups/${groupId}`, { schemas: ['urn:ietf:params:scim:api:messages:2.0:PatchOp'], Operations: [{ op: 'add', path: 'members', value: [{ value: co.users.member.id }] }] })
+  expect(add.status()).toBe(200)
+
+  // The same signed-in session now gets the PM dashboard on its next load.
+  await member.page.goto('/work/pm')
+  await expect(member.page.getByRole('main').getByRole('heading', { name: 'Projects I manage' })).toBeVisible()
+
+  // The console shows the role as managed by the identity provider and locks it.
+  await page.goto('/work/company?section=team')
+  const managed = page.getByTestId('idp-managed')
+  await expect(managed).toHaveCount(1)
+  await expect(managed).toContainText('Managed by your identity provider')
+
+  await shoot(as, co.users.admin, { name: 'sso-scim-roles', edition, path: '/work/company?section=sso', ready: '[data-testid="sso-setup"]', prepare: async (p) => { await p.getByTestId('sso-tab-scim').click(); await p.getByTestId('scim-role-mapping').first().waitFor(); await p.getByTestId('scim-roles').scrollIntoViewIfNeeded() } })
+  await shoot(as, co.users.admin, { name: 'company-team-idp', edition, path: '/work/company?section=team', ready: '[data-testid="idp-managed"]' })
+})
+
 const BILL_REFUSE = { what: 'company billing (contract and invoices)', api: [['GET', '/api/work/company/billing'], ['GET', '/api/work/company/invoices/x.pdf']], pages: ['/work/company'] }
 
 companyTest(test, 'AdmireVeda bills by contract: the superadmin issues an invoice and the company admin downloads it', BILL_REFUSE, async ({ as, seed, edition }) => {
