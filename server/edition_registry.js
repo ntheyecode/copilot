@@ -38,6 +38,7 @@ export const CAPABILITIES = Object.freeze({
   brain_query: 'The read-only Company Brain query interface is available.',
   external_db: 'Persistence can point at a database the customer owns (a connection string given at setup).',
   public_site: 'The public marketing pages, pricing and the "validate it live" lead capture are served.',
+  individual_site: 'The public site is the individuals site (src/sites/individuals/): home, how it works, pricing, use cases, FAQ and security written for one person on their own screen, instead of the organization site. Needs public_site.',
 })
 
 // The editions. `capabilities` lists every capability the edition turns on;
@@ -61,7 +62,7 @@ export const EDITIONS = Object.freeze({
   paid: {
     label: 'Paying users',
     summary: 'Individual accounts on a paid plan; no free tier and no company tenants.',
-    capabilities: ['solo_signup', 'paid_only', 'individual_plans', 'stripe_billing', 'platform_ai', 'public_site'],
+    capabilities: ['solo_signup', 'paid_only', 'individual_plans', 'stripe_billing', 'platform_ai', 'public_site', 'individual_site'],
   },
   // 4. The customer runs it on their own servers. One company, their own AI
   // keys, offline license, any of the three persistence choices.
@@ -85,6 +86,9 @@ export const DEFAULT_EDITION = 'all'
 
 // Pairs that can never be on together (validated at import, below).
 const EXCLUSIVE = [['saas_companies', 'single_company'], ['stripe_billing', 'offline_licensing']]
+// Pairs where the first needs the second: the individuals site IS the public
+// site, so an edition cannot serve it without serving a public site.
+const REQUIRES = [['individual_site', 'public_site']]
 
 function validateRegistry() {
   for (const [name, ed] of Object.entries(EDITIONS)) {
@@ -94,6 +98,9 @@ function validateRegistry() {
     if (new Set(ed.capabilities).size !== ed.capabilities.length) throw new Error(`[editions] edition "${name}" lists a capability twice.`)
     for (const [a, b] of EXCLUSIVE) {
       if (ed.capabilities.includes(a) && ed.capabilities.includes(b)) throw new Error(`[editions] edition "${name}" turns on both "${a}" and "${b}", which exclude each other.`)
+    }
+    for (const [a, b] of REQUIRES) {
+      if (ed.capabilities.includes(a) && !ed.capabilities.includes(b)) throw new Error(`[editions] edition "${name}" turns on "${a}" without "${b}", which it needs.`)
     }
     Object.freeze(ed.capabilities)
     Object.freeze(ed)

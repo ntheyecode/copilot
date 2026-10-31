@@ -10,12 +10,14 @@
 //   'companies'       company features exist (company console, SSO, teams)
 //   'individualPlans' personal Lite to Premium plans are sold
 //   'soloSignup'      a person can create their own account
+//   'individualSite'  the public site is the individuals site (src/sites/individuals/)
 export function shows(view, needs) {
   if (!needs) return true
   if (!view) return true
   if (needs === 'companies') return !!view.companies
   if (needs === 'individualPlans') return !!view.individualPlans
   if (needs === 'soloSignup') return !!view.soloSignup
+  if (needs === 'individualSite') return !!view.individualSite
   throw new Error(`[editions] unknown surface requirement "${needs}"`)
 }
 

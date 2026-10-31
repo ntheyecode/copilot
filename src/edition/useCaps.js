@@ -18,6 +18,8 @@ export function useCaps() {
 //   audience         'organizations' | 'individuals' | null (both: base copy)
 //   publicSite       our public site (and its sales conversation) is served
 //                    here; off on a customer's own on-prem / managed install
+//   individualSite   the public site is the individuals site
+//                    (src/sites/individuals/) instead of the organization pages
 export function editionView(caps) {
   return {
     caps,
@@ -26,6 +28,7 @@ export function editionView(caps) {
     soloSignup: caps.has('solo_signup'),
     audience: copyAudience(caps),
     publicSite: caps.has('public_site'),
+    individualSite: caps.has('individual_site'),
   }
 }
 

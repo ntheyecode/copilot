@@ -44,6 +44,13 @@ test('every edition lists only known capabilities, no duplicates, no excluded pa
   for (const cap of Object.keys(CAPABILITIES)) assert.ok(EDITION_IDS.some((id) => EDITIONS[id].capabilities.includes(cap)), `${cap} is used`)
 })
 
+test('the individuals site is a capability of paid only, and always comes with a public site', () => {
+  assert.equal(makeCaps('paid').has('individual_site'), true)
+  for (const id of EDITION_IDS.filter((x) => x !== 'paid')) assert.equal(makeCaps(id).has('individual_site'), false, `${id} keeps the organization pages`)
+  for (const id of EDITION_IDS) if (makeCaps(id).has('individual_site')) assert.equal(makeCaps(id).has('public_site'), true, `${id}: the individuals site is a public site`)
+  assert.match(CAPABILITIES.individual_site, /individuals site/)
+})
+
 test('the registry is frozen (no runtime edits to an edition)', () => {
   assert.ok(Object.isFrozen(EDITIONS) && Object.isFrozen(CAPABILITIES))
   for (const id of EDITION_IDS) assert.ok(Object.isFrozen(EDITIONS[id]) && Object.isFrozen(EDITIONS[id].capabilities))
