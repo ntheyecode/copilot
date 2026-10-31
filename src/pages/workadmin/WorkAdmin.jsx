@@ -9,7 +9,7 @@
 // Routing is by local state (no react-router inside). The owner wires this
 // component at a /work/admin route in App.jsx.
 import React, { useEffect, useState, useCallback } from 'react'
-import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut, LogIn, Megaphone, Mail, MailCheck, DollarSign, Share2, Wallet, UserMinus, Palette, BookOpen, Bell } from 'lucide-react'
+import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut, LogIn, Megaphone, Mail, MailCheck, DollarSign, Share2, Wallet, UserMinus, Palette, BookOpen, Bell, Receipt, Info, HeartPulse } from 'lucide-react'
 import { useT } from '../../i18n/index.jsx'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import PreferencesPanel from '../../components/PreferencesPanel.jsx'
@@ -34,13 +34,20 @@ import EmailTemplates from './sections/EmailTemplates.jsx'
 import Finance from './sections/Finance.jsx'
 import Subscribers from './sections/Subscribers.jsx'
 import Cancelled from './sections/Cancelled.jsx'
+import SubscriptionHealth from './sections/SubscriptionHealth.jsx'
 import Notifications from './sections/Notifications.jsx'
 import HelpSuper from './sections/HelpSuper.jsx'
+import B2bInvoices from './sections/B2bInvoices.jsx'
+// Which sections this server offers: ONE registry shared with the server's
+// route gate (server/admin_sections.js), so a hidden section's API is refused too.
+import { adminSectionAvailable } from '../../../server/admin_sections.js'
+import { useCaps } from '../../edition/useCaps.js'
 
 // label/title/sub are i18n keys; the nav and shell resolve them with t().
 const SECTIONS = [
   { id: 'overview', label: 'superAdmin.nav.overview', icon: LayoutDashboard, title: 'superAdmin.sections.overview.title', sub: 'superAdmin.sections.overview.sub' },
   { id: 'companies', label: 'superAdmin.nav.companies', icon: Building2, title: 'superAdmin.sections.companies.title', sub: 'superAdmin.sections.companies.sub' },
+  { id: 'invoices', label: 'superAdmin.nav.invoices', icon: Receipt, title: 'superAdmin.sections.invoices.title', sub: 'superAdmin.sections.invoices.sub' },
   { id: 'notifications', label: 'superAdmin.nav.notifications', icon: Bell, title: 'superAdmin.sections.notifications.title', sub: 'superAdmin.sections.notifications.sub' },
   { id: 'governance', label: 'superAdmin.nav.governance', icon: ShieldCheck, title: 'superAdmin.sections.governance.title', sub: 'superAdmin.sections.governance.sub' },
   { id: 'users', label: 'superAdmin.nav.users', icon: Users, title: 'superAdmin.sections.users.title', sub: 'superAdmin.sections.users.sub' },
@@ -49,6 +56,7 @@ const SECTIONS = [
   { id: 'finance', label: 'superAdmin.nav.finance', icon: DollarSign, title: 'superAdmin.sections.finance.title', sub: 'superAdmin.sections.finance.sub' },
   { id: 'subscribers', label: 'superAdmin.nav.subscribers', icon: Wallet, title: 'superAdmin.sections.subscribers.title', sub: 'superAdmin.sections.subscribers.sub' },
   { id: 'cancelled', label: 'superAdmin.nav.cancelled', icon: UserMinus, title: 'superAdmin.sections.cancelled.title', sub: 'superAdmin.sections.cancelled.sub' },
+  { id: 'subscription-health', label: 'superAdmin.nav.subscription-health', icon: HeartPulse, title: 'superAdmin.sections.subscription-health.title', sub: 'superAdmin.sections.subscription-health.sub' },
   { id: 'email', label: 'superAdmin.nav.email', icon: Mail, title: 'superAdmin.sections.email.title', sub: 'superAdmin.sections.email.sub' },
   { id: 'email-templates', label: 'superAdmin.nav.email-templates', icon: MailCheck, title: 'superAdmin.sections.email-templates.title', sub: 'superAdmin.sections.email-templates.sub' },
   { id: 'ai', label: 'superAdmin.nav.ai', icon: Cpu, title: 'superAdmin.sections.ai.title', sub: 'superAdmin.sections.ai.sub' },
@@ -80,6 +88,7 @@ function AppearanceSection() {
 
 export default function WorkAdmin() {
   const t = useT()
+  const caps = useCaps()
   const [active, setActive] = useState('overview')
   // gate: 'loading' | 'ready' | 'denied' | 'error'
   const [gate, setGate] = useState('loading')
@@ -143,16 +152,20 @@ export default function WorkAdmin() {
   // Hidden from a plain `admin` (the explicit superadmin / accounting / affiliate-
   // admin branches below are unaffected). Affiliates is managed by superadmin or a
   // dedicated affiliate_admin only - a plain admin would just hit a 403.
-  const SUPERADMIN_ONLY = new Set(['ai', 'social', 'finance', 'subscribers', 'cancelled', 'incidents', 'claims', 'affiliates', 'notifications'])
+  const SUPERADMIN_ONLY = new Set(['ai', 'social', 'finance', 'subscribers', 'cancelled', 'incidents', 'claims', 'affiliates', 'notifications', 'invoices'])
   // Single source for the accounting role's allowed sections (used both to build
   // the nav and, via the generic fallback effect below, to land the role on its
   // first visible tab rather than force-pinning one tab).
-  const ACCOUNTING_SECTIONS = new Set(['finance', 'subscribers', 'cancelled', 'appearance'])
-  const visibleSections = isSuperAdmin ? SECTIONS
-    : isAccounting ? SECTIONS.filter((s) => ACCOUNTING_SECTIONS.has(s.id))
-      : isAffiliateAdmin ? SECTIONS.filter((s) => s.id === 'affiliates' || s.id === 'appearance')
-        : SECTIONS.filter((s) => !SUPERADMIN_ONLY.has(s.id))
-  useEffect(() => { if (isAffiliateAdmin && active !== 'affiliates') setActive('affiliates') }, [isAffiliateAdmin, active])
+  // Subscriber health sits behind the same finance gate as Finance and Subscribers.
+  const ACCOUNTING_SECTIONS = new Set(['finance', 'subscribers', 'cancelled', 'subscription-health', 'appearance'])
+  // What this server offers comes first (the edition registry), then the role.
+  const offered = SECTIONS.filter((s) => adminSectionAvailable(s.id, caps))
+  const notOffered = SECTIONS.filter((s) => !adminSectionAvailable(s.id, caps))
+  const visibleSections = isSuperAdmin ? offered
+    : isAccounting ? offered.filter((s) => ACCOUNTING_SECTIONS.has(s.id))
+      : isAffiliateAdmin ? offered.filter((s) => s.id === 'affiliates' || s.id === 'appearance')
+        : offered.filter((s) => !SUPERADMIN_ONLY.has(s.id))
+  useEffect(() => { if (isAffiliateAdmin && active !== 'affiliates' && visibleSections.some((s) => s.id === 'affiliates')) setActive('affiliates') }, [isAffiliateAdmin, active, visibleSections])
   // Never leave the view pointed at a section this viewer cannot see (e.g. a
   // plain admin whose stored tab is now gated) - fall back to the first visible.
   useEffect(() => {
@@ -164,6 +177,7 @@ export default function WorkAdmin() {
   const renderSection = () => {
     switch (active) {
       case 'companies': return <Companies isSuperAdmin={isSuperAdmin} />
+      case 'invoices': return <B2bInvoices />
       case 'notifications': return <Notifications />
       case 'governance': return <Governance isSuperAdmin={isSuperAdmin} />
       case 'users': return <UsersSection isSuperAdmin={isSuperAdmin} viewer={viewer} />
@@ -174,6 +188,7 @@ export default function WorkAdmin() {
       case 'finance': return <Finance isSuperAdmin={isSuperAdmin} />
       case 'subscribers': return <Subscribers isSuperAdmin={isSuperAdmin} />
       case 'cancelled': return <Cancelled isSuperAdmin={isSuperAdmin} />
+      case 'subscription-health': return <SubscriptionHealth isSuperAdmin={isSuperAdmin} />
       case 'ai': return <AiConfig isSuperAdmin={isSuperAdmin} />
       case 'social': return <SocialSignIn isSuperAdmin={isSuperAdmin} />
       case 'sessions': return <Sessions isSuperAdmin={isSuperAdmin} />
@@ -273,6 +288,11 @@ export default function WorkAdmin() {
         <main className="wka-main">
           <h1 className="wka-h1">{t(current.title)}</h1>
           <p className="wka-sub">{t(current.sub)}</p>
+          {/* Honest note: what this service does not offer, so a missing tab is
+              never mistaken for a fault. Shown on the overview only. */}
+          {current.id === 'overview' && isSuperAdmin && notOffered.length ? (
+            <div className="wka-note" data-testid="wa-not-offered"><Info size={14} /> <span style={{ minWidth: 0 }}>{t('superAdmin.notOffered', { list: notOffered.map((s) => t(s.label)).join(', ') })}</span></div>
+          ) : null}
           {renderSection()}
         </main>
       </div>

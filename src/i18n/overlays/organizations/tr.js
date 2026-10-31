@@ -8,7 +8,7 @@ export default {
   seo: {
     pricing: {
       title: "Kuruluşlar için planlar - WorkCoPilot by AdmireVeda",
-      description: "Kuruluşlar için WorkCoPilot planları: şirketiniz için barındırılan, yönetilen özel bulut ya da şirket içi kurulum. Şirket büyüklüğüne göre kişi başı fiyat; şirket politikası, tek oturum açma ve bir rehberlik saati havuzu ile. Teklif için bizimle konuşun."
+      description: "Kuruluşlar için WorkCoPilot: AdmireVeda tarafından barındırılan, AdmireVeda tarafından yönetilen ya da kendi bulutunuzda özel kurulum; şirket politikası, tek oturum açma ve bir rehberlik saati havuzu ile. Fiyat teklifi için bizimle konuşun."
     }
   },
   home: {
@@ -42,12 +42,13 @@ export default {
     pricing: {
       eyebrow: "Planlar",
       h2: "Kuruluşlar için planlar.",
-      sub: "Şirketiniz için barındırılan, bulutunuzda yönetilen ya da kendi sunucularınızda. Şirket büyüklüğüne göre kişi başı fiyat, teklifi ekibimiz hazırlar.",
+      sub: "AdmireVeda tarafından barındırılan, AdmireVeda tarafından yönetilen ya da kendi bulutunuzda özel kurulum. Kuruluşunuza uygun bir fiyat teklifi için bizimle konuşun.",
       fullCompare: "Kuruluşlar için planları görün"
     },
     final: {
       h2: "Rehberli çalışmayı kuruluşunuza getirin.",
-      p: "Ekibiniz için bir yaygınlaştırmayı bizimle konuşun ya da önce 60 saniyelik demoyu izleyin."
+      p: "Ekibiniz için bir yaygınlaştırmayı bizimle konuşun ya da önce 60 saniyelik demoyu izleyin.",
+      note2: "Şirket hesabınızla ya da şirketinizin tek oturum açması için iş e-postanızla giriş yapın. <a>Kurumsal giriş</a>."
     }
   },
   login: {
@@ -61,12 +62,12 @@ export default {
   pricing: {
     eyebrow: "Kuruluşlar için planlar",
     h1: "<em>Tüm kuruluşunuz için</em> rehberli çalışma.",
-    sub: "WorkCoPilot'un sizin için nasıl çalışacağını seçin: şirketiniz için barındırılan, bulutunuzda yönetilen ya da kendi sunucularınızda. Güvenlik ve gizlilik her planla gelir, asla ek satış olarak değil.",
+    sub: "WorkCoPilot'un sizin için nasıl çalışacağını seçin: AdmireVeda tarafından barındırılan, AdmireVeda tarafından yönetilen ya da kendi bulutunuzda özel kurulum. Güvenlik ve gizlilik her planla gelir, asla ek satış olarak değil.",
     notes: {
       items: [
         {
-          t: "Kişi başı fiyat",
-          d: "Planlar şirket büyüklüğüne göre kişi başı fiyatlandırılır; şirket yöneticinizin dağıttığı bir rehberlik saati havuzu ile."
+          t: "Kurulumunuza göre fiyat",
+          d: "Kuruluşunuza ve WorkCoPilot’u kullanma biçiminize uygun bir fiyat teklifi için bizimle konuşun. Şirket yöneticinizin dağıttığı bir rehberlik saati havuzu da dahildir."
         },
         {
           t: "Bloklar değil, dakikalar",
@@ -78,11 +79,11 @@ export default {
         },
         {
           t: "Şirketler nasıl satın alır",
-          d: "Şirketinizin satın alma biçimine uyan bir teklif, bir DPA ve indirilebilir faturalı hesap özetleri."
+          d: "Şirketinizin satın alma biçimine uyan bir sözleşme, bir DPA ve şirket konsolunuzdan indirdiğiniz faturalar."
         }
       ]
     },
-    fine: "Nihai koşullar ve fiyatlar teklifinizde belirlenir. Konuma göre vergiler uygulanabilir."
+    fine: "Nihai koşullar sözleşmenizde belirlenir. Konuma göre vergiler uygulanabilir."
   },
   howItWorks: {
     cta: {
@@ -102,8 +103,15 @@ export default {
       pricing: {
         items: {
           0: {
-            a: "WorkCoPilot kuruluşlara satılır: şirketiniz için barındırılan, yönetilen özel bulut olarak ya da kendi sunucularınızda; şirket büyüklüğüne göre kişi başı fiyatla. Teklif için bizimle konuşun.",
-            d: "Faturalama teklifinize göre yapılır; hesap özetleri ve indirilebilir faturalarla."
+            a: "WorkCoPilot kuruluşlara, kurulumunuza göre belirlenen bir fiyatla satılır: AdmireVeda tarafından barındırılan, AdmireVeda tarafından yönetilen ya da kendi bulutunuzda özel kurulum. Fiyat teklifi için bizimle konuşun.",
+            d: "AdmireVeda, sözleşmeniz kapsamında şirketinize fatura keser; faturalar şirket konsolunuzdadır."
+          }
+        }
+      },
+      compliance: {
+        items: {
+          3: {
+            a: "Özet bir DPA herkese açıktır ve imzalı bir DPA istek üzerine sunulur. Rehberliği büyük bir yapay zeka sağlayıcısı üretir, barındırmayı bir bulut sağlayıcısı yapar; tüzel kişi adlarıyla güncel liste istek üzerine sunulur."
           }
         }
       },
@@ -123,6 +131,19 @@ export default {
   fieldsPage: {
     startBtn: "Ekibinize getirin"
   },
+  securityPage: {
+    guarantees: {
+      2: {
+        t: "Her girişte ikinci bir faktör",
+        d: "Parolayla giriş, her hesapta bir doğrulayıcı uygulama gerektirir; şirketin tek oturum açması ise kimlik sağlayıcınızın zorunlu tuttuğu ikinci faktörü kullanır."
+      }
+    },
+    mock: {
+      fields: {
+        2: "Banka hesabı"
+      }
+    }
+  },
   useCases: {
     final: {
       cta: "Bizimle konuşun"
@@ -135,10 +156,14 @@ export default {
   workDashboard: {
     plan: {
       choose: "Bu hesapta henüz plan yok"
+    },
+    meters: {
+      sub: "Bu ayki saatler, şirket havuzunuz ve açık görevler. Nasıl çalıştığını görmek için bir kutucuktaki bilgi simgesinin üzerine gelin."
     }
   },
   dashboardsHelp: {
     home: {
+      lead: "Pano sizin ana sayfanızdır: bu ayki saatleriniz ve şirket havuzunuz, açık görevler, sıradaki yapılacak tek şey ve kaldığınız yer.",
       steps: {
         0: "<b>Planınızı okuyun.</b> Üç kutu bu ay kalan saatleri, şirket havuzunuzu ve açık görev yuvalarınızı gösterir. Üstteki zaman rozeti, azalmadan önce kehribar rengine döner.",
         2: "<b>Zaman ekleyin.</b> Yöneticinizden ek saat istemek için üstteki <b>Zaman ekle</b>'ye basın."

@@ -10,6 +10,15 @@ import { shows, visibleLinks, startPath, CONTACT_PATH } from '../edition/surface
 const view = (id) => editionView(capsFromList(makeCaps(id).list()))
 const LINKS = [{ key: 'how' }, { key: 'enterprise', needs: 'companies' }, { key: 'pricing' }]
 
+test('the affiliate page exists only where personal plans and Stripe both do; social sign-in follows social_login', () => {
+  assert.equal(shows(view('all'), 'affiliates'), true)
+  assert.equal(shows(view('paid'), 'affiliates'), true)
+  assert.equal(shows(view('saas'), 'affiliates'), false)
+  assert.equal(view('saas').socialLogin, false)
+  assert.equal(view('saas').stripe, false)
+  assert.equal(view('all').socialLogin && view('paid').socialLogin, true)
+})
+
 test('the default edition shows every link and starts at sign-up, as before', () => {
   assert.deepEqual(visibleLinks(view('all'), LINKS).map((l) => l.key), ['how', 'enterprise', 'pricing'])
   assert.equal(startPath(view('all')), '/workcopilot')
@@ -27,6 +36,18 @@ test('a customer\'s own install (no public site) never points at our sales page'
     assert.equal(view(id).publicSite, false)
     assert.equal(startPath(view(id)), '/workcopilot')
   }
+})
+
+test('the individuals site shows only where individual_site is on (paid), never on all or saas', () => {
+  assert.equal(shows(view('paid'), 'individualSite'), true)
+  assert.equal(view('paid').individualSite, true)
+  for (const id of ['all', 'saas', 'onprem', 'managed']) {
+    assert.equal(shows(view(id), 'individualSite'), false, `${id} keeps the organization pages`)
+    assert.equal(view(id).individualSite, false, id)
+  }
+  // Without a view (a page rendered before the capabilities are known) the
+  // organization pages render, exactly as an unstamped build does today.
+  assert.equal(shows(undefined, 'individualSite'), true)
 })
 
 test('an unknown requirement fails loudly', () => {

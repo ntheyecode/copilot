@@ -52,11 +52,11 @@ export const GUIDE_CSS = `
 .gv-glance:focus-visible{outline:none;box-shadow:0 0 0 3px var(--gv-accent-ring)}
 .gv-glance-ic{flex:0 0 auto;display:inline-flex;color:var(--gv-obs)}
 .gv-glance-k{flex:0 0 auto;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--gv-faint);white-space:nowrap}
-.gv-glance-t{flex:1 1 auto;min-width:0;font-size:calc(12.5px*var(--wc-fs,1));line-height:1.45;color:var(--gv-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gv-glance-t{flex:1 1 auto;min-width:0;font-size:calc(12.5px*var(--wc-fs,1));line-height:1.45;color:var(--gv-muted)}
 .gv-glance-t .gv-key{background:transparent;padding:0;margin:0;font-weight:650;color:var(--gv-muted)}
 .gv-glance.open{align-items:flex-start;background:var(--gv-surface-2);border-color:var(--gv-border)}
 .gv-glance.open .gv-glance-ic,.gv-glance.open .gv-glance-k{margin-top:2px}
-.gv-glance.open .gv-glance-t{white-space:normal;overflow-wrap:anywhere;color:var(--gv-text)}
+.gv-glance.open .gv-glance-t{color:var(--gv-text)}
 .gv-glance.open .gv-glance-t .gv-key{color:var(--gv-text)}
 .gv-glance-chev{flex:0 0 auto;color:var(--gv-faint);transition:transform .18s}
 .gv-glance.open .gv-glance-chev{transform:rotate(180deg)}
@@ -79,8 +79,16 @@ export const GUIDE_CSS = `
 .gv-goal{display:flex;align-items:center;gap:8px;width:100%;min-width:0;padding:4px 2px;background:transparent;border:none;font:inherit;color:var(--gv-faint);cursor:pointer;text-align:left;border-radius:8px}
 .gv-goal:hover{color:var(--gv-muted)}
 .gv-goal:focus-visible{outline:none;box-shadow:0 0 0 3px var(--gv-accent-ring)}
-.gv-goal-t{flex:1 1 auto;min-width:0;font-size:12.5px;color:var(--gv-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.gv-goal.open .gv-goal-t{white-space:normal;overflow-wrap:anywhere;line-height:1.5;color:var(--gv-text)}
+.gv-goal-t{flex:1 1 auto;min-width:0;font-size:12.5px;color:var(--gv-muted)}
+.gv-goal.open .gv-goal-t{line-height:1.5;color:var(--gv-text)}
+/* The COLLAPSED one-liners that hold guidance text with key chips (the glance,
+   the goal line, the Next step): a two-line clamp, never nowrap + ellipsis.
+   A nowrap line let the last key chip (an inline-styled box) run past the
+   clip, 11px over the edge at 380px; wrapping keeps every chip and keyboard
+   key whole and readable, the clamp keeps the line quiet. Opened, they show
+   everything. Shared by the console, the float and the full guide. */
+.gv-glance-t,.gv-goal-t,.gv-next-t{white-space:normal;overflow-wrap:anywhere;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.gv-glance.open .gv-glance-t,.gv-goal.open .gv-goal-t{display:block;-webkit-line-clamp:unset}
 .gv-goal>svg{flex:0 0 auto;color:var(--gv-faint);transition:transform .18s}
 .gv-goal.open>svg{transform:rotate(90deg)}
 
@@ -161,7 +169,7 @@ export const GUIDE_CSS = `
 /* ---- next step (one quiet line) + prev / next with a progress track ------- */
 .gv-next{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:11px;background:var(--gv-surface-2);border:1px solid var(--gv-border);opacity:.8;min-width:0}
 .gv-next-n{flex:0 0 auto;width:20px;height:20px;border-radius:6px;display:grid;place-items:center;font-size:10.5px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--gv-faint);border:1px solid var(--gv-border)}
-.gv-next-t{flex:1;min-width:0;font-size:calc(13px*var(--wc-fs,1));line-height:1.4;color:var(--gv-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gv-next-t{flex:1;min-width:0;font-size:calc(13px*var(--wc-fs,1));line-height:1.4;color:var(--gv-muted)}
 .gv-next-t .gv-key{background:transparent;padding:0;font-weight:650}
 .gv-nav{display:flex;align-items:center;gap:10px;padding:0 2px}
 .gv-nav-btn{display:inline-flex;align-items:center;gap:3px;height:30px;padding:0 9px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--gv-muted);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;flex:0 0 auto}

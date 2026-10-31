@@ -56,13 +56,23 @@ export const EXEC_SPEC = {
   ],
 }
 
+// Your brain (personal accounts): teach it with a document, then read, keep
+// or forget each learning.
+export const BRAIN_SPEC = {
+  shots: [
+    { id: 'page', name: 'dashboards/your-brain', marks: [{ key: 'promise' }, { key: 'drop' }, { key: 'meter' }, { key: 'result' }, { key: 'rows' }] },
+    { id: 'learned', name: 'dashboards/your-brain-learned', marks: [{ key: 'kind' }, { key: 'forget' }, { key: 'forgetSource' }, { key: 'forgetAll' }] },
+  ],
+}
+
 // Work Help entries: catalog key (dashboardsHelp.<k>) -> spec.
-export const DASHBOARD_HELP_SPECS = { workflows: WORKFLOWS_SPEC, teach: TEACH_SPEC, issues: ISSUES_SPEC, exec: EXEC_SPEC }
+export const DASHBOARD_HELP_SPECS = { workflows: WORKFLOWS_SPEC, teach: TEACH_SPEC, issues: ISSUES_SPEC, exec: EXEC_SPEC, brain: BRAIN_SPEC }
 
 // Company console Help areas: helpCompany.<area>.shots.<id>.
 const m = (...keys) => keys.map((key) => ({ key }))
 export const COMPANY_HELP_SHOTS = {
   trainer: [{ id: 'grant', name: 'company/trainer-grant', marks: m('role', 'trainer') }],
+  brain: [{ id: 'add', name: 'company/brain-add', marks: m('promise', 'drop', 'result', 'rows') }],
   developer: [
     { id: 'keys', name: 'company/api-keys', marks: m('create', 'row', 'acts') },
     { id: 'create', name: 'company/api-key-create', marks: m('scopes', 'expiry', 'ip') },

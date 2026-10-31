@@ -15,6 +15,8 @@ import { DEPTH_CHOICE_CSS } from './DepthChoice.jsx'
 import { aiSetupOf, aiSourceFor } from '../../../shared/ai_source_options.js'
 import { useT } from '../../../i18n/index.jsx'
 import { OIDC_PROVIDERS, oidcIssuerExample } from '../../../shared/oidc_providers.js'
+import SsoRequiredToggle from './SsoRequiredToggle.jsx'
+import { useEditionView } from '../../../edition/useCaps.js'   // the card-payment toggle exists only where Stripe does
 
 // The OIDC provider list + example issuers come from the single registry
 // (src/shared/oidc_providers.js): one list, no parallel copies (SUPREME RULE II).
@@ -198,6 +200,7 @@ const TZ_SUGGEST = [
 // pool + consumption are shown so the state is actionable, never a dead end.
 function EnterprisePanel({ company, onSaved }) {
   const t = useT()
+  const { stripe } = useEditionView()
   const ent = company.enterprise || {}
   const [open, setOpen] = useState(false)
   const blank = {
@@ -308,7 +311,7 @@ function EnterprisePanel({ company, onSaved }) {
           </div>
           <div className="co-inline-wrap" style={{ marginBottom: 8 }}>
             <button type="button" className={`co-toggle ${f.requestsEnabled ? 'on' : ''}`} onClick={() => setF({ ...f, requestsEnabled: !f.requestsEnabled })}>{t('companiesAdmin.enterprise.requestsToggle')} {f.requestsEnabled ? t('companiesAdmin.on') : t('companiesAdmin.off')}</button>
-            <button type="button" className={`co-toggle ${f.stripeEnabled ? 'on' : ''}`} onClick={() => setF({ ...f, stripeEnabled: !f.stripeEnabled })}>{t('companiesAdmin.enterprise.stripeToggle')} {f.stripeEnabled ? t('companiesAdmin.on') : t('companiesAdmin.off')}</button>
+            {stripe ? <button type="button" className={`co-toggle ${f.stripeEnabled ? 'on' : ''}`} onClick={() => setF({ ...f, stripeEnabled: !f.stripeEnabled })}>{t('companiesAdmin.enterprise.stripeToggle')} {f.stripeEnabled ? t('companiesAdmin.on') : t('companiesAdmin.off')}</button> : null}
             <span className="co-dim">{t('companiesAdmin.enterprise.stripeHint')}</span>
           </div>
           {msg && <div className="co-msg">{msg}</div>}
@@ -805,6 +808,7 @@ export default function Companies({ isSuperAdmin }) {
                         )}
 
                         {isSuperAdmin && <SsoPanel company={detail.company} onSaved={() => refreshDetail(c.id)} />}
+                        {isSuperAdmin && <SsoRequiredToggle company={detail.company} onSaved={() => refreshDetail(c.id)} />}
                       </>
                     )}
                   </div>

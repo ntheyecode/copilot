@@ -16,6 +16,7 @@
 // base wording in their language because one overlay string was missing.
 // en-GB reads the en overlay under its own en-GB overlay (British spelling).
 import { mergeOverlay } from './overlay_merge.js'
+import { brandForAudience, rebrandCatalog } from '../../server/brand.js'
 
 // The English overlays are small and are every audience's fallback, so they
 // ship in the main bundle (no network round trip, nothing to fail); the other
@@ -69,7 +70,9 @@ export function withOverlay(base, aud, code) {
   if (hit && hit.base === base) return hit.dict
   const own = loaded.get(k) || {}
   const parts = code === 'en-GB' ? [loaded.get(keyOf(aud, 'en')) || {}, own] : [own]
-  const dict = parts.reduce((acc, p) => mergeOverlay(acc, p), base)
+  // The audience's brand (LinkNotes for individuals) renames the product once,
+  // here, after the overlay: server/brand.js holds the one rule.
+  const dict = rebrandCatalog(parts.reduce((acc, p) => mergeOverlay(acc, p), base), brandForAudience(aud))
   merged.set(k, { base, dict })
   return dict
 }

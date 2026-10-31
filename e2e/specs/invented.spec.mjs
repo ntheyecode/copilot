@@ -246,7 +246,11 @@ companyTest(test, 'company A can never read or change company B, by key or by se
   const bWf = await makeWorkflow(bTrainer, { title: 'Company B secret workflow' })
   const bShot = bWf.steps[0].shot
   const bPm = await as.api(B.users.pm)
-  const bProject = (await bPm.post('/api/work/pm/projects', { goal: 'Close the quarter books for the finance team' })).data.project
+  // Setup must say why it failed (2026-10-31: once, under a 4-worker full run,
+  // this create returned no project and the test died later on a TypeError).
+  const bCreate = await bPm.post('/api/work/pm/projects', { goal: 'Close the quarter books for the finance team' })
+  expect([bCreate.status, !!(bCreate.data && bCreate.data.project)], `setup: company B's project (${JSON.stringify(bCreate.data).slice(0, 300)})`).toEqual([200, true])
+  const bProject = bCreate.data.project
   const bMember = await as.api(B.users.member)
   const bSession = (await bMember.post(`/api/work/workflows/${bWf.id}/start`)).data.sessionId
   const bAdmin = await as.api(B.users.admin)

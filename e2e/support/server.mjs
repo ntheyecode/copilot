@@ -7,6 +7,7 @@
 // It never reaches into product internals the product does not export.
 import { fork } from 'node:child_process'
 import fs from 'node:fs'
+import net from 'node:net'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -21,13 +22,21 @@ export async function bootServer({ edition = 'all', env = {}, label = 'e2e' } = 
   // runtime is openai, and net-fakes routes that host to the fake provider.
   if (!env.E2E_NO_AI) {
     fs.writeFileSync(path.join(dataDir, 'ai-seed.json'), JSON.stringify({
-      providers: { openai: { apiKey: 'sk-e2e-fake-key', chatModel: 'gpt-4o-mini', visionModel: 'gpt-4o-mini' } },
+      providers: { openai: { apiKey: 'sk-e2e-fake-key', chatModel: 'gpt-6-luna', visionModel: 'gpt-6-luna' } },
       activeProvider: 'openai',
       platformAiAllowed: true,
     }))
   }
   const logFile = path.join(dataDir, 'server.log')
   const out = fs.openSync(logFile, 'a')
+  // WORK_PUBLIC_URL is read once at import (Stripe success and cancel URLs), so
+  // a test that needs Stripe to send the browser back HERE asks for 'self':
+  // the port is picked up front and the public URL points at it.
+  let port = '0'
+  if (env.WORK_PUBLIC_URL === 'self') {
+    port = String(await freePort())
+    env = { ...env, WORK_PUBLIC_URL: `http://127.0.0.1:${port}` }
+  }
   const child = fork(CHILD, [], {
     cwd: REPO,
     stdio: ['ignore', out, out, 'ipc'],
@@ -36,7 +45,7 @@ export async function bootServer({ edition = 'all', env = {}, label = 'e2e' } = 
       ...process.env,
       WORK_EDITION: edition,
       WORK_DATA_DIR: dataDir,
-      PORT: '0',
+      PORT: port,
       WORK_ADMIN_PASSWORD: 'E2e-Admin-Pass-123!',
       SESSION_SECRET: `e2e-${edition}-${Date.now()}`,
       WORK_MFA_DISABLED: '1',
@@ -85,6 +94,16 @@ export async function bootServer({ edition = 'all', env = {}, label = 'e2e' } = 
   }
 
   return { baseURL: `http://127.0.0.1:${info.port}`, port: info.port, edition, dataDir, logFile, ctl, close, info }
+}
+
+// A port the OS has just handed out and released (a tiny race window, the
+// same one every dev server with a fixed port accepts).
+function freePort() {
+  return new Promise((resolve, reject) => {
+    const s = net.createServer()
+    s.once('error', reject)
+    s.listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => resolve(port)) })
+  })
 }
 
 function withTimeout(p, ms, msg) {

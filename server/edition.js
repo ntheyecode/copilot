@@ -57,6 +57,14 @@ export function companyFeatureRefusal(c = caps) {
   return { status: 403, body: { error: 'This feature is not available on this service.', companiesDisabled: true } }
 }
 
+// A public-website form (the "validate it live" check and lead capture, the
+// contact form) where this server serves no public site, or null when it does.
+// A customer's own install has no sales pages; the person signs in instead.
+export function publicSiteRefusal(c = caps) {
+  if (c.has('public_site')) return null
+  return { status: 403, body: { error: 'This installation does not serve the public website, so this form is not available here. Sign in to use WorkCoPilot.', publicSiteDisabled: true, signIn: '/workcopilot' } }
+}
+
 // Creating a company tenant, or null when allowed. countCompanies is called
 // only when the answer depends on it (single_company), so the default edition
 // does no extra work.
@@ -69,11 +77,43 @@ export function companyCreationRefusal(countCompanies, c = caps) {
   return { status: 403, body: { error: 'Company accounts are not part of this edition.', companiesDisabled: true } }
 }
 
+// Any Stripe path (checkout, customer portal, Stripe invoices and refunds, the
+// webhook, Stripe Connect payouts) where this edition takes no card payments,
+// or null when it does. Companies on such an edition are billed by AdmireVeda
+// under contract and invoice; nothing here ever reaches Stripe.
+export function stripeRefusal(c = caps) {
+  if (c.has('stripe_billing')) return null
+  const error = c.has('public_site')
+    ? 'Card payments are not taken here: AdmireVeda bills each company under contract and invoice. Talk to us, or ask your company administrator.'
+    : 'Card payments are not taken on this installation. Ask your company administrator.'
+  return { status: 403, body: { error, stripeDisabled: true, ...(c.has('public_site') ? { contact: CONTACT_PATH } : {}) } }
+}
+
+// Social sign-in (Google, Microsoft, Facebook) on an edition without it, or
+// null where individuals may use it. Company accounts are refused in EVERY
+// edition by the account rule in sign_in_rules.js; this is the edition rule.
+export function socialLoginRefusal(c = caps) {
+  if (c.has('social_login')) return null
+  return { status: 403, body: { error: 'Social sign-in is not available here. Sign in with your password and authenticator, or with your company (SSO).', socialDisabled: true } }
+}
+
+// A feature this edition does not offer, in neutral wording (used for route
+// families whose own refusal would mention something the audience never sees).
+export function featureRefusal() {
+  return { status: 403, body: { error: 'This feature is not available on this service.', featureDisabled: true } }
+}
+
 // Why Stripe is off on this server, for the superadmin billing panel, or null
 // when this edition uses Stripe.
-export function stripeOffReason(c = caps) {
+// stripeOffCode is the stable id the panel words in the reader's language
+// (billingAdmin.offByEdition.<code>); stripeOffReason is the English text.
+export function stripeOffCode(c = caps) {
   if (c.has('stripe_billing')) return null
-  return c.has('offline_licensing')
+  return c.has('offline_licensing') ? 'license' : 'invoiced'
+}
+export function stripeOffReason(c = caps) {
+  if (!stripeOffCode(c)) return null
+  return stripeOffCode(c) === 'license'
     ? 'Stripe is off in this edition: plans come from the installation license. Stripe keys in the settings or the environment are ignored.'
-    : 'Stripe is off in this edition: this installation is invoiced directly. Stripe keys in the settings or the environment are ignored.'
+    : 'Stripe is off in this edition: companies are invoiced under contract. Stripe keys in the settings or the environment are ignored.'
 }

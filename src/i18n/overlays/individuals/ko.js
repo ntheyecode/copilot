@@ -198,7 +198,10 @@ export default {
   },
   widgets: {
     validate: {
-      workEmailPh: "minjun@example.com"
+      workEmailPh: "minjun@example.com",
+      workEmail: "이메일",
+      chip1: "Google 캘린더를 주간 보기로 바꾸고 고객과 공유하기",
+      chip5: "연락처 CSV를 HubSpot으로 가져와 각 연락처에 리드 출처 속성 추가하기"
     }
   },
   setPasswordPage: {

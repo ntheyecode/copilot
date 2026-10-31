@@ -12,11 +12,18 @@ const IS_APP = typeof window !== 'undefined' && !!window.refigold
 function chosenLocale() {
   try { return (typeof localStorage !== 'undefined' && localStorage.getItem('wc_locale')) || '' } catch { return '' }
 }
+// What the guiding console reads from right now ('screen' | 'camera'). Session
+// requests carry it (x-wc-capture) so the server can apply the company's camera
+// switch (server/capture_sources.js); the console sets it when capture starts.
+let captureSource = 'screen'
+export function setCaptureSource(s) { captureSource = s === 'camera' ? 'camera' : 'screen' }
+
 async function req(method, url, body, opts) {
   const headers = {}
   if (body) headers['Content-Type'] = 'application/json'
   if (IS_APP) headers['X-Refigold-App'] = '1'
   const loc = chosenLocale(); if (loc) headers['X-WC-Locale'] = loc
+  if (String(url).startsWith('/api/work/sessions')) headers['x-wc-capture'] = captureSource
   const res = await fetch(url, {
     method,
     credentials: 'include',
@@ -36,6 +43,12 @@ async function req(method, url, body, opts) {
     // instead of a generic error wherever the failing call happened to be.
     if (res.status === 401 && data && data.loggedOut) {
       try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('wc:signed-out')) } catch { /* ignore */ }
+    }
+    // The server refused a camera read (server/capture_sources.js, 403
+    // CAMERA_OFF: the company's camera switch is off). Announced once here so
+    // the guiding console offers the screen instead, whichever call it was.
+    if (res.status === 403 && data && data.code === 'CAMERA_OFF') {
+      try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('wc:camera-off', { detail: data })) } catch { /* ignore */ }
     }
     const err = new Error((data && data.error) || `Request failed (${res.status})`)
     err.status = res.status
@@ -161,6 +174,10 @@ export const api = {
   // The account's Stripe invoices, and a Customer Portal link to manage/cancel.
   workInvoices: () => req('GET', '/api/work/invoices'),
   workBillingPortal: () => req('POST', '/api/work/billing/portal'),
+  // A person's own plan lifecycle (server/billing_lifecycle.js): end it at the
+  // period end (optional reason), or keep it renewing again before it ends.
+  workCancelSubscription: (reason) => req('POST', '/api/work/subscription/cancel', { reason: reason || '' }),
+  workResumeSubscription: () => req('POST', '/api/work/subscription/resume'),
   // sessions. Every free-text field is scrubbed CLIENT-SIDE (clean()) before it
   // leaves the browser, so raw PII/PHI/secrets never reach our server or the AI.
   workCreate: (body) => req('POST', '/api/work/sessions', { ...(body || {}), ...(body && body.goal != null ? { goal: clean(body.goal) } : {}) }),
@@ -169,6 +186,10 @@ export const api = {
   workDelete: (id, reason) => req('DELETE', `/api/work/sessions/${id}${reason ? `?reason=${encodeURIComponent(reason)}` : ''}`),
   workTeamActivity: () => req('GET', '/api/work/team/activity'),
   workTeamAi: () => req('GET', '/api/work/team/ai'),
+  // Camera reading (company admin): the switch that lets members guide from a
+  // camera pointed at another computer or a physical system (off by default).
+  workCompanyCapture: () => req('GET', '/api/work/company/capture'),
+  workSetCompanyCapture: (camera) => req('PUT', '/api/work/company/capture', { camera: !!camera }),
   workTeamSetAiKeys: (body) => req('POST', '/api/work/team/ai-keys', body || {}),
   // Company admin: view / backup / restore / clear the company knowledge base.
   // Clear + replace are destructive, so they require a reason (logged server-side).
@@ -481,12 +502,24 @@ export const api = {
   workTeamSkillsExportUrl: () => '/api/work/team/skills/export',   // direct cookie-authed download
   workTeamSkillsImport: (skills, replace) => req('POST', '/api/work/team/skills/import', { skills, ...(replace ? { replace: true } : {}) }),
   workTeamSkillsClear: (reason) => req('POST', '/api/work/team/skills/clear', { reason }),
+  // A personal account's own brain (server/personal_brain_routes.js): what it
+  // learned by source, learn from one document (the file is never kept),
+  // forget one learning / one source / everything. Company users have the
+  // company brain (403 COMPANY_ACCOUNT here).
+  meBrain: () => req('GET', '/api/work/me/brain'),
+  meBrainLearn: (body) => req('POST', '/api/work/me/brain/learn', body || {}),   // { name, mime, dataBase64 }
+  meBrainForgetLearning: (id) => req('DELETE', `/api/work/me/brain/learnings/${encodeURIComponent(id)}`),
+  meBrainForgetSource: (id) => req('DELETE', `/api/work/me/brain/sources/${encodeURIComponent(id)}`),
+  meBrainClear: () => req('POST', '/api/work/me/brain/clear', {}),
   // Company Brain (company admin): the per-company knowledge store the desktop
   // app fills from documents scrubbed + embedded ON DEVICE. This console only
   // lists what is in it and removes sources; nothing is uploaded from the web.
   // Remove + clear are destructive, so they require a reason (logged server-side).
   //   inventory -> { stats: { chunks, sources, bytes }, sources: [{ sourceId, title, kind, version, chunks, status, updatedAt, policyVersion }] }
   workBrainInventory: () => req('GET', '/api/work/brain/inventory'),
+  // A company admin adds one document (name, mime, dataBase64): read in memory,
+  // masked under the company policy, kept only as passages; never the file.
+  workBrainDocumentAdd: (doc) => req('POST', '/api/work/brain/documents', doc),
   workBrainSourceDelete: (id, reason) => req('DELETE', `/api/work/brain/sources/${encodeURIComponent(id)}`, { reason }),
   workBrainClear: (reason) => req('POST', '/api/work/brain/clear', { reason }),
   // Company Brain custody (company admin): customer-held key. With private
@@ -543,6 +576,22 @@ export const api = {
   // Company admin: read / set SSO for their own company (secret is write-only).
   workCompanyGetSso: () => req('GET', '/api/work/company/sso'),
   workCompanySetSso: (cfg) => req('POST', '/api/work/company/sso', cfg || {}),
+  // Company admin: SAML, SCIM and the test sign-in (server/sso_admin_routes.js).
+  workCompanySsoOverview: () => req('GET', '/api/work/company/sso/overview'),
+  workCompanySamlParse: (body) => req('POST', '/api/work/company/sso/saml/parse', body || {}),
+  workCompanySetSaml: (cfg) => req('POST', '/api/work/company/sso/saml', cfg || {}),
+  workCompanyClearSaml: () => req('DELETE', '/api/work/company/sso/saml'),
+  workCompanySsoTestResult: () => req('GET', '/api/work/company/sso/test-result'),
+  workCompanyScimTokens: () => req('GET', '/api/work/company/scim/tokens'),
+  workCompanyCreateScimToken: (body) => req('POST', '/api/work/company/scim/tokens', body || {}),
+  workCompanyRevokeScimToken: (id) => req('DELETE', `/api/work/company/scim/tokens/${encodeURIComponent(id)}`),
+  // SCIM group -> role / grant mappings (server/scim_role_routes.js).
+  workCompanyScimRoleMappings: () => req('GET', '/api/work/company/scim/role-mappings'),
+  workCompanyAddScimRoleMapping: (body) => req('POST', '/api/work/company/scim/role-mappings', body || {}),
+  workCompanyRemoveScimRoleMapping: (id, reason) => req('DELETE', `/api/work/company/scim/role-mappings/${encodeURIComponent(id)}`, { reason: reason || '' }),
+  // Company admin: contract, pool and the invoices AdmireVeda issued (server/b2b_routes.js).
+  workCompanyBilling: () => req('GET', '/api/work/company/billing'),
+  workCompanyInvoicePdfUrl: (id) => `/api/work/company/invoices/${encodeURIComponent(id)}.pdf`,
   // superadmin WorkCoPilot config
   workAdminGetPlatformAi: () => req('GET', '/api/work/admin/platform-ai'),
   workAdminSetPlatformAi: (allowed) => req('POST', '/api/work/admin/platform-ai', { allowed }),

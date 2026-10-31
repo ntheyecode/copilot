@@ -114,6 +114,23 @@ export default {
           done: 'the task finishes with a clean log and no error',
         },
       },
+      // Where screen sharing is not an option: a camera reads the HMI, console
+      // or device screen (the proof card shows "via camera" instead of
+      // "watching"). Honest: it reads what the camera sees, never controls the
+      // equipment, masks readable values on the device. HMI and SCADA are
+      // industry terms and stay as written.
+      {
+        tag: 'Operations, OT & industrial', short: 'OT',
+        outcome: 'Guided at the panel, not at a desk',
+        benefit: 'Where screen sharing is not an option, a camera reads the HMI, console or device screen and the guide gives the next step: read-only, masked on the device.',
+        can: ['Change a recipe on an HMI', 'Clear an alarm on a SCADA console', 'Set up a run on a lab instrument', 'Guide a kiosk or a second computer'],
+        guide: {
+          goal: 'Change Line 3 over to the new recipe',
+          plan: ['Stop the line and confirm Manual mode', 'Load the new recipe on the HMI', 'Run a test cycle and read the setpoints back'],
+          now: 'On the panel open Setup, then Recipe, select the one named for this batch, and read the setpoints back before you press Load.',
+          done: 'the display shows the new recipe name and the test cycle ends with no alarm',
+        },
+      },
     ],
     case: {
       cta: 'Guide me on this',
@@ -123,6 +140,7 @@ export default {
     mini: {
       aria: 'Example guided session: {goal}',
       watching: 'watching',
+      watchingCamera: 'via camera',
       youWant: 'YOU WANT',
       stepOf: 'Step {n} of {total}',
       srDone: 'Done: ',

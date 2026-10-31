@@ -5,12 +5,16 @@
 //      src/edition/active.js reads at import (no flash of the wrong edition;
 //      the SPA still confirms with GET /api/work/edition and the server wins).
 //   2. The static shell's audience copy (JSON-LD offers, the cost FAQ answer,
-//      the <noscript> plans line) from scripts/audience_seo.mjs.
+//      the <noscript> plans line) from scripts/audience_seo.mjs; where the
+//      edition serves the individuals site, the shell's title, description and
+//      no-JavaScript heading are that site's home page's own
+//      (src/sites/individuals/seo_pages.js).
 //   3. The public origin (canonical, hreflang, Open Graph, JSON-LD) when the
 //      server is not admireveda.com.
 //   4. The prerendered marketing routes, regenerated for that audience
-//      (scripts/prerender-marketing.mjs --audience --origin), or removed when
-//      the capability set serves no public site.
+//      (scripts/prerender-marketing.mjs --audience --origin, plus
+//      --individual-site where that capability is on), or removed when the
+//      capability set serves no public site.
 //
 // Capability-driven: the input is a capability LIST, never an edition id.
 // The default edition's capabilities with the default origin need no stamp at
@@ -24,8 +28,15 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { execFileSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
-import { CAPABILITIES, EDITIONS, DEFAULT_EDITION, copyAudience } from '../server/edition_registry.js'
+import { CAPABILITIES, EDITIONS, DEFAULT_EDITION, COPY_AUDIENCES, copyAudience } from '../server/edition_registry.js'
 import { AUDIENCE_SHELL } from '../scripts/audience_seo.mjs'
+import { brandForAudience, brandDocument } from '../server/brand.js'
+import { loadEnCatalog, lookup } from '../scripts/en_catalog.mjs'
+import { indivPrerender } from '../src/sites/individuals/seo_pages.js'
+
+// The English catalog per copy audience, as the SPA builds it (read once).
+const CATALOGS = { '': await loadEnCatalog(null) }
+for (const a of COPY_AUDIENCES) CATALOGS[a] = await loadEnCatalog(a)
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 export const DEFAULT_ORIGIN = 'https://admireveda.com'
@@ -82,15 +93,35 @@ export function stampShell(html, list, { origin = DEFAULT_ORIGIN } = {}) {
     h = swap(h, /(?<=\{ "@type": "Question", "name": "How much does it cost\?", "acceptedAnswer": \{ "@type": "Answer", "text": )"[^"]*"/, JSON.stringify(shell.costAnswer), 'the cost FAQ answer')
     h = swap(h, /<p>Self-service plans[\s\S]*?<\/p>/, `<p>${shell.noscriptPlans}</p>`, 'the <noscript> plans line')
   }
+  // The individuals site's home page IS this shell: its title, description,
+  // social cards and the no-JavaScript heading come from the page's own SEO
+  // source (src/sites/individuals/seo_pages.js over the `indiv` namespace),
+  // the same values Home.jsx sets with useSeo. Other editions are untouched.
+  if (caps.has('individual_site')) {
+    const home = indivPrerender(lookup(CATALOGS[aud || '']), 'home')
+    h = swap(h, /<title>[\s\S]*?<\/title>/, `<title>${esc(home.title)}</title>`, '<title>')
+    h = swap(h, /<meta name="description" content="[^"]*"\s*\/?>/, `<meta name="description" content="${esc(home.description)}" />`, 'meta description')
+    h = swap(h, /<meta property="og:title" content="[^"]*"\s*\/?>/, `<meta property="og:title" content="${esc(home.title)}" />`, 'og:title')
+    h = swap(h, /<meta property="og:description" content="[^"]*"\s*\/?>/, `<meta property="og:description" content="${esc(home.description)}" />`, 'og:description')
+    h = swap(h, /<meta name="twitter:title" content="[^"]*"\s*\/?>/, `<meta name="twitter:title" content="${esc(home.title)}" />`, 'twitter:title')
+    h = swap(h, /<meta name="twitter:description" content="[^"]*"\s*\/?>/, `<meta name="twitter:description" content="${esc(home.description)}" />`, 'twitter:description')
+    // The <noscript> heading and opening lines: the individuals home hero
+    // replaces the organization heading and the "for every field" line; the
+    // plans line (above) stays.
+    h = swap(h, /(?<=<noscript>)\s*<h1>[\s\S]*?<\/h1>\s*<p>[\s\S]*?<\/p>\s*<p>[\s\S]*?<\/p>/, `\n      <h1>${esc(home.h1)}</h1>\n${home.lede.map((p) => `      <p>${esc(p)}</p>`).join('\n')}`, 'the <noscript> heading and opening lines')
+  }
   if (origin !== DEFAULT_ORIGIN) h = h.split(DEFAULT_ORIGIN).join(origin)
-  return h
+  // The audience's brand (LinkNotes on the individuals edition): site name,
+  // JSON-LD names, domain and icon set. After the origin swap, so an operator's
+  // own origin wins over the brand's default domain.
+  return brandDocument(h, brandForAudience(aud))
 }
 
 // Regenerate the prerendered marketing routes for this audience from the
 // (already stamped) shell. Returns how many routes were written.
 function runPrerender(distDir, caps, origin) {
   const aud = copyAudience(caps)
-  const args = [path.join(ROOT, 'scripts', 'prerender-marketing.mjs'), '--dist', distDir, '--origin', origin, ...(aud ? ['--audience', aud] : [])]
+  const args = [path.join(ROOT, 'scripts', 'prerender-marketing.mjs'), '--dist', distDir, '--origin', origin, ...(aud ? ['--audience', aud] : []), ...(caps.has('individual_site') ? ['--individual-site'] : [])]
   const outText = execFileSync(process.execPath, args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
   return (outText.match(/^prerender: \//gm) || []).length
 }

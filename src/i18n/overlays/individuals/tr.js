@@ -198,7 +198,10 @@ export default {
   },
   widgets: {
     validate: {
-      workEmailPh: "ayse@ornek.com"
+      workEmailPh: "ayse@ornek.com",
+      workEmail: "E-posta",
+      chip1: "Google Takvim'imi hafta görünümüne al ve bir müşteriyle paylaş",
+      chip5: "Kişilerden oluşan bir CSV'yi HubSpot'a aktar ve her kişiye müşteri adayı kaynağı özelliği ekle"
     }
   },
   setPasswordPage: {

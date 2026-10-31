@@ -4,8 +4,20 @@
 // catches what it exists for. Runs in `npm test` (src/shared/*.test.mjs).
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { runAll, scanAudience, INDIVIDUALS_BANNED, ORGANIZATIONS_BANNED, checkOverlayShape, checkOverlayParity } from '../../scripts/edition_copy_scan.mjs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { runAll, scanAudience, INDIVIDUALS_BANNED, ORGANIZATIONS_BANNED, INDIVIDUALS_BANNED_LOCAL, VISIBLE, individualsSiteNamespaces, checkOverlayShape, checkOverlayParity } from '../../scripts/edition_copy_scan.mjs'
 import { mergeOverlay } from '../i18n/overlay_merge.js'
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
+
+test('every namespace the individuals site reads is scanned for company wording, in English and every language', () => {
+  const used = individualsSiteNamespaces(ROOT)
+  assert.ok(used.includes('indiv'), 'the site reads its own namespace')
+  for (const ns of used) assert.ok(VISIBLE.individuals.includes(ns), `namespace "${ns}" is read by src/sites/individuals but not listed in VISIBLE.individuals (scripts/edition_copy_scan.mjs)`)
+  // Every language has a banned-stem pattern, so the local scan covers them all.
+  for (const code of ['de', 'fr', 'es', 'it', 'pt-BR', 'ru', 'tr', 'id', 'ja', 'ko', 'zh', 'ar', 'hi', 'vi']) assert.ok(INDIVIDUALS_BANNED_LOCAL[code], `${code} has a local banned pattern`)
+})
 
 test('every audience overlay is well formed and complete in every locale', async () => {
   const { problems } = await runAll()

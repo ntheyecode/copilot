@@ -198,7 +198,10 @@ export default {
   },
   widgets: {
     validate: {
-      workEmailPh: "alexey@example.com"
+      workEmailPh: "alexey@example.com",
+      workEmail: "Email",
+      chip1: "Переключить мой Google Календарь на вид недели и поделиться им с клиентом",
+      chip5: "Импортировать CSV с контактами в HubSpot и добавить каждому контакту свойство «источник лида»"
     }
   },
   setPasswordPage: {

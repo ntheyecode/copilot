@@ -39,16 +39,17 @@ test('saas: capability meta, organization offers, and prerendered routes for org
   assert.equal(r.audience, 'organizations')
   assert.ok(r.prerenderedRoutes >= 6, `prerendered ${r.prerenderedRoutes}`)
   const shell = fs.readFileSync(path.join(dir, 'index.html'), 'utf8')
-  assert.match(shell, /<meta name="wcp-capabilities" content="saas_companies,stripe_billing,platform_ai,brain_export,brain_query,public_site"/)
-  assert.doesNotMatch(shell, /"name":"Lite"|Self-service plans|\$1/)
-  assert.match(shell, /"text": "WorkCoPilot is sold to organizations/)
-  assert.match(shell, /Hosted for your company/)
+  assert.match(shell, /<meta name="wcp-capabilities" content="saas_companies,platform_ai,brain_export,brain_query,public_site"/)
+  // No personal plan, and no published price at all (owner, 2026-10-31): the
+  // organization offers name the three ways to run it and point to sales.
+  assert.doesNotMatch(shell, /"name":"(Lite|Basic|Advanced|Premium)"|Self-service plans/)
+  assert.match(shell, /"text": "WorkCoPilot is sold to organizations and priced to your rollout/)
+  assert.match(shell, /Hosted by AdmireVeda/)
+  assert.doesNotMatch(shell, /"price"|"priceCurrency"|\$\d|per user per month/)
   const login = fs.readFileSync(path.join(dir, 'workcopilot', 'index.html'), 'utf8')
   assert.match(login, /wcp-capabilities/)
   assert.doesNotMatch(login, /free to sign up/i)
-  const pricing = fs.readFileSync(path.join(dir, 'workcopilot', 'pricing', 'index.html'), 'utf8')
-  assert.match(pricing, /Plans for organizations/)
-  assert.doesNotMatch(pricing, /Basic: 2 hours/)
+  assert.ok(!fs.existsSync(path.join(dir, 'workcopilot', 'pricing', 'index.html')), 'no prerendered pricing page for organizations')
 })
 
 test('paid: no company wording in the shell or any prerendered page a person reads', () => {
@@ -95,7 +96,7 @@ test('a run that died before the prerender is finished by the next run, not repo
   const r = stampSpa(dir, makeCaps('saas').list())
   assert.equal(r.resumed, true)
   assert.ok(r.prerenderedRoutes >= 6)
-  assert.ok(fs.existsSync(path.join(dir, 'workcopilot', 'pricing', 'index.html')))
+  assert.ok(fs.existsSync(path.join(dir, 'workcopilot', 'faq', 'index.html')))
 })
 
 test('an edition without the public site gets the meta tag and no prerendered pages', () => {
@@ -104,4 +105,24 @@ test('an edition without the public site gets the meta tag and no prerendered pa
   assert.equal(r.prerenderedRoutes, 0)
   assert.deepEqual(fs.readdirSync(dir), ['index.html'])
   assert.match(stampShell(SHELL, makeCaps('onprem').list()), /wcp-capabilities" content="single_company,offline_licensing,onprem_setup/)
+})
+
+// The individuals edition is LinkNotes (server/brand.js): its shell and every
+// prerendered page a person reads carry the LinkNotes name and icons, never the
+// corporate brand. Legal pages keep their text as written (owner decision).
+test('paid: the shell and prerendered pages are branded LinkNotes', () => {
+  const dir = fixture()
+  stampSpa(dir, makeCaps('paid').list())
+  const shell = fs.readFileSync(path.join(dir, 'index.html'), 'utf8')
+  assert.match(shell, /href="\/brand\/linknotes\/favicon\.svg"/)
+  assert.match(shell, /<meta property="og:site_name" content="LinkNotes"/)
+  const LEGAL = /terms|privacy|refund|cookie|dpa|disclaimer|acceptable-use|subprocessors|accessibility/
+  const pages = []
+  const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (e.name === 'index.html') pages.push(p) } }
+  walk(dir)
+  for (const p of pages) {
+    if (LEGAL.test(path.relative(dir, p))) continue
+    const m = fs.readFileSync(p, 'utf8').match(/WorkCoPilot|AdmireVeda/)
+    assert.equal(m, null, `${path.relative(dir, p)} still names "${m && m[0]}"`)
+  }
 })

@@ -5,7 +5,8 @@ export class PmPages {
 
   async openPm() {
     await this.page.goto('/work/pm')
-    await this.page.getByRole('heading', { name: 'Projects I manage' }).waitFor()
+    // The page's own heading (the top bar repeats the name outside <main>).
+    await this.page.getByRole('main').getByRole('heading', { name: 'Projects I manage' }).waitFor()
   }
 
   // New project dialog -> the AI maps the tasks -> the project view opens.
@@ -28,6 +29,6 @@ export class PmPages {
 
   async openQueue() {
     await this.page.goto('/work/queue')
-    await this.page.getByRole('heading', { name: 'My queue' }).first().waitFor()
+    await this.page.getByRole('main').getByRole('heading', { name: 'My queue' }).first().waitFor()
   }
 }

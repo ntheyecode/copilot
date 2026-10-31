@@ -18,6 +18,7 @@ import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import * as store from './store.js'
 import * as ai from './ai.js'
+import { pickWorkVision, pickWorkVisionStrong } from './ai_vision_ladder.js'
 import * as docs from './docs.js'
 import * as work from './work.js'
 import { buildWorkReportPdf, buildDeliverablesPdf, buildComplianceReportPdf } from './pdf.js'
@@ -32,6 +33,12 @@ import { registerWorkAdminRoutes } from './work-admin.js'
 import { scheduleFrameSweep } from './workflow_frame_sweep.js'
 import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
+import { registerPersonalBrainRoutes } from './personal_brain_routes.js'
+import { registerPartnerRoutes } from './partner_apply.js'
+import { registerContactRoutes } from './contact_form.js'
+import { registerCompanyBrainDocumentRoutes } from './company_brain_documents.js'
+import { sessionLearning } from './personal_brain_rules.js'
+import { captureSourceOf, CAPTURE_HEADER } from './capture_sources.js'
 import { verifyResponse } from './work_verify.js'
 import { registerWorkImageRoutes } from './work-images.js'
 import { registerWorkCustomerRoutes } from './work_customer_routes.js'
@@ -49,13 +56,17 @@ import { registerWorkPracticeRoutes } from './work_practices_routes.js'
 import { registerTeamProjectRoutes } from './work_team_projects_routes.js'
 import { registerSsoRoutes } from './sso.js'
 import { registerSocialRoutes, socialConfigured } from './social.js'
+import { registerSamlRoutes } from './saml_sso.js'
+import { registerScimRoutes } from './scim.js'
+import { registerSsoAdminRoutes } from './sso_admin_routes.js'
+import { registerB2bRoutes } from './b2b_routes.js'
 import { registerOnboardingRoutes } from './onboarding.js'
 // Legal consent (clickwrap): the current agreements + version every account must
 // accept to use the platform. ONE source of truth (SUPREME RULE II); the signup
 // gate, the accept endpoint, and the re-consent gate all read from here.
 import { LEGAL_VERSION, legalManifest } from './legal.js'
 import * as integrations from './integrations.js'
-import { registerWorkBillingRoutes, workStripeWebhook, billingConfigured } from './billing.js'
+import { registerWorkBillingRoutes, workStripeWebhook, billingConfigured, annualCheckoutReady } from './billing.js'
 import { registerAffiliateRoutes, bindReferralOnSignup } from './affiliate.js'
 import { claimsReport, claimsMarkdown } from './claims.js'
 import { scrubSensitive, scrubWithPolicy, redactionSummary, POLICY_CATEGORIES } from './work-scrub.js'
@@ -77,6 +88,8 @@ import { enforceRules, extractRulesAI, extractRulesHeuristic, ruleSummary } from
 import { COMPLIANCE_PRESETS, COMPLIANCE_LABELS } from './compliance-presets.js'
 import { estimateCostUsd } from './model-prices.js'
 import { currentUsageScope, drainUsage, costForCall, setUsageSink, usageScopeMiddleware, runInBackgroundUsage } from './ai_usage.js'
+import { usageHolderOf } from './usage_holder.js'
+import { publicSitePageGate } from './public_site_gate.js'
 import * as llmGuard from './llm_guard.js'
 import * as extractionWatch from './extraction_watch.js'
 // Integration API (company API keys, /api/v1, webhooks, launch links). The routes,
@@ -91,8 +104,10 @@ import { PUBLIC_BASE } from './public_url.js'
 // Deployment edition (server/edition_registry.js is the registry): routes ask
 // for a capability, never an edition name.
 import { caps, publicEdition, soloSignupRefusal } from './edition.js'
+import { brandForAudience } from './brand.js'
 import { editionRouteGate } from './edition_route_gates.js'
-import { companyTenancy } from './edition_registry.js'
+import { passwordSignInRefusal } from './sign_in_rules.js'
+import { companyTenancy, copyAudience } from './edition_registry.js'
 import { checkSpaStamp } from './spa_stamp_check.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -108,6 +123,13 @@ const WORK_TAVILY_KEY = process.env.WORK_TAVILY_KEY || ''
 
 const app = express()
 app.disable('x-powered-by')
+// Edition route gates (server/edition_route_gates.js): personal-plan purchase,
+// company-only, Stripe, social sign-in and superadmin-section route families,
+// each refused where the edition lacks the capability. Mounted FIRST, ahead of
+// every route and body parser (it reads only the method and path), so a route
+// registered early (the Stripe webhook, which needs the raw body) is covered
+// too. The default edition passes everything through untouched.
+app.use(editionRouteGate())
 // Stripe webhook MUST read the RAW body to verify the signature, so it is
 // mounted BEFORE the json parser (otherwise express.json consumes the body and
 // the signature check fails). Guarded so a missing key never crashes anything.
@@ -120,17 +142,15 @@ app.use(express.json({ limit: '16mb' })) // generous: pasted base64 frames + upl
 // scope. Provider calls report the token / audio counts their responses carry;
 // meterCost takes them per call; whatever no meter took is booked to the
 // company's ledger when the request ends (and anything later, as it lands).
-// Who an AI call's spend belongs to: the signed-in person's company (or solo
-// account). Support work done while a superadmin views a customer is booked to
+// Who an AI call's spend belongs to (usage_holder.js): the signed-in person's
+// company (or solo account), or the company of the API key a /api/v1 request
+// carries. Support work done while a superadmin views a customer is booked to
 // the platform, never billed to that customer.
-const usageHolder = (req) => {
-  const u = req && !req.impersonating ? req.workUser : null
-  return { companyId: (u && u.companyId) || null, userId: (u && u.id) || null, kind: req && req.impersonating ? 'support' : null }
-}
+const usageHolder = usageHolderOf
 setUsageSink((r) => store.recordAiUsage(r))
 app.use('/api', usageScopeMiddleware((req, entries) => {
   const h = usageHolder(req)
-  store.recordAiUsage({ companyId: h.companyId, userId: h.userId, kind: h.kind || 'other', entries })
+  store.recordAiUsage({ companyId: h.companyId, userId: h.userId, kind: h.kind || 'other', apiKeyId: h.apiKeyId, entries })
 }))
 
 // express-session's default MemoryStore does not survive a restart, which would
@@ -230,11 +250,6 @@ app.use(session({
   cookie: { httpOnly: true, sameSite: 'lax', secure: HOSTED, maxAge: 1000 * 60 * 60 * 8 }, // 8h
 }))
 
-// Edition route gates: personal-plan purchase routes need individual_plans,
-// company-only route families need company tenancy. ONE middleware ahead of
-// every route (server/edition_route_gates.js holds both lists); the default
-// edition passes everything through untouched.
-app.use(editionRouteGate())
 
 // ---- helpers --------------------------------------------------------------
 // Turn any thrown error into a user-safe response. SYSTEM errors (AI provider
@@ -560,7 +575,7 @@ function meterCost(sessionId, model, inText, outText, images = 0, opts = {}) {
     const who = h ? null : ((opts && opts.workUserId) ? store.getUser(opts.workUserId) : null)
     store.recordAiUsage({
       companyId: h ? h.companyId : ((who && who.companyId) || null), userId: h ? h.userId : ((who && who.id) || null),
-      kind: (h && h.kind) || (opts && opts.kind) || 'guide', entries, estimatedUsd: estimated, estimateKeySource,
+      kind: (h && h.kind) || (opts && opts.kind) || 'guide', apiKeyId: h ? h.apiKeyId : null, entries, estimatedUsd: estimated, estimateKeySource,
     })
     if (sessionId && typeof store.recordSessionCall === 'function') {
       const tele = opts && opts.tele
@@ -576,44 +591,9 @@ function meterCost(sessionId, model, inText, outText, images = 0, opts = {}) {
 }
 
 // ---- WorkCoPilot vision model resolution ----------------------------------
-// WorkCoPilot needs a VISION model (it reads the screen). Pick the cheapest
-// capable model per provider so the continuous watch stays cheap (the client
-// already downscales frames and only sends on change).
-const WORK_VISION_PREF = {
-  gemini: [/gemini-3\.1-flash-lite(?!-preview|-image)/i, /gemini-3(\.\d)?-flash-lite(?!-preview|-image)/i, /flash-lite-latest/i, /flash-latest/i, /2\.0-flash(?!-lite)/i, /gemini-3(\.\d)?-flash\b/i, /flash-image/i],
-  openai: [/gpt-4o-mini(?!-transcribe|-search|-audio)/i, /4\.1-nano/i, /4\.1-mini/i, /gpt-4o(?!-mini|-transcribe|-audio)/i, /gpt-4\.1\b/i, /o4-mini/i],
-  groq: [/scout/i, /maverick/i, /llama.*vl/i, /vision/i],
-  // OpenRouter: the cheapest verified screen-reader first (Qwen 3.7 Flash, reasoning
-  // off), then other cheap Qwen vision models.
-  openrouter: [/qwen3\.7-flash/i, /qwen3\.5-flash/i, /qwen3-vl-30b/i, /qwen.*vl.*instruct/i, /qwen.*flash/i],
-}
-async function pickWorkVision(rt) {
-  try {
-    const models = await ai.listModels(rt)
-    for (const re of (WORK_VISION_PREF[rt.providerId] || [])) {
-      const m = models.find((x) => re.test(x))
-      if (m) return m
-    }
-  } catch { /* fall through to the shared resolver */ }
-  return await ai.findVisionModel(rt).catch(() => null)
-}
-// Strongest-first patterns, for the just-in-time backup / Deep switch.
-const WORK_VISION_STRONG = {
-  gemini: [/gemini-3(\.\d)?-pro/i, /2\.5-pro/i, /gemini-pro.*vision/i, /flash-latest/i, /gemini-3(\.\d)?-flash\b/i, /2\.0-flash(?!-lite)/i],
-  openai: [/gpt-4o(?!-mini|-transcribe|-audio|-search)/i, /gpt-4\.1(?!-nano|-mini)/i, /o4\b/i, /gpt-4-turbo/i, /gpt-4o-mini/i],
-  groq: [/maverick/i, /scout/i, /llama.*vl/i, /vision/i],
-  openrouter: [/qwen3-vl-235b/i, /qwen3\.8/i, /qwen.*vl.*instruct/i, /qwen3\.7-flash/i],
-}
-async function pickWorkVisionStrong(rt, avoid) {
-  try {
-    const models = await ai.listModels(rt)
-    for (const re of (WORK_VISION_STRONG[rt.providerId] || [])) {
-      const m = models.find((x) => re.test(x) && x !== avoid)
-      if (m) return m
-    }
-  } catch { /* none */ }
-  return null
-}
+// The cheap and strong screen-reading ladders live in ai_vision_ladder.js
+// (pickWorkVision / pickWorkVisionStrong), which skip any model the lifecycle
+// registry says is shut down. Only the runtime wiring stays here.
 // A stronger backup {rt, visionModel} than the primary, or null. Prefers a
 // stronger model on the SAME provider first, then any other configured provider.
 async function findWorkVisionStrong(req, primary) {
@@ -888,10 +868,10 @@ async function resolveWorkRuntime(req, res, { needVision = false } = {}) {
   if (needVision) {
     res.status(400).json({
       error: companyRt
-        ? 'Your company AI key has no vision-capable model, so WorkCoPilot cannot read the screen. Ask your company admin to set a provider or model that can see images (Gemini, GPT-4o, or Llama 4 Scout) in Company, AI keys.'
+        ? 'Your company AI key has no vision-capable model, so WorkCoPilot cannot read the screen. Ask your company admin to set a provider or model that can see images (OpenAI, Gemini, or a Groq vision model) in Company, AI keys.'
         : platform
           ? 'The platform AI has no vision-capable model, so WorkCoPilot cannot read the screen. Ask the administrator to add a Gemini or OpenAI key in AI Settings.'
-          : 'Your AI key has no vision-capable model, so WorkCoPilot cannot read the screen. Use a provider or model that can see images (Gemini, GPT-4o, or Llama 4 Scout), then test it again.',
+          : 'Your AI key has no vision-capable model, so WorkCoPilot cannot read the screen. Use a provider or model that can see images (OpenAI, Gemini, or a Groq vision model), then test it again.',
       needsVision: true,
     })
     return null
@@ -1097,6 +1077,11 @@ app.post('/api/work/login', wrap((req, res) => {
   // A superadmin-disabled account cannot sign in (its sessions were already
   // invalidated when it was disabled). Clear message, not a confusing password error.
   if (u.disabled) return res.status(403).json({ error: 'This account has been disabled. Please contact your administrator.' })
+  // A company that requires single sign-on refuses password sign-in for every
+  // one of its accounts (sign_in_rules.js; checked after the password so the
+  // answer never reveals whether an account exists).
+  const ssoOnly = passwordSignInRefusal(u, u.companyId ? store.getCompany(u.companyId) : null)
+  if (ssoOnly) return res.status(ssoOnly.status).json(ssoOnly.body)
   // Break-glass: if MFA is globally disabled (operator env flag), sign in the old
   // way so a broken rollout can be recovered without locking everyone out.
   if (!store.mfaGloballyEnabled()) { establishSession(req, u); return res.json({ user: store.publicWorkUser(u) }) }
@@ -1116,7 +1101,10 @@ function pendingMfaUser(req) {
   const uid = req.session && req.session.pendingMfaUid
   const at = req.session && req.session.pendingMfaAt
   if (!uid || !at || (Date.now() - at) > MFA_PENDING_TTL_MS) return null
-  return store.getUser(uid)
+  const u = store.getUser(uid)
+  // "SSO required" switched on mid-login also ends a pending password sign-in.
+  if (u && passwordSignInRefusal(u, u.companyId ? store.getCompany(u.companyId) : null)) return null
+  return u
 }
 function clearPendingMfa(req) { if (req.session) { delete req.session.pendingMfaUid; delete req.session.pendingMfaAt } }
 
@@ -1282,8 +1270,11 @@ app.post('/api/work/profile/password', requireWorkAuth, wrap((req, res) => {
 // ===========================================================================
 // AI gating
 // ===========================================================================
+// Readiness only. The provider catalog (provider labels and model ids) is a
+// superadmin concern served by /api/work/admin/ai/providers; it was sent here to
+// every signed-in user although no client reads it, which exposed model names.
 app.get('/api/work/ai', requireWorkAuth, wrap((req, res) => {
-  res.json({ status: store.workAiStatus(req.workUser.id), providers: ai.catalog() })
+  res.json({ status: store.workAiStatus(req.workUser.id) })
 }))
 app.post('/api/work/ai/key', requireWorkAuth, wrap((req, res) => {
   const { providerId, apiKey, chatModel, visionModel } = req.body || {}
@@ -1312,9 +1303,12 @@ app.post('/api/work/ai/test', requireWorkAuth, async (req, res) => {
 })
 
 // ---- app download (gated on AI readiness) ---------------------------------
-const WORK_DESKTOP_FILE = 'WorkCoPilot-Setup.exe'
-const WORK_APK_FILE = 'WorkCoPilot.apk'
-const WORK_MSI_FILE = 'WorkCoPilot-Setup.msi'
+// Installer names follow the edition's brand (LinkNotes on the individuals
+// edition, server/brand.js): each product ships its own build.
+const APP_BRAND = brandForAudience(copyAudience(caps)).product
+const WORK_DESKTOP_FILE = `${APP_BRAND}-Setup.exe`
+const WORK_APK_FILE = `${APP_BRAND}.apk`
+const WORK_MSI_FILE = `${APP_BRAND}-Setup.msi`
 // Silent network-deploy command surfaced to company admins (and the deploy docs).
 const WORK_MSI_SILENT_CMD = `msiexec /i ${WORK_MSI_FILE} /qn /norestart`
 app.get('/api/work/app/status', requireWorkAuth, wrap((req, res) => {
@@ -1557,7 +1551,11 @@ app.post('/api/work/admin/grant-minutes', requireAuth, requireSuperAdmin, wrap((
 // AdmireVeda sets the monthly pool, task policy, overage price, timezone,
 // month-end behavior, and the request/Stripe toggles against each company.
 app.post('/api/work/admin/companies/:id/enterprise', requireAuth, requireSuperAdmin, wrap((req, res) => {
-  const out = store.setCompanyEnterprise(req.params.id, req.body || {})
+  // Where Stripe is off (contract + invoice billing), paying for extra hours by
+  // card can never be switched on: the toggle is forced off, not just hidden.
+  const body = { ...(req.body || {}) }
+  if (!caps.has('stripe_billing')) body.stripeEnabled = false
+  const out = store.setCompanyEnterprise(req.params.id, body)
   store.recordAdminAction({ companyId: req.params.id, action: 'set_enterprise', reason: req.body && req.body.reason || '', detail: 'enterprise pool/policy updated' })
   res.json(out)
 }))
@@ -1696,6 +1694,16 @@ function guardUserText(req, res, text, field, sessionId = null) {
   return { guard: { warning, severity: hit.severity, category: hit.category, blocked: false } }
 }
 
+// The one camera chokepoint: a session request that says it reads from a camera
+// (x-wc-capture: camera) goes ahead only where the camera is allowed.
+app.use('/api/work/sessions', (req, res, next) => {
+  if (captureSourceOf(req.get(CAPTURE_HEADER)) !== 'camera') return next()
+  requireWorkAuth(req, res, () => {
+    const refusal = store.cameraRefusalFor(req.workUser.id, 'camera')
+    if (refusal) return res.status(403).json(refusal)
+    next()
+  })
+})
 app.post('/api/work/sessions', requireWorkAuth, requireWorkSubscription, wrap((req, res) => {
   const { title, goal, scope } = req.body || {}
   // Work-flow segregation: a company user on the worker flow does not start their
@@ -1966,6 +1974,17 @@ app.get('/api/work/team/privacy-contacts', requireWorkAuth, requireCompanyAdmin,
   const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
   res.json(store.getCompanySensitivity(cid))
 }))
+// Camera reading (server/capture_sources.js): the company admin's switch, off
+// by default for a company; personal accounts always have it.
+app.get('/api/work/company/capture', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  res.json({ camera: store.getCompanyCameraCapture(req.workUser.companyId) })
+}))
+app.put('/api/work/company/capture', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const r = store.setCompanyCameraCapture(req.workUser.companyId, !!(req.body && req.body.camera))
+  store.recordAdminAction({ userId: req.workUser.id, companyId: req.workUser.companyId, action: 'camera_capture', reason: r.camera ? 'turned camera reading on' : 'turned camera reading off', detail: `camera=${r.camera}` })
+  res.json(r)
+}))
+
 app.post('/api/work/team/privacy-contacts', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
   const b = req.body || {}
@@ -2382,7 +2401,7 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     // passes the text in the request. It is used for THIS plan only and never
     // stored (store.getWorkDocsText is the web path, where docs are persisted).
     const ephemeralDocs = typeof (req.body && req.body.docsText) === 'string' ? req.body.docsText.slice(0, 8000) : ''
-    const rawDocs = ephemeralDocs || store.getWorkDocsText(req.workUser.id, { maxChars: 6000 })
+    const rawDocs = ephemeralDocs || store.getGroundingText(req.workUser.id, safeGoal, { maxChars: 6000 })
     const docScrub = scrubText(rawDocs)
     const userDocs = docScrub.clean
     const groundedResearch = userDocs
@@ -3061,7 +3080,7 @@ app.post('/api/work/sessions/:id/howto', requireWorkAuth, requireWorkSubscriptio
       new Promise((resolve) => setTimeout(() => resolve(''), 12000)),
     ]).catch(() => '')
     const ephemeralDocs2 = typeof (req.body && req.body.docsText) === 'string' ? req.body.docsText.slice(0, 5000) : ''
-    const userDocs = scrubIf(scrubOn, ephemeralDocs2 || store.getWorkDocsText(req.workUser.id, { maxChars: 4000 }), req.workUser.id)
+    const userDocs = scrubIf(scrubOn, ephemeralDocs2 || store.getGroundingText(req.workUser.id, `${s.goal || ''} ${act}`, { maxChars: 4000 }), req.workUser.id)
     const grounded = userDocs
       ? (`USER REFERENCE DOCUMENTS (ground in these, but verify against best practice and flag anything wrong):\n${userDocs}\n\n` + (notes || ''))
       : notes
@@ -3299,9 +3318,10 @@ app.post('/api/work/report-shots', requireWorkAuth, wrap((req, res) => {
 // Pricing is public (the marketing site reads it); superadmin can change it.
 app.get('/api/work/pricing', wrap((req, res) => {
   // annualReady tells the marketing page whether annual CHECKOUT is wired (all
-  // three annual Stripe price ids set). When false, an annual pick shows the
+  // three annual Stripe price ids set, through billing.js cfg(), so it is false
+  // where this edition has no Stripe). When false, an annual pick shows the
   // 20%-off price and routes to sign-up rather than starting a charge.
-  const annualReady = (() => { try { return !!store.getBillingPublic().annualReady } catch { return false } })()
+  const annualReady = (() => { try { return annualCheckoutReady(store) } catch { return false } })()
   res.json({ ...store.getWorkPricing(), annualReady })
 }))
 
@@ -3365,7 +3385,9 @@ app.post('/api/work/coverage', wrap(async (req, res) => {
   const cfg = store.getActiveRuntime()
   if (!cfg) { logSearch(generic); return res.json(generic) }
   try {
-    const out = await work.workCoverage(ai, cfg, { question, pricing: store.getWorkPricing(), locale: readLocale(req) })
+    // Personal plans only where they are sold; the corporate site talks to sales.
+    const personalPlans = caps.has('individual_plans')
+    const out = await work.workCoverage(ai, cfg, { question, pricing: personalPlans ? store.getWorkPricing() : null, locale: readLocale(req), personalPlans })
     logSearch(out)
     res.json(out)
   } catch (e) {
@@ -3406,22 +3428,17 @@ app.post('/api/work/leads', wrap((req, res) => {
 // ---- Contact Us (public) --------------------------------------------------
 // Capture the form, email the business (recipient is superadmin-set), and send
 // the submitter a thank-you. Rate-limited like the lead form.
-app.post('/api/work/contact', wrap((req, res) => {
-  const b = req.body || {}
-  const name = String(b.name || '').trim()
-  const email = String(b.email || '').trim()
-  const message = String(b.message || '').trim()
-  if (!name || !email || !message) return res.status(400).json({ error: 'Name, email and a message are required.' })
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return res.status(400).json({ error: 'Enter a valid email address.' })
-  if (message.length < 5) return res.status(400).json({ error: 'Please add a little more detail to your message.' })
-  const ip = String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim()
-  if (!coverageRateOk(ip)) return res.status(429).json({ error: 'Too many submissions just now - please try again shortly.' })
-  const rec = store.addContactSubmission({ name, email, subject: b.subject, message }, { ip })
-  const notify = store.getNotifySettings()
-  sendTemplateAsync('contact_notify', notify.contactTo, { name, email, subject: b.subject || '(no subject)', message, submittedAt: rec.at, ip })
-  if (notify.thankYou) sendTemplateAsync('contact_thank_you', email, { name })
-  res.json({ ok: true })
-}))
+// Partner applications land in the contact inbox (server/partner_apply.js).
+registerPartnerRoutes(app, {
+  store, wrap, rateOk: coverageRateOk, companiesOn: () => caps.has('saas_companies'),
+  notify: (d) => { const n = store.getNotifySettings(); sendTemplateAsync('contact_notify', n.contactTo, d); if (n.thankYou) sendTemplateAsync('contact_thank_you', d.email, { name: d.name }) },
+})
+// The contact form (server/contact_form.js): validated details, the Contacts
+// inbox and the notification email.
+registerContactRoutes(app, {
+  store, wrap, rateOk: coverageRateOk,
+  notify: (d) => { const n = store.getNotifySettings(); sendTemplateAsync('contact_notify', n.contactTo, d); if (n.thankYou) sendTemplateAsync('contact_thank_you', d.email, { name: d.name }) },
+})
 
 // ---- Password: set (via emailed token), forgot, validate token ------------
 // A strong throwaway password for accounts created without one (the person sets
@@ -3771,7 +3788,14 @@ app.post('/api/work/sessions/:id/finalize', requireWorkAuth, async (req, res) =>
     // false templates). Best-effort: a capture failure never breaks finalize.
     // A session that followed a published workflow is not distilled: the trainer's
     // workflow is the authority, and a learned copy would compete with it.
-    try { const rec = s.workflowRef ? null : work.distillWorkflowTemplate(s); if (rec) store.captureWorkflowTemplate(req.workUser.id, rec) } catch (e) { console.warn(`[work] template capture failed: ${e.message}`) }
+    try {
+      const rec = s.workflowRef ? null : work.distillWorkflowTemplate(s)
+      if (rec) store.captureWorkflowTemplate(req.workUser.id, rec)
+      // A personal account also keeps what worked in its own brain (masked again
+      // on the way in), so its next similar task starts from it.
+      const learned = rec && !req.workUser.companyId ? sessionLearning(s.goal, rec) : null
+      if (learned) store.addPersonalBrainNotes(req.workUser.id, [learned])
+    } catch (e) { console.warn(`[work] template capture failed: ${e.message}`) }
     // If this session is a project task, close the forward-learning loop: mark the task
     // done, record its outcome + telemetry (completed-task storage), and keep the ledger
     // populated for the next task. Best-effort - never breaks finalize.
@@ -3797,6 +3821,8 @@ app.get('/api/work/active', requireWorkAuth, wrap((req, res) => {
 registerWorkAdminRoutes(app, { store, work, ai, requireAuth, requireAdmin, requireSuperAdmin, wrap, resolveWorkRuntime })
 registerWorkShotRoutes(app, { store, requireWorkAuth, wrap })
 registerWorkDocsRoutes(app, { store, requireWorkAuth, wrap, extractDocText: docs.extractText })
+registerPersonalBrainRoutes(app, { store, requireWorkAuth, wrap })
+registerCompanyBrainDocumentRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap, extractText: docs.extractText })
 registerWorkCustomerRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap })
 registerKbSpaceRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap })
 registerGuidanceDepthRoutes(app, { store, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
@@ -3829,6 +3855,12 @@ registerSsoRoutes(app, { store, establishSession, requireAuth, requireWorkAuth, 
 // Social sign-in for individual users (Google + Microsoft OIDC, Facebook OAuth2).
 // Reuses the OIDC machinery and the same MFA gate as password + SSO login.
 registerSocialRoutes(app, { store, establishSession, wrap })
+// SAML 2.0 sign-in, SCIM 2.0 provisioning, their console setup routes, and
+// AdmireVeda's contract + invoice billing of companies (each its own module).
+registerSamlRoutes(app, { store, establishSession, wrap, hosted: HOSTED })
+registerScimRoutes(app, { store })
+registerSsoAdminRoutes(app, { store, requireAuth, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap, hosted: HOSTED })
+registerB2bRoutes(app, { store, requireAuth, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
 // Subscribe onboarding: create account -> verify email -> pay -> welcome -> app.
 // Runs on the onboarding marker / full session; the app entry reuses the MFA
 // gate above (pendingMfaUid + /api/work/login/mfa*), so no login path is bypassed.
@@ -3876,14 +3908,16 @@ app.post('/api/work/company/integrations/:id/test', requireWorkAuth, requireComp
 registerWorkBillingRoutes(app, { store, requireWorkAuth, requireAuth, requireSuperAdmin, requireAiStepUp, wrap })
 registerAffiliateRoutes(app, { store, requireWorkAuth, requireAuth, requireAffiliateAdmin, requireSuperAdmin, requireAiStepUp, wrap })
 
-// Public: the Windows desktop installer. A bare /downloads/... path hits the
+// The Windows desktop installer, for signed-in people only (owner, 2026-10-31:
+// downloads live in the dashboard, never on the public site; the MSI is for
+// company admins at /api/work/app/msi). A bare /downloads/... path hits the
 // nginx catch-all and returns the SPA HTML (a ~6 KB file renamed .exe), so it
 // MUST be served via an /api/work path that reaches this app, before the catch-all.
-app.get('/api/work/desktop-setup.exe', (req, res) => {
-  const f = path.join(ROOT, 'downloads', 'WorkCoPilot-Setup.exe')
+app.get('/api/work/desktop-setup.exe', requireWorkAuth, (req, res) => {
+  const f = path.join(ROOT, 'downloads', WORK_DESKTOP_FILE)
   if (!fs.existsSync(f)) return res.status(404).json({ error: 'The installer is not published yet.' })
   res.setHeader('Content-Type', 'application/octet-stream')
-  res.setHeader('Content-Disposition', 'attachment; filename="WorkCoPilot-Setup.exe"')
+  res.setHeader('Content-Disposition', `attachment; filename="${WORK_DESKTOP_FILE}"`)
   res.sendFile(f)
 })
 
@@ -3908,6 +3942,9 @@ if (fs.existsSync(DIST)) {
   // The built SPA must carry this server's capability stamp (logged with the
   // fix when it does not; server/spa_stamp_check.js).
   checkSpaStamp(DIST, caps.list())
+  // No public site on this server: marketing pages go to sign-in and sign-in is
+  // the plain shell (server/public_site_gate.js).
+  app.use(publicSitePageGate({ shellFile: path.join(DIST, 'index.html') }))
   app.use(express.static(DIST, {
     etag: true,
     setHeaders: (res, filePath) => {

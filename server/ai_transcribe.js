@@ -19,6 +19,12 @@
 // ===========================================================================
 import { AI_CODES, aiError, assertAllowedHost, providerOf, looksLikeModelError, listModels } from './ai.js'
 import { reportUsage, usageFromResponse, withKeySource } from './ai_usage.js'
+import { billsPerMinute } from './ai_call_prices.js'
+import { dropRetired, firstCurrent, isRetired, preferredReplacement, retiredModelMessage } from './ai_model_lifecycle.js'
+import { buildTranscribeForm, wantsSegments } from './ai_transcribe_request.js'
+import { audioDurationSeconds } from './audio_duration.js'
+
+export { wantsSegments }
 
 export const AI_NO_TRANSCRIBE = 'AI-NO-TRANSCRIBE'
 export const TRANSCRIBE_PROVIDERS = new Set(['groq', 'openai', 'gemini'])
@@ -26,13 +32,20 @@ export const MAX_AUDIO_BYTES = 8 * 1024 * 1024          // one utterance chunk i
 export const AUDIO_MIMES = ['audio/wav', 'audio/x-wav', 'audio/webm', 'audio/ogg', 'audio/mpeg', 'audio/mp4']
 const TIMEOUT_MS = 60000
 
-// Cheapest dependable first; the live catalog decides what exists on the key.
-const PREFS = {
+// Cheapest dependable first; the live catalog decides what exists on the key and
+// the lifecycle registry removes any model past its shutdown date (OpenAI's
+// gpt-4o-mini-transcribe at $0.003/min until 2027-02-26, then gpt-transcribe at
+// $0.0045/min, its named replacement).
+export const TRANSCRIBE_PREFS = {
   groq: [/^whisper-large-v3-turbo$/i, /^whisper-large-v3$/i, /whisper/i],
   openai: [/^gpt-4o-mini-transcribe$/i, /^gpt-transcribe$/i, /^whisper-1$/i, /transcribe/i, /whisper/i],
 }
-const NEVER = /diariz|tts|speech-to-speech|realtime|preview/i
-const FALLBACK = { groq: 'whisper-large-v3-turbo', openai: 'gpt-4o-mini-transcribe' }
+// Streaming / realtime / diarization variants are not for this one-shot endpoint.
+const NEVER = /diariz|tts|speech-to-speech|realtime|preview|live/i
+// Used only when the key's model list cannot be read: the first entry that is
+// not past its shutdown on the day of the call.
+export const TRANSCRIBE_FALLBACK = Object.freeze({ groq: ['whisper-large-v3-turbo'], openai: ['gpt-4o-mini-transcribe', 'gpt-transcribe'] })
+export const transcribeFallback = (providerId, at = Date.now()) => firstCurrent(TRANSCRIBE_FALLBACK[providerId], { at })
 
 const idOf = (rt) => { const p = providerOf(rt); return p ? p.id : null }
 
@@ -51,15 +64,15 @@ export function pickTranscribeRuntime(rt) {
   return { rt: { ...alt, onSwitch: rt.onSwitch }, switched: true, fromProvider: idOf(rt) }
 }
 
-// Pure: choose a transcription model from a provider's model ids.
-export function chooseTranscribeModel(providerId, ids, { avoid = null } = {}) {
-  const pool = (Array.isArray(ids) ? ids : []).map(String).filter((x) => x && x !== avoid && !NEVER.test(x))
-  for (const re of (PREFS[providerId] || [])) { const hit = pool.find((x) => re.test(x)); if (hit) return hit }
+// Pure: choose a transcription model from a provider's model ids. A model past
+// its shutdown is never chosen; when `avoid` (the model that just failed) has a
+// named replacement on the key, that replacement comes first.
+export function chooseTranscribeModel(providerId, ids, { avoid = null, at = Date.now() } = {}) {
+  const pool = dropRetired((Array.isArray(ids) ? ids : []).map(String), { provider: providerId, at }).filter((x) => x && x !== avoid && !NEVER.test(x))
+  if (avoid) { const named = preferredReplacement(avoid, pool, { at }); if (named && pool.includes(named)) return named }
+  for (const re of (TRANSCRIBE_PREFS[providerId] || [])) { const hit = pool.find((x) => re.test(x)); if (hit) return hit }
   return null
 }
-// Whisper models return segment timestamps (verbose_json); the newer transcribe
-// models only return text.
-export const wantsSegments = (model) => /whisper/i.test(String(model || ''))
 
 // Pure: validate the request body { audio (base64 or data URL), mime, language? }.
 export function parseAudioPayload(body) {
@@ -85,16 +98,24 @@ async function timed(fn) {
   try { return await fn(ac.signal) } finally { clearTimeout(timer) }
 }
 
+// The usage to book for one transcription. A per-minute billed model
+// (gpt-transcribe) is booked from the audio length we sent when the response
+// did not state the seconds it processed: the response may carry no usage at
+// all, or token counts the provider does not bill by.
+export function transcribeUsage(model, data, audio, mime) {
+  const usage = usageFromResponse('openai', data)
+  if (!billsPerMinute(model) || (usage && usage.audioSeconds != null)) return usage
+  const secs = audioDurationSeconds(audio, mime)
+  return secs != null ? { audioSeconds: secs } : usage
+}
+
 // OpenAI-compatible multipart transcription (Groq, OpenAI).
 async function openaiTranscribe(p, apiKey, model, audio, mime, language, retry = 0) {
   assertAllowedHost(p.base)
   const verbose = wantsSegments(model)
-  const form = new FormData()
-  form.append('file', new Blob([audio], { type: mime }), `chunk.${extOf(mime)}`)
-  form.append('model', model)
-  form.append('response_format', verbose ? 'verbose_json' : 'json')
-  form.append('temperature', '0')
-  if (language) form.append('language', language)
+  // Fields per model family (ai_transcribe_request.js): gpt-transcribe takes a
+  // `languages` array and no verbose segments; whisper keeps verbose_json.
+  const form = buildTranscribeForm(model, { audio, mime, filename: `chunk.${extOf(mime)}`, language })
   let res, data
   try {
     res = await timed((signal) => fetch(`${p.base}/audio/transcriptions`, { method: 'POST', headers: { Authorization: `Bearer ${apiKey}` }, body: form, signal }))
@@ -107,7 +128,7 @@ async function openaiTranscribe(p, apiKey, model, audio, mime, language, retry =
     throw e
   }
   if (!res.ok) throw aiError(res.status, (data && data.error && data.error.message) || `${p.label} transcription failed (${res.status})`)
-  reportUsage({ provider: p.id, model, usage: usageFromResponse('openai', data), call: 'transcribe' })
+  reportUsage({ provider: p.id, model, usage: transcribeUsage(model, data, audio, mime), call: 'transcribe' })
   const text = String((data && data.text) || '').trim()
   const segments = verbose && Array.isArray(data && data.segments)
     ? data.segments
@@ -164,7 +185,7 @@ async function pickModel(rt, { avoid = null, fresh = false } = {}) {
   const hit = modelCache.get(key)
   if (!fresh && !avoid && hit && Date.now() - hit.at < MODEL_TTL_MS && hit.model) return hit.model
   const ids = await rawModelIds(p, rt.apiKey).catch(() => null)
-  const model = ids ? chooseTranscribeModel(p.id, ids, { avoid }) : (avoid ? null : FALLBACK[p.id] || null)
+  const model = ids ? chooseTranscribeModel(p.id, ids, { avoid }) : (avoid ? null : transcribeFallback(p.id))
   if (!avoid) modelCache.set(key, { model, at: Date.now() })
   return model
 }
@@ -183,6 +204,9 @@ async function transcribeOnKey(rt, { audio, mime = 'audio/wav', language = null 
   const model = await pickModel(rt)
   if (!model) throw aiError(503, `No transcription model is available on this ${p.label} key.`, AI_CODES.EXHAUSTED)
   try {
+    // A pinned model past its shutdown (Gemini uses the key's chat model) is not
+    // called: it takes the retired path below, which records the substitution.
+    if (isRetired(model, { provider: p.id })) throw aiError(404, retiredModelMessage(model), AI_CODES.RETIRED)
     return { ...(await run(model)), provider: p.id, model }
   } catch (e) {
     if (!looksLikeModelError(e)) throw e
@@ -201,4 +225,5 @@ async function transcribeOnKey(rt, { audio, mime = 'audio/wav', language = null 
 export default {
   AI_NO_TRANSCRIBE, TRANSCRIBE_PROVIDERS, MAX_AUDIO_BYTES, AUDIO_MIMES,
   canTranscribe, pickTranscribeRuntime, chooseTranscribeModel, wantsSegments, parseAudioPayload, transcribeAudio,
+  transcribeFallback, transcribeUsage,
 }

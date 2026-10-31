@@ -27,23 +27,37 @@ turned into privacy-scrubbed, embedded, content-addressed chunks. At plan time,
 for a company user, those chunks become the primary company grounding for the
 answer, each carrying the name of the source it came from.
 
-The design principle throughout: **raw company documents never reach the
-server.** The desktop app extracts, scrubs and embeds on device; only scrubbed
-text chunks and their numeric vectors are uploaded. The server stores them
-encrypted per tenant and retrieves from them. This matches the SESSION-HANDOFF
-vision (desktop-first ingestion; the server learns from scrubbed learning, not
-from the documents).
+**How documents get in today (as shipped):** the company admin adds them in
+the company console, Company Brain section, "Add documents"
+(`src/pages/workadmin/sections/companybrain/`, route
+`POST /api/work/brain/documents` in `server/company_brain_documents.js`). The
+file is decoded and its text extracted in memory on the server, every chunk is
+masked under the company's effective data policy (`ingestSource`, the same
+scrub as every other intake), and only the masked passages are embedded and
+stored, sealed per tenant. The file itself is never written anywhere and the
+response states `fileKept: false`. The same document name again replaces its
+earlier version. A locked private brain answers 423 `BRAIN_LOCKED` with what to
+do; each add is audited; 30 adds per admin per hour.
+
+The design principle for on-device ingestion: **raw company documents never
+reach the server.** A device client extracts, scrubs and embeds on device and
+uploads only scrubbed chunks and their vectors through the intake route below.
+That contract is built on the server; the desktop app does not yet use it, so
+the console path above is the one customers have. Nothing user-facing claims a
+desktop uploader.
 
 Scope today is company-wide sources only (no per-user ACL trimming yet), per
 SESSION-HANDOFF decision A (V1).
 
 ---
 
-## 2. Desktop-first ingestion (scrub and embed on device)
+## 2. On-device ingestion contract (scrub and embed on device)
 
 The ingestion contract (`server/brain_ingest.js` `ingestSource`, and the server
 intake route `POST /api/work/brain/chunks`) is built so that the heavy, sensitive
-work happens on the device:
+work can happen on a device. The console's "Add documents" path (section 1) runs
+the same `ingestSource` on the server, in memory, so both paths share one scrub,
+one chunker and one dedupe:
 
 1. **Extract** the document text on the device (reusing the existing on-device
    extraction path).

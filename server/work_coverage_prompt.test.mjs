@@ -159,3 +159,58 @@ test('offtopic and "no" verdicts carry no plan, no precondition and no steps', a
   assert.equal(no.ready, '')
   assert.deepEqual(no.preview, [])
 })
+
+// A fake AI that answers each call from a list, recording the user turns, so the
+// recheck after a refusal can be driven call by call.
+const seqAi = (answers) => {
+  const calls = []
+  return { calls, generate: async (_cfg, _sys, user) => { calls.push(user); return JSON.stringify(answers[Math.min(calls.length - 1, answers.length - 1)]) } }
+}
+
+test('the taste is always the first 3 steps: a step without a how list no longer cuts it short', async () => {
+  const gap = { ...CALENDAR, steps: CALENDAR.steps.map((s, i) => (i === 1 ? { ...s, how: [], done: '', drift: '' } : s)) }
+  const out = await workCoverage(fakeAi(gap), {}, { question: 'calendar week view' })
+  assert.equal(out.preview.length, 3, 'step 2 has no how, steps 1 and 3 still show with step 2 between them')
+  assert.deepEqual(out.preview.map((p) => p.do), out.roadmap.slice(0, 3))
+  assert.deepEqual(out.preview[1].how, [])
+  assert.equal(out.preview[1].path, 'My calendars > your calendar > Options > Settings and sharing', 'a thin step keeps its click path')
+})
+
+test('a refusal gets one recheck, and a real task is answered on the second look', async () => {
+  const ai = seqAi([{ verdict: 'offtopic', answer: 'Describe a task.' }, CALENDAR])
+  const out = await workCoverage(ai, {}, { question: 'Onboard a new employee in Okta and assign their apps' })
+  assert.equal(ai.calls.length, 2)
+  assert.doesNotMatch(ai.calls[0], /Read it again/)
+  assert.match(ai.calls[1], /Read it again before refusing/)
+  assert.equal(out.verdict, 'covered')
+  assert.equal(out.preview.length, 3)
+})
+
+test('a second refusal stands, and a first answer that is not a refusal is never rechecked', async () => {
+  const off = seqAi([{ verdict: 'offtopic', answer: 'Describe a task.' }])
+  const o = await workCoverage(off, {}, { question: 'tell me a joke' })
+  assert.equal(off.calls.length, 2)
+  assert.equal(o.verdict, 'offtopic')
+  assert.deepEqual(o.preview, [])
+  const ok = seqAi([CALENDAR])
+  await workCoverage(ok, {}, { question: 'calendar' })
+  assert.equal(ok.calls.length, 1, 'no extra AI call for an answered task')
+  const no = seqAi([{ verdict: 'no', answer: 'Not a fit.' }])
+  await workCoverage(no, {}, { question: 'review my contract' })
+  assert.equal(no.calls.length, 1, 'an honest "no" is not second-guessed')
+})
+
+test('the corporate prompt never names a plan, a price or a pricing page', () => {
+  const org = workCoverageSystem(PRICING, { personalPlans: false })
+  for (const word of ['Lite', 'Basic', 'Advanced', 'Premium', 'PLANS:', 'CHOOSING THE PLAN', 'plan fits', '$']) assert.ok(!org.includes(word), `organizations prompt mentions ${word}`)
+  assert.match(org, /ORGANIZATIONS ONLY/)
+  assert.match(org, /"plan":null/)
+  assert.match(org, /SIBLING PRODUCTS/, 'the rest of the prompt is intact')
+  assert.match(workCoverageSystem(PRICING), /PLANS:/, 'the individuals prompt keeps its plans')
+})
+
+test('a corporate answer carries no plan even when the model names one', async () => {
+  const out = await workCoverage(fakeAi(CALENDAR), {}, { question: 'calendar', personalPlans: false })
+  assert.equal(out.plan, null)
+  assert.equal(out.preview.length, 3, 'the steps are unchanged')
+})

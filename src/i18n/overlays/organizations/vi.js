@@ -8,7 +8,7 @@ export default {
   seo: {
     pricing: {
       title: "Các gói cho tổ chức - WorkCoPilot by AdmireVeda",
-      description: "Các gói WorkCoPilot cho tổ chức: lưu trữ cho công ty bạn, đám mây riêng được quản lý, hoặc cài đặt tại chỗ. Tính theo người theo quy mô công ty, kèm chính sách công ty, đăng nhập một lần và quỹ giờ hướng dẫn. Trao đổi với chúng tôi để nhận báo giá."
+      description: "WorkCoPilot cho tổ chức: do AdmireVeda lưu trữ, do AdmireVeda quản lý, hoặc phiên bản riêng trên đám mây của chính bạn, kèm chính sách công ty, đăng nhập một lần và quỹ giờ hướng dẫn. Trao đổi với chúng tôi để nhận báo giá."
     }
   },
   home: {
@@ -42,12 +42,13 @@ export default {
     pricing: {
       eyebrow: "Các gói",
       h2: "Các gói cho tổ chức.",
-      sub: "Lưu trữ cho công ty bạn, quản lý trên đám mây của bạn, hoặc trên máy chủ của chính bạn. Tính theo người theo quy mô công ty, do đội ngũ chúng tôi báo giá.",
+      sub: "Do AdmireVeda lưu trữ, do AdmireVeda quản lý, hoặc phiên bản riêng trên đám mây của chính bạn. Trao đổi với chúng tôi để nhận báo giá phù hợp với tổ chức của bạn.",
       fullCompare: "Xem các gói cho tổ chức"
     },
     final: {
       h2: "Đưa cách làm việc có hướng dẫn về tổ chức của bạn.",
-      p: "Trao đổi với chúng tôi về việc triển khai cho đội ngũ của bạn, hoặc xem bản demo 60 giây trước."
+      p: "Trao đổi với chúng tôi về việc triển khai cho đội ngũ của bạn, hoặc xem bản demo 60 giây trước.",
+      note2: "Đăng nhập bằng tài khoản công ty, hoặc bằng email công việc để dùng đăng nhập một lần của công ty bạn. <a>Đăng nhập doanh nghiệp</a>."
     }
   },
   login: {
@@ -61,12 +62,12 @@ export default {
   pricing: {
     eyebrow: "Các gói cho tổ chức",
     h1: "Làm việc có hướng dẫn cho <em>toàn bộ tổ chức của bạn.</em>",
-    sub: "Chọn cách WorkCoPilot vận hành cho bạn: lưu trữ cho công ty bạn, quản lý trên đám mây của bạn, hoặc trên máy chủ của chính bạn. Bảo mật và riêng tư đi kèm mọi gói, không bao giờ là khoản bán thêm.",
+    sub: "Chọn cách WorkCoPilot vận hành cho bạn: do AdmireVeda lưu trữ, do AdmireVeda quản lý, hoặc phiên bản riêng trên đám mây của chính bạn. Bảo mật và riêng tư đi kèm mọi gói, không bao giờ là khoản bán thêm.",
     notes: {
       items: [
         {
-          t: "Tính theo số người",
-          d: "Các gói được tính theo người theo quy mô công ty, với một quỹ giờ hướng dẫn do quản trị viên công ty bạn phân bổ."
+          t: "Giá theo quy mô triển khai",
+          d: "Trao đổi với chúng tôi để nhận báo giá phù hợp với tổ chức của bạn và cách bạn vận hành WorkCoPilot. Kèm một quỹ giờ hướng dẫn do quản trị viên công ty bạn phân bổ."
         },
         {
           t: "Tính theo phút, không theo khối",
@@ -78,11 +79,11 @@ export default {
         },
         {
           t: "Cách công ty mua",
-          d: "Một báo giá khớp với cách công ty bạn mua hàng, một DPA, và bảng kê kèm hóa đơn có thể tải về."
+          d: "Một hợp đồng khớp với cách công ty bạn mua hàng, một DPA, và hóa đơn bạn tải về từ bảng điều khiển công ty."
         }
       ]
     },
-    fine: "Điều khoản và giá cuối cùng được ấn định trong báo giá của bạn. Có thể áp dụng thuế theo địa điểm."
+    fine: "Điều khoản cuối cùng được ấn định trong hợp đồng của bạn. Có thể áp dụng thuế theo địa điểm."
   },
   howItWorks: {
     cta: {
@@ -102,8 +103,15 @@ export default {
       pricing: {
         items: {
           0: {
-            a: "WorkCoPilot được bán cho tổ chức: lưu trữ cho công ty bạn, dưới dạng đám mây riêng được quản lý, hoặc trên máy chủ của chính bạn, tính theo người theo quy mô công ty. Trao đổi với chúng tôi để nhận báo giá.",
-            d: "Thanh toán theo báo giá của bạn, kèm bảng kê và hóa đơn có thể tải về."
+            a: "WorkCoPilot được bán cho tổ chức với mức giá theo quy mô triển khai của bạn: do AdmireVeda lưu trữ, do AdmireVeda quản lý, hoặc phiên bản riêng trên đám mây của chính bạn. Trao đổi với chúng tôi để nhận báo giá.",
+            d: "AdmireVeda xuất hóa đơn cho công ty bạn theo hợp đồng; hóa đơn có trong bảng điều khiển công ty."
+          }
+        }
+      },
+      compliance: {
+        items: {
+          3: {
+            a: "Một bản DPA tóm tắt được công khai và một bản DPA đã ký có sẵn theo yêu cầu. Hướng dẫn do một nhà cung cấp AI lớn tạo ra và lưu trữ do một nhà cung cấp đám mây đảm nhận; danh sách hiện tại kèm tên pháp nhân có sẵn theo yêu cầu."
           }
         }
       },
@@ -123,6 +131,19 @@ export default {
   fieldsPage: {
     startBtn: "Đưa về đội ngũ của bạn"
   },
+  securityPage: {
+    guarantees: {
+      2: {
+        t: "Yếu tố thứ hai ở mỗi lần đăng nhập",
+        d: "Đăng nhập bằng mật khẩu cần ứng dụng xác thực trên mọi tài khoản; đăng nhập một lần của công ty dùng yếu tố thứ hai mà nhà cung cấp danh tính của bạn bắt buộc."
+      }
+    },
+    mock: {
+      fields: {
+        2: "Tài khoản ngân hàng"
+      }
+    }
+  },
   useCases: {
     final: {
       cta: "Trao đổi với chúng tôi"
@@ -135,10 +156,14 @@ export default {
   workDashboard: {
     plan: {
       choose: "Tài khoản này chưa có gói nào"
+    },
+    meters: {
+      sub: "Giờ trong tháng này, quỹ giờ của công ty bạn và các tác vụ đang mở. Di chuột vào biểu tượng thông tin trên mỗi ô để biết cách hoạt động."
     }
   },
   dashboardsHelp: {
     home: {
+      lead: "Bảng điều khiển là trang chủ của bạn: số giờ tháng này và quỹ giờ của công ty, các tác vụ đang mở, việc cần làm tiếp theo, và nơi bạn đã dừng lại.",
       steps: {
         0: "<b>Đọc gói của bạn.</b> Ba ô hiển thị số giờ còn lại trong tháng này, quỹ giờ của công ty bạn, và số chỗ tác vụ đang mở của bạn. Chip thời gian ở trên cùng chuyển sang màu hổ phách trước khi bạn sắp hết giờ.",
         2: "<b>Thêm thời gian.</b> Nhấn <b>Thêm thời gian</b> ở trên cùng để xin quản trị viên của bạn thêm giờ."

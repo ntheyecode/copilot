@@ -8,7 +8,7 @@ export default {
   seo: {
     pricing: {
       title: "Planos para organizações - WorkCoPilot by AdmireVeda",
-      description: "Planos do WorkCoPilot para organizações: hospedado para a sua empresa, nuvem privada gerenciada ou on-premises. Preço por pessoa conforme o tamanho da empresa, com política da empresa, login único e um pool de horas guiadas. Fale conosco para uma cotação."
+      description: "WorkCoPilot para organizações: hospedado pela AdmireVeda, gerenciado pela AdmireVeda ou uma instância privada na sua própria nuvem, com política da empresa, login único e um pool de horas guiadas. Fale conosco para um orçamento."
     }
   },
   home: {
@@ -42,12 +42,13 @@ export default {
     pricing: {
       eyebrow: "Planos",
       h2: "Planos para organizações.",
-      sub: "Hospedado para a sua empresa, gerenciado na sua nuvem ou nos seus próprios servidores. Preço por pessoa conforme o tamanho da empresa, cotado pela nossa equipe.",
+      sub: "Hospedado pela AdmireVeda, gerenciado pela AdmireVeda ou uma instância privada na sua própria nuvem. Fale conosco para um orçamento sob medida para a sua organização.",
       fullCompare: "Ver planos para organizações"
     },
     final: {
       h2: "Leve o trabalho guiado para a sua organização.",
-      p: "Fale conosco sobre uma implantação para a sua equipe, ou veja antes a demonstração de 60 segundos."
+      p: "Fale conosco sobre uma implantação para a sua equipe, ou veja antes a demonstração de 60 segundos.",
+      note2: "Entre com a sua conta da empresa, ou com o seu e-mail de trabalho para o login único da sua empresa. <a>Login para empresas</a>."
     }
   },
   login: {
@@ -61,12 +62,12 @@ export default {
   pricing: {
     eyebrow: "Planos para organizações",
     h1: "Trabalho guiado para <em>toda a sua organização.</em>",
-    sub: "Escolha como o WorkCoPilot roda para você: hospedado para a sua empresa, gerenciado na sua nuvem ou nos seus próprios servidores. Segurança e privacidade vêm em todos os planos, nunca como adicional.",
+    sub: "Escolha como o WorkCoPilot roda para você: hospedado pela AdmireVeda, gerenciado pela AdmireVeda ou uma instância privada na sua própria nuvem. Segurança e privacidade vêm em todos os planos, nunca como adicional.",
     notes: {
       items: [
         {
-          t: "Preço por pessoa",
-          d: "Os planos têm preço por pessoa conforme o tamanho da empresa, com um pool de horas guiadas que o administrador da sua empresa distribui."
+          t: "Preço sob medida para a sua implantação",
+          d: "Fale conosco para um orçamento sob medida para a sua organização e para o jeito como você usa o WorkCoPilot. Um pool de horas guiadas que o administrador da sua empresa distribui."
         },
         {
           t: "Minutos, não blocos",
@@ -78,11 +79,11 @@ export default {
         },
         {
           t: "Como empresas compram",
-          d: "Uma cotação que acompanha a forma como a sua empresa compra, um DPA e extratos com faturas para download."
+          d: "Um contrato que acompanha a forma como a sua empresa compra, um DPA e faturas que você baixa no console da sua empresa."
         }
       ]
     },
-    fine: "Condições e preços finais são definidos na sua cotação. Impostos podem ser aplicados conforme a localização."
+    fine: "As condições finais são definidas no seu contrato. Impostos podem ser aplicados conforme a localização."
   },
   howItWorks: {
     cta: {
@@ -102,8 +103,15 @@ export default {
       pricing: {
         items: {
           0: {
-            a: "O WorkCoPilot é vendido para organizações: hospedado para a sua empresa, como nuvem privada gerenciada ou nos seus próprios servidores, com preço por pessoa conforme o tamanho da empresa. Fale conosco para uma cotação.",
-            d: "A cobrança segue a sua cotação, com extratos e faturas para download."
+            a: "O WorkCoPilot é vendido para organizações com preço sob medida para a sua implantação: hospedado pela AdmireVeda, gerenciado pela AdmireVeda ou como instância privada na sua própria nuvem. Fale conosco para um orçamento.",
+            d: "A AdmireVeda fatura a sua empresa conforme o seu contrato; as faturas ficam no console da sua empresa."
+          }
+        }
+      },
+      compliance: {
+        items: {
+          3: {
+            a: "Um DPA resumido é público e um DPA assinado está disponível mediante solicitação. A orientação é produzida por um grande provedor de IA e a hospedagem por um provedor de nuvem; a lista atual com os nomes das entidades está disponível mediante solicitação."
           }
         }
       },
@@ -123,6 +131,19 @@ export default {
   fieldsPage: {
     startBtn: "Leve para a sua equipe"
   },
+  securityPage: {
+    guarantees: {
+      2: {
+        t: "Um segundo fator em todo login",
+        d: "O login com senha exige um app autenticador em todas as contas; o login único da sua empresa usa o segundo fator que o seu provedor de identidade exige."
+      }
+    },
+    mock: {
+      fields: {
+        2: "Conta bancária"
+      }
+    }
+  },
   useCases: {
     final: {
       cta: "Fale conosco"
@@ -135,10 +156,14 @@ export default {
   workDashboard: {
     plan: {
       choose: "Ainda não há plano nesta conta"
+    },
+    meters: {
+      sub: "Horas deste mês, o pool da sua empresa e tarefas abertas. Passe o mouse sobre a informação de um bloco para ver como funciona."
     }
   },
   dashboardsHelp: {
     home: {
+      lead: "O painel é a sua base: suas horas neste mês e o pool da sua empresa, tarefas abertas, a única coisa a fazer em seguida, e onde você parou.",
       steps: {
         0: "<b>Leia seu plano.</b> Os três blocos mostram as horas restantes neste mês, o pool da sua empresa e seus espaços de tarefas abertas. O chip de tempo no topo fica âmbar antes de você ficar com pouco.",
         2: "<b>Adicione tempo.</b> Pressione <b>Adicionar tempo</b> no topo para pedir mais horas ao seu administrador."

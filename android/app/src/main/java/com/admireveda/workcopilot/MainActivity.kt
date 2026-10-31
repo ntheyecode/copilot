@@ -136,7 +136,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val ORIGIN = "https://admireveda.com"
-        private const val START_URL = "$ORIGIN/work"
+        // The web origin comes from the product flavor (WorkCoPilot or LinkNotes).
+        private val ORIGIN = BuildConfig.APP_ORIGIN
+        private val START_URL = "$ORIGIN/work"
     }
 }

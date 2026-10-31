@@ -72,6 +72,10 @@ export const workAdminApi = {
   // Endpoint is implemented by the server agent; the UI codes defensively (it may
   // 404/501 until wired, and any field may be null).
   subscribersCancelled: () => request('GET', '/api/work/admin/subscribers/cancelled'),
+  // Subscriber health for an individuals business (superadmin + accounting):
+  // MRR by plan, counts, churn over 30 days, payments, plans ending, Stripe
+  // wiring. Shape: server/admin_subscription_health.js subscriptionHealth().
+  subscriptionHealth: () => request('GET', '/api/work/admin/subscriptions/health'),
   incidents: (limit) => request('GET', `/api/work/admin/incidents${limit ? `?limit=${encodeURIComponent(limit)}` : ''}`),
   aiState: () => request('GET', '/api/work/admin/ai-state'),
 
@@ -237,6 +241,15 @@ export const workAdminApi = {
   // (leave clientSecret empty to keep the stored one unchanged).
   companySso: (id) => request('GET', `/api/work/admin/companies/${id}/sso`),
   setCompanySso: (id, cfg) => request('POST', `/api/work/admin/companies/${id}/sso`, cfg || {}),
+  // "Single sign-on required" for every account of a company (superadmin).
+  setCompanySsoRequired: (id, required, reason) => request('POST', `/api/work/admin/companies/${id}/sso-required`, { required: !!required, reason: reason || '' }),
+  // B2B contract + invoices (server/b2b_routes.js). No card payment anywhere.
+  b2bInvoices: (status) => request('GET', `/api/work/admin/b2b/invoices${status ? `?status=${encodeURIComponent(status)}` : ''}`),
+  b2bCompany: (id) => request('GET', `/api/work/admin/b2b/companies/${id}`),
+  b2bSetContract: (id, contract) => request('POST', `/api/work/admin/b2b/companies/${id}/contract`, contract || {}),
+  b2bCreateInvoice: (id, invoice) => request('POST', `/api/work/admin/b2b/companies/${id}/invoices`, invoice || {}),
+  b2bSetInvoiceStatus: (id, invoiceId, status, note) => request('POST', `/api/work/admin/b2b/companies/${id}/invoices/${invoiceId}/status`, { status, note: note || '' }),
+  b2bInvoicePdfUrl: (id, invoiceId) => `/api/work/admin/b2b/companies/${id}/invoices/${invoiceId}.pdf`,
   createUser: (body) => request('POST', '/api/work/admin/users', body),
   userScrub: (id, enabled) => request('POST', `/api/work/admin/users/${id}/scrub`, { enabled: !!enabled }),
   userFreeAccess: (id, free) => request('POST', `/api/work/admin/users/${id}/access`, { free: !!free }),

@@ -30,7 +30,11 @@ export const OVERLAY_DIR = path.resolve(LOCALE_DIR, '..', 'overlays')
 // company wording at all"). Word-bounded, case-insensitive.
 export const INDIVIDUALS_BANNED = /\b(compan(y|ies|y's)|teams?|team's|teammates?|enterprises?|organi[sz]ations?|orgs?|SSO|single sign-on|governance|admin console|administrators?|admins?|executives?|trainers?|project managers?|seats?|seat pools?|tenants?|B2B|employees?|workforce|colleagues?|Company Brain|signed DPA|Data Processing Addendum)\b/i
 // Personal-plan wording an organizations-only edition never shows.
-export const ORGANIZATIONS_BANNED = /\b(free (account|trial|plan|tier)|free to (sign up|try|create|start)|sign up (for )?free|start free|create (a |your )?(free )?account|pick a plan|choose a plan|self-service plans?|upgrade|buy (top-up )?hours|top-up)\b/i
+// 2026-10-30 (owner): the organizations site never mentions personal plans,
+// buying hours, individual subscriptions, social sign-in or a credit card
+// (companies are invoiced under contract; company accounts never use social
+// sign-in).
+export const ORGANIZATIONS_BANNED = /\b(free (account|trial|plan|tier)|free to (sign up|try|create|start)|sign up (for )?free|start free|create (a |your )?(free )?account|pick a plan|choose a plan|self-service plans?|upgrade|buy (top-up |more |extra )?hours|top-ups?|personal (plans?|subscriptions?|accounts?)|individual (plans?|subscriptions?)|subscribe|credit cards?|debit cards?|card payments?|pay(ing)? by card|card on file|Stripe|social sign-?in|sign in with (Google|Microsoft|Facebook)|continue with (Google|Microsoft|Facebook))\b/i
 
 // The same rule in each language, for the strings an individuals overlay
 // writes (the base strings it does not override are covered by key parity
@@ -56,13 +60,46 @@ export const INDIVIDUALS_BANNED_LOCAL = {
 // app for a person). Operator consoles (superAdmin, *Admin) are not here: they
 // are AdmireVeda's own staff tools, not something a customer reads.
 const PUBLIC = ['nav', 'footer', 'common', 'seo', 'home', 'login', 'pricing', 'rel', 'residency', 'widgets', 'guide', 'how', 'notChat',
-  'fieldsPage', 'howItWorks', 'faqPage', 'securityPage', 'contactPage', 'useCases', 'demoPage', 'benchmarkPage', 'edition', 'demo', 'enterprise']
+  'fieldsPage', 'howItWorks', 'faqPage', 'securityPage', 'contactPage', 'useCases', 'demoPage', 'benchmarkPage', 'edition', 'demo', 'enterprise',
+  // /workcopilot/company-brain + the home page's Company Brain section: the
+  // organizations audience reads it (scanned for personal-plan wording); the
+  // individuals edition never renders it (HIDDEN.individuals below).
+  'companyBrainPage']
+// The individuals site (src/sites/individuals/, capability individual_site):
+// rendered for individuals only (an organizations edition never serves it), so
+// its namespace is scanned for that audience alone. Its whole namespace, in
+// English and in every language, must never carry company wording;
+// src/shared/edition_copy.test.mjs proves every namespace that site reads is
+// listed for the individuals audience.
+const INDIVIDUALS_SITE = ['indiv']
 const APP = ['onboarding', 'setPasswordPage', 'helpPage', 'helpShared', 'dashboardsHelp', 'workDashboard', 'workShell', 'workStart',
   'workProjects', 'skillsPage', 'stepCard', 'guideConsole', 'usage', 'policyNote', 'billingWidget', 'errorBoundary', 'prefs',
   'buddyPage', 'fullGuide', 'answerBody', 'resultCard', 'composeCard', 'computeCard', 'floatPanel', 'readingStrip', 'guideLevel',
-  'guideFontScale', 'accentPicker', 'buddyPicker', 'downloadMenu', 'destructiveGate', 'askFocus', 'securityNote', 'scrubRules', 'supportTickets', 'legalShared']
+  'guideFontScale', 'accentPicker', 'buddyPicker', 'downloadMenu', 'destructiveGate', 'askFocus', 'securityNote', 'scrubRules', 'supportTickets', 'legalShared', 'brainPage']
 
-export const VISIBLE = { individuals: [...PUBLIC, ...APP], organizations: [...PUBLIC, ...APP] }
+// The company console is read by the customer's own administrators (a role
+// dashboard, not an AdmireVeda staff tool), so the organizations site scans it
+// too (2026-10-31). The individuals site has no company console.
+const COMPANY_CONSOLE = ['companyAdmin', 'ssoSetup', 'companyBilling', 'companyBrain', 'brainSecurity', 'apiKeys', 'helpCompany', 'companyGovernance', 'policyRules', 'companyAdminPlan']
+export const VISIBLE = { individuals: [...PUBLIC, ...APP, ...INDIVIDUALS_SITE], organizations: [...PUBLIC, ...APP, ...COMPANY_CONSOLE] }
+
+// Every i18n namespace the individuals site's own code reads (t('ns.key') in
+// src/sites/individuals/**), so the test can prove each one is scanned. A
+// namespace used there but missing from VISIBLE.individuals would let company
+// wording onto the individuals site unscanned; the gate fails instead.
+export function individualsSiteNamespaces(root) {
+  const dir = path.join(root, 'src', 'sites', 'individuals')
+  const out = new Set()
+  const walk = (d) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name)
+      if (e.isDirectory()) walk(p)
+      else if (/\.(jsx?|mjs)$/.test(e.name)) for (const m of fs.readFileSync(p, 'utf8').matchAll(/\bt(?:\.rich|\.n)?\(\s*[`'"]([A-Za-z]\w*)\./g)) out.add(m[1])
+    }
+  }
+  if (fs.existsSync(dir)) walk(dir)
+  return [...out].sort()
+}
 
 // Legal and partner pages (terms, privacy, refund, acceptable use,
 // sub-processors, disclaimer, affiliate program). They are public on every
@@ -94,6 +131,8 @@ const WORK_CONTENT = {
 // Shown only to company members, company admins or platform staff, so an
 // individuals-only edition (no company tenants) never renders them.
 const COMPANY_MEMBER_ONLY = [
+  // the desktop-app float pointer: shown only to company members (src/shared/web_float.js)
+  'guideConsole.float.desktopOnly', 'guideConsole.float.desktopOnlyTip',
   'workDashboard.cobrand', 'workDashboard.plan.companyLeft', 'workDashboard.plan.yourCompany', 'workDashboard.plan.admin', 'workDashboard.meters.tipAdmin',
   'workDashboard.meters.allowance', 'workDashboard.meters.pool', 'workDashboard.meters.tasks.tipLimit', 'workDashboard.meters.state.pool',
   'workDashboard.meters.state.ceiling', 'workDashboard.meters.state.exhaustedCompany', 'workDashboard.meters.state.lowCompany', 'workDashboard.meters.state.tasksLimit',
@@ -118,9 +157,12 @@ export const HIDDEN = {
     ...Object.fromEntries(COMPANY_MEMBER_ONLY.map((k) => [k, 'hidden surface: rendered only for company members, company admins or platform staff'])),
     'nav.enterprise': 'SiteHeader: the Enterprise link needs companies',
     'footer.enterpriseFeatures': 'SiteFooter: needs companies',
+    'footer.companyBrain': 'SiteFooter: the Company Brain link needs companies',
+    'companyBrainPage': 'the /workcopilot/company-brain route needs companies (EditionRoute), and the home section renders only where companies exist',
     'footer.dpa': 'SiteFooter: the DPA link needs companies',
     'home.roi': 'WorkMarketing: the #enterprise section needs companies',
     'home.enterprise': 'WorkMarketing: the enterprise chips live in the #enterprise section',
+    'home.camera': 'WorkMarketing: the #camera section renders only where companies exist (the company administrator turns camera reading on)',
     'enterprise': 'the enterprise demo band (WorkEnterprise only, route needs companies)',
     'seo.enterprise': 'the /enterprise route needs companies',
     'rel.enterprise': 'ReleaseNote group shown on the enterprise page only',
@@ -200,7 +242,21 @@ export const HIDDEN = {
     'workProjects.outcome.upgradeBody': 'needs canUpgrade', 'workStart.docsCapUpgrade': 'personal plan document cap',
     'workStart.docsCapFull': 'personal plan document cap', 'workStart.qUpgrade': 'needs canUpgrade',
     'helpPage.time.buyItems': 'Help.jsx renders the top-up lines only for a personal account where personal plans are sold (the rest of the time section applies to everyone and is scanned)',
+    // Your brain (/work/brain, its rail item and its help entry): personal
+    // accounts only (no companyId); the server answers company users with 403
+    // COMPANY_ACCOUNT and the rail never shows it to them.
+    'brainPage': 'Your brain: rendered only for a personal account (company members have the company brain)',
+    'workShell.nav.brain': 'rail item shown only to personal accounts', 'workShell.nav.brainTip': 'rail item shown only to personal accounts',
+    'dashboardsHelp.brain': 'help entry shown only to personal accounts (show: !v.company)',
     'usage.outIndividual': 'personal account only', 'usage.lowNote': 'personal account only',
+    // 2026-10-30: no card and no social sign-in on the organizations site.
+    'login.social': 'WorkLogin: the social sign-in tab needs social_login (off here; company accounts never use it)',
+    'home.pricing.trustStripe': 'WorkMarketing / WorkPricing: the personal plan cards need individual_plans',
+    'widgets.validate.trustStripe': 'LiveValidate: plan card needs individual_plans',
+    // Work content: the apps and tasks people are guided through on their own
+    // screens (a payment provider is something a person may integrate at work).
+    'home.marquee': 'work content: apps and tasks people work in',
+    'useCases.cases.1.guide': 'work content: a demo task (adding payment webhooks to an app)',
   },
 }
 
@@ -354,5 +410,4 @@ export const LOCAL_REVIEWED = {
     'helpPage.desktopfaq.items.1.a': 'as above',
   },
   zh: { 'workDashboard.ai.solo': '"支持团队" = our support team (the English says contact support)' },
-  hi: { 'guideConsole.planning.phases.4': 'renders "Working with multimodal vision"; no company meaning' },
 }

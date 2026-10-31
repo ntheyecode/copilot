@@ -43,14 +43,14 @@ test('Stripe is not configured even with env keys, and the webhook does nothing'
   assert.equal(billing.billingConfigured(app.store), false)
   assert.deepEqual(billing.billingPriceMap(app.store), { lite: '', basic: '', advanced: '', premium: '' })
   assert.equal(await billing.stripeClient(app.store), null)
+  // The webhook is refused at the edition gate before it reads anything.
   const r = await req(jar(), 'POST', '/api/work/stripe/webhook', '{}', { 'stripe-signature': 't=1,v1=x' })
-  assert.equal(r.status, 200)
-  assert.equal(r.data.skipped, true)
+  assert.equal(r.status, 403)
+  assert.equal(r.data.stripeDisabled, true)
 })
 
-test('the superadmin billing panel says why Stripe is off', async () => {
+test('the superadmin Stripe billing section is not offered: its API is refused (admin_sections.js)', async () => {
   const r = await req(await superadmin(), 'GET', '/api/work/admin/billing')
-  assert.equal(r.status, 200)
-  assert.equal(r.data.offByEdition, true)
-  assert.match(r.data.offReason, /license/)
+  assert.equal(r.status, 403)
+  assert.equal(r.data.featureDisabled, true)
 })

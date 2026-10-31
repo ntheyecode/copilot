@@ -9,6 +9,9 @@
 //     signing; only the socket is swapped).
 // Anything else that is not loopback is REFUSED and recorded, so a test run can
 // never reach a real paid API, and the suite asserts that the list stays empty.
+// Stripe is not swapped here: the SDK is pointed at the loopback fake through
+// the product's own STRIPE_API_BASE hook (server-child.mjs), so a call that
+// still went to api.stripe.com would be refused and recorded like any other.
 import http from 'node:http'
 import https from 'node:https'
 import dns from 'node:dns'
@@ -23,15 +26,22 @@ function isLoopback(host) {
   return h === 'localhost' || h === '127.0.0.1' || h === '::1' || h.endsWith('.localhost')
 }
 
-export function installNetFakes({ aiHosts, aiPort, hookPort }) {
+export function installNetFakes({ aiHosts, aiPort, hookPort, idp = null }) {
   const hosts = new Set(aiHosts.map((h) => h.toLowerCase()))
   const realFetch = globalThis.fetch
+  // The mock identity provider (fake-oidc.mjs) answers for its https issuer host.
+  const idpHost = idp ? String(idp.host).toLowerCase() : null
 
   globalThis.fetch = async function e2eFetch(input, init) {
     const url = new URL(typeof input === 'string' ? input : (input && input.url) || String(input))
     const host = url.hostname.toLowerCase()
     if (hosts.has(host)) {
       const target = `http://127.0.0.1:${aiPort}/${host}${url.pathname}${url.search}`
+      if (typeof input === 'object' && input && input.url && !init) return realFetch(new Request(target, input))
+      return realFetch(target, init)
+    }
+    if (idpHost && host === idpHost) {
+      const target = `http://127.0.0.1:${idp.port}${url.pathname}${url.search}`
       if (typeof input === 'object' && input && input.url && !init) return realFetch(new Request(target, input))
       return realFetch(target, init)
     }

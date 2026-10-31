@@ -127,7 +127,10 @@ export function RecRow({ label, value }) {
   return (
     <div className="wka-rec-row" style={{ display: 'flex', gap: 14, padding: '7px 0', borderBottom: '1px solid var(--wka-line, #eceff3)' }}>
       <div style={{ width: 170, flexShrink: 0, color: 'var(--wka-muted)', fontSize: 13 }}>{label}</div>
-      <div style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--wka-ink, #111)' }}>{value}</div>
+      {/* --wka-text is the console's theme token (light and dark). The old
+          --wka-ink never existed, so every value fell back to #111 and was
+          unreadable in dark mode. */}
+      <div style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--wka-text)', minWidth: 0, overflowWrap: 'anywhere' }}>{value}</div>
     </div>
   )
 }

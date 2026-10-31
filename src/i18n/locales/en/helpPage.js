@@ -16,6 +16,7 @@ export default {
       ask: 'Ask, Analyze & Research',
       deep: 'Deep pass',
       float: 'The floating overlay',
+      camera: 'Setup: screen or camera',
       where: 'Desktop, mobile & browser',
       time: 'Your time & pausing',
       record: 'Keeping a record',
@@ -66,8 +67,8 @@ export default {
         },
         tools: {
           t: 'Open Tools',
-          d: 'Make something (Answer, Write, Compute), read the screen, Deep pass, re-plan, the full guide, text size and theme.',
-          alt: 'The Tools menu: Answer, Write, Compute, Read my screen, Deep pass, View full plan, Re-plan, Full guide, text size, accent color and dark mode.',
+          d: 'Make something (Answer, Write, Compute), read the screen, Deep pass, re-plan, the full guide, and Setup for the screen or camera, text size and theme.',
+          alt: 'The Tools menu: Answer, Write, Compute, Read my screen, Deep pass, View full plan, Re-plan, Full guide and Setup.',
         },
         answer: {
           t: 'Get the answer',
@@ -175,6 +176,18 @@ export default {
       p1: 'Tap <b>Float on top</b> to pop the guide into a small always-on-top window, so you never switch tabs while you work. Move and resize it freely. Use the sun and moon to switch light or dark, and the percentage control to dim it so it stays out of the way.',
       p2: 'On Chrome, Edge, Brave and Opera the float sits on top of every app. On Firefox and Safari it opens as a separate pop-out window instead, which you can still move anywhere.',
       tip: 'Keep the WorkCoPilot tab open while you use the float. It can sit in the background, that is fine.',
+    },
+    // The Setup tab of the guide: screen or camera, the camera picker + live
+    // view, text size, guidance, look. Real screenshot under /help/user/.
+    camera: {
+      h2: 'Setup: screen or camera',
+      lead: 'The guide has two tabs. <b>Guide</b> is the step you are on. <b>Setup</b> holds what you rarely need mid-task: what the guide reads from, text size, guidance level, colors and theme. Pause, Float and End stay in the top bar.',
+      p1: 'Under <b>What the guide reads</b>, pick <b>My screen</b> to share this screen, or <b>A camera</b> to point a camera at another computer, a control panel, a machine or a robot: for industrial, OT and physical systems where screen sharing is not an option.',
+      p2: 'With a camera: choose which camera, press <b>Start the camera</b>, and aim it with the live view so the screen or panel fills the frame and its text is readable. Keep <b>Show the live view while guiding</b> on and a small viewfinder stays under the step. Switching between screen and camera restarts capture cleanly; guiding carries on.',
+      p3: 'Camera frames go through exactly the same path as screen frames: the same compression and the same on-device masking before anything is sent. The chosen camera is remembered on this browser.',
+      p4: 'Camera reading is on for your own account. On a managed account it is turned on for you by whoever manages your WorkCoPilot access; until then Setup offers the screen only, and a camera read is refused with a one-tap way back to your screen.',
+      alt: 'The Setup tab: My screen and A camera, the camera picker, the live view with Start the camera, the live-view switch, then text size, guidance and look.',
+      caption: 'Setup: what the guide reads, the live view to aim a camera, and the reading settings.',
     },
     where: {
       h2: 'Desktop, mobile and browser',

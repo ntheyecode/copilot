@@ -10,7 +10,7 @@ import { useEffect, useRef, useState, useCallback, useMemo, useReducer } from 'r
 import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, ChevronRight, Sparkles, Rocket, Calculator, Compass, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard, ShieldCheck, RefreshCw, Paperclip, PenLine, Upload, FileSpreadsheet, Building2, Phone, MapPin, BarChart3, Settings, Wrench, Table } from 'lucide-react'
-import { api, friendlyError } from '../../api.js'
+import { api, friendlyError, setCaptureSource } from '../../api.js'
 import AnswerBody, { splitSegments } from '../../components/AnswerBody.jsx'
 import RichText from '../../components/RichText.jsx'
 import { StepLink, CmdBlock, CodeBlock } from '../../components/StepBlocks.jsx'   // the ONE step link / terminal / code renderer (shared with the public widget)
@@ -18,7 +18,6 @@ import { copyText } from '../../components/CopyChip.jsx'
 import { hrefForUrl } from '../../shared/links.js'
 import DownloadMenu from '../../components/DownloadMenu.jsx'
 import GuideFontControl, { useGuideFontScale } from '../../components/GuideFontScale.jsx'
-import PreferencesPanel from '../../components/PreferencesPanel.jsx'
 import ResultCard from '../../components/ResultCard.jsx'
 import ComposeCard from '../../components/ComposeCard.jsx'
 import ComputeCard from '../../components/ComputeCard.jsx'
@@ -30,8 +29,9 @@ import { useTheme } from '../../theme.jsx'
 import { useSurfaceScheme } from '../../theme/useSurfaceScheme.js'
 import { useT } from '../../i18n/index.jsx'
 import { useWorkApp } from './WorkAppContext.jsx'
+import { webFloatAllowed, desktopFloatPointer } from '../../shared/web_float.js'
 import { usageTimeLeft, usageOutOfTime, usageLowNote } from './usageCopy.js'
-import { linkHost, readContextFile, parseDataFile, frameFromVideo, signatureFromVideo, changed, isMobileUA, frameFromImageFile, WATCH_MAX_W, card, shell } from './lib.js'
+import { linkHost, readContextFile, parseDataFile, frameFromVideo, awaitFirstFrame, signatureFromVideo, changed, isMobileUA, frameFromImageFile, WATCH_MAX_W, card, shell } from './lib.js'
 // The guide view (owner redesign): ONE stylesheet + small shared modules used
 // by the console AND the floating panel, so both read identically.
 import { GUIDE_CSS, gvVars } from './guideView.css.js'
@@ -46,11 +46,22 @@ import TaskOverview from './TaskOverview.jsx'
 import DestructiveGate from './DestructiveGate.jsx'
 import { askReducer, initialAsk, askFocused, normalizeAskResponse, applyResume, ASK_OFFER, ASK_ANSWERED } from './askFlow.js'
 import useStuck from './useStuck.js'
-import GuideLevelControl, { useGuideLevel } from '../../components/GuideLevel.jsx'
+import { useGuideLevel } from '../../components/GuideLevel.jsx'
 import FloatPanel from './FloatPanel.jsx'
 import { makeConfetti, confettiNodes } from './confetti.jsx'
 import { VerifyButton, VerifyVerdict } from './VerifyStep.jsx'
 import { verdictFromWatch, verdictForStep, VERIFY_DONE, VERIFY_NO_FRAME, VERIFY_ERROR } from './verifyFlow.js'
+// The planning state (goal + screen read + the step plan taking shape), its own
+// module with its own sheet; the console only hands it the real state it has.
+import PlanningLoader, { planLandingMs } from './guiding/PlanningLoader.jsx'
+import { PLANNING_LOADER_CSS } from './guiding/planningLoader.css.js'
+// Guide | Setup: the Setup tab holds what a person rarely needs mid-task (the
+// capture source incl. the camera + its live preview, text size, guidance,
+// preferences, theme); the rules + per-browser memory live in captureSource.js.
+import SetupTab from './guiding/SetupTab.jsx'
+import ConsoleTabs, { tabId, tabPanelId } from './guiding/ConsoleTabs.jsx'
+import { SETUP_TAB_CSS } from './guiding/setupTab.css.js'
+import { defaultSource, readStoredSource, storeSource, readCameraId, storeCameraId, cameraConstraints, cameraErrorKind, shouldRetryWithoutDevice, CAMERA_ERROR_KEYS, CAMERA_OFF_EVENT } from './guiding/captureSource.js'
 
 // Responsive layer for the (otherwise inline-styled) Console. Scoped to the
 // .wc wrapper so it never touches the rest of the app. On a phone it enlarges
@@ -359,7 +370,6 @@ const CONSOLE_CSS = `
 .wc-loading-orb span{position:absolute;inset:0;border-radius:50%;border:2px solid var(--track,var(--border));border-top-color:var(--em);animation:wc-orb 1s linear infinite}
 .wc-loading-orb span:nth-child(2),.wc-loading-orb span:nth-child(3){display:none}
 @keyframes wc-orb{to{transform:rotate(360deg)}}
-.wc-loading-phases{display:flex;flex-direction:column;gap:10px;width:100%;max-width:290px}
 .wc-loading-line{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;color:var(--text);animation:wc-line-in .45s cubic-bezier(.2,.8,.2,1) both}
 .wc-loading-line svg{flex-shrink:0}
 .wc-loading-line.past{color:var(--text-dim);font-weight:400}
@@ -764,7 +774,7 @@ function HowDetail({ entry, onRetry }) {
               <div>{ss.text}</div>
               {ss.url && <StepLink url={ss.url} />}
               {((ss.commands && ss.commands.length > 0) || (ss.code && ss.code.content)) && (
-                <DestructiveGate why={ss.destructive ? ss.destructiveWhy : null}>
+                <DestructiveGate step={ss}>
                   {ss.commands && ss.commands.length > 0 && <CmdBlock lines={ss.commands} />}
                   {ss.code && ss.code.content && <CodeBlock file={ss.code.file} content={ss.code.content} />}
                 </DestructiveGate>
@@ -905,38 +915,32 @@ function SharePrompt({ source }) {
   )
 }
 
-// The planning animation: phases reveal one by one while the plan is being
-// built, then the Console swaps to the step view the moment steps arrive. It
-// mounts only once the plan request is actually in flight (never while the
-// share prompt is still open), so its ticks never run ahead of reality.
-function PlanningLoader() {
-  const t = useT()
-  const PHASES = t('guideConsole.planning.phases')   // the translated ARRAY (lists translate as units)
-  const [i, setI] = useState(0)
-  useEffect(() => {
-    const id = setInterval(() => setI((n) => (n < PHASES.length - 1 ? n + 1 : n)), 1600)
-    return () => clearInterval(id)
-  }, [])   // eslint-disable-line
-  return (
-    <div className="wc-loading">
-      <div className="wc-loading-orb"><span /><span /><span /></div>
-      <div className="wc-loading-phases">
-        {PHASES.slice(0, i + 1).map((p, k) => (
-          <div key={k} className={`wc-loading-line${k === i ? ' on' : ' past'}`}>
-            {k < i ? <Check size={14} /> : <Loader2 size={14} className="spin" />}<span>{p}…</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+// The planning state lives in ./guiding/PlanningLoader.jsx: it mounts only once
+// the plan request is actually in flight (never while the share prompt is
+// open) and shows real state only (the goal, the source being read, then the
+// landed steps), never a timed list of phases.
 
-function Console({ sessionId, watchLight = false, onBack, onGuard }) {
+function Console({ sessionId, watchLight = false, onBack, onGuard, user = null }) {
   const [sess, setSess] = useState(null)
   const [goal, setGoal] = useState('')
-  const [source, setSource] = useState(() => isMobileUA() ? 'camera' : 'screen')     // 'screen' | 'camera' (phones default to camera: no screen share on mobile)
+  // 'screen' | 'camera': the remembered choice while the user may still use it,
+  // else the camera on a phone (no screen share there), else the screen.
+  const [source, setSource] = useState(() => defaultSource({ user, mobile: isMobileUA(), stored: readStoredSource() }))
+  const [cameraId, setCameraId] = useState(readCameraId)   // the chosen camera ('' = the default / back camera), remembered per browser
+  const [preview, setPreview] = useState(true)             // keep the live viewfinder under the step while guiding from a camera
+  const [cameraError, setCameraError] = useState('')       // '' | denied | none | busy | other (why the camera could not start)
+  const [cameraOff, setCameraOff] = useState(false)        // the server refused a camera read (CAMERA_OFF): actionable banner
+  const [tab, setTab] = useState('guide')                  // 'guide' | 'setup' (ConsoleTabs)
   const [capturing, setCapturing] = useState(false)
   const [sharePrompt, setSharePrompt] = useState(false)   // true while the browser's share / camera prompt is open (M7)
+  // The planning state's real inputs: did a frame go with the plan request
+  // (null until the grab has happened: "getting a first look", then true or
+  // false), and the short "your steps are ready" beat that holds the planning
+  // view with the landed steps before the step card takes over (first plan only).
+  const [planFrameSent, setPlanFrameSent] = useState(null)
+  const [planLanding, setPlanLanding] = useState(false)
+  const planLandingTimer = useRef(null)
+  useEffect(() => () => { if (planLandingTimer.current) clearTimeout(planLandingTimer.current) }, [])
   const [watching, setWatching] = useState(false)
   const [status, setStatus] = useState('')
   const [observation, setObservation] = useState('')
@@ -1116,7 +1120,9 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   // mobile (the app is full screen; a pop-up there makes no sense).
   const isMobile = isMobileUA()
   const pipSupported = typeof window !== 'undefined' && 'documentPictureInPicture' in window
-  const floatCapable = !desktop && !isMobile && typeof window !== 'undefined' && typeof window.open === 'function'
+  // Company members float through the desktop app only (src/shared/web_float.js).
+  const floatCapable = webFloatAllowed({ user, desktop: !!desktop, mobile: isMobile }) && typeof window !== 'undefined' && typeof window.open === 'function'
+  const floatViaDesktop = desktopFloatPointer({ user, desktop: !!desktop, mobile: isMobile })
   // Microsoft-Learn / Docs reading treatment, same as the console + full guide:
   // a compact 13.5px base that scales off --fp-fs (the reader's A- / A / A+
   // choice, shared via the wc-guide-fontscale key). --wc-fs mirrors it so the
@@ -1225,6 +1231,22 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const lastChangeRef = useRef(0)      // when the screen last changed (for the settle delay)
   const photoInputRef = useRef(null)    // hidden camera file input for the mobile Photo path
   const photoFrameRef = useRef(null)    // mirror of photoFrame for synchronous reads in grabFrame
+  // The source as a ref too, so a capture queued right after a switch (before
+  // React re-rendered) reads the new source, never a stale closure.
+  const sourceRef = useRef(source); sourceRef.current = source
+  // Every /api/work/sessions request carries the source the console reads
+  // (x-wc-capture), so the server can apply the camera rule
+  // (server/capture_sources.js). Leaving the console resets it: the dashboard
+  // must never carry a stale camera header.
+  useEffect(() => { setCaptureSource(source); return () => setCaptureSource('screen') }, [source])
+  // ONE listener for the server's camera refusal, whichever call raised it
+  // (plan, watch, ask, verify...): src/api.js dispatches the event at its one
+  // chokepoint, so no call site needs its own check.
+  useEffect(() => {
+    const on = () => setCameraOff(true)
+    window.addEventListener(CAMERA_OFF_EVENT, on)
+    return () => window.removeEventListener(CAMERA_OFF_EVENT, on)
+  }, [])
 
   // Session load state. Before this, a session that could not be loaded (deleted
   // on another device, server restarted with fresh data, a stale id remembered in
@@ -1297,19 +1319,41 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       // shows "Share your screen to start" (not the planning phases) meanwhile.
       setSharePrompt(true)
       let stream
+      const src = sourceRef.current
       try {
-        stream = source === 'screen'
-          ? await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 1 }, audio: false })
-          : await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false })
+        if (src === 'screen') {
+          stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 1 }, audio: false })
+        } else {
+          // A camera pointed at another computer or a physical system: the
+          // chosen camera exactly (1080p ideal so on-screen text stays
+          // readable); a camera that is gone falls back to the default one.
+          try { stream = await navigator.mediaDevices.getUserMedia(cameraConstraints(cameraId)) }
+          catch (e) {
+            if (!shouldRetryWithoutDevice(e, cameraId)) throw e
+            storeCameraId(''); setCameraId('')
+            stream = await navigator.mediaDevices.getUserMedia(cameraConstraints(''))
+          }
+        }
       } finally { setSharePrompt(false) }
       streamRef.current = stream
       // The user stopping the share from the browser chrome ends capture cleanly.
       stream.getVideoTracks().forEach((t) => { t.onended = () => stopCapture() })
       if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play().catch(() => {}) }
       photoFrameRef.current = null; setPhotoFrame(null)   // a live stream supersedes a one-shot photo
+      if (src === 'camera') {
+        setCameraError('')
+        // Remember the camera that actually opened, so the next session starts on it.
+        try { const id = stream.getVideoTracks()[0].getSettings().deviceId; if (id) { storeCameraId(id); setCameraId(id) } } catch { /* no settings: keep the choice as is */ }
+      }
       setCapturing(true)
       return true
-    } catch (e) { setErr(friendlyError(e, t('guideConsole.err.capture'))); return false }
+    } catch (e) {
+      if (sourceRef.current === 'camera') {
+        // Actionable, not generic: blocked, missing or busy camera each say what to do.
+        const kind = cameraErrorKind(e); setCameraError(kind); setErr(t(CAMERA_ERROR_KEYS[kind]))
+      } else setErr(friendlyError(e, t('guideConsole.err.capture')))
+      return false
+    }
   }
 
   // Desktop multi-monitor: when the watched monitor is switched (the picker or
@@ -1355,13 +1399,21 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     // event, so only read opts when it is a plain options object.
     const o = (opts && typeof opts === 'object' && !opts.nativeEvent && !opts.target) ? opts : {}
     if (outOfMinutes()) return
-    setBusy(true); setErr('')
+    setBusy(true); setErr(''); setPlanFrameSent(null)
     setClarify(null); setClarifyText('')   // drop a stale clarify card the moment a fresh plan starts
     if (!o.fromClarify) setClarifyDone(null)   // a fresh plan moves on; the answer-strip survives only its own re-plan
     try {
       let frame = null
-      if (!capturing && !photoFrameRef.current) { const okCap = await startCapture(); if (!okCap) { setBusy(false); return } await new Promise((r) => setTimeout(r, 400)) }
+      if (!capturing && !photoFrameRef.current) {
+        const okCap = await startCapture(); if (!okCap) { setBusy(false); return }
+        // Let the fresh stream settle, then wait (bounded) until it actually has
+        // a frame to read, so the first plan sees the screen and the planning
+        // view's "reading your screen" line is true (a slow source read null).
+        await new Promise((r) => setTimeout(r, 400))
+        await awaitFirstFrame(videoRef.current)
+      }
       frame = await prepFrame(grabFrame())
+      setPlanFrameSent(!!frame)   // the planning view says "reading your screen" only when that is true
       // Desktop on-device docs: governed text held client-side for this session,
       // injected into the plan for this call only (never stored on the server).
       let docsText = ''
@@ -1373,6 +1425,17 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       const r = await waitFor(
         api.workPlan(sessionId, { goal: goal.trim(), frame, mode, level, ...(docsText ? { docsText } : {}), ...(space ? { space } : {}), ...(o.reason ? { reason: o.reason } : {}), ...(o.keepProgress ? { keepProgress: true } : {}), ...(o.fromClarify ? { fromClarify: true } : {}) }),
         t('guideConsole.err.planSlow'))
+      // First plan landing: hold the planning view for one short beat with the
+      // real steps filled in, then the step card takes over (a re-plan already
+      // shows steps, so it never goes through this).
+      const firstPlan = ((sess && sess.steps) || []).length === 0
+      const landed = !!(r.session && Array.isArray(r.session.steps) && r.session.steps.length)
+      const hold = (firstPlan && landed) ? planLandingMs() : 0
+      if (hold > 0) {
+        setPlanLanding(true)
+        if (planLandingTimer.current) clearTimeout(planLandingTimer.current)
+        planLandingTimer.current = setTimeout(() => { planLandingTimer.current = null; setPlanLanding(false) }, hold)
+      }
       noteStrong(r); setSess(r.session); setGuidance(''); setHowTo({})
       // Company-policy findings on the plan surface immediately as cited flags, so
       // the person sees which company rule a step breaks and the compliant fix.
@@ -1540,6 +1603,39 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       setFlags(r.flag ? [{ t: Date.now(), text: r.flag }] : [])
     } catch (e) { setErr(friendlyError(e, t('guideConsole.err.refresh'))) } finally { setBusy(false); setAnalyzing(false) }
   }
+
+  // Setup tab: switch what the guide reads, pick a camera, start the camera
+  // to aim it. A switch stops the running tracks, records the choice (per
+  // browser + the api header), and restarts capture cleanly: watching resumes
+  // where it was watching, a plain capture restarts where one was running, and
+  // a fresh camera choice starts the camera at once so the live preview shows.
+  // The restart runs after React re-rendered, through a ref that always holds
+  // the latest closures (never a stale `capturing`).
+  const latestRef = useRef({})
+  latestRef.current = { startCapture, startWatching }
+  const restartCapture = (resumeWatch) => setTimeout(() => { const l = latestRef.current; if (resumeWatch) l.startWatching(); else l.startCapture() }, 200)
+  const switchSource = (next) => {
+    if (next !== 'screen' && next !== 'camera') return
+    if (next === source) return
+    const wasWatching = watching, wasCapturing = capturing
+    const hasPlan = !!(sess && (sess.steps || []).length) && !ended
+    stopCapture()
+    sourceRef.current = next
+    setSource(next); storeSource(next); setCaptureSource(next)
+    setCameraOff(false); setCameraError(''); setErr('')
+    if (wasWatching || (wasCapturing && hasPlan && !paused && !watchLight)) restartCapture(true)
+    else if (wasCapturing || next === 'camera') restartCapture(false)
+  }
+  const pickCamera = (id) => {
+    const next = String(id || '')
+    if (next === cameraId) return
+    setCameraId(next); storeCameraId(next); setCameraError('')
+    if (capturing && source === 'camera') { const wasWatching = watching; stopCapture(); restartCapture(wasWatching) }
+  }
+  const startCameraPreview = () => { if (!capturing) { setErr(''); setCameraError(''); startCapture() } }
+  // The server refused the camera (the switch is off for this account): back
+  // to the screen in one tap, guiding resumes where it was.
+  const useScreenInstead = () => { setCameraOff(false); setErr(''); switchSource('screen') }
   // OPTIONAL "Verify on my screen" (owner: "a live verify button, if at all the
   // user wants to use it"): ONE frame, ONE read, NOTHING applied. Works with the
   // continuous watch ON (grabs the current frame of the live share) or OFF
@@ -2109,7 +2205,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       ? { label: t('guideConsole.chip.guiding'), title: t('guideConsole.chip.guidingTip') }
       : sharePrompt
         ? { label: source === 'screen' ? t('guideConsole.chip.shareScreen') : t('guideConsole.chip.camera'), title: source === 'screen' ? t('guideConsole.chip.shareScreenTip') : t('guideConsole.chip.cameraTip') }
-        : (busy && steps.length === 0)
+        : ((busy && steps.length === 0) || planLanding)
           ? { label: t('guideConsole.chip.planning'), title: t('guideConsole.chip.planningTip') }
           : { label: t('guideConsole.chip.ready'), title: t('guideConsole.chip.readyTip') }
   // #2 Wrong-place gate: the mismatch signal the watch response carries (the
@@ -2121,7 +2217,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     <div className="wc wd-tokens" style={{ ...shell, minHeight: 0, height: 'auto', flex: '1 1 auto', display: 'flex', flexDirection: 'column', overflow: 'hidden', '--wc-fs': `calc(var(--wc-fs-app, 1) * ${fsScale})` }}>
       {/* The console renders outside the app shell, so it carries the ONE token
           sheet itself (wd-tokens on the root): Light / Dark / Heavy + a11y. */}
-      <style>{WD_TOKENS_CSS}{CONSOLE_CSS}{GUIDE_CSS}</style>
+      <style>{WD_TOKENS_CSS}{CONSOLE_CSS}{PLANNING_LOADER_CSS}{GUIDE_CSS}{SETUP_TAB_CSS}</style>
       {/* FIXED HEADER (#new): the menu/title bar stays pinned; only the content
           between it and the fixed Ask footer scrolls. */}
       <div className="wc-fixedhead"><div className="wc-shellw">
@@ -2151,6 +2247,10 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           {floatCapable && sess && !ended && (pipWin
             ? <button className="wc-tbtn on" title={floatIsPip ? t('guideConsole.float.unfloatTip') : t('guideConsole.float.closePopOutTip')} aria-label={t('guideConsole.float.unfloat')} onClick={closeFloat}><PictureInPicture2 size={15} /> <span className="wc-lbl">{floatIsPip ? t('guideConsole.float.unfloat') : t('guideConsole.float.closePopOut')}</span></button>
             : <button className="wc-tbtn primary" title={pipSupported ? t('guideConsole.float.floatTip') : t('guideConsole.float.popOutTip')} aria-label={t('guideConsole.float.floatOnTop')} onClick={openFloat}><PictureInPicture2 size={15} /> <span className="wc-lbl">{pipSupported ? t('guideConsole.float.floatOnTop') : t('guideConsole.float.popOut')}</span></button>)}
+          {/* Company members float the steps with the desktop app, never a web window. */}
+          {floatViaDesktop && sess && !ended && (
+            <a className="wc-tbtn primary" href="/api/work/desktop-setup.exe" title={t('guideConsole.float.desktopOnlyTip')} aria-label={t('guideConsole.float.desktopOnly')}><Monitor size={15} /> <span className="wc-lbl">{t('guideConsole.float.desktopOnly')}</span></a>
+          )}
           {/* TOOLS: one dropdown for everything that need not sit on screen.
               Make something opens a focused modal; the rest run their existing
               handlers. Pause/Resume, Float and End stay as the visible essentials. */}
@@ -2173,19 +2273,18 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                   <button role="menuitem" className="wc-menu-item" disabled={busy} onClick={fromMenu(() => { setReplanReason(''); setReplanScope('here'); setReplanOpen(true) })}><RefreshCw size={15} /><span><b>{t('guideConsole.tools.replan')}</b><small>{t('guideConsole.tools.replanSub')}</small></span></button>
                   {!isMobile && <button role="menuitem" className="wc-menu-item" onClick={fromMenu(openFullGuide)}><Monitor size={15} /><span><b>{t('guideConsole.tools.fullGuide')}</b><small>{t('guideConsole.tools.fullGuideSub')}</small></span></button>}
                   <div className="wc-menu-sec">{t('guideConsole.tools.secView')}</div>
-                  <div className="wc-menu-row"><span className="wc-menu-row-k">{t('guideConsole.tools.textSize')}</span><GuideFontControl scale={fsScale} dec={fsDec} inc={fsInc} reset={fsReset} atMin={fsAtMin} atMax={fsAtMax} theme={{ border: 'var(--border)', text: 'var(--text)', muted: 'var(--text-muted)', panel: 'var(--surface)', accent: 'var(--em)' }} /></div>
-                  <div className="wc-menu-row"><span className="wc-menu-row-k">{t('guideConsole.tools.guidance')}</span><GuideLevelControl level={level} onChange={setLevel} compact theme={{ border: 'var(--border)', muted: 'var(--text-muted)', panel: 'var(--surface)', accent: 'var(--em)', accentSoft: 'var(--em-soft)' }} /></div>
-                  {/* Per-user preferences (theme mode, brand combination, accessibility):
-                      apply live everywhere (guide + dashboards) and persist. Stays open
-                      like Text size; the reading-size stepper above is the guide's own. */}
-                  <div className="wc-menu-row" style={{ display: 'block' }}><PreferencesPanel variant="guide" hide={['textSize']} /></div>
-                  <button role="menuitem" className="wc-menu-item" onClick={fromMenu(toggleAppTheme)}>{appTheme === 'light' ? <Moon size={15} /> : <Sun size={15} />}<span><b>{appTheme === 'light' ? t('guideConsole.tools.darkMode') : t('guideConsole.tools.lightMode')}</b><small>{t('guideConsole.tools.themeSub')}</small></span></button>
+                  {/* Text size, guidance level, preferences and theme moved to the
+                      Setup tab (owner, 2026-10-31): the menu only points there. */}
+                  <button role="menuitem" className="wc-menu-item" onClick={fromMenu(() => setTab('setup'))}><Settings size={15} /><span><b>{t('guideConsole.tools.setup')}</b><small>{t('guideConsole.tools.setupSub')}</small></span></button>
                 </div>
               )}
             </div>
           )}
           {sess && !ended && <button className="wc-tbtn quiet" onClick={endSession} disabled={busy} title={t('guideConsole.end.tip')}>{t('guideConsole.end.label')}</button>}
         </div>
+        {/* Guide | Setup (owner, 2026-10-31): the Setup tab holds what a person
+            rarely needs mid-task, so the Guide tab stays one screen at a time. */}
+        {sess && !ended && <ConsoleTabs tab={tab} onTab={setTab} />}
         {/* PINNED guide status strip (owner request): Pause/Resume and the live
             "what the screen is reading" line stay stuck to the top bar instead of
             scrolling away. While a frame is in flight it blinks "Analyzing"; on the
@@ -2213,8 +2312,8 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           re-plan) and a RIGHT rail (status, minutes, pause/resume, make, screen
           reads, full guide, end). The rails collapse on narrower widths, where
           the header Tools menu already carries every control. */}
-      {(() => { const rails = !!(sess && steps.length > 0 && !ended); const ci = rails ? steps.findIndex((s) => s.status === 'current') : -1; return (
-      <div className="wc-scroll"><div className={`wc-shellw${rails ? ' wc-stagegrid' : ''}`}>
+      {(() => { const setup = tab === 'setup' && !!sess && !ended; const rails = !setup && !!(sess && steps.length > 0 && !ended && !planLanding); const ci = rails ? steps.findIndex((s) => s.status === 'current') : -1; const viewfinder = source === 'camera' && capturing && preview && !setup && !ended; return (
+      <div className="wc-scroll" role={sess && !ended ? 'tabpanel' : undefined} id={sess && !ended ? tabPanelId(tab) : undefined} aria-labelledby={sess && !ended ? tabId(tab) : undefined}><div className={`wc-shellw${rails ? ' wc-stagegrid' : ''}`}>
         {rails && (
           <aside className="wc-rail wc-rail-l" aria-label={t('guideConsole.rail.plan')}>
             <div className="wc-rail-card">
@@ -2295,6 +2394,44 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
         )}
         {deliverOpen && <DeliverablesPanel sessionId={sessionId} grabFrame={grabFrame} videoRef={videoRef} onClose={() => setDeliverOpen(false)} />}
 
+        {/* hidden camera-photo picker, always mounted */}
+        <input ref={photoInputRef} type="file" accept="image/*" capture="environment" onChange={onPhotoPicked} style={{ display: 'none' }} />
+        {/* The capture <video>: ALWAYS mounted, on either tab, so a camera
+            started from Setup feeds the same element the frame pipeline reads
+            (grabFrame -> prepFrame -> the same masking + compression as a screen
+            frame). Shown as a live viewfinder on the Guide tab for the camera
+            source while the person keeps the live view on, so they can keep it
+            aimed. The screen source is your own screen, so it stays hidden. */}
+        <video ref={videoRef} muted playsInline data-testid="wc-capture-video"
+          style={viewfinder
+            ? { display: 'block', width: '100%', maxWidth: 360, margin: '12px auto 0', borderRadius: 12, background: '#000', aspectRatio: '16 / 9', objectFit: 'contain' }
+            : { display: 'none' }} />
+        {viewfinder && <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-dim)', margin: '4px 0 8px' }}>{t('guideConsole.camera.live')}</div>}
+
+        {/* The server refused a camera read (camera reading is off for this
+            account): say so and offer the screen in one tap. Shown on both tabs. */}
+        {sess && !ended && cameraOff && (
+          <div className="wc-camoff" role="alert" data-testid="wc-camera-off">
+            <AlertTriangle size={16} />
+            <div className="wc-camoff-t"><b>{t('guideConsole.setup.cameraOffTitle')}</b>{t('guideConsole.setup.cameraOffBody')}</div>
+            <div className="wc-camoff-acts">
+              <button type="button" className="wc-tbtn primary" onClick={useScreenInstead}><Monitor size={14} /> {t('guideConsole.setup.useScreen')}</button>
+              <button type="button" className="wc-tbtn ghost" onClick={() => setCameraOff(false)}>{t('guideConsole.banner.dismiss')}</button>
+            </div>
+          </div>
+        )}
+
+        {setup ? (
+          <SetupTab
+            user={user} mobile={isMobile}
+            source={source} onSource={switchSource}
+            cameraId={cameraId} onCameraId={pickCamera}
+            preview={preview} onPreview={setPreview}
+            stream={capturing ? streamRef.current : null} cameraError={cameraError}
+            onStartCamera={startCameraPreview} onStopCapture={stopCapture} busy={busy || sharePrompt}
+            view={{ fsScale, fsDec, fsInc, fsReset, fsAtMin, fsAtMax, level, setLevel, appTheme, toggleAppTheme }}
+          />
+        ) : (<>
         {/* Task-complete celebration: a one-shot flourish + a prominent "Start
             another task" that drops back into the new-task flow (onBack -> Home,
             where the goal box lives). Shows on the finished record; the confetti
@@ -2354,12 +2491,15 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             <div className="wc-loading-orb"><span /><span /><span /></div>
             <div className="wc-loading-line on"><Loader2 size={14} className="spin" /><span>{t('guideConsole.load.opening')}</span></div>
           </div>
-        ) : steps.length === 0 ? (
-          busy ? (
+        ) : (steps.length === 0 || planLanding) ? (
+          (busy || planLanding) ? (
             // First the share prompt (nothing is claimed until the person has
-            // shared), then planning: the thinking animation reveals phases, and
-            // the view swaps to the step card the moment the plan is ready.
-            sharePrompt ? <SharePrompt source={source} /> : <PlanningLoader />
+            // shared), then planning: the goal, the screen being read and the
+            // step plan taking shape; when the plan lands the skeleton fills
+            // with the real steps for a beat, then the step card takes over.
+            sharePrompt
+              ? <SharePrompt source={source} />
+              : <PlanningLoader goal={goal} title={sess && sess.title} source={source} frameSent={planFrameSent} ready={planLanding} steps={steps} />
           ) : (
             // Not planning yet (first frame) or screen-share was declined: the
             // goal starter + Plan button as a clean fallback.
@@ -2429,17 +2569,6 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           </div>
         )}
         {ended && err && <div style={{ color: 'var(--danger)', fontSize: 13, lineHeight: 1.45, margin: '0 2px 10px' }}>{err}</div>}
-        {/* hidden camera-photo picker, always mounted */}
-        <input ref={photoInputRef} type="file" accept="image/*" capture="environment" onChange={onPhotoPicked} style={{ display: 'none' }} />
-
-        {/* Always mounted so the capture ref exists; shown as a live viewfinder
-            only for the phone/camera source so you can aim it. The screen source
-            is your own screen, so it stays hidden. */}
-        <video ref={videoRef} muted playsInline
-          style={source === 'camera' && capturing
-            ? { display: 'block', width: '100%', maxWidth: 360, margin: '12px auto 0', borderRadius: 12, background: '#000', aspectRatio: '4 / 3', objectFit: 'cover' }
-            : { display: 'none' }} />
-        {source === 'camera' && capturing && <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>{t('guideConsole.camera.live')}</div>}
 
         {/* ONE SCREEN AT A TIME (owner direction). The guide view is a sequence
             of single focused screens with a hide/show fade between them: the
@@ -2592,7 +2721,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                         completed-only gate. */}
                     {isDone && s.url && <StepLink url={s.url} />}
                     {isDone && ((s.commands && s.commands.length > 0) || (s.code && s.code.content)) && (
-                      <DestructiveGate why={s.destructive ? s.destructiveWhy : null}>
+                      <DestructiveGate step={s}>
                         {s.commands && s.commands.length > 0 && <CmdBlock lines={s.commands} />}
                         {s.code && s.code.content && <CodeBlock file={s.code.file} content={s.code.content} />}
                       </DestructiveGate>
@@ -2841,6 +2970,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             <AnswerBody text={sess.summary} />
           </div>
         )}
+        </>)}
         </div>
         {rails && (
           <aside className="wc-rail wc-rail-r" aria-label={t('guideConsole.rail.controls')}>
@@ -2880,7 +3010,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           what is on screen) to answer and keep you moving. The answer appears
           above the row inside the footer. The re-plan-keeps-progress behaviour is
           the server's (addContext merges steps, preserving done ones) - untouched. */}
-      {sess && !ended && (
+      {sess && !ended && tab === 'guide' && (
         <div className="wc-fixedfoot"><div className="wc-shellw">
           <div className="wc-ask">
             <div className="wc-ask-row wc-askrow">
@@ -2930,5 +3060,5 @@ export default function Guiding() {
   const navigate = useNavigate()
   const { user, sess, showGuard } = useWorkApp()
   const watchLight = !!((user && user.watchLight) || (sess && sess.watchLight))
-  return <Console sessionId={id} watchLight={watchLight} onBack={() => navigate('/work')} onGuard={showGuard} />
+  return <Console sessionId={id} watchLight={watchLight} onBack={() => navigate('/work')} onGuard={showGuard} user={user} />
 }

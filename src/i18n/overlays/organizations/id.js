@@ -8,7 +8,7 @@ export default {
   seo: {
     pricing: {
       title: "Paket untuk Organisasi - WorkCoPilot by AdmireVeda",
-      description: "Paket WorkCoPilot untuk organisasi: dihosting untuk perusahaan Anda, cloud privat terkelola, atau on-premise. Harga per orang menurut ukuran perusahaan, dengan kebijakan perusahaan, single sign-on, dan pool jam panduan. Hubungi kami untuk penawaran."
+      description: "WorkCoPilot untuk organisasi: dihosting oleh AdmireVeda, dikelola oleh AdmireVeda, atau instans privat di cloud Anda sendiri, dengan kebijakan perusahaan, single sign-on, dan pool jam panduan. Hubungi kami untuk penawaran harga."
     }
   },
   home: {
@@ -42,12 +42,13 @@ export default {
     pricing: {
       eyebrow: "Paket",
       h2: "Paket untuk organisasi.",
-      sub: "Dihosting untuk perusahaan Anda, dikelola di cloud Anda, atau di server Anda sendiri. Harga per orang menurut ukuran perusahaan, penawaran disusun oleh tim kami.",
+      sub: "Dihosting oleh AdmireVeda, dikelola oleh AdmireVeda, atau instans privat di cloud Anda sendiri. Hubungi kami untuk penawaran harga yang sesuai dengan organisasi Anda.",
       fullCompare: "Lihat paket untuk organisasi"
     },
     final: {
       h2: "Bawa kerja terpandu ke organisasi Anda.",
-      p: "Bicarakan penerapan untuk tim Anda dengan kami, atau tonton dulu demo 60 detiknya."
+      p: "Bicarakan penerapan untuk tim Anda dengan kami, atau tonton dulu demo 60 detiknya.",
+      note2: "Masuk dengan akun perusahaan Anda, atau dengan email kerja Anda untuk single sign-on perusahaan Anda. <a>Masuk untuk perusahaan</a>."
     }
   },
   login: {
@@ -61,12 +62,12 @@ export default {
   pricing: {
     eyebrow: "Paket untuk organisasi",
     h1: "Kerja terpandu untuk <em>seluruh organisasi Anda.</em>",
-    sub: "Pilih cara WorkCoPilot berjalan untuk Anda: dihosting untuk perusahaan Anda, dikelola di cloud Anda, atau di server Anda sendiri. Keamanan dan privasi termasuk di setiap paket, tidak pernah sebagai tambahan berbayar.",
+    sub: "Pilih cara WorkCoPilot berjalan untuk Anda: dihosting oleh AdmireVeda, dikelola oleh AdmireVeda, atau instans privat di cloud Anda sendiri. Keamanan dan privasi termasuk di setiap paket, tidak pernah sebagai tambahan berbayar.",
     notes: {
       items: [
         {
-          t: "Harga per orang",
-          d: "Paket dihargai per orang menurut ukuran perusahaan, dengan pool jam panduan yang dibagikan oleh administrator perusahaan Anda."
+          t: "Harga sesuai peluncuran Anda",
+          d: "Hubungi kami untuk penawaran harga yang sesuai dengan organisasi Anda dan cara Anda menjalankan WorkCoPilot. Termasuk pool jam panduan yang dibagikan oleh administrator perusahaan Anda."
         },
         {
           t: "Menit, bukan blok",
@@ -78,11 +79,11 @@ export default {
         },
         {
           t: "Cara perusahaan membeli",
-          d: "Penawaran yang sesuai dengan cara perusahaan Anda membeli, DPA, dan laporan tagihan dengan faktur yang dapat diunduh."
+          d: "Kontrak yang sesuai dengan cara perusahaan Anda membeli, DPA, dan faktur yang Anda unduh dari konsol perusahaan Anda."
         }
       ]
     },
-    fine: "Ketentuan dan harga final ditetapkan dalam penawaran Anda. Pajak dapat berlaku sesuai lokasi."
+    fine: "Ketentuan final ditetapkan dalam kontrak Anda. Pajak dapat berlaku sesuai lokasi."
   },
   howItWorks: {
     cta: {
@@ -102,8 +103,15 @@ export default {
       pricing: {
         items: {
           0: {
-            a: "WorkCoPilot dijual kepada organisasi: dihosting untuk perusahaan Anda, sebagai cloud privat terkelola, atau di server Anda sendiri, dengan harga per orang menurut ukuran perusahaan. Hubungi kami untuk penawaran.",
-            d: "Penagihan mengikuti penawaran Anda, dengan laporan tagihan dan faktur yang dapat diunduh."
+            a: "WorkCoPilot dijual kepada organisasi dengan harga yang sesuai peluncuran Anda: dihosting oleh AdmireVeda, dikelola oleh AdmireVeda, atau instans privat di cloud Anda sendiri. Hubungi kami untuk penawaran harga.",
+            d: "AdmireVeda menagih perusahaan Anda berdasarkan kontrak; faktur tersedia di konsol perusahaan Anda."
+          }
+        }
+      },
+      compliance: {
+        items: {
+          3: {
+            a: "DPA ringkasan bersifat publik dan DPA yang ditandatangani tersedia atas permintaan. Panduan dihasilkan oleh penyedia AI besar dan hosting oleh penyedia cloud; daftar terkini beserta nama entitas tersedia atas permintaan."
           }
         }
       },
@@ -123,6 +131,19 @@ export default {
   fieldsPage: {
     startBtn: "Bawa ke tim Anda"
   },
+  securityPage: {
+    guarantees: {
+      2: {
+        t: "Faktor kedua di setiap proses masuk",
+        d: "Masuk dengan kata sandi memerlukan aplikasi autentikator di setiap akun; single sign-on perusahaan memakai faktor kedua yang diwajibkan penyedia identitas Anda."
+      }
+    },
+    mock: {
+      fields: {
+        2: "Rekening bank"
+      }
+    }
+  },
   useCases: {
     final: {
       cta: "Hubungi kami"
@@ -135,10 +156,14 @@ export default {
   workDashboard: {
     plan: {
       choose: "Belum ada paket di akun ini"
+    },
+    meters: {
+      sub: "Jam bulan ini, pool perusahaan Anda, dan tugas terbuka. Arahkan kursor ke info pada kartu untuk melihat cara kerjanya."
     }
   },
   dashboardsHelp: {
     home: {
+      lead: "Dasbor adalah beranda Anda: jam Anda bulan ini dan pool perusahaan Anda, tugas terbuka, satu hal yang harus dilakukan berikutnya, dan tempat Anda berhenti.",
       steps: {
         0: "<b>Baca paket Anda.</b> Tiga ubin menampilkan jam tersisa bulan ini, pool perusahaan Anda, dan slot tugas terbuka Anda. Chip waktu di bagian atas berubah kuning sebelum waktu Anda hampir habis.",
         2: "<b>Tambah waktu.</b> Tekan <b>Tambah waktu</b> di bagian atas untuk meminta jam tambahan dari administrator Anda."

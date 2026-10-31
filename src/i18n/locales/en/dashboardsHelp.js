@@ -428,6 +428,41 @@ export default {
         },
       },
     },
+    // Your brain (help/entries/brainHelp.jsx): personal accounts only. The
+    // product is never named: the page speaks of "your guide".
+    brain: {
+      title: 'Your brain',
+      lead: 'Teach your guide with your own documents. It learns from each one, masks private details first, then deletes the file. You keep only what it learned, and every task you start reads from it.',
+      path: [
+        'Open <b>Your brain</b> in the menu.',
+        'Drop in a document about how you work, or press <b>Choose a document</b>: a PDF, a Word document, a text file or a Markdown file, up to 10 MB.',
+        'Read what it learned. Open any row to see each learning, and press <b>Forget</b> on anything you do not want kept.',
+        'Start a task as usual. The guidance now follows what you taught it.',
+      ],
+      page: {
+        h: 'Teach it with a document',
+        alt: 'The Your brain page: the promise that the file is deleted after learning, the drop zone with the Choose a document button, the 1 of 3 documents meter, the line Learned 2 things from How I work.txt, and the list of sources.',
+        caption: 'The file is read, private details are masked, and only the learnings stay. The same document again refreshes them instead of adding a copy.',
+        marks: {
+          promise: '<b>The promise.</b> What happens to a document, stated before you upload one.',
+          drop: '<b>Drop zone.</b> Drag a document in, or choose one. PDF, Word, text or Markdown, up to 10 MB.',
+          meter: '<b>Documents on your plan.</b> How many it learns from. Forget one to make room, or move to a bigger plan.',
+          result: '<b>What just happened.</b> How many things it learned, how many private details were masked, and that the file is gone.',
+          rows: '<b>By source.</b> One row per document, plus Your sessions, which fills up as you finish tasks.',
+        },
+      },
+      learned: {
+        h: 'Read, keep or forget each learning',
+        alt: 'A source row opened: each learning with its kind chip (Fact, How-to, Preference, Term or Watch out), a Forget button on every learning, Forget this document at the bottom of the row, and Forget everything above the list.',
+        caption: 'Each learning is one short note it will use. Forget one, a whole document, or everything.',
+        marks: {
+          kind: '<b>Kind.</b> Fact, How-to, Preference, Term or Watch out. Hover one to see what it means.',
+          forget: '<b>Forget one.</b> Press Forget, then confirm. It is gone at once.',
+          forgetSource: '<b>Forget a document.</b> Removes everything that document taught. A learning another document also taught stays.',
+          forgetAll: '<b>Forget everything.</b> Clears your whole brain after a confirm you have to acknowledge.',
+        },
+      },
+    },
     admin: {
       title: 'Flows and roles',
       lead: 'In the company console, Team, you set two things per person: their <b>work flow</b> (how guided tasks reach them) and their <b>role</b> (what they manage). Changes take effect right away.',

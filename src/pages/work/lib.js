@@ -168,6 +168,22 @@ const MAX_W = 1280
 // each call's cost, so its frames are smaller (still readable for UI state). The
 // one-off plan / "what is this" reads keep the full 1280 for detail.
 export const WATCH_MAX_W = 1024
+// A freshly shared stream has no dimensions for a few hundred milliseconds
+// (longer on a slow machine or a low-frame-rate source), and frameFromVideo
+// returns null until it does. Waiting a bounded moment for the first frame
+// means the first plan reads the screen instead of starting from the goal
+// alone. Resolves true when a frame can be read, false at the bound.
+export function awaitFirstFrame(video, maxMs = 2500, stepMs = 50) {
+  return new Promise((resolve) => {
+    const until = Date.now() + maxMs
+    const tick = () => {
+      if (video && video.videoWidth > 0) return resolve(true)
+      if (Date.now() >= until) return resolve(false)
+      setTimeout(tick, stepMs)
+    }
+    tick()
+  })
+}
 export function frameFromVideo(video, maxW = MAX_W) {
   if (!video || !video.videoWidth) return null
   const scale = Math.min(1, maxW / video.videoWidth)

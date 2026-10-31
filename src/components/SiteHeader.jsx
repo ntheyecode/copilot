@@ -37,11 +37,12 @@
 // the labels change (locale switch).
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ArrowRight, Menu, X } from 'lucide-react'
-import AdmireVedaLogo from './AdmireVedaLogo.jsx'
+import BrandLogo from './brand/BrandLogo.jsx'
 import LanguageMenu from './LanguageMenu.jsx'   // globe + language picker (16 locales), lives in the header on every public page
 import { useT, useLocale } from '../i18n/index.jsx'
 import { useEditionView } from '../edition/useCaps.js'
-import { visibleLinks, startPath } from '../edition/surfaces.js'   // which links an edition shows (capability-driven)
+import { visibleLinks, startPath, shows } from '../edition/surfaces.js'   // which links an edition shows (capability-driven)
+import IndivHeader from '../sites/individuals/IndivHeader.jsx'   // the individuals site's header, where that site is served
 
 // Labels come from the locale catalog (nav.<key>) so the menu reads in the
 // visitor's language; the hrefs are never translated. `needs` names what a
@@ -52,7 +53,7 @@ export const SITE_LINKS = [
   { key: 'fields', href: '/workcopilot/fields' },
   { key: 'security', href: '/workcopilot/security' },
   { key: 'enterprise', href: '/workcopilot/enterprise', needs: 'companies' },
-  { key: 'pricing', href: '/workcopilot/pricing' },
+  { key: 'pricing', href: '/workcopilot/pricing', needs: 'individualPlans' },   // no published prices for organizations
   { key: 'faq', href: '/workcopilot/faq' },
 ]
 
@@ -67,9 +68,17 @@ function currentFromPath() {
 }
 
 export default function SiteHeader({ current }) {
+  const ed = useEditionView()
+  // Where the public site is the individuals site, EVERY public page (legal
+  // pages, sign-in, contact, demo) carries that site's header, so the chrome
+  // never switches between two sites mid-visit.
+  if (ed.individualSite && shows(ed, 'individualSite')) return <IndivHeader />
+  return <OrgHeader current={current} ed={ed} />
+}
+
+function OrgHeader({ current, ed }) {
   const t = useT()
   const { locale } = useLocale()
-  const ed = useEditionView()
   const links = visibleLinks(ed, SITE_LINKS)
   const start = startPath(ed)
   const [open, setOpen] = useState(false)
@@ -131,7 +140,7 @@ export default function SiteHeader({ current }) {
     <header className={'wsh' + (folded ? ' wsh-folded' : '')} ref={rootRef}>
       <style>{CSS}</style>
       <div className="wsh-in" ref={innerRef}>
-        <a className="wsh-brand" href="/" aria-label={t('nav.home')}><AdmireVedaLogo size={26} idSuffix="sh" /></a>
+        <a className="wsh-brand" href="/" aria-label={t('nav.home')}><BrandLogo size={26} idSuffix="sh" /></a>
 
         <nav className={'wsh-links' + (open ? ' open' : '')} id="wsh-menu" aria-label={t('nav.main')}>
           {links.map((l) => (

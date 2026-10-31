@@ -27,7 +27,7 @@
 // Honesty rules: no model names, no AI cost, never "certified"; final
 // entitlements are confirmed at checkout.
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Check, Lock, ShieldCheck, Zap, BadgeCheck, Building2, RotateCcw, Clock3, CalendarCheck, ScanEye } from 'lucide-react'
 import SiteHeader from '../components/SiteHeader.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
@@ -37,7 +37,6 @@ import useSeo from '../useSeo.js'
 import { useT } from '../i18n/index.jsx'
 import HoursBadge, { HOURS_BADGE_CSS } from '../components/HoursBadge.jsx'
 import { normalizePricing, planValueLines, planHoursShare, annualMonthlyRate, annualTotal, expiryFootnote, planRange, money, hours, PLAN_IDS, LIST_PRICE_FALLBACK } from '../pricingModel.js'
-import OrgPlans from '../components/OrgPlans.jsx'   // the organizations-only plans (hosted / managed / on-prem), where personal plans are not sold
 import { useEditionView } from '../edition/useCaps.js'
 
 // Product names are never translated; the per-plan promise and highlight live
@@ -96,45 +95,10 @@ function ValueBand({ model, t }) {
 
 export default function WorkPricing() {
   const ed = useEditionView()
-  // No personal plans on this edition (organizations only): the page sells the
-  // organization plans instead, from the same hero, notes and CTA.
-  if (!ed.individualPlans) return <OrgPricing />
+  // Organizations only (admireveda.com): no published prices (owner,
+  // 2026-10-31). The next step is always the sales conversation.
+  if (!ed.individualPlans) return <Navigate to="/workcopilot/contact" replace />
   return <PersonalPricing companies={ed.companies} />
-}
-
-// Organizations-only pricing: hero, the three deployment cards, good to know,
-// and the sales CTA. No personal plan, price, checkout or Stripe line.
-function OrgPricing() {
-  const t = useT()
-  useSeo({ title: t('seo.pricing.title'), description: t('seo.pricing.description'), path: '/workcopilot/pricing' })
-  return (
-    <div className="wpr">
-      <style>{CSS}</style>
-      <SiteHeader current="pricing" />
-      <section className="wpr-hero">
-        <div className="wpr-eyebrow"><Building2 size={14} aria-hidden /> {t('pricing.eyebrow')}</div>
-        <h1>{t.rich('pricing.h1')}</h1>
-        <p>{t('pricing.sub')}</p>
-      </section>
-      <section className="wpr-orgplans" aria-label={t('pricing.plansAria')}>
-        <OrgPlans />
-      </section>
-      <section className="wpr-notes" aria-labelledby="wpr-notes-h">
-        <h2 id="wpr-notes-h" className="wpr-h2">{t('pricing.notes.h2')}</h2>
-        <div className="wpr-notes-grid">
-          {(t('pricing.notes.items') || []).map((n) => (
-            <div className="wpr-note" key={n.t}><h3>{n.t}</h3><p>{n.d}</p></div>
-          ))}
-        </div>
-        <p className="wpr-fine"><BadgeCheck size={14} aria-hidden /> {t('pricing.fine')}</p>
-      </section>
-      <section className="wpr-cta">
-        <a className="wpr-btn" href="/workcopilot/contact">{t('common.getStarted')} <ArrowRight size={15} aria-hidden /></a>
-        <a className="wpr-btn alt" href="/demo">{t('pricing.ctaDemo')}</a>
-      </section>
-      <SiteFooter />
-    </div>
-  )
 }
 
 function PersonalPricing({ companies }) {

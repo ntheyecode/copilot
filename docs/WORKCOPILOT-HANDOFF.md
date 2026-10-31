@@ -50,6 +50,17 @@ marketing, `/work/admin` superadmin, `/work/buddy` desktop buddy window).
   (`sudo find /opt/workcopilot/dist/copilot-assets -name 'index-*.js' ! -name '<new>' -delete`)
   and `sudo systemctl restart workcopilot`. `nginx` serves /work,/workcopilot,/demo
   from dist and proxies the rest to :4000.
+- **Since 2026-10-31 admireveda.com runs the `saas` edition** (organizations
+  only): `WORK_EDITION=saas` is set in the systemd drop-in
+  `/etc/systemd/system/workcopilot.service.d/edition.conf`, and the site must
+  be stamped for it before upload (`npm run build:harden && npm run stamp:spa
+  -- --edition saas --origin https://admireveda.com`). The release that day
+  went: backup (db.json copy beside it + code and node_modules under
+  `/opt/wc-rollback/<UTC timestamp>/`), upload to `/opt/wc-stage`, `npm ci
+  --omit=dev` there on the server's Node, a boot test on a spare port with a
+  temp data dir, then stop, swap server/dist/editions/node_modules/package
+  files, start, and check `GET /api/work/edition`. Rollback: copy those folders
+  back from `/opt/wc-rollback/<ts>/`, remove the drop-in, daemon-reload, start.
 - **Desktop build**: in `workcopilot/`: `npm install` then `npm run dist` →
   signed NSIS installer in `release-workcopilot/` (no PIN — software cert).
   Publish: copy `WorkCoPilot-Setup.exe` + `.blockmap` + `latest.yml` to

@@ -1,0 +1,72 @@
+// English strings for the superadmin Subscriber health section
+// (src/pages/workadmin/sections/SubscriptionHealth.jsx), namespace
+// `subHealthAdmin`. Plan names (Lite to Premium) and Stripe stay as written;
+// numbers come from server/admin_subscription_health.js.
+export default {
+  subHealthAdmin: {
+    loading: 'Loading subscriber health',
+    refresh: 'Refresh',
+    window: 'Last {days} days',
+    asOf: 'As of {time}',
+    tiles: {
+      mrr: 'Monthly recurring revenue',
+      mrrFoot: '{arr} a year at this rate',
+      active: 'Paying subscribers',
+      activeFoot: '{trialing} on trial',
+      pastDue: 'Failed payments',
+      pastDueFoot: 'accounts past due right now',
+      ending: 'Plans set to end',
+      endingFoot: 'cancel at period end, still active',
+      churn: 'Churn',
+      churnFoot: '{canceled} of {start} canceled',
+      newSubs: 'New subscribers',
+      newSubsFoot: 'started in the window',
+    },
+    byPlan: {
+      h3: 'MRR by plan',
+      plan: 'Plan',
+      subscribers: 'Subscribers',
+      annual: 'Annual',
+      mrr: 'MRR',
+      share: 'Share',
+    },
+    payments: {
+      h3: 'Money in the window',
+      paid: 'Payments',
+      refunds: 'Refunds',
+      net: 'Net',
+    },
+    stripe: {
+      h3: 'Stripe',
+      keys: 'Secret key',
+      webhook: 'Webhook secret',
+      annual: 'Annual prices',
+      mode: 'Mode',
+      on: 'Set',
+      off: 'Missing',
+      fix: 'Set it in Billing',
+      ready: 'Checkout, renewals and the portal are wired.',
+      notReady: 'Until the key and the webhook secret are set, no personal plan can be bought and no renewal lands.',
+    },
+    ending: {
+      h3: 'Ending soon',
+      empty: 'No plan is set to end.',
+      user: 'User',
+      plan: 'Plan',
+      endsAt: 'Ends',
+      reason: 'Reason',
+      noReason: 'No reason given',
+    },
+    pastDueList: {
+      h3: 'Past due',
+      empty: 'Every renewal went through.',
+      user: 'User',
+      plan: 'Plan',
+      since: 'Subscribed',
+      periodEnd: 'Period end',
+      open: 'Open in Subscribers',
+    },
+    viewOnlyNote: 'Subscriber health is visible to superadmins and the accounting role.',
+    unavailable: 'Subscriber health is not available on this server yet.',
+  },
+}

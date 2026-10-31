@@ -60,7 +60,11 @@ function isoDate(v) {
 
 // Build the invoice into a PDFDocument and return it. The caller pipes it to a
 // response (or a file) and the document is already ended.
-export function buildCompanyInvoice(statement, { invoiceNumber = null, issuer = null } = {}) {
+// `b2b` (optional): an invoice AdmireVeda issues under a company's contract
+// ({ periodStart, periodEnd, dueDate, status, notes }): titled Invoice, with the
+// service period, the due date and one Total. Without it the layout is the
+// statement exactly as before.
+export function buildCompanyInvoice(statement, { invoiceNumber = null, issuer = null, b2b = null } = {}) {
   const st = statement || {}
   // autoFirstPage on, but we drive the cursor ourselves (absolute x/y) and add
   // pages explicitly, so pdfkit's own overflow paging never fires mid-row.
@@ -78,11 +82,18 @@ export function buildCompanyInvoice(statement, { invoiceNumber = null, issuer = 
   // Header
   doc.fillColor(ACCENT).fontSize(22).font('Helvetica-Bold').text('WorkCoPilot', LEFT, 50, { width: 260, lineBreak: false })
   doc.fillColor(MUTE).fontSize(10).font('Helvetica').text('Read-only, screen-aware work guidance', LEFT, 76, { width: 260, lineBreak: false })
-  doc.fillColor(INK).fontSize(16).font('Helvetica-Bold').text('Invoice / Statement', LEFT, 52, { width: CONTENT_W, align: 'right' })
+  doc.fillColor(INK).fontSize(16).font('Helvetica-Bold').text(b2b ? 'Invoice' : 'Invoice / Statement', LEFT, 52, { width: CONTENT_W, align: 'right' })
   doc.fillColor(MUTE).fontSize(9).font('Helvetica')
   doc.text(`Invoice: ${num}`, LEFT, 74, { width: CONTENT_W, align: 'right', lineBreak: false })
   doc.text(`Date: ${isoDate(st.generatedAt)}`, LEFT, 85, { width: CONTENT_W, align: 'right', lineBreak: false })
   if (issuer && txt(issuer.name)) doc.text(txt(issuer.name), LEFT, 96, { width: CONTENT_W, align: 'right', lineBreak: false })
+  if (b2b) {
+    // Service period, due date and status sit under the bill-to block (right column).
+    doc.fillColor(MUTE).fontSize(9).font('Helvetica')
+    doc.text(`Service period: ${txt(b2b.periodStart)} to ${txt(b2b.periodEnd)}`, LEFT, 126, { width: CONTENT_W, align: 'right', lineBreak: false })
+    doc.text(`Due: ${txt(b2b.dueDate)}`, LEFT, 137, { width: CONTENT_W, align: 'right', lineBreak: false })
+    doc.text(`Status: ${txt(b2b.status)}`, LEFT, 148, { width: CONTENT_W, align: 'right', lineBreak: false })
+  }
 
   doc.moveTo(LEFT, 110).lineTo(RIGHT, 110).strokeColor(ACCENT).lineWidth(2).stroke()
 
@@ -170,9 +181,18 @@ export function buildCompanyInvoice(statement, { invoiceNumber = null, issuer = 
     cell(money(cur, amount), cols.amount, widths.amount, bold ? 12 : 10, font, color)
     y += bold ? 22 : 18
   }
-  totalRow('Recurring', st.recurringTotal)
-  totalRow('Extras', st.extrasTotal)
+  if (!b2b) {
+    totalRow('Recurring', st.recurringTotal)
+    totalRow('Extras', st.extrasTotal)
+  }
   totalRow('Total', st.total, true)
+  if (b2b && txt(b2b.notes)) {
+    const n = txt(b2b.notes)
+    const h = measure(n, CONTENT_W, 9, 'Helvetica')
+    ensureRoom(h + 10)
+    doc.fillColor(MUTE).fontSize(9).font('Helvetica').text(n, LEFT, y + 4, { width: CONTENT_W })
+    y += h + 10
+  }
 
   // Footer on EVERY page (with page numbers), drawn last via bufferPages.
   const range = doc.bufferedPageRange()
@@ -180,7 +200,9 @@ export function buildCompanyInvoice(statement, { invoiceNumber = null, issuer = 
   for (let i = 0; i < pages; i++) {
     doc.switchToPage(range.start + i)
     doc.fillColor(MUTE).fontSize(8).font('Helvetica')
-    doc.text('This statement reflects the current roster and recorded charges. Seat charges are computed from active licenses. Thank you for using WorkCoPilot.', LEFT, FOOTER_Y, { width: CONTENT_W - 70, align: 'left' })
+    doc.text(b2b
+      ? 'Issued by AdmireVeda under your company contract. Payment terms are those in your contract. Thank you for using WorkCoPilot.'
+      : 'This statement reflects the current roster and recorded charges. Seat charges are computed from active licenses. Thank you for using WorkCoPilot.', LEFT, FOOTER_Y, { width: CONTENT_W - 70, align: 'left' })
     doc.text(`Page ${i + 1} of ${pages}`, RIGHT - 60, FOOTER_Y, { width: 60, align: 'right', lineBreak: false })
   }
   doc.pageCount = pages   // for callers and tests; the stream itself is unchanged

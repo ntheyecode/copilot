@@ -70,6 +70,36 @@ export const SHOT_GEOMETRY = {
       ]
     }
   },
+  "company/brain-add": {
+    "w": 1016,
+    "h": 1028,
+    "marks": {
+      "promise": [
+        33,
+        95,
+        950,
+        70
+      ],
+      "drop": [
+        33,
+        171,
+        950,
+        216
+      ],
+      "result": [
+        33,
+        431,
+        950,
+        110
+      ],
+      "rows": [
+        10,
+        923,
+        996,
+        95
+      ]
+    }
+  },
   "company/trainer-grant": {
     "w": 970,
     "h": 480,
@@ -294,6 +324,72 @@ export const SHOT_GEOMETRY = {
         94,
         211,
         44
+      ]
+    }
+  },
+  "dashboards/your-brain": {
+    "w": 1280,
+    "h": 893,
+    "marks": {
+      "promise": [
+        280,
+        106,
+        952,
+        157
+      ],
+      "drop": [
+        280,
+        271,
+        952,
+        219
+      ],
+      "meter": [
+        997,
+        28,
+        149,
+        36
+      ],
+      "result": [
+        280,
+        498,
+        952,
+        98
+      ],
+      "rows": [
+        280,
+        656,
+        952,
+        217
+      ]
+    }
+  },
+  "dashboards/your-brain-learned": {
+    "w": 1280,
+    "h": 317,
+    "marks": {
+      "kind": [
+        306,
+        146,
+        73,
+        30
+      ],
+      "forget": [
+        1123,
+        144,
+        83,
+        36
+      ],
+      "forgetSource": [
+        1044,
+        246,
+        173,
+        40
+      ],
+      "forgetAll": [
+        1079,
+        12,
+        153,
+        40
       ]
     }
   },

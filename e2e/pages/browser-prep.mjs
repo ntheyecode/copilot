@@ -6,14 +6,56 @@
 // "verify capture flows with a synthetic stream"): a canvas drawing a fake app
 // window, exposed through canvas.captureStream(), so the real capture code runs
 // end to end without a share picker.
-export async function prepContext(context, { locale = 'en', theme = 'light', syntheticScreen = false } = {}) {
-  await context.addInitScript(({ locale, theme, syntheticScreen }) => {
+//
+// The synthetic camera (syntheticCamera: true) is the same recipe for
+// getUserMedia: a canvas drawing a machine panel (an HMI with a status line),
+// plus enumerateDevices listing two labeled cameras, so the Setup tab's picker,
+// the live preview and the camera frame path all run without a real device.
+export async function prepContext(context, { locale = 'en', theme = 'light', syntheticScreen = false, syntheticCamera = false } = {}) {
+  await context.addInitScript(({ locale, theme, syntheticScreen, syntheticCamera }) => {
     try {
       localStorage.setItem('wc_consent_v1', JSON.stringify({ version: 1, necessary: true, functional: false, analytics: false }))
       localStorage.setItem('wc_locale', locale)
       localStorage.setItem('wc_theme_mode', theme)
       localStorage.setItem('wc.coach.skip', '1')
     } catch { /* storage blocked: the page still renders with defaults */ }
+    if (syntheticCamera) {
+      const md = navigator.mediaDevices || (navigator.mediaDevices = {})
+      const CAMERAS = [
+        { deviceId: 'e2e-cam-bench', kind: 'videoinput', label: 'Workbench camera', groupId: 'g1' },
+        { deviceId: 'e2e-cam-usb', kind: 'videoinput', label: 'USB camera', groupId: 'g2' },
+      ]
+      md.enumerateDevices = async () => CAMERAS.map((c) => ({ ...c, toJSON() { return c } }))
+      if (typeof md.addEventListener !== 'function') { md.addEventListener = () => {}; md.removeEventListener = () => {} }
+      md.getUserMedia = async (constraints) => {
+        const want = constraints && constraints.video && constraints.video.deviceId && constraints.video.deviceId.exact
+        if (want && !CAMERAS.some((c) => c.deviceId === want)) { const e = new Error('no such camera'); e.name = 'OverconstrainedError'; throw e }
+        const c = document.createElement('canvas')
+        c.width = 1280; c.height = 720
+        const g = c.getContext('2d')
+        let n = 0
+        const draw = () => {
+          g.fillStyle = '#1b2430'; g.fillRect(0, 0, c.width, c.height)
+          g.fillStyle = '#263445'; g.fillRect(60, 60, 1160, 600)
+          g.fillStyle = '#e8eef7'; g.font = 'bold 30px sans-serif'; g.fillText('Line 3 HMI: Conveyor control', 90, 120)
+          g.fillStyle = '#9fb3c8'; g.font = '24px sans-serif'
+          g.fillText('Status: RUNNING   Speed: 1.20 m/s   Temp: 41 C', 90, 180)
+          g.fillText('Alarm: none   Mode: AUTO   Shift: B', 90, 220)
+          g.fillStyle = n % 2 ? '#2da44e' : '#1f6feb'; g.fillRect(90, 300, 300, 90)
+          g.fillStyle = '#fff'; g.font = 'bold 26px sans-serif'; g.fillText('START', 190, 356)
+          n += 1
+        }
+        draw()
+        const timer = setInterval(draw, 1000)
+        const stream = c.captureStream(5)
+        const [track] = stream.getVideoTracks()
+        track.getSettings = () => ({ width: 1280, height: 720, frameRate: 5, deviceId: want || CAMERAS[0].deviceId, facingMode: 'environment' })
+        const stop = track.stop.bind(track)
+        track.stop = () => { clearInterval(timer); stop() }
+        window.__e2eCamera = { calls: (window.__e2eCamera ? window.__e2eCamera.calls : 0) + 1, last: constraints }
+        return stream
+      }
+    }
     if (!syntheticScreen) return
     const md = navigator.mediaDevices || (navigator.mediaDevices = {})
     md.getDisplayMedia = async () => {
@@ -49,5 +91,5 @@ export async function prepContext(context, { locale = 'en', theme = 'light', syn
       track.stop = () => { clearInterval(timer); stop() }
       return stream
     }
-  }, { locale, theme, syntheticScreen })
+  }, { locale, theme, syntheticScreen, syntheticCamera })
 }

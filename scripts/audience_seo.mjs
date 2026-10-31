@@ -12,16 +12,19 @@
 //
 // Copy rules: honest (no claim the product cannot back), no em-dashes, no
 // provider or model names. The individuals copy carries no company wording.
+// No prices here (owner, 2026-10-31): admireveda.com publishes no rates; the
+// rates live only in server/org_pricing.js for contracts and invoices.
+
 
 export const AUDIENCE_SHELL = {
   organizations: {
     offers: [
-      { '@type': 'Offer', name: 'Hosted for your company', category: 'subscription', description: 'WorkCoPilot for your whole organization on our hosted service: company console, single sign-on, company policy and a guided-hours pool. Priced per user by company size; talk to us for a quote.' },
-      { '@type': 'Offer', name: 'Managed private cloud', category: 'subscription', description: 'A dedicated installation we run in your own cloud, on your database. Talk to us for a quote.' },
-      { '@type': 'Offer', name: 'On-premises', category: 'subscription', description: 'Installed on your own servers with your own AI keys and an offline license. Available on request.' },
+      { '@type': 'Offer', name: 'Hosted by AdmireVeda', category: 'subscription', description: 'WorkCoPilot for your whole organization on our hosted service, AI included: company console, single sign-on, SCIM provisioning, company policy and a guided-hours pool. Talk to us for a quote.' },
+      { '@type': 'Offer', name: 'Managed by AdmireVeda', category: 'subscription', description: 'We run WorkCoPilot for you, connected to your own database. Talk to us for a quote.' },
+      { '@type': 'Offer', name: 'Private instance', category: 'subscription', description: 'WorkCoPilot in your own cloud on your own AI keys. Talk to us for a quote.' },
     ],
-    costAnswer: 'WorkCoPilot is sold to organizations: hosted for your company, as a managed private cloud, or on your own servers. Pricing depends on the number of people and the deployment you choose. Talk to us for a quote.',
-    noscriptPlans: 'Plans for organizations: hosted for your company, managed private cloud, or on-premises. <a href="/workcopilot/contact">Talk to us</a> · <a href="/workcopilot">Sign in to WorkCoPilot</a> · <a href="/workcopilot/use-cases">See the use cases</a>.',
+    costAnswer: 'WorkCoPilot is sold to organizations and priced to your rollout: hosted by AdmireVeda, managed by AdmireVeda, or a private instance in your own cloud. Talk to us for a quote.',
+    noscriptPlans: 'Plans for organizations: hosted by AdmireVeda, managed by AdmireVeda, or a private instance. <a href="/workcopilot/contact">Talk to us</a> · <a href="/workcopilot">Sign in to WorkCoPilot</a> · <a href="/workcopilot/use-cases">See the use cases</a>.',
   },
   individuals: {
     offers: [
@@ -37,6 +40,10 @@ export const AUDIENCE_SHELL = {
 
 // Prerendered route copy per audience: { [routePath]: { lede?, points? } }.
 // Any of label, h1, lede, points replaces the base route's value.
+// These describe the organization pages read with the audience's overlay.
+// Where an edition serves the individuals site (capability individual_site),
+// that site's pages replace those routes wholesale with their own copy
+// (src/sites/individuals/seo_pages.js), so nothing here speaks for them.
 export const AUDIENCE_ROUTES = {
   organizations: {
     '/workcopilot': {
@@ -46,21 +53,10 @@ export const AUDIENCE_ROUTES = {
         'WorkCoPilot is for organizations. Accounts come from your company administrator or your company single sign-on. To bring it to your company, talk to us.',
       ],
     },
-    '/workcopilot/pricing': {
-      h1: 'Plans for organizations. Real guided time.',
-      lede: [
-        'WorkCoPilot is sold to organizations, priced per person by company size, with a guided-hours pool your company administrator shares out.',
-        'Talk to us for a quote. Security and privacy are built into every deployment, never sold as an upgrade.',
-      ],
-      points: [
-        'Hosted for your company: company console, single sign-on, company policy, a guided-hours pool and a DPA.',
-        'Managed private cloud: a dedicated installation we run in your own cloud, on your database.',
-        'On-premises: installed on your own servers with your own AI keys, available on request.',
-        'Company Brain and teach workflows: your own know-how, kept private to your company and used in every guided step.',
-      ],
-    },
+    '/workcopilot/pricing': { skip: true },   // no published prices: the page redirects to contact
   },
   individuals: {
+    '/workcopilot/company-brain': { skip: true },   // route needs companies: the individuals edition redirects it
     '/workcopilot': {
       lede: [
         'AdmireVeda\'s WorkCoPilot sits beside you and guides any task, step by step, all the way to done.',
@@ -99,6 +95,7 @@ export const AUDIENCE_ROUTES = {
 export function routeFor(route, audience) {
   const o = audience && AUDIENCE_ROUTES[audience] && AUDIENCE_ROUTES[audience][route.path]
   if (!o) return route
+  if (o.skip) return null   // this audience has no such page (it redirects): nothing to prerender
   const out = { ...route }
   for (const k of ['label', 'h1', 'lede', 'points']) if (o[k] !== undefined) out[k] = o[k]
   return out

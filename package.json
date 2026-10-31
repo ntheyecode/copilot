@@ -4,7 +4,7 @@
   "type": "module",
   "version": "1.0.0",
   "scripts": {
-    "test": "node --test server/*.test.mjs server/storage/*.test.mjs server/eval/*.test.mjs editions/*.test.mjs build/*.test.mjs src/pages/work/projects/*.test.mjs src/pages/work/pm/*.test.mjs src/pages/work/teach/*.test.mjs src/pages/work/workflows/*.test.mjs src/pages/work/incidents/*.test.mjs src/pages/work/help/*.test.mjs src/shared/*.test.mjs src/theme/*.test.mjs",
+    "test": "node --test server/*.test.mjs server/storage/*.test.mjs server/eval/*.test.mjs editions/*.test.mjs build/*.test.mjs src/pages/work/projects/*.test.mjs src/pages/work/pm/*.test.mjs src/pages/work/teach/*.test.mjs src/pages/work/workflows/*.test.mjs src/pages/work/incidents/*.test.mjs src/pages/work/help/*.test.mjs src/pages/work/guiding/*.test.mjs src/shared/*.test.mjs src/theme/*.test.mjs src/components/live_validate/*.test.mjs src/components/brand/*.test.mjs src/pages/work/brain/*.test.mjs src/pages/workadmin/sections/companybrain/*.test.mjs scripts/*.test.mjs",
     "dev:web": "vite",
     "dev:api": "node --watch server/index.js",
     "check:jsx-imports": "node scripts/check-jsx-imports.mjs",
@@ -32,6 +32,8 @@
     "@fontsource/bricolage-grotesque": "^5.3.0",
     "@fontsource/figtree": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
+    "@node-saml/node-saml": "^5.2.0",
+    "@xmldom/xmldom": "^0.9.12",
     "bcryptjs": "^2.4.3",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
@@ -54,7 +56,8 @@
     "@playwright/test": "^1.64.1",
     "@vitejs/plugin-react": "^6.1.2",
     "javascript-obfuscator": "^5.2.1",
-    "vite": "^8.3.5"
+    "vite": "^8.3.5",
+    "xml-crypto": "^6.4.0"
   },
   "overrides": {
     "multimatch": {

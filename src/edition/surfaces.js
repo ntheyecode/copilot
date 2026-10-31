@@ -10,12 +10,18 @@
 //   'companies'       company features exist (company console, SSO, teams)
 //   'individualPlans' personal Lite to Premium plans are sold
 //   'soloSignup'      a person can create their own account
+//   'individualSite'  the public site is the individuals site (src/sites/individuals/)
 export function shows(view, needs) {
   if (!needs) return true
   if (!view) return true
   if (needs === 'companies') return !!view.companies
   if (needs === 'individualPlans') return !!view.individualPlans
   if (needs === 'soloSignup') return !!view.soloSignup
+  // The affiliate program pays a share of a referred person's first personal
+  // plan payment through Stripe: it exists only where both do (the same rule
+  // as the server, server/admin_sections.js and edition_route_gates.js).
+  if (needs === 'affiliates') return !!(view.individualPlans && view.stripe)
+  if (needs === 'individualSite') return !!view.individualSite
   throw new Error(`[editions] unknown surface requirement "${needs}"`)
 }
 

@@ -40,16 +40,22 @@
 //                                                    scripts/audience_seo.mjs. Omitted = the base copy.
 //   node scripts/prerender-marketing.mjs --origin https://example.com
 //                                                    canonical / hreflang / JSON-LD origin (default admireveda.com)
-// build/spa_stamp.js runs this with --audience/--origin when it stamps an edition's SPA.
+//   node scripts/prerender-marketing.mjs --individual-site
+//                                                    the edition serves the individuals site (capability
+//                                                    individual_site): its pages' routes take their title,
+//                                                    description, heading and text from the pages' own source,
+//                                                    src/sites/individuals/seo_pages.js over the `indiv` namespace.
+// build/spa_stamp.js runs this with --audience/--origin (and --individual-site) when it stamps an edition's SPA.
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { LOCALES } from '../src/i18n/locales.js'   // single source for hreflang tags + ?lang codes
-import enBase from '../src/i18n/locales/en.js'      // source of truth for localized marketing meta (seo.*, login.meta)
 import enFields from '../src/i18n/locales/en/fieldsPage.js'   // the Fields roster (fieldsPage.families) - what WorkFields.jsx renders
-import { mergeOverlay } from '../src/i18n/overlay_merge.js'
 import { COPY_AUDIENCES } from '../server/edition_registry.js'
+import { brandForAudience, brandDocument } from '../server/brand.js'
 import { routeFor } from './audience_seo.mjs'
+import { loadEnCatalog, lookup } from './en_catalog.mjs'
+import { INDIV_SEO_PAGES, indivPrerender } from '../src/sites/individuals/seo_pages.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const argv = process.argv.slice(2)
@@ -63,11 +69,11 @@ const AUDIENCE = valueOf('--audience') || null
 if (AUDIENCE && !COPY_AUDIENCES.includes(AUDIENCE)) { console.error(`prerender: unknown --audience "${AUDIENCE}" (one of: ${COPY_AUDIENCES.join(', ')})`); process.exit(1) }
 const ORIGIN = String(valueOf('--origin') || 'https://admireveda.com').replace(/\/+$/, '')
 if (!/^https?:\/\/[^/\s]+$/.test(ORIGIN)) { console.error(`prerender: --origin must be a bare origin like https://example.com (got "${ORIGIN}")`); process.exit(1) }
-// The audience's English overlay over the base catalog: the same merge the SPA
-// runs at load (src/i18n/overlay.js), so the prerendered meta matches the page.
-const en = AUDIENCE
-  ? mergeOverlay(enBase, (await import(`../src/i18n/overlays/${AUDIENCE}/en.js`)).default || {})
-  : enBase
+const INDIVIDUAL_SITE = flag('--individual-site')
+// The English catalog the SPA builds at load (base + partials, then the
+// audience's overlay; scripts/en_catalog.mjs), so the prerendered meta matches
+// the page.
+const en = await loadEnCatalog(AUDIENCE)
 const MARKER = '<!-- prerendered-by: scripts/prerender-marketing.mjs (prerender-lite, audit IP-16) -->'
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -91,7 +97,7 @@ const FIELDS = readFields()
 // ---- the routes -------------------------------------------------------------
 // label: short link text for the sibling-page nav. `source`: page file used by --check.
 const R = []
-const route = (r) => R.push(routeFor(r, AUDIENCE))
+const route = (r) => { const x = routeFor(r, AUDIENCE); if (x) R.push(x) }   // null: no such page for this audience
 
 route({
   path: '/workcopilot',
@@ -201,8 +207,8 @@ route({
   path: '/workcopilot/security',
   label: 'Security and privacy',
   source: 'WorkSecurity.jsx',
-  title: 'Security and Privacy - WorkCoPilot by AdmireVeda',
-  description: 'How WorkCoPilot protects your data: sensitive values redacted or tokenized on your device before anything is sent, code checked before you run it, an authenticator on every account, a per-session audit log, encryption at rest, and compliance evidence mapped to the frameworks you report to.',
+  title: en.securityPage.seo.title,
+  description: en.securityPage.seo.description,
   h1: 'See exactly what is protected',
   lede: [
     'Before anything is sent, sensitive data is stripped or tokenized on your own device, in screenshots and in text. You decide what counts as sensitive, on top of the industry-standard detectors.',
@@ -213,6 +219,31 @@ route({
     'Read-only by design: it never clicks, types or runs anything in your systems.',
     'A plain account of how your data moves and how long we keep it, as a disclosure of what the product does today, not a compliance claim.',
     'Controls and audit evidence to support compliance across the frameworks you report to. Your admin arms a policy per company and locks it.',
+  ],
+})
+
+// The Company Brain page: organizations only (route needs companies), so the
+// individuals audience skips it (scripts/audience_seo.mjs). Title and
+// description come from the page's own catalog keys (companyBrainPage.seo);
+// the crawler copy below mirrors the page's English wording.
+route({
+  path: '/workcopilot/company-brain',
+  label: 'Company Brain',
+  source: 'WorkCompanyBrain.jsx',
+  title: en.companyBrainPage.seo.title,
+  description: en.companyBrainPage.seo.description,
+  h1: 'Guidance that knows how your company works.',
+  lede: [
+    'The Company Brain is your company\'s private knowledge inside WorkCoPilot. It turns your documents, your trainers\' recorded workflows and the tasks your people finish into guidance that follows your own apps, playbooks and conventions.',
+  ],
+  points: [
+    'Three sources: your documents become scrubbed, searchable passages that cite their source; your trainers record and publish guided workflows; the tasks your people finish cleanly are kept as de-identified patterns for the next person.',
+    'Every step in your words, in your apps: steps use your system names, fields and approval chain, name the document or workflow they came from, and get more specific the more your team uses it.',
+    'Private to your company: stored separately under your company\'s own key, encrypted at rest, never shared with another company and never used to train a shared model.',
+    'Your admin curates it: every source listed with its size and status; removing one or clearing everything needs a reason and lands in the audit trail; knowledge spaces group company learnings.',
+    'Private brain with your passphrase: sealed under a passphrase only your company holds, a recovery phrase shown once, lock and open it for your team, and it re-locks on a timer.',
+    'Executives download the Company Brain as one encrypted archive under a passphrase they set; on the hosted service, viewing or replacing it asks for a fresh authenticator code.',
+    'Read-only by design: the Company Brain changes what the guide says, never what it does. WorkCoPilot never clicks, types or runs anything for anyone.',
   ],
 })
 
@@ -235,6 +266,25 @@ route({
     'Which platforms does WorkCoPilot support? WorkCoPilot works in any modern browser with nothing to install, as a Windows desktop app, and on mobile, with the Android app coming soon.',
   ],
 })
+
+// ---- the individuals site -------------------------------------------------------
+// Where the edition serves the individuals site, its pages replace the
+// organization pages at the same paths, so their routes are rebuilt from the
+// pages' own source (seo_pages.js over the `indiv` namespace), never from the
+// literals above or the audience overrides in audience_seo.mjs. The home page
+// ("/") is the shell itself; build/spa_stamp.js stamps its title from the same
+// table. The sign-in and Fields pages are not part of that site and keep their
+// routes.
+if (INDIVIDUAL_SITE) {
+  const t = lookup(en)
+  for (const p of INDIV_SEO_PAGES) {
+    if (p.path === '/') continue
+    const r = { ...indivPrerender(t, p.page), indivPage: p.page }
+    const at = R.findIndex((x) => x.path === p.path)
+    if (at >= 0) R[at] = r
+    else R.push(r)
+  }
+}
 
 // ---- templating ---------------------------------------------------------------
 function jsonLd(r) {
@@ -330,7 +380,7 @@ const BUNDLE_RE = /<(script)\b[^>]*\bsrc="\/copilot-assets\/[^"]+"[^>]*><\/scrip
 // cannot silently drift; the check instead confirms the page still reads the
 // expected catalog key (catches a page reverted to a hard-coded string or wired
 // to the wrong key). Routes not listed here still use a literal useSeo() and are
-// checked by matching the prerender copy against the page source (e.g. security).
+// checked by matching the prerender copy against the page source.
 const I18N_KEY = {
   '/workcopilot': 'login.meta',
   '/workcopilot/how-it-works': 'seo.how-it-works',
@@ -338,11 +388,32 @@ const I18N_KEY = {
   '/workcopilot/fields': 'seo.fields',
   '/workcopilot/pricing': 'seo.pricing',
   '/workcopilot/faq': 'seo.faq',
+  '/workcopilot/security': 'securityPage.seo',
+  '/workcopilot/company-brain': 'companyBrainPage.seo',
+}
+
+// An individuals-site route's copy comes from the same table the page reads;
+// the check confirms the page still sets its SEO through that table (the page
+// file is found through SitePage.jsx's own page list).
+const SITE_DIR = path.join(ROOT, 'src', 'sites', 'individuals')
+function indivPageFile(page) {
+  try {
+    const sp = fs.readFileSync(path.join(SITE_DIR, 'SitePage.jsx'), 'utf8')
+    const m = new RegExp(`\\b${page}: lazy\\(\\(\\) => import\\('\\./pages/(\\w+)\\.jsx'\\)\\)`).exec(sp)
+    return m ? path.join(SITE_DIR, 'pages', `${m[1]}.jsx`) : null
+  } catch { return null }
 }
 
 function checkCopy() {
   const warnings = []
   for (const r of R) {
+    if (r.indivPage) {
+      const f = indivPageFile(r.indivPage)
+      let src = ''
+      try { src = f ? fs.readFileSync(f, 'utf8') : '' } catch { /* reported below */ }
+      if (!src.includes(`useSeo(indivSeo(t, '${r.indivPage}'))`)) warnings.push(`${r.path}: the individuals page "${r.indivPage}" no longer sets its SEO with indivSeo() (src/sites/individuals/seo_pages.js)`)
+      continue
+    }
     let src = ''
     try { src = fs.readFileSync(path.join(SRC_PAGES, r.source), 'utf8') } catch { warnings.push(`${r.path}: cannot read ${r.source}`); continue }
     const key = I18N_KEY[r.path]
@@ -383,8 +454,12 @@ function main() {
   const bundle = tags(template, BUNDLE_RE)
   if (!bundle.some((t) => t.startsWith('<script'))) { console.error('prerender: no /copilot-assets/ <script> in dist/index.html; refusing to write pages that would not load the app'); process.exit(1) }
 
+  // The audience's brand (LinkNotes for individuals), the same pass as the
+  // shell's (server/brand.js); legal pages keep their text as written.
+  const brand = brandForAudience(AUDIENCE)
+  const LEGAL_ROUTE = /\/(terms|privacy|refund|cookies?|dpa|disclaimer|acceptable-use|subprocessors|accessibility)\b/
   for (const r of R) {
-    const out = render(template, r)
+    const out = LEGAL_ROUTE.test(r.path) ? render(template, r) : brandDocument(render(template, r), brand)
     // The one invariant that protects the live SPA: identical bundle tags.
     const got = tags(out, BUNDLE_RE)
     if (JSON.stringify(got) !== JSON.stringify(bundle)) throw new Error(`${r.path}: bundle tags changed during render`)

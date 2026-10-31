@@ -192,7 +192,15 @@ export const WORKADMIN_CSS = WD_TOKENS_CSS + `
 .wka-search { flex: 1; min-width: 180px; max-width: 360px; }
 
 .wka-table-wrap { max-width: 100%; overflow-x: auto; border: 1px solid var(--wka-line); border-radius: var(--wka-radius); background: var(--wka-panel); box-shadow: none; }
-table.wka-table { width: 100%; border-collapse: collapse; font-size: calc(13px * var(--wc-fs, 1)); min-width: 640px; }
+/* A table is as wide as its content and no wider: a wide data table (nowrap
+   cells, many columns) scrolls inside its .wka-table-wrap, a small one (a
+   category + an action) fits the viewport. The old base min-width: 640px forced
+   every table, even a two-column one, past a 640px or 380px viewport; tables
+   that need a floor set their own minWidth inline. */
+table.wka-table { width: 100%; border-collapse: collapse; font-size: calc(13px * var(--wc-fs, 1)); }
+/* A select in a cell fills its column and shrinks with it (min-width: 0), so
+   a narrow viewport narrows the control instead of pushing the table out. */
+.wka-table td > .wka-select { width: 100%; min-width: 0; max-width: 100%; }
 .wka-table th {
   text-align: left; padding: 10px 14px; color: var(--wka-muted); font-weight: 600;
   font-size: calc(12px * var(--wc-fs, 1));
@@ -258,6 +266,7 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: calc(13px *
 .wka-select {
   background: var(--wka-panel); border: 1px solid var(--wka-line-2); color: var(--wka-text);
   border-radius: 9px; padding: 6px 9px; font-size: calc(12.5px * var(--wc-fs, 1)); outline: none; cursor: pointer;
+  max-width: 100%; min-width: 0;
 }
 .wka-select:focus { border-color: var(--wka-accent); box-shadow: 0 0 0 3px var(--wka-accent-soft); }
 .wka-select:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -415,6 +424,10 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: calc(13px *
 @media (max-width: 760px) {
   .wka-nav { width: 64px; padding: 14px 8px; }
   .wka-nav-item span.label { display: none; }
+  /* Collapsed to icons: anything else an item carries (a count badge, a dot)
+     sits on the icon's corner instead of running past the 64px rail. */
+  .wka-nav-item { position: relative; justify-content: center; }
+  .wka-nav-item > :not(svg):not(.label) { position: absolute; top: 2px; right: 2px; margin: 0; transform: scale(.85); transform-origin: top right; }
   .wka-nav-foot { display: none; }
   .wka-main { padding: 20px 16px 40px; }
 }

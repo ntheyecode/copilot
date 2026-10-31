@@ -198,7 +198,10 @@ export default {
   },
   widgets: {
     validate: {
-      workEmailPh: "giulia@esempio.it"
+      workEmailPh: "giulia@esempio.it",
+      workEmail: "Email",
+      chip1: "Passa il mio Google Calendar alla vista settimanale e condividilo con un cliente",
+      chip5: "Importa un CSV di contatti in HubSpot e aggiungi a ogni contatto la proprietà di origine del lead"
     }
   },
   setPasswordPage: {

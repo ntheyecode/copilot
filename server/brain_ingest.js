@@ -158,7 +158,9 @@ function isVersionNewer(incoming, prior) {
 // ingestSource: scrub -> embed -> hash -> dedupe -> supersede/upsert.
 // Returns an honest tally: { accepted, skipped, superseded, tombstoned, redacted }.
 // ---------------------------------------------------------------------------
-export async function ingestSource(companyId, { source, version, extractedText, policy }) {
+// sourceMeta (optional): the source's details for the inventory (title, kind,
+// revision, embedding model), passed through to the store write.
+export async function ingestSource(companyId, { source, version, extractedText, policy, sourceMeta = null }) {
   const result = { accepted: 0, skipped: 0, superseded: 0, tombstoned: 0, redacted: 0 }
   if (!source || source.id == null) throw new Error('ingestSource: source.id is required')
 
@@ -231,12 +233,12 @@ export async function ingestSource(companyId, { source, version, extractedText, 
   // 6) Write: supersede a newer version (atomic replace + tombstone old chunks),
   //    else upsert the fresh chunks. A fully-unchanged re-ingest writes nothing.
   if (supersede) {
-    await brainStore.supersede(companyId, source.id, records)
+    await brainStore.supersede(companyId, source.id, records, sourceMeta)
     result.superseded = records.length
     result.tombstoned = (prior.chunkHashes || []).length
     result.accepted = records.filter((r) => !priorHashes.has(r.chunkHash)).length
   } else if (records.length) {
-    await brainStore.upsert(companyId, records)
+    await brainStore.upsert(companyId, records, sourceMeta)
     result.accepted = records.length
   }
 

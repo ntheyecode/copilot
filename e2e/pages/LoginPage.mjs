@@ -1,12 +1,16 @@
-// /workcopilot/login: the card opens on the Social tab, so the email form is
-// one tab away. Selectors are the ids the page already ships (no test ids).
+// /workcopilot/login: where social sign-in exists the card opens on the Social
+// tab, so the email form is one tab away; without it (the organizations site)
+// the email form is the only panel. Selectors are the ids the page ships.
 export class LoginPage {
   constructor(page) { this.page = page }
 
   async open() {
     await this.page.goto('/workcopilot/login')
-    await this.page.locator('#wl-tab-email').click()
-    await this.page.locator('#wl-user').waitFor()
+    const user = this.page.locator('#wl-user')
+    const emailTab = this.page.locator('#wl-tab-email')
+    await user.or(emailTab).first().waitFor()
+    if (await emailTab.count()) await emailTab.click()
+    await user.waitFor()
   }
 
   async signIn(username, password) {

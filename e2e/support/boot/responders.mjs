@@ -4,6 +4,8 @@
 // (server/work.js, work_deep_plan.js, workflow_step_reader.js). Order matters:
 // the harden prompt also contains "PLAN THE WORK", so it is checked first.
 const MARKERS = [
+  ['coverage', /You are the coverage assistant/],
+  ['distill', /You read part of a document a person uploaded to teach their own/],
   ['project', /PLAN A PROJECT AS AN ORDERED MAP OF TASKS/],
   ['harden', /HARDEN A DRAFT PLAN/],
   ['watch', /GUIDE CONTINUOUSLY BY WATCHING THE SCREEN/],
@@ -11,8 +13,9 @@ const MARKERS = [
   ['result', /RETURN THE RESULT, NOT JUST THE STEPS/],
   ['plan', /PLAN THE WORK/],
   ['ping', /You are a connectivity check/],
-  ['scope', /You are the scoping step of WorkCoPilot/],
-  ['summary', /You are summarizing a WorkCoPilot session/],
+  // Brand-neutral: the individuals edition's prompts say LinkNotes (server/brand.js).
+  ['scope', /You are the scoping step of (WorkCoPilot|MyTaskPilot)/],
+  ['summary', /You are summarizing a (WorkCoPilot|MyTaskPilot) session/],
   ['stepRead', /You are reading one recorded step of a guided workflow/],
 ]
 
@@ -46,8 +49,28 @@ export const DEFAULT_PROJECT = Object.freeze({
   ],
 })
 
+// The public live widget's answer: a covered task, four steps, the first
+// three in full depth. Names a plan, so a corporate run proves the server
+// drops it.
+export const DEFAULT_COVERAGE = Object.freeze({
+  verdict: 'covered', answer: 'Your monthly summary, built step by step with you.', points: ['**Exact clicks** in your spreadsheet'],
+  sees: 'Your spreadsheet is open', ready: 'Signed in to your spreadsheet app',
+  steps: [
+    { do: 'Select the expense rows', url: '', path: '', cmd: '', how: ['Click the first cell', 'Press `Ctrl+Shift+Down`'], done: 'The rows are highlighted', drift: 'That is the header row. Start one row below it' },
+    { do: 'Insert a pivot table', url: '', path: 'Insert > PivotTable', cmd: '', how: ['Open the `Insert` tab', 'Choose `PivotTable`'], done: 'An empty pivot table appears', drift: 'That is the chart menu. Use PivotTable instead' },
+    { do: 'Total each month', url: '', path: '', cmd: '', how: ['Drag `Month` to Rows', 'Drag `Amount` to Values'], done: 'Each month shows its total', drift: 'Amount belongs in Values, not Rows' },
+    { do: 'Name the summary sheet', url: '', path: '', cmd: '', how: [], done: '', drift: '' },
+  ],
+  plan: 'Basic', product: 'WorkCoPilot',
+})
+
 export function defaultAnswer(kind, text) {
   switch (kind) {
+    case 'coverage':
+      return DEFAULT_COVERAGE
+    case 'distill':
+      // What a personal brain learns from a document (server/personal_brain_rules.js).
+      return { learnings: [{ text: 'Monthly expense summaries use the Expenses sheet and a pivot table by month.', kind: 'procedure' }, { text: 'Amounts are always in euros, rounded to two decimals.', kind: 'preference' }] }
     case 'project':
       return DEFAULT_PROJECT
     case 'plan':

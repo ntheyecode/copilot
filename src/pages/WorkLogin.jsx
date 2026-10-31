@@ -7,7 +7,7 @@ import GuideConsole from '../components/GuideConsole.jsx'   // the live guide co
 import { api } from '../api.js'
 import { LEGAL_FALLBACK_DOCS } from '../components/LegalConsentGate.jsx'   // shared fallback agreement list
 import AgreementLinks from '../components/AgreementLinks.jsx'   // the keyed "I have read and agree to ..." sentence
-import { AVMark } from '../components/AdmireVedaLogo.jsx'
+import { BrandMark as AVMark } from '../components/brand/BrandLogo.jsx'   // the edition's brand mark
 import SocialMark from '../components/SocialMark.jsx'   // Google / Microsoft / Facebook marks (shared with the subscribe onboarding)
 import WorkShell from '../workShell.jsx'
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
@@ -107,7 +107,12 @@ export default function WorkLogin() {
   const mode = IN_APP || !ed.soloSignup ? 'signin' : modeState   // the app is sign-in only (accounts are created on the web), and so is an edition without personal sign-up
   // The two tabs: 'social' | 'email'. A returning SSO error lands on the email
   // tab (that is where company SSO lives).
-  const [tab, setTab] = useState(sp.get('sso_error') ? 'email' : 'social')
+  // Social sign-in exists only where the edition offers it (social_login); a
+  // company account never uses it anyway (server/sign_in_rules.js). Without it
+  // the page has one panel: email, password and company single sign-on.
+  const socialOn = ed.socialLogin
+  const [tabState, setTab] = useState(sp.get('sso_error') ? 'email' : 'social')
+  const tab = socialOn ? tabState : 'email'
   // The focused company-SSO step (replaces the old inline dropdown).
   const [ssoView, setSsoView] = useState(false)
   const [uName, setUName] = useState(''); const [uPass, setUPass] = useState('')
@@ -166,7 +171,7 @@ export default function WorkLogin() {
     setSsoChecking(true)
     try {
       const r = await api.workSsoResolve(domain)
-      const hit = r && r.companyId ? { domain, companyId: r.companyId, companyName: r.companyName || r.name || '' } : false
+      const hit = r && r.companyId ? { domain, companyId: r.companyId, startUrl: r.startUrl || '', companyName: r.companyName || r.name || '' } : false
       ssoSeen.current[domain] = hit
       setSsoHit(hit || null)
       if (hit) setSsoDomain(domain)
@@ -179,7 +184,8 @@ export default function WorkLogin() {
     return () => clearTimeout(tm)
   }, [candidateDomain])   // eslint-disable-line
   const ssoActive = !!(ssoHit && ssoHit.domain === candidateDomain && ssoDismissed !== ssoHit.domain)
-  const goSso = () => { if (ssoHit) window.location.assign(api.workSsoStartUrl(ssoHit.companyId)) }
+  // startUrl: the server says which protocol (OIDC or SAML) the company uses.
+  const goSso = () => { if (ssoHit) window.location.assign(ssoHit.startUrl || api.workSsoStartUrl(ssoHit.companyId)) }
 
   // SOCIAL sign-in (server/social.js). Providers: enable a button ONLY when the
   // server reports it configured (true); false -> disabled "Coming soon"; while
@@ -188,9 +194,10 @@ export default function WorkLogin() {
   const [socialErr, setSocialErr] = useState(sp.get('social_error') || '')
   useEffect(() => {
     let dead = false
+    if (!socialOn) return undefined
     api.workSocialProviders().then((r) => { if (!dead) setProviders((r && r.providers) || {}) }).catch(() => { if (!dead) setProviders({}) })
     return () => { dead = true }
-  }, [])
+  }, [socialOn])
   const socialEnabled = (id) => !!(providers && providers[id] === true)
   // The start route is a FULL-PAGE navigation (the server redirects to the
   // provider), never an XHR. The checkout intent rides along, harmless if ignored.
@@ -270,7 +277,7 @@ export default function WorkLogin() {
     setSsoBusy(true); setSsoErr('')
     try {
       const r = await api.workSsoResolve(domain)
-      window.location.assign(api.workSsoStartUrl(r.companyId))
+      window.location.assign(r.startUrl || api.workSsoStartUrl(r.companyId))
     } catch (e2) {
       setSsoErr(e2.message || t('login.err.ssoNotFound'))
       setSsoBusy(false)
@@ -475,10 +482,10 @@ export default function WorkLogin() {
           <p className="wl-sub">{subline}</p>
 
           {/* THE TWO TABS: Social | Email & SSO (same pattern for log in and create account). */}
-          <div className="wl-tabs" role="tablist" aria-label={t('login.tabs.aria')}>
+          {socialOn ? <div className="wl-tabs" role="tablist" aria-label={t('login.tabs.aria')}>
             <button type="button" role="tab" id="wl-tab-social" aria-selected={tab === 'social'} aria-controls="wl-panel-social" className={`wl-tab${tab === 'social' ? ' on' : ''}`} onClick={() => setTab('social')}><Sparkles size={14} aria-hidden="true" /> {t('login.tabs.social')}</button>
             <button type="button" role="tab" id="wl-tab-email" aria-selected={tab === 'email'} aria-controls="wl-panel-email" className={`wl-tab${tab === 'email' ? ' on' : ''}`} onClick={() => setTab('email')}><Mail size={14} aria-hidden="true" /> {t('login.tabs.email')}</button>
-          </div>
+          </div> : null}
 
           {tab === 'social' ? (
             <div className="wl-panel" role="tabpanel" id="wl-panel-social" aria-labelledby="wl-tab-social">

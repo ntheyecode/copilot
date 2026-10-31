@@ -22,7 +22,10 @@ import { fileURLToPath } from 'node:url'
 import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import * as totp from './totp.js'
-import { PROVIDERS, allowAiHost } from './ai.js'
+import { PROVIDERS, allowAiHost, generate as aiGenerate } from './ai.js'
+import { extractText as extractDocText } from './docs.js'
+import { createPersonalBrain } from './personal_brain.js'
+import { cameraAllowed, cameraRefusal } from './capture_sources.js'
 import { COMPLIANCE_FRAMEWORKS, getFramework } from './compliance_frameworks.js'
 import { resolveGuidanceDepth, normalizeDepth as normalizeDepthId, clampDepth, canUseProjects as canUseProjectsPure } from './guidance_depth.js'
 import * as customers from './work_customers.js'
@@ -44,6 +47,7 @@ import { resolveLocale } from './locales.js'
 // Every account must have accepted the CURRENT version to use the platform; the
 // per-user acceptance record and the re-consent gate both read LEGAL_VERSION here.
 import { LEGAL_VERSION } from './legal.js'
+import { ANNUAL_DISCOUNT } from './billing_terms.js'
 // Password -> key derivation for the password-encrypted data export. ONE source of
 // truth for scrypt (SUPREME RULE II): the same KDF the Company Brain customer-held
 // key uses. We store ONLY a verifier (useless for decrypting anything) + its salt,
@@ -63,6 +67,7 @@ import { createPlanAllowance } from './plan_allowance.js'
 import { createOnboarding } from './onboarding_store.js'
 import { createWorkflows } from './workflows_store.js'
 import { isFrameRef } from './workflows_rules.js'
+import { withDestructive } from './destructive_rules.js'
 import { createWorkflowIncidents, alertInboxOf } from './workflow_incidents.js'
 import { createAiUsageLedger } from './ai_usage_ledger.js'
 import { createInbox } from './notifications.js'
@@ -72,6 +77,12 @@ import { createWorkflowFrameSweep } from './workflow_frame_sweep.js'
 import { execOverview } from './exec_overview.js'
 import { makeExportKey } from './export_key.js'
 import { createIntegrationState } from './integration_store.js'
+import { createSsoState } from './sso_store.js'           // SAML connection, "SSO required", the shared sign-in domain
+import { createScimState } from './scim_store.js'         // SCIM 2.0 provisioning tokens, users and groups
+import { createScimRoleSync } from './scim_roles.js'      // SCIM group -> role / grant mappings
+import { manualEditConflict, managedView } from './scim_role_rules.js'
+import { createB2bBilling } from './b2b_invoices.js'      // AdmireVeda's contract + invoice billing of companies
+import { OIDC_PROVIDER_IDS } from './idp_catalog.js'
 import { resolveDataDir } from './data_dir.js'
 import { assertResolvesPublic } from './egress_guard.js'
 // Persistence driver (server/storage/): json (db.json, the default) or postgres.
@@ -535,6 +546,43 @@ export const markWorkflowAlertsRead = (userId, idOrAll) => wfAlertInbox.markRead
 const aiUsageLedger = createAiUsageLedger({ db: () => db, persistSoon })
 export const { recordAiUsage, listAiUsage } = aiUsageLedger
 
+// ---- Company single sign-on beyond OIDC (module: sso_store.js) ----
+const ssoState = createSsoState({
+  db: () => db, persist, httpErr, normalizeDomain, isDomain: (d) => DOMAIN_RE.test(d),
+  findMember: (companyId, email) => findCompanyMemberByEmail(companyId, email),
+  audit: (a) => recordAdminAction(a),
+})
+export const { setCompanySaml, clearCompanySaml, getCompanySamlConfig, samlStatus, setCompanySsoRequired, previewSsoSignIn, recordSsoTest, lastSsoTest } = ssoState
+// ---- SCIM 2.0 provisioning (module: scim_store.js) ----
+// Tokens are hashed with the same peppered HMAC as the company API keys; every
+// account change goes through the store's own seat-gated, audited functions.
+// Group -> role mappings (module: scim_roles.js, rules in scim_role_rules.js):
+// group membership sets roles and grants through the same seat gate and the
+// same "your access changed" notice as a manual console edit.
+const scimRoleSync = createScimRoleSync({
+  db: () => db, persist, httpErr, audit: (a) => recordAdminAction(a),
+  assertSeat: (cid, role, u) => assertSeatAvailable(cid, role, WORK_TIERS.includes(u.tier) ? u.tier : 'basic', u.id),
+  accessChanged: (u) => emitStoreEvent('work_access_changed', { userId: u.id, role: u.companyRole || 'member', flow: u.workFlow || 'independent', grants: u.grants, companyId: u.companyId }),
+  label: (u) => u.ssoEmail || u.email || u.username || u.id,
+})
+export const { listRoleMappings: listScimRoleMappings, addRoleMapping: addScimRoleMapping, removeRoleMapping: removeScimRoleMapping } = scimRoleSync
+// A person's own brain (personal_brain.js): learned from their documents and
+// sessions; the files themselves are never kept.
+const personalBrain = createPersonalBrain({ db: () => db, persist, ai: { generate: (...a) => aiGenerate(...a) }, runtime: () => getActiveRuntime(), extractText: extractDocText, newId: () => id() })
+export const { learnFromDocument: learnPersonalBrainDoc, addNotes: addPersonalBrainNotes, list: listPersonalBrain, forgetLearning: forgetPersonalLearning, forgetSource: forgetPersonalBrainSource, clear: clearPersonalBrain, contextFor: personalBrainContext } = personalBrain
+const scim = createScimState({
+  db: () => db, persist, persistSoon, httpErr, company: _company, masterKey: encKey,
+  createMember: (args) => createSsoAccount(args),
+  setDisabled: (userId, disabled, opts) => setUserDisabled(userId, disabled, opts),
+  setSsoEmail: (userId, email) => setUserSsoEmail(userId, email),
+  audit: (a) => recordAdminAction(a),
+  syncRoles: (cid, opts) => scimRoleSync.syncUsers(cid, opts),
+})
+export const { listScimTokens, createScimToken, revokeScimToken, resolveScimToken, scimUsers, scimGroups } = scim
+// ---- B2B contract + invoice billing (module: b2b_invoices.js) ----
+const b2b = createB2bBilling({ db: () => db, persist, httpErr, id, company: _company, publicCompany, poolDashboard: (cid) => companyPoolDashboard(cid), audit: (a) => recordAdminAction(a) })
+export const { getCompanyContract, setCompanyContract, listCompanyInvoices, listAllInvoices, createCompanyInvoice, setInvoiceStatus, getCompanyInvoice, invoiceStatement, companyBillingOverview } = b2b
+
 // ---- AI seed (one-time, at deploy) ---------------------------------------
 // If an ai-seed.json exists and the platform AI is not already configured, load
 // it into db.ai (providers + keys + model pins) and db.work.platformAiAllowed.
@@ -675,8 +723,10 @@ export function publicWorkUser(u) {
     companyId: u.companyId || null,
     companyRole: u.companyRole || null,          // member | company_admin | executive | project_manager | senior_project_manager | grc
     grants: (u.companyId ? roles.sanitizeGrants(u.companyRole, u.grants) : []),  // additive grants (trainer); only those the primary role may hold
+    idpManaged: managedView(u),   // { role, grants } the company's identity provider sets through group mappings, else null
     workFlow: (u.companyId ? (['worker', 'independent', 'mixed'].includes(u.workFlow) ? u.workFlow : 'independent') : null),  // how tasks reach a company user: worker | independent | mixed (null for individuals)
     companyName: co ? co.name : null,
+    cameraCapture: cameraAllowed({ user: u, company: co }),   // may the guide read from a camera (personal: on; company: its admin's switch)
     // Enterprise allocation GROUP (admin / supervisor / member) the company admin
     // governs the user by, and the per-user ceiling override (null = inherit the
     // group). Defaulted from the company role when the admin has not reassigned it.
@@ -885,7 +935,9 @@ export function freshSubscription() {
   // cancelled-subscribers list and the finance timeseries have a real end date
   // and a documented reason. pendingChange: a scheduled (period-end) downgrade
   // the dashboard can show and the renewal webhook flips into place.
-  return { status: 'none', plan: null, cycle: null, since: null, canceledAt: null, cancelReason: null, pendingChange: null, stripeCustomerId: null, stripeSubscriptionId: null, currentPeriodEnd: null }
+  // cancelAtPeriodEnd: the person (or Stripe's portal) asked the plan to end at
+  // the period end; status stays live until then and a resume clears it.
+  return { status: 'none', plan: null, cycle: null, since: null, canceledAt: null, cancelReason: null, pendingChange: null, cancelAtPeriodEnd: false, stripeCustomerId: null, stripeSubscriptionId: null, currentPeriodEnd: null }
 }
 function ensureSubscription(u) {
   if (!u.subscription || typeof u.subscription !== 'object') u.subscription = freshSubscription()
@@ -907,6 +959,7 @@ export function getSubscription(userId) {
     since: s.since || null,
     canceledAt: s.canceledAt || null,
     pendingChange: s.pendingChange || null,
+    cancelAtPeriodEnd: !!s.cancelAtPeriodEnd,
   }
 }
 // Merge a patch (from the webhook) into the account's subscription. Only known
@@ -921,9 +974,12 @@ export function setSubscription(userId, patch = {}) {
   // interval so the Subscribers view and MRR math know the billing period.
   // 'canceledAt'/'cancelReason' record the end of a subscription; 'pendingChange'
   // holds a scheduled period-end downgrade until the renewal webhook flips it.
-  for (const k of ['status', 'plan', 'cycle', 'canceledAt', 'cancelReason', 'pendingChange', 'stripeCustomerId', 'stripeSubscriptionId', 'currentPeriodEnd']) {
+  for (const k of ['status', 'plan', 'cycle', 'canceledAt', 'cancelReason', 'pendingChange', 'cancelAtPeriodEnd', 'stripeCustomerId', 'stripeSubscriptionId', 'currentPeriodEnd']) {
     if (patch[k] !== undefined) s[k] = patch[k]
   }
+  // A plan that has actually ended, or one that is no longer live, has nothing
+  // left to end at the period end.
+  if (s.status === 'canceled' || s.status === 'none') s.cancelAtPeriodEnd = false
   // Stamp when the subscription first became live, so the Subscribers list can
   // show a real "since" date rather than falling back to the account creation.
   if (!s.since && (s.status === 'active' || s.status === 'trialing' || s.status === 'comp')) s.since = now()
@@ -1323,6 +1379,8 @@ function publicCompany(c) {
     // admin owns this; the platform does not override it.
     retentionDays: (Number.isInteger(Number(c.retentionDays)) && Number(c.retentionDays) > 0) ? Number(c.retentionDays) : 0,
     sso: c.sso ? { provider: c.sso.provider || null, connected: !!c.sso.connected, domain: c.sso.domain || null } : null,
+    saml: c.saml ? { provider: c.saml.provider || 'saml', connected: !!c.saml.connected, domain: c.saml.domain || null } : null,
+    ssoRequired: !!c.ssoRequired,                      // superadmin: password sign-in refused for every account
     userCount: users.length,
     memberCount,
     adminCount,
@@ -1672,6 +1730,19 @@ export function clearLearnings(userId) {
 // NEVER touch the platform KB. The destructive ones are logged with a reason by
 // the caller via recordAdminAction.
 function _company(companyId) { return (db.companies || []).find((c) => c.id === companyId) || null }
+// Camera switch (company admin): OFF by default for a company; personal
+// accounts always have it (capture_sources.js holds the rule).
+export function getCompanyCameraCapture(companyId) { const c = _company(companyId); return !!(c && c.cameraCapture === true) }
+export function setCompanyCameraCapture(companyId, enabled) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
+  c.cameraCapture = !!enabled; persist()
+  return { camera: c.cameraCapture }
+}
+export function cameraRefusalFor(userId, source) {
+  const u = getUser(userId)
+  return cameraRefusal({ source, user: u, company: u && u.companyId ? _company(u.companyId) : null })
+}
+
 // Company-KB switch (admin): ON (default) stores learned app knowledge on our
 // servers, shared across the team; OFF learns/recalls nothing on our servers.
 export function getCompanyKbEnabled(companyId) { const c = _company(companyId); return c ? (c.kbEnabled !== false) : true }
@@ -2630,10 +2701,8 @@ export function listCompanyUsers(companyId) {
 // PKCE), so ANY standards-compliant provider works once its issuer is entered.
 // This allowlist is just what the UI offers by name; 'oidc' is the catch-all for
 // any other OpenID Connect identity provider. No code differs per provider.
-export const SSO_PROVIDERS = [
-  'google', 'microsoft', 'okta', 'auth0', 'onelogin', 'ping', 'jumpcloud',
-  'keycloak', 'cognito', 'azuread_b2c', 'authentik', 'duo', 'centrify', 'oidc',
-]
+// The list is the ONE identity provider catalog (idp_catalog.js), never a copy.
+export const SSO_PROVIDERS = OIDC_PROVIDER_IDS
 // An email domain as typed on the sign-in page: lowercase host name, no @, no
 // scheme, no path. Used for the SSO routing domain and the AUTO-provisioning check.
 const DOMAIN_RE = /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/
@@ -2664,10 +2733,8 @@ export function setCompanySso(companyId, cfg = {}) {
   // provider, so it must belong to exactly one company. Otherwise a second tenant
   // could claim another tenant's domain and have their sign-ins land in the
   // wrong company (or at the wrong IdP).
-  if (domain) {
-    const owner = (db.companies || []).find((x) => x.id !== c.id && x.sso && normalizeDomain(x.sso.domain) === domain)
-    if (owner) throw httpErr(409, 'That email domain is already connected to another company. Ask the WorkCoPilot team if you believe this is a mistake.')
-  }
+  // One check across BOTH protocols (sso_store.js domainOwnedByOther).
+  if (domain && ssoState.domainOwnedByOther(domain, c.id)) throw httpErr(409, 'That email domain is already connected to another company. Ask the WorkCoPilot team if you believe this is a mistake.')
   c.sso = { provider, issuer, clientId, clientSecret, domain, connected: true }
   persist()
   return publicCompany(c)
@@ -2678,11 +2745,26 @@ export function getCompanySsoConfig(companyId) {
   return (c && c.sso) ? { ...c.sso } : null
 }
 // Public resolver: a connected company whose SSO domain matches, non-secret.
+// Matches a connected OIDC or SAML sign-in domain; `ssoProtocol` says which one
+// the sign-in page starts ('saml' wins when both claim the domain).
 export function findCompanyBySsoDomain(domain) {
-  const d = normalizeDomain(domain)
-  if (!d) return null
-  const c = (db.companies || []).find((x) => x.sso && x.sso.connected && x.sso.domain && normalizeDomain(x.sso.domain) === d)
-  return c ? publicCompany(c) : null
+  const hit = ssoState.companyForSignInDomain(domain)
+  return hit ? { ...publicCompany(hit.company), ssoProtocol: hit.protocol } : null
+}
+// SCIM: change the SSO email (the stable sign-in key) of a company account.
+function setUserSsoEmail(userId, email) {
+  const u = getUser(userId)
+  if (!u) throw httpErr(404, 'Account not found.')
+  const mail = normalizeEmail(email)
+  if (!mail) throw httpErr(400, 'A valid work email is required.')
+  if (u.companyId) {
+    const other = findCompanyMemberByEmail(u.companyId, mail)
+    if (other && other.id !== u.id) throw httpErr(409, 'That email is already on this company.')
+  }
+  u.ssoEmail = mail
+  indexUsers()
+  persist()
+  return u
 }
 // Look up an already-provisioned SSO member of a company by email (the stable
 // key). Returns the raw user record or null.
@@ -2792,7 +2874,7 @@ export function addCompanyMemberByEmail({ companyId, email, companyRole = 'membe
 // be on the company, else the sign-in is refused (the allowlist). In AUTO mode a
 // member is created on first sign-in. This is the only place the SSO callback
 // turns a verified email into an account.
-export function resolveSsoLogin({ companyId, email } = {}) {
+export function resolveSsoLogin({ companyId, email, displayName = null, via = 'oidc' } = {}) {
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c) throw httpErr(404, 'Company not found.')
   const mail = normalizeEmail(email)
@@ -2809,13 +2891,14 @@ export function resolveSsoLogin({ companyId, email } = {}) {
   // only emails on that domain may be created on first sign-in. Without this, any
   // gmail.com account could join an acme.com company, take a seat, and run on the
   // company's AI keys and trial.
-  const want = c.sso ? normalizeDomain(c.sso.domain) : ''
+  // The domain of the protocol this sign-in came through (OIDC or SAML).
+  const want = ssoState.signInDomainOf(c, via)
   if (want) {
     const got = mail.slice(mail.lastIndexOf('@') + 1)
     if (got !== want) throw httpErr(403, `Only ${want} email addresses can join this company through single sign-on. Ask your company administrator to add you.`)
   }
   // Create a member on first sign-in (respects the user-seat pool).
-  return createSsoAccount({ companyId, email: mail, companyRole: 'member', tier: 'basic' })
+  return createSsoAccount({ companyId, email: mail, companyRole: 'member', tier: 'basic', displayName })
 }
 
 // Kept for backward compatibility with any caller that expects find-or-create in
@@ -2828,6 +2911,9 @@ export function setUserCompany(userId, companyId, companyRole, workFlow) {
   const role = companyId ? normalizeCompanyRole(companyRole) : null
   // Moving into (or re-roling within) a company takes a seat like any other path.
   if (companyId) assertSeatAvailable(companyId, role, u.tier, u.id)
+  // A role an identity provider managed belongs to the company that mapped it;
+  // a move to another company (or out of one) starts unmanaged.
+  if (String(u.companyId || '') !== String(companyId || '')) u.scimRoleManaged = null
   u.companyId = companyId || null
   u.companyRole = role
   // Work flow (worker / independent / mixed) only applies inside a company.
@@ -3865,7 +3951,8 @@ export function allocateCompanyPoolToUser(companyId, targetUserId, seconds) {
 // Annual plans bill yearly at 20% off (see billing.js cfg: priceAnnual = 20% off).
 // Used to normalize an annual subscriber's yearly charge to a monthly-equivalent
 // MRR: yearly = monthly * 12 * (1 - ANNUAL_DISCOUNT); mrr = yearly / 12.
-const ANNUAL_DISCOUNT = 0.2
+// The one definition lives in billing_terms.js (shared with the SPA's
+// pricing model and the subscriber-health summary).
 const WORK_PRICING_DEFAULT = {
   currency: 'usd',
   plans: { lite: 69, basic: 99, advanced: 299, premium: 399 },   // monthly plan price
@@ -4155,12 +4242,19 @@ export function setNotifySettings(patch = {}) {
 }
 
 // ---- Contact Us submissions -----------------------------------------------
-export function addContactSubmission({ name, email, subject, message } = {}, meta = {}) {
+// company / jobTitle / phone / country / topic: the contact form's details
+// (server/contact_form.js validates them); older callers simply omit them.
+export function addContactSubmission({ name, email, subject, message, company, jobTitle, phone, country, topic } = {}, meta = {}) {
   if (!db.contacts) db.contacts = []
   const rec = {
     id: 'ct' + id(),
     name: String(name || '').trim().slice(0, 120),
     email: String(email || '').trim().slice(0, 160),
+    company: String(company || '').trim().slice(0, 160),
+    jobTitle: String(jobTitle || '').trim().slice(0, 120),
+    phone: String(phone || '').trim().slice(0, 40),
+    country: String(country || '').trim().slice(0, 2).toUpperCase(),
+    topic: String(topic || '').trim().slice(0, 20),
     subject: String(subject || '').trim().slice(0, 200),
     message: String(message || '').trim().slice(0, 4000),
     at: now(), ip: String(meta.ip || '').slice(0, 64),
@@ -4280,6 +4374,11 @@ export function deleteWorkUser(userId, { reason = '', by = '' } = {}) {
   // matched, so a deleted account's tickets silently outlived the account.
   db.workTickets = (db.workTickets || []).filter((t) => t.userId !== userId)
   try { purgeWorkflowIncidents({ userId }) } catch { /* best-effort */ }
+  // The person's own material goes with the account: reference documents (and
+  // their text files) and everything their personal brain learned.
+  for (const d of ((db.workDocs && db.workDocs[userId]) || [])) { try { if (d.path && fs.existsSync(d.path)) fs.unlinkSync(d.path) } catch { /* best effort */ } }
+  if (db.workDocs) delete db.workDocs[userId]
+  if (db.personalBrain) delete db.personalBrain[userId]
   bumpSessionEpoch(userId)
   const i = (db.users || []).findIndex((x) => x.id === userId)
   if (i >= 0) db.users.splice(i, 1)
@@ -4656,6 +4755,7 @@ export function listSubscribers() {
       status,
       cycle,
       pendingChange: s.pendingChange || null,
+      cancelAtPeriodEnd: !!s.cancelAtPeriodEnd,
       since: s.since || u.createdAt || null,
       currentPeriodEnd: s.currentPeriodEnd || null,
       mrrUsd,
@@ -4674,6 +4774,17 @@ export function listSubscribers() {
   // Newest subscriptions first (by since), so the admin sees recent activity on top.
   subscribers.sort((a, b) => String(b.since || '').localeCompare(String(a.since || '')))
   return { subscribers, totals: { count: subscribers.length, activeCount, mrrUsd: round2(mrrTotal), byPlan } }
+}
+
+// Read-only inputs for the subscriber-health summary
+// (server/admin_subscription_health.js): each account's id, username, company
+// link and subscription, plus the ledger. No secrets; the Stripe ids never
+// leave that module's output either.
+export function subscriptionHealthInputs() {
+  return {
+    users: (db.users || []).map((u) => ({ id: u.id, username: u.username, companyId: u.companyId || null, subscription: u.subscription || null })),
+    transactions: (db.transactions || []).map((t) => ({ kind: t.kind, amount: t.amount, at: t.at, voided: !!t.voided, status: t.status })),
+  }
 }
 
 // The Cancelled Subscribers view (finance role): every account whose subscription
@@ -5289,6 +5400,15 @@ export function updateCompanyMember(adminCompanyId, targetUserId, { companyRole,
   const finalTier = tier !== undefined ? String(tier) : (WORK_TIERS.includes(u.tier) ? u.tier : 'basic')
   // Promoting into the admin pool must fit the admin seats; a member must fit the
   // target tier's allocation (ignoring their own current seat). One shared gate.
+  // A field the company's identity provider manages (a SCIM group mapped to a
+  // role or grant, scim_role_rules.js) is changed there, not here. The check
+  // sees the FINAL grants, so a role change that would drop a managed grant is
+  // refused too. Fields it does not manage (plan, work flow, an unmanaged
+  // role) stay editable.
+  const idpConflict = manualEditConflict(u, { finalRole, finalGrants: roles.sanitizeGrants(finalRole, grants !== undefined ? grants : (u.grants || [])) })
+  if (idpConflict) throw Object.assign(httpErr(409, idpConflict === 'role'
+    ? 'This person\'s role is managed by your identity provider. Change their groups there instead.'
+    : 'This person\'s grants are managed by your identity provider. Change their groups there instead.'), { code: 'IDP_MANAGED' })
   const curRole = u.companyRole === 'company_admin' ? 'company_admin' : 'member'   // legacy records may lack companyRole
   if (finalRole !== curRole || finalTier !== (WORK_TIERS.includes(u.tier) ? u.tier : 'basic')) {
     assertSeatAvailable(adminCompanyId, finalRole, finalTier, u.id)
@@ -5323,6 +5443,7 @@ export function removeCompanyMember(adminCompanyId, targetUserId, { reason = '',
   emitStoreEvent('work_member_removed', { userId: u.id, companyName: _coName })
   u.companyId = null
   u.companyRole = null
+  u.scimRoleManaged = null   // the identity provider's management ends with the membership
   bumpSessionEpoch(u.id)
   // Accountable removal: who did it, to whom, and why (platform-wide rule -
   // every destructive action is logged with a captured reason).
@@ -5441,6 +5562,15 @@ export function deleteWorkDoc(workUserId, docId, reason = '') {
     persist()
   }
   return { ok: true }
+}
+// What grounds one task: the person's reference documents, plus what their
+// personal brain learned that matches this goal. Learnings first take at most
+// half the room, so a long reference document never crowds them out.
+export function getGroundingText(workUserId, goal, { maxChars = 6000 } = {}) {
+  const learned = personalBrainContext(workUserId, goal, Math.floor(maxChars / 2))
+  const block = learned ? `WHAT THIS PERSON TAUGHT THEIR GUIDE (their own documents and sessions; use where it fits this task):\n${learned}` : ''
+  const docs = getWorkDocsText(workUserId, { maxChars: Math.max(0, maxChars - block.length - 2) })
+  return [docs, block].filter(Boolean).join('\n\n')
 }
 export function getWorkDocsText(workUserId, { maxChars = 6000 } = {}) {
   const docs = ((db.workDocs && db.workDocs[workUserId]) || []).slice().sort((a, b) => (b.at || '').localeCompare(a.at || ''))
@@ -5798,7 +5928,7 @@ export function setWorkSessionSteps(workUserId, sessionId, steps) {
     // A published workflow's step carries the trainer's screenshot (frame ref only).
     ...(x && isFrameRef(x.shot) ? { shot: x.shot } : {}),
     status: i === 0 ? 'current' : 'pending',
-  })).filter((x) => x.text)
+  })).filter((x) => x.text).map(withDestructive)
   s.currentStep = 0
   s.guidance = null
   s.lastActivityAt = Date.now()
@@ -5826,7 +5956,7 @@ export function replanKeepingProgress(workUserId, sessionId, newSteps) {
     ...(Array.isArray(x && x.onFail) && x.onFail.length ? { onFail: x.onFail } : {}),
     status: 'pending',
     doneAt: null,
-  })).filter((x) => x.text)
+  })).filter((x) => x.text).map(withDestructive)
   const all = [...done, ...fresh].map((x, i) => ({ ...x, n: i + 1 }))
   const curIdx = all.findIndex((x) => x.status !== 'done')
   all.forEach((x, i) => { if (x.status !== 'done') x.status = (i === curIdx ? 'current' : 'pending') })

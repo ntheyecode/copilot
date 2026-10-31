@@ -21,7 +21,7 @@ test('no config means the all edition, which keeps every capability the product 
   // Pinned on purpose: this is today's product. Changing `all` changes what an
   // unconfigured server does, so it must be a deliberate edit of this list too.
   // individual_plans (2026-10-30) names what `all` already did: sell personal plans.
-  assert.deepEqual(makeCaps('all').list(), ['solo_signup', 'saas_companies', 'individual_plans', 'stripe_billing', 'platform_ai', 'brain_export', 'brain_query', 'public_site'])
+  assert.deepEqual(makeCaps('all').list(), ['solo_signup', 'saas_companies', 'individual_plans', 'stripe_billing', 'platform_ai', 'brain_export', 'brain_query', 'public_site', 'social_login'])
 })
 
 test('an unknown edition or capability fails loudly, never reads as off', () => {
@@ -42,6 +42,13 @@ test('every edition lists only known capabilities, no duplicates, no excluded pa
     assert.deepEqual(c.list(), Object.keys(CAPABILITIES).filter((k) => ed.capabilities.includes(k)))
   }
   for (const cap of Object.keys(CAPABILITIES)) assert.ok(EDITION_IDS.some((id) => EDITIONS[id].capabilities.includes(cap)), `${cap} is used`)
+})
+
+test('the individuals site is a capability of paid only, and always comes with a public site', () => {
+  assert.equal(makeCaps('paid').has('individual_site'), true)
+  for (const id of EDITION_IDS.filter((x) => x !== 'paid')) assert.equal(makeCaps(id).has('individual_site'), false, `${id} keeps the organization pages`)
+  for (const id of EDITION_IDS) if (makeCaps(id).has('individual_site')) assert.equal(makeCaps(id).has('public_site'), true, `${id}: the individuals site is a public site`)
+  assert.match(CAPABILITIES.individual_site, /individuals site/)
 })
 
 test('the registry is frozen (no runtime edits to an edition)', () => {

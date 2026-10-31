@@ -10,8 +10,9 @@ import { visibleTexts, rawKeys } from '../support/i18n-check.mjs'
 // re-import of the code under test. Seeded flows: member/trainer mixed, worker
 // worker, everyone else independent.
 const BASE = ['home', 'start', 'projects', 'guide', 'reports']
+// A personal account also reads "Your brain" (its own learnings from its documents).
 const EXPECTED = {
-  solo: BASE,
+  solo: [...BASE, 'brain'],
   member: [...BASE, 'queue', 'workflows'],
   worker: ['home', 'guide', 'reports', 'queue', 'workflows'],
   trainer: [...BASE, 'queue', 'workflows', 'teach', 'issues'],
@@ -62,6 +63,9 @@ test('company-only entries never appear for a personal account', async ({ as, se
   }
   const text = await page.locator('main, body').first().innerText()
   for (const title of ['Teach studio', 'Company workflows', 'Workflow issues', 'Executive dashboard']) expect(text, title).not.toContain(title)
+  // Their own brain's help is there, with its annotated screenshots.
+  await expect(page.locator('#help-dash-brain')).toHaveCount(1)
+  expect(await page.locator('#help-dash-brain button.hs-pin').count()).toBeGreaterThan(0)
   // Personal plans are sold here: the top-up lines are still shown (no regression).
   if (capsOf(edition).has('individual_plans')) await expect(page.getByText('Purchased top-up time never expires').first()).toBeVisible()
 })
@@ -82,24 +86,25 @@ test('company members never read personal top-up lines', async ({ as, seed, edit
 })
 
 test('annotated screenshot callouts are reachable and usable from the keyboard', async ({ as, seed, edition }) => {
+  // A personal account reads the Your brain entry's callouts; a company admin
+  // reads the company surfaces'. Both go through the same keyboard checks.
+  let page
   if (!capsOf(edition).has('saas_companies')) {
-    // The annotated screenshots belong to company features. A personal account's
-    // help is still keyboard-usable: every section link is a button in the tab
-    // order, and Enter on one marks it current.
-    const { page } = await as.page(await seed.solo(), { path: '/work/help' })
+    page = (await as.page(await seed.solo(), { path: '/work/help' })).page
+    // Every section link is a button in the tab order, and Enter on one marks it current.
     const nav = page.locator('.wd-help-nav button')
     await nav.first().waitFor()
-    await expect(page.locator('button.hs-pin'), 'no company callouts for a personal account').toHaveCount(0)
     const n = await nav.count()
     for (let i = 0; i < n; i++) expect(await nav.nth(i).evaluate((el) => el.tabIndex >= 0 && !el.disabled), `section link ${i + 1} is in the tab order`).toBe(true)
     const target = nav.nth(Math.min(2, n - 1))
     await target.focus()
     await page.keyboard.press('Enter')
     await expect(target).toHaveAttribute('aria-current', 'true')
-    return
+    await expect(page.locator('button.hs-pin:not(#help-dash-brain button.hs-pin)'), 'only the Your brain callouts for a personal account').toHaveCount(0)
+  } else {
+    const co = await seed.company({ personas: ['admin'] })
+    page = (await as.page(co.users.admin, { path: '/work/help' })).page
   }
-  const co = await seed.company({ personas: ['admin'] })
-  const { page } = await as.page(co.users.admin, { path: '/work/help' })
   const pins = page.locator('button.hs-pin')
   await pins.first().waitFor({ state: 'attached' })
   const n = await pins.count()

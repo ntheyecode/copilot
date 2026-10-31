@@ -60,11 +60,11 @@ export default {
       overview: { title: 'Overview', sub: 'Your company at a glance: people, seats, AI consumption and plan.' },
       team: { title: 'Team', sub: 'Add people, set their role and plan, and remove them. Changes take effect right away.' },
       usage: { title: 'Usage & limits', sub: 'Your shared hours pool, per-person and per-group limits, and requests for more hours.' },
-      sso: { title: 'Your company\'s single sign-on', sub: 'Connect your own identity provider (Google Workspace, Microsoft Entra, Okta and others) so your team signs in with it. This is separate from the Google, Microsoft and Facebook buttons on the public sign-in page.' },
+      sso: { title: 'Your company\'s single sign-on', sub: 'Connect your identity provider (Microsoft Entra ID, Okta, Google Workspace and others) with SAML or OpenID Connect, and provision your people with SCIM.' },
       ai: { title: 'AI keys', sub: 'See how your company runs AI, and run WorkCoPilot on your own provider keys so usage is billed to your own provider account.' },
-      billing: { title: 'Billing', sub: 'Your plan charges and any extras. Set by the WorkCoPilot team.' },
+      billing: { title: 'Billing', sub: 'Your contract, this month\'s hours pool and the invoices AdmireVeda issued.' },
       governance: { title: 'Data governance (DLP)', sub: 'Decide what sensitive data may leave the device. Controls and evidence that support your compliance.' },
-      brain: { title: 'Company Brain', sub: 'What is in your company\'s private knowledge store. Documents are added from the desktop app, scrubbed on the device first; here you can see them and remove any.' },
+      brain: { title: 'Company Brain', sub: 'Your company\'s private knowledge store. Add your documents here; each one is masked under your data policy and kept only as passages. See what is in it and remove any.' },
       brainsecurity: { title: 'Private encryption and data export', sub: 'Hold the key to your Company Brain yourself (a passphrase plus a one-time recovery phrase - no backdoor), and take a complete, password-encrypted copy of your company\'s data whenever you want.' },
       alerts: { title: 'Security alerts', sub: 'When one of your people enters sensitive data (PII / PHI), it is redacted on their device before anything is sent, and you are told who, where and what kind - never the values themselves.' },
       integrations: { title: 'SOC / SIEM integrations', sub: 'Relay security alerts automatically into your SIEM, SOAR, chat and observability tools. Only alert metadata is ever sent - the kind and count of what was redacted plus who and where - never the values.' },
@@ -329,6 +329,8 @@ export default {
       th2fa: '2FA',
       youSuffix: ' (you)',
       cannotChangeOwnRole: 'You cannot change your own role.',
+      idpManaged: 'Managed by your identity provider',
+      idpManagedHelp: 'Set by a group mapping in Company SSO. Change this person\'s groups in your identity provider.',
       roleExecutiveShort: 'Executive (read-only)',
       minPh: 'min',
       give: 'Give',
@@ -343,7 +345,7 @@ export default {
     sso: {
       loading: 'Loading SSO',
       registerCallback: 'Register this exact redirect / callback URL in your identity provider:',
-      inviteNote: 'Your company uses <b>invite-only</b> sign-in: only people you add by email on the Team tab (or the WorkCoPilot team adds) can sign in through SSO. Everyone else is refused, even if your identity provider lets them in. The automatic account creation described in the guide below does not apply to your company.',
+      inviteNote: 'Your company uses <b>invite-only</b> sign-in: only people you add by email on the Team tab, or that your identity provider provisions with SCIM, can sign in through SSO. Everyone else is refused, even if your identity provider lets them in.',
       openPre: 'Your company uses <b>open-domain</b> sign-in: anyone your identity provider authenticates with an email on ',
       yourEmailDomain: 'your email domain',
       openPost: ' gets a member account on first sign-in, as long as a user license is free.',
@@ -434,6 +436,23 @@ export default {
       onDetail: 'On - milestone screenshots are kept as evidence.',
       offDetail: 'Off - no screenshots are kept for any of your users.',
       changeError: 'Could not change the setting. Please try again.',
+    },
+    // Camera reading (sections/CameraCapture.jsx): the company's switch for
+    // guiding from a camera pointed at another computer or a physical system.
+    capture: {
+      title: 'Camera reading',
+      desc: 'Let your people point a camera at another computer or a physical system and get guided from what it sees: for industrial and OT systems, machines and robots, anywhere screen sharing is not an option. Off by default.',
+      on: 'On',
+      off: 'Off',
+      useIndustrial: 'Industrial systems',
+      useOt: 'OT consoles',
+      usePhysical: 'Physical systems',
+      useRobots: 'Robots',
+      loading: 'Loading current setting...',
+      onDetail: 'On. Your people can choose A camera under Setup in the guide, in the browser and in the desktop app.',
+      offDetail: 'Off. The guide reads shared screens only; a camera read is refused.',
+      privacy: 'Camera frames are handled exactly like screen frames: masked on the device before anything is sent, under the same data governance policy.',
+      changeError: 'Could not change camera reading. Please try again.',
     },
     gov: {
       actionSend: 'Send as-is',
@@ -724,6 +743,11 @@ export default {
       launch: 'Try it on your task, live',
       launchAria: 'Try WorkCoPilot on your own task, live',
       title: 'See it guide your task',
+      // The product name in the console's title bar: a brand, never translated
+      // in a locale; an edition overlay may rename it (the individuals site).
+      brand: 'WorkCoPilot',
+      // The console's theme switch (pressed = dark); light is the default.
+      conTheme: 'Dark console',
       live: 'LIVE',
       watching: 'Watching',
       goal: 'GOAL',
@@ -779,11 +803,25 @@ export default {
       doThisNow: 'Do this now',
       stepOf: 'Step {n} of {total}',
       exactlyHow: 'Exactly how',
+      // The sub-steps control on a step card: the count chip and the verb that
+      // changes with the state (aria-expanded carries it for screen readers too).
+      howCount_one: '{n} sub-step', howCount_two: '{n} sub-steps', howCount_other: '{n} sub-steps',
+      howShow: 'Show them',
+      howHide: 'Hide',
       step_one: '{n} step', step_two: '{n} steps', step_other: '{n} steps',
       lockedMore_one: '{n} more step, this detailed, in a live session',
       lockedMore_two: '{n} more steps, each this detailed, in a live session',
       lockedMore_other: '{n} more steps, each this detailed, in a live session',
       lockedTag: 'Live session',
+      // Each remaining step opens to what a live session gives for it. Generic
+      // on purpose: the server sent only the title, so nothing here pretends
+      // to be a sub-step of that step.
+      lockedShow: 'What you get live',
+      lockedHide: 'Hide',
+      lockedGive1: 'The exact clicks, fields and commands for this step',
+      lockedGive2: 'A check on your screen that it worked',
+      lockedGive3: 'A correction the moment you take a wrong turn',
+      lockedNote: 'Held back here. In a live session every remaining step unfolds like the ones above.',
       valExact: 'Exact commands and clicks',
       valCheck: 'Checks each step worked',
       valRo: 'Read-only, never clicks for you',
@@ -846,6 +884,7 @@ export default {
     trust: 'Trust',
     securityData: 'Security & data protection',
     enterpriseFeatures: 'Enterprise features',
+    companyBrain: 'Company Brain',
     benchmark: 'Accuracy benchmark',
     legal: 'Legal',
     privacy: 'Privacy Policy',

@@ -7,6 +7,7 @@ import { capsOf } from '../support/editions.mjs'
 import { hostedClient } from '../support/hosted-client.mjs'
 import { currentToken } from '../../server/totp.js'
 import { LoginPage } from '../pages/LoginPage.mjs'
+import { SUPERADMIN } from '../support/personas.mjs'
 
 test.use({ serverEnv: { WORK_HOSTED: '1', WORK_MFA_DISABLED: '0' } })
 
@@ -93,4 +94,39 @@ test('the login page asks for the authenticator code and signs in with it', asyn
   await expect(page).toHaveURL(/\/work$/)
   await expect(page.getByRole('heading', { level: 1 }).first()).toHaveText(/^Hello/)
   await context.close()
+})
+
+// Owner rule (2026-10-31): the company admin and the superadmin can reset a
+// person's authenticator when they need to. A reset signs the person out
+// everywhere and their next sign-in sets up a new authenticator; an admin of
+// another company cannot touch them.
+test('the company admin and the superadmin reset an authenticator; the person sets it up again', async ({ server, seed, edition }) => {
+  const reason = 'Lost their phone'
+  const sa = hostedClient(server.baseURL)
+  await enroll(sa, { username: SUPERADMIN.username, password: SUPERADMIN.password })
+  const signsInFresh = async (user) => {
+    const r = await hostedClient(server.baseURL).post('/api/work/login', { username: user.username, password: 'E2e-User-Pass-123!' })
+    expect(r.data.mfaSetup, `${user.username} sets up a new authenticator after the reset`).toBe(true)
+  }
+  if (!capsOf(edition).has('saas_companies')) {
+    const solo = await seed.solo()
+    const c = hostedClient(server.baseURL)
+    await enroll(c, solo)
+    expect((await sa.post(`/api/work/admin/users/${solo.id}/mfa/reset`, { reason })).status).toBe(200)
+    expect((await c.get('/api/work/me')).data.signedIn, 'the reset signs them out').toBeFalsy()
+    return signsInFresh(solo)
+  }
+  const a = await seed.company({ personas: ['admin', 'member'] })
+  const b = await seed.company({ personas: ['admin'] })
+  const adminA = hostedClient(server.baseURL); await enroll(adminA, a.users.admin)
+  const adminB = hostedClient(server.baseURL); await enroll(adminB, b.users.admin)
+  const member = hostedClient(server.baseURL); await enroll(member, a.users.member)
+  const path = `/api/work/company/users/${a.users.member.id}/mfa/reset`
+  expect((await adminB.post(path, { reason })).status, 'another company\'s admin is refused').toBe(403)
+  expect((await member.post(`/api/work/company/users/${a.users.admin.id}/mfa/reset`, { reason })).status, 'a member cannot reset anyone').toBe(403)
+  expect((await adminA.post(path, { reason })).status).toBe(200)
+  expect((await member.get('/api/work/me')).data.signedIn, 'the reset signs them out').toBeFalsy()
+  await signsInFresh(a.users.member)
+  expect((await sa.post(`/api/work/admin/users/${b.users.admin.id}/mfa/reset`, { reason })).status, 'the superadmin can reset anyone').toBe(200)
+  await signsInFresh(b.users.admin)
 })

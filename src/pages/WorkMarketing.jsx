@@ -2,9 +2,9 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Compass, ShieldCheck, Globe2, FileText,
-  ArrowRight, Check, Sparkles, Layers, Monitor, Smartphone, AppWindow,
+  ArrowRight, Check, Sparkles, Layers, Smartphone, AppWindow,
   Lock, Zap, Rocket, Target, ScanEye, ListChecks, AlertTriangle,
-  Building2, Download,
+  Building2,
   Server, Blocks, Bot, Megaphone, Calculator, Scale, Shapes, Trophy, X, MessageSquareOff,
   FileCheck2, ScrollText, Fingerprint, ClipboardCheck,
   UserCog, Copy, BrainCircuit, Lightbulb,
@@ -16,7 +16,7 @@ import {
 // and the locale registry (the language chips are its own endonyms).
 import { COMPLIANCE_FRAMEWORKS } from '../../server/compliance_frameworks.js'
 import { LOCALES } from '../i18n/locales.js'
-import { AVMark } from '../components/AdmireVedaLogo.jsx'
+import { BrandMark as AVMark } from '../components/brand/BrandLogo.jsx'   // the edition's brand mark
 import SiteHeader from '../components/SiteHeader.jsx'   // shared top nav (one link list, mobile disclosure menu) - same as every inner page
 import { revealOnScroll } from '../reveal.js'            // the ONE scroll-reveal mechanism for the site (timing + crawler/print safety)
 import SiteFooter from '../components/SiteFooter.jsx'   // shared footer across the whole site
@@ -28,6 +28,8 @@ import FieldVignettes from '../components/FieldVignettes.jsx'   // real-screen f
 import { useAuth } from '../auth.jsx'
 import { api } from '../api.js'
 import OrgPlans from '../components/OrgPlans.jsx'   // organizations-only plans, where personal plans are not sold
+import CameraReadSection from '../components/camera_read/CameraReadSection.jsx'   // where screen sharing is not an option: the camera reads the panel
+import CompanyBrainSection from '../components/company_brain/CompanyBrainSection.jsx'   // the Company Brain in three benefit points, linking to its full page
 import { useEditionView } from '../edition/useCaps.js'
 import { CONTACT_PATH } from '../edition/surfaces.js'
 import useSeo from '../useSeo.js'
@@ -461,6 +463,18 @@ export default function WorkMarketing() {
 
       )}
 
+      {/* CAMERA - where screen sharing is not an option (operations, OT and
+          industrial teams): a camera reads the panel or machine screen and the
+          guide gives the next step. Its own module (src/components/camera_read);
+          renders where companies exist, since the company administrator turns
+          camera reading on. Copy: home.camera. */}
+      {ed.companies && <CameraReadSection className="wm-sec" />}
+
+      {/* COMPANY BRAIN - the company's private knowledge, three benefit points
+          and the flow visual, linking to /workcopilot/company-brain. Its own
+          module (src/components/company_brain); copy: companyBrainPage.home. */}
+      {ed.companies && <CompanyBrainSection className="wm-sec" />}
+
       {/* EVERYWHERE - platforms, languages, personalization: three shared
           WorkCards. The language chips are the locale registry's endonyms
           (each tagged lang= so the browser picks the right script font) and
@@ -493,9 +507,6 @@ export default function WorkMarketing() {
           <h2 className="wm-h2" data-reveal>{t('home.pricing.h2')}</h2>
           <p className="wm-sub" data-reveal>{t('home.pricing.sub')}</p>
           <OrgPlans compact />
-          <div className="wm-fld-more" data-reveal>
-            <a className="wm-cta alt" href="/workcopilot/pricing">{t('home.pricing.fullCompare')} <ArrowRight size={15} className="wm-arrow" /></a>
-          </div>
         </div>
       </section>
       ) : (
@@ -554,25 +565,23 @@ export default function WorkMarketing() {
           <p>{t('home.final.p')}</p>
           <button className="wm-cta big" onClick={() => go('')}>{t('common.getStarted')} <ArrowRight size={18} className="wm-arrow" /></button>
           <div className="wm-dl" data-reveal>
-            <span className="wm-dl-lbl">{t('home.final.useYourWay')}</span>
-            <div className="wm-dl-row">
+            {ed.individualPlans && <span className="wm-dl-lbl">{t('home.final.useYourWay')}</span>}
+            {/* Downloads live in the signed-in dashboard (owner, 2026-10-31): the
+                public site offers no installer. The organization site (pure
+                enterprise) shows no "use it your way" row at all. */}
+            {ed.individualPlans && <div className="wm-dl-row">
               <a className="wm-dl-btn primary" href="/workcopilot" title={t('home.final.browser.title')}>
                 <span className="wm-dl-rec">{t('home.final.browser.rec')}</span>
                 <Globe2 size={22} />
                 <span className="wm-dl-t"><b>{t('home.final.browser.b')}</b><i>{t('home.final.browser.i')}</i></span>
                 <ArrowRight size={16} className="wm-arrow" />
               </a>
-              <a className="wm-dl-btn" href="/api/work/desktop-setup.exe" aria-label={t('home.final.windows.aria')} title={t('home.final.windows.title')}>
-                <Monitor size={22} />
-                <span className="wm-dl-t"><b>{t('home.final.windows.b')}</b><i>{t('home.final.windows.i')}</i></span>
-                <Download size={16} />
-              </a>
               <div className="wm-dl-btn soon" aria-disabled="true">
                 <Smartphone size={22} />
                 <span className="wm-dl-t"><b>{t('home.final.android.b')}</b><i>{t('home.final.android.i')}</i></span>
                 <span className="wm-dl-soon">{t('common.comingSoon')}</span>
               </div>
-            </div>
+            </div>}
             <span className="wm-dl-note">{t.rich('home.final.note2', null, { a: (c) => <a href="/workcopilot/enterprise">{c}</a> })}</span>
           </div>
         </div>

@@ -102,6 +102,22 @@ export default {
         },
       },
     },
+    // Camera reading (Data governance): the switch that lets members guide
+    // from a camera pointed at another computer or a physical system.
+    capture: {
+      open: 'Data governance',
+      title: 'Turn on camera reading',
+      lead: 'For industrial and OT systems, machines and robots, where screen sharing is not an option: your people point a camera at the screen or panel and get guided from what it sees. Off until you turn it on.',
+      steps: {
+        where: { t: 'Open Data governance', d: 'The Camera reading card sits under the screenshot setting.' },
+        on: { t: 'Switch it on', d: 'One switch for the whole company. It saves at once and is recorded in Activity.' },
+        member: { t: 'What your people see', d: 'In the guide, Setup offers A camera next to My screen, with a camera picker and a live view to aim it. Frames are masked on their device like screen frames.' },
+      },
+      shot: {
+        alt: 'The Camera reading card in Data governance: the explanation, the use-case chips and the On / Off switch.',
+        caption: 'Camera reading, off by default. One switch for the company.',
+      },
+    },
     billing: {
       open: 'Billing',
       title: 'Billing',
@@ -146,6 +162,30 @@ export default {
           marks: {
             role: '<b>Role.</b> The grant works with the Member or Project manager role.',
             trainer: '<b>Trainer.</b> Tick to let this person record and publish workflows. Untick to take it away.',
+          },
+        },
+      },
+    },
+    // Company Brain (HelpCompanyBrainArea.jsx): adding documents in the console.
+    brain: {
+      open: 'Company Brain',
+      title: 'Add documents to the Company Brain',
+      lead: 'Your SOPs, playbooks and policies become the first thing guidance draws on. You add them here in the console; the file itself is never stored.',
+      steps: {
+        open: { t: 'Open Company Brain', d: 'The Add documents area sits at the top of the section.' },
+        add: { t: 'Drop or choose files', d: 'PDF, Word, text or Markdown, up to 10 MB each. Several at once is fine; they are added one after another.' },
+        read: { t: 'Read the result', d: 'How many passages were kept, whether an earlier version was replaced, and how many private details were masked.' },
+        curate: { t: 'Curate the list', d: 'Every document shows its passages and date. Remove one, or clear everything, with a reason that lands in the audit trail.' },
+      },
+      shots: {
+        add: {
+          alt: 'The Company Brain section: the Add documents area with its promise and drop zone, a finished row reading Added: 2 passages from Expense SOP.txt, and the inventory table listing the document with its passages and date.',
+          caption: 'The same document name again replaces the earlier version, so a revised SOP never sits beside a stale one.',
+          marks: {
+            promise: '<b>The promise.</b> Read once, masked under your data policy, kept only as passages. The file is never stored.',
+            drop: '<b>Drop or choose.</b> PDF, Word, text or Markdown, up to 10 MB each.',
+            result: '<b>Per-file result.</b> Passages kept, an earlier version replaced, private details masked.',
+            rows: '<b>Your documents.</b> Title, kind, passages and date, with Remove and Clear all behind a reason.',
           },
         },
       },

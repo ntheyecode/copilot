@@ -37,6 +37,7 @@ import * as billingDefault from './billing.js'
 import { applyCheckoutSession, checkoutSessionPaid, PLANS } from './billing_checkout.js'
 import { OTP_TTL_MS } from './email_otp.js'
 import { soloSignupRefusal } from './edition.js'
+import { socialSignInRefusal, socialSignUpRefusal } from './sign_in_rules.js'
 
 const MARKER_TTL_MS = 24 * 3600 * 1000      // the onboarding marker's own life (the cookie is shorter)
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
@@ -62,7 +63,7 @@ export function registerOnboardingRoutes(app, deps = {}) {
   for (const k of ['store', 'establishSession', 'resolveWorkIdentity', 'authBlocked', 'authFail', 'authOk', 'ipOf']) {
     if (!deps[k]) throw new Error(`registerOnboardingRoutes: missing dep ${k}`)
   }
-  const { createSubscriptionCheckout, stripeClient, billingConfigured, billingPriceMap } = { ...billingDefault, ...(deps.billing || {}) }
+  const { createSubscriptionCheckout, stripeClient, billingConfigured, billingPriceMap, annualCheckoutReady } = { ...billingDefault, ...(deps.billing || {}) }
   const socialConfigured = deps.socialConfigured || (() => ({ google: false, microsoft: false, facebook: false }))
   const ipRateOk = typeof deps.ipRateOk === 'function' ? deps.ipRateOk : () => true
   const mailRateBlocked = (req, res) => {
@@ -102,7 +103,7 @@ export function registerOnboardingRoutes(app, deps = {}) {
   function stateFor(req, idn, urlIntent = {}) {
     const pricing = store.getWorkPricing()
     let annualReady = false
-    try { annualReady = !!store.getBillingPublic().annualReady } catch { annualReady = false }
+    try { annualReady = annualCheckoutReady(store) } catch { annualReady = false }
     const base = {
       signedIn: !!(idn && idn.full),
       billingConfigured: billingConfigured(store),
@@ -402,13 +403,22 @@ export function resolveSocialAccount(store, { email, displayName = '', provider 
   if (existing) {
     if (existing.disabled) return { error: 'This account has been disabled. Please contact your administrator.' }
     if (existing.ssoEmail) return { error: "This is a company single sign-on account. Use 'Sign in with your company (SSO)' and enter your company email domain." }
+    // A company account never signs in with a social identity, in any edition
+    // (sign_in_rules.js: password plus authenticator, or the company's SSO).
+    const companyRefusal = socialSignInRefusal(existing)
+    if (companyRefusal) return { error: companyRefusal }
     return { user: existing, isNew: false }
   }
-  if (store.findUserByLogin(email)) return { error: 'An account with this email already exists. Sign in with your password, or reset it, to continue.' }
+  const byLogin = store.findUserByLogin(email)
+  if (byLogin) return { error: socialSignInRefusal(byLogin) || 'An account with this email already exists. Sign in with your password, or reset it, to continue.' }
   // A first-time social sign-in CREATES an individual account, so it obeys the
   // same edition rule as email sign-up. Existing accounts still sign in above.
   const noSignup = soloSignupRefusal()
   if (noSignup) return { error: noSignup.body.error }
+  // An email on a domain a company signs in with by single sign-on is that
+  // company's identity: no personal account is created beside it.
+  const domainRefusal = socialSignUpRefusal(email, (d) => (typeof store.findCompanyBySsoDomain === 'function' ? store.findCompanyBySsoDomain(d) : null))
+  if (domainRefusal) return { error: domainRefusal }
   try { return { user: store.createSocialUser({ email, displayName, provider }), isNew: true } }
   catch (e) { return { error: (e && e.message) || 'Sign-in could not be completed.' } }
 }

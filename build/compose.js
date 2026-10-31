@@ -34,6 +34,7 @@ import { EDITIONS, EDITION_IDS, makeCaps } from '../server/edition_registry.js'
 import { loadManifest } from '../editions/profile.js'
 import { importsOf, packagesOf } from './import_check.js'
 import { stampSpa, DEFAULT_ORIGIN } from './spa_stamp.js'
+import { renameWithRetry } from './fs_retry.js'   // Windows: a scanner's brief lock must not fail the bundle
 
 export const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const MARKER = 'ship-manifest.json'
@@ -204,9 +205,9 @@ export function compose({ edition, out, root = ROOT, spa = true, replace = false
     // the new one is in place; if the swap fails it is moved back.
     fs.mkdirSync(path.dirname(outAbs), { recursive: true })
     const aside = fs.existsSync(outAbs) ? `${outAbs}.old-${process.pid}-${Date.now()}` : null
-    if (aside) fs.renameSync(outAbs, aside)
-    try { fs.renameSync(staging, outAbs) } catch (e) {
-      if (aside) { try { fs.renameSync(aside, outAbs) } catch { /* left at aside; named in the error */ } }
+    if (aside) renameWithRetry(outAbs, aside)
+    try { renameWithRetry(staging, outAbs) } catch (e) {
+      if (aside) { try { renameWithRetry(aside, outAbs) } catch { /* left at aside; named in the error */ } }
       throw new Error(`[compose] could not move the new bundle into place (${e.code || e.message}).${aside && fs.existsSync(aside) ? ` The previous bundle is at ${aside}.` : ''}`)
     }
     if (aside) { try { fs.rmSync(aside, { recursive: true, force: true }) } catch { /* the new bundle is in place; a leftover copy is harmless */ } }

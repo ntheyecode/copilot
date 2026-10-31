@@ -49,6 +49,7 @@ export default defineConfig((env) => {
       strictPort: true,
       fs: { allow: [ROOT, NODE_MODULES].filter(Boolean) },
       proxy: apiProxy(env.mode),
+      watch: b.server && b.server.watch,   // same ignore list as the base (no build output, no worktrees)
     },
     // Not strict (preview would otherwise inherit server.strictPort): if 5192 is
     // taken, Vite moves to the next free port and prints it.

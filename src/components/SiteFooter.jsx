@@ -11,12 +11,13 @@
 // `dark={false}` only if a page ever needs the light variant.
 import React from 'react'
 import { Mail, ArrowUpRight } from 'lucide-react'
-import AdmireVedaLogo from './AdmireVedaLogo.jsx'
+import BrandLogo from './brand/BrandLogo.jsx'
 import { SUPPORT_CONTACT, LEGAL_CONTACT } from './LegalPage.jsx'
 import { useT } from '../i18n/index.jsx'
 import { openPreferences } from '../consent.js'   // re-open the cookie consent panel
 import { useEditionView } from '../edition/useCaps.js'
 import { shows, startPath } from '../edition/surfaces.js'   // which links an edition shows (capability-driven)
+import IndivFooter from '../sites/individuals/IndivFooter.jsx'   // the individuals site's footer, where that site is served
 
 // Link groups: the catalog key for each label (footer.<key> / nav.<key>) and the
 // href (+ what the link needs, src/edition/surfaces.js). Labels are translated
@@ -24,7 +25,8 @@ import { shows, startPath } from '../edition/surfaces.js'   // which links an ed
 const GROUPS = [
   { key: 'product', links: [
     ['nav.how', '/workcopilot/how-it-works'], ['nav.use', '/workcopilot/use-cases'], ['nav.fields', '/workcopilot/fields'],
-    ['nav.pricing', '/workcopilot/pricing'], ['nav.faq', '/workcopilot/faq'], ['footer.demo', '/demo'],
+    ['footer.companyBrain', '/workcopilot/company-brain', 'companies'],
+    ['nav.pricing', '/workcopilot/pricing', 'individualPlans'], ['nav.faq', '/workcopilot/faq'], ['footer.demo', '/demo'],
   ] },
   { key: 'trust', links: [
     ['footer.securityData', '/workcopilot/security'], ['footer.enterpriseFeatures', '/workcopilot/enterprise', 'companies'], ['footer.benchmark', '/workcopilot/benchmark'],
@@ -38,15 +40,21 @@ const GROUPS = [
 
 // `dark` (default true) forces the dark palette regardless of data-theme.
 export default function SiteFooter({ dark = true }) {
-  const t = useT()
   const ed = useEditionView()
+  // Same rule as SiteHeader: the individuals site's footer on every public page.
+  if (ed.individualSite && shows(ed, 'individualSite')) return <IndivFooter />
+  return <OrgFooter dark={dark} ed={ed} />
+}
+
+function OrgFooter({ dark, ed }) {
+  const t = useT()
   const start = startPath(ed)
   return (
     <footer className={`sf${dark ? ' sf-dark' : ''}`} aria-label={t('footer.aria')}>
       <style>{CSS}</style>
       <div className="sf-in">
         <div className="sf-brand">
-          <a href="/" aria-label={t('nav.home')}><AdmireVedaLogo size={26} idSuffix="sf" onDark={dark} /></a>
+          <a href="/" aria-label={t('nav.home')}><BrandLogo size={26} idSuffix="sf" onDark={dark} /></a>
           <p className="sf-tag">{t('footer.tag')}</p>
           <div className="sf-ctas">
             <a className="sf-btn" href={start}>{t('common.getStarted')} <ArrowUpRight size={14} aria-hidden="true" className="sf-arrow" /></a>

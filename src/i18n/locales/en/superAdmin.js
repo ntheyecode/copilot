@@ -10,6 +10,7 @@ export default {
     nav: {
       overview: 'Overview',
       companies: 'Companies',
+      invoices: 'Invoices',
       notifications: 'Notifications',
       governance: 'Governance',
       users: 'Users',
@@ -18,6 +19,7 @@ export default {
       finance: 'Finance',
       subscribers: 'Subscribers',
       cancelled: 'Cancelled',
+      'subscription-health': 'Subscriber health',
       email: 'SMTP Settings',
       'email-templates': 'Email Templates',
       ai: 'AI config',
@@ -38,6 +40,7 @@ export default {
     sections: {
       overview: { title: 'Overview', sub: 'WorkCoPilot at a glance.' },
       companies: { title: 'Companies', sub: 'Tenancy: companies, company admins, users and redaction policy.' },
+      invoices: { title: 'Invoices', sub: 'Company contracts and the invoices AdmireVeda issues. No card payment.' },
       notifications: { title: 'Notifications', sub: 'Enterprise alerts: companies nearing their pool, and additional-hours requests to review.' },
       governance: { title: 'Data governance', sub: 'Per-company DLP policy: what leaves the device, block words, compliance frameworks, arm & lock.' },
       users: { title: 'Users', sub: 'Tiers, balances and granted hours.' },
@@ -46,6 +49,7 @@ export default {
       finance: { title: 'Finance', sub: 'All transactions, revenue by week/month/quarter/year, MRR, and refunds.' },
       subscribers: { title: 'Subscribers', sub: 'Every paying subscriber and their operations: plan, status, cycle, MRR, lifetime paid, and today\'s activity.' },
       cancelled: { title: 'Cancelled subscribers', sub: 'Churned subscriptions: who canceled, when, why, and the lifetime revenue they brought before leaving.' },
+      'subscription-health': { title: 'Subscriber health', sub: 'The individuals business at a glance: MRR by plan, trials, failed payments, plans set to end, churn over 30 days, and whether Stripe is wired.' },
       email: { title: 'SMTP Settings (Email / SES)', sub: 'Outbound email for delivering reports. MFA-gated. Enter your SES SMTP credentials and send a test.' },
       'email-templates': { title: 'Email Templates', sub: 'Every email the product sends - edit the wording, placeholders and preview. Nothing is static.' },
       ai: { title: 'AI configuration', sub: 'Platform AI for WorkCoPilot users.' },
@@ -86,6 +90,8 @@ export default {
 
     // Nav footer note.
     navFoot: 'WorkCoPilot - a separate product surface. Changes here do not touch the interview admin.',
+    // Overview note naming the sections this service does not offer (server/admin_sections.js).
+    notOffered: 'Not part of this service, so not shown: {list}.',
 
     // Appearance panel (per-user accent picker host).
     appearancePanel: {

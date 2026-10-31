@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">WorkCoPilot</string>
+    <!-- app_name comes from the product flavor (app/build.gradle: workcopilot / linknotes). -->
 </resources>

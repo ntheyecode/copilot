@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from 'react'
 import { KeyRound, Check, Loader2, ArrowRight, AlertTriangle, Eye, EyeOff, ShieldCheck, Lock } from 'lucide-react'
 import { api } from '../api.js'
-import { AVMark } from '../components/AdmireVedaLogo.jsx'
+import { BrandMark as AVMark } from '../components/brand/BrandLogo.jsx'   // the edition's brand mark
 import { useT } from '../i18n/index.jsx'
 
 function getToken() {

@@ -50,9 +50,9 @@ if any server module imports from outside `server/`.
 
 | Edition | Who | Capabilities on |
 |---|---|---|
-| `all` (default) | solo users + SaaS companies, hosted | solo_signup, saas_companies, individual_plans, stripe_billing, platform_ai, brain_export, brain_query, public_site |
-| `saas` | SaaS companies only, hosted | saas_companies, stripe_billing, platform_ai, brain_export, brain_query, public_site |
-| `paid` | paying individuals only, hosted | solo_signup, paid_only, individual_plans, stripe_billing, platform_ai, public_site |
+| `all` (default) | solo users + SaaS companies, hosted | solo_signup, saas_companies, individual_plans, stripe_billing, platform_ai, brain_export, brain_query, public_site, social_login |
+| `saas` | SaaS companies only, hosted | saas_companies, platform_ai, brain_export, brain_query, public_site |
+| `paid` | paying individuals only, hosted | solo_signup, paid_only, individual_plans, stripe_billing, platform_ai, public_site, social_login, individual_site |
 | `onprem` | the customer's own servers | single_company, offline_licensing, onprem_setup, ai_custody_customer, brain_export, brain_query, external_db |
 | `managed` | a dedicated install we operate in the customer's cloud | single_company, onprem_setup, platform_ai, ai_custody_customer, brain_export, brain_query, external_db |
 
@@ -87,25 +87,28 @@ tenants and Stripe for enterprise billing.
 |---|---|---|
 | `solo_signup` | `POST /api/work/signup` (index.js), `POST /api/work/onboarding/signup` (onboarding.js), first-time social sign-in (`resolveSocialAccount`, onboarding.js) | 403 `{ error, signupDisabled: true }` from `soloSignupRefusal()`, nothing created. Existing accounts still sign in. |
 | `saas_companies` / `single_company` | `POST /api/work/admin/companies` (work-admin.js) via `companyCreationRefusal()` | `single_company`: the first company is created, a second gets 409 `{ singleCompany: true }`. Neither: 403 `{ companiesDisabled: true }`. |
-| `stripe_billing` | `cfg()` in billing.js; `GET /api/work/admin/billing` | Every Stripe path takes its existing "not configured" branch and no Stripe call is made, even with keys in the env or the store. The superadmin billing panel response carries `offByEdition: true` and an `offReason`. |
+| `stripe_billing` | `cfg()` in billing.js; `annualCheckoutReady()` in billing.js (read by `GET /api/work/pricing` and the sign-up state in onboarding.js); `server/edition_route_gates.js` `STRIPE_ROUTE_PREFIXES` (webhook, checkout, onboarding checkout, plan change, portal, Stripe invoices, refunds, cancel, Connect payouts); the superadmin Stripe billing section (`server/admin_sections.js`); the enterprise "pay extra hours by card" toggle is forced off (index.js) | Every Stripe path is refused with 403 `{ error, stripeDisabled: true, contact }` from `stripeRefusal()` and no Stripe call is made, even with keys in the env or the store. `annualReady` is false. `GET /api/work/admin/billing` carries `offByEdition: true`, an `offReason` (English, for integrations) and an `offCode` (`license` or `invoiced`, from `stripeOffCode()` in edition.js), shown by the billing panel as a note in the reader's language (`billingAdmin.offByEdition.*`). Companies are billed by contract and invoice (`server/b2b_invoices.js`). |
+| `public_site` | `server/edition_route_gates.js` `PUBLIC_SITE_ROUTES`: `POST /api/work/coverage` and `POST /api/work/leads` ("validate it live"), `POST /api/work/contact`; `server/public_site_gate.js` ahead of the static SPA; `src/edition/PublicSiteGate.jsx` and `RootRedirect` in src/App.jsx. The page list is `server/public_site_paths.js` (one list, read by the server and the SPA). | The forms answer 403 `{ error, publicSiteDisabled: true, signIn: '/workcopilot' }` from `publicSiteRefusal()` ("this installation does not serve the public website ... sign in"); nothing is stored or mailed. Marketing pages (including any prerendered file left in dist/) answer 302 to `/workcopilot`; the sign-in page is served as the plain shell, never its prerendered marketing variant; legal pages stay served. In the SPA, the same marketing routes and `/` for a signed-out visitor redirect to sign-in. |
+| `social_login` | `server/edition_route_gates.js` `SOCIAL_ROUTE_PREFIXES` (`/api/work/social/`, `/api/work/admin/social`); the sign-in page and the superadmin Social sign-in section | 403 `{ error, socialDisabled: true }` from `socialLoginRefusal()`; no social button is shown. Separately, in EVERY edition a company account can never use social sign-in (`server/sign_in_rules.js`, enforced in `resolveSocialAccount`). |
+| superadmin sections | `server/admin_sections.js` (one registry: section to capabilities to admin API families), read by the console (hides the section and names it in a note) and by the route gate (refuses its admin API) | 403 `{ featureDisabled: true }` (or `companiesDisabled` where there are no companies). |
 | `individual_plans` | `server/edition_route_gates.js` (one middleware ahead of every route): `POST /api/work/checkout`, `/checkout/credits`, `/subscription/change`, `/onboarding/plan`, `/onboarding/checkout`; also inside `createSubscriptionCheckout()`; `canUpgrade` / `nextTier` in `store.publicWorkUser()` | 403 `{ error, individualPlansDisabled: true, contact }` from `individualPlanRefusal()` ("WorkCoPilot is for organizations ... talk to us"). Reading an existing subscription, invoices and the Stripe portal stay open. |
 | company tenancy (`saas_companies` or `single_company`: `companyTenancy()`) | `server/edition_route_gates.js` prefixes: `/api/work/company/`, `/team/`, `/my-company`, `/exec/`, `/pm/`, `/grc/`, `/brain/`, `/workflows`, `/workflow-incidents*`, `/templates`, `/kb-spaces`, `/customers`, `/my/assigned`, `/app/msi`, `/launch/`, `/sso/`, `/api/v1/` | 403 `{ error: 'This feature is not available on this service.', companiesDisabled: true }` (neutral wording: the individuals site never talks about companies). |
 | `paid_only` | `requireWorkSubscription` (index.js) | With Stripe not configured, a personal account without comp access gets 503 `{ billingNotConfigured: true }` instead of free guiding; the server logs the fix for the operator. |
 | `solo_signup` (wording) | `soloSignupRefusal()` | Where the public site is served, the refusal says WorkCoPilot is for organizations and carries `contact: '/workcopilot/contact'`. |
 | lead form | `POST /api/work/leads` | The company field is required only where company tenants exist. |
+| `individual_site` | `src/sites/individuals/SitePage.jsx` (App.jsx routes `/`, `/workcopilot/how-it-works`, `/pricing`, `/use-cases`, `/faq`, `/security`) and `SiteHeader` / `SiteFooter` (the site chrome on every public page, legal pages included) | Off: the organization marketing pages render exactly as before. On: the individuals site renders at the same paths (its strings live in the `indiv` namespace, scanned by the edition copy gate), with the shared legal pages linked, not rewritten. |
 
 ### Not wired yet (defined in the registry, not enforced)
 
 These capabilities exist so editions can be described completely, but setting
 `WORK_EDITION=paid` or `onprem` today does not yet change these behaviors:
 
-1. **SPA, remaining**: the SPA is edition-aware (section 5). Still open: hide
-   the marketing routes when `public_site` is off, and show `offReason` in the
-   superadmin billing panel. (The superadmin console still lists its Companies
-   section on `paid`; creating one is refused.)
+1. **SPA, remaining**: the superadmin console still lists its Companies
+   section on `paid`; creating one is refused. (Done: the marketing routes
+   redirect to sign-in where `public_site` is off, and the superadmin billing
+   panel shows why Stripe is off; see the table above.)
 2. (Done: `paid_only` is enforced, see the table above.)
-3. **`public_site`**: the "validate it live" lead endpoints and the prerendered
-   marketing pages are still served in every edition.
+3. (Done: `public_site` is enforced, see the table above.)
 4. **`platform_ai`** (refuse platform AI providers where it is off) and
    **`ai_custody_customer`** (default new companies to company AI and
    customer-held brain custody): part of the first-run setup (planned).
@@ -114,8 +117,10 @@ These capabilities exist so editions can be described completely, but setting
    when an edition first needs them off with companies on.
 6. **`offline_licensing`**: no license check exists yet; `onprem` has no
    subscription or license gate today (planned with the first-run setup).
-7. `store.getBillingPublic().annualReady` reads `db.billing` directly; route it
-   through billing.js `cfg()` so it reads false where `stripe_billing` is off.
+7. (Done: the public `annualReady` comes from billing.js `annualCheckoutReady()`,
+   through `cfg()`, so it is false where `stripe_billing` is off. The
+   superadmin panel's own `getBillingPublic().annualReady` still reports what
+   is saved in each key bundle, which is what that panel edits.)
 
 ---
 
@@ -529,7 +534,7 @@ not repeat steps 1 to 3.
 |---|---|---|---|
 | Wording | base catalog, unchanged | organizations overlay | individuals overlay |
 | Home | as today | the personal plan cards become the organization plans (hosted, managed, on-premises); every "start" leads to Talk to us | no enterprise section, no company wording |
-| Pricing | as today | organization plans only: no personal plan, price, checkout or Stripe line | Lite to Premium only: no Enterprise column, seat or enterprise rows |
+| Pricing | as today | organization plans with the owner's per-user prices (server/org_pricing.js), Talk to us only: no personal plan, checkout or Stripe line | Lite to Premium only: no Enterprise column, seat or enterprise rows |
 | Sign-up | as today | `/workcopilot/signup` shows "WorkCoPilot is for organizations" with Talk to us and Sign in; the sign-in page has no create switch | as today, without the company field or company SSO |
 | App | as today | no personal upgrade, top-up or plan chooser; an account with no plan is told to ask its company administrator | no company routes (company console, exec, teach, PM, GRC, templates, launch); no knowledge-space picker |
 | Header / footer | as today | "Get started" reads Talk to us and goes to contact | no Enterprise or DPA link |
@@ -607,14 +612,25 @@ capabilities, and the page source carries the matching
   (the manifest defaults the origin to `https://admireveda.com`), or for the
   tar flow `npm run build && npm run stamp:spa -- --edition saas`.
 - Env: `WORK_EDITION=saas`, `WORK_PUBLIC_URL=https://admireveda.com`.
-- Stripe: company billing only. Personal plan prices are not needed, and no
-  personal checkout can start. The Stripe customer portal opens with a
-  configuration the server creates (invoices, card, cancel; no plan switch),
-  so a legacy personal subscriber cannot change plans there either.
+- Stripe: none (owner, 2026-10-30). `saas` has no `stripe_billing`: every
+  Stripe path (webhook, checkout, portal, Stripe invoices, refunds, Connect)
+  answers 403 `stripeDisabled`, and Stripe keys are ignored. AdmireVeda bills
+  each company under contract: the superadmin records the contract and issues
+  invoices in the console's Invoices section (`server/b2b_invoices.js`,
+  prices from `server/org_pricing.js`); the company admin reads them, with
+  PDFs, under Billing. No Stripe webhook is registered for this server.
+- Sign-in: no social sign-in (`social_login` off). Company accounts use a
+  password plus authenticator, or the company's OIDC or SAML 2.0 connection;
+  SCIM 2.0 provisioning at `/api/work/scim/v2`. A company admin can map a
+  SCIM group to a company role or grant (Company SSO, SCIM tab); membership
+  then sets the role (highest precedence wins, grants are unioned), every
+  change is audited, and the last company admin is never demoted that way
+  (`server/scim_roles.js`, rules in `server/scim_role_rules.js`). `WORK_PUBLIC_URL` must be the
+  real origin: it is the base of the SAML entity id and ACS URL companies
+  register in their identity provider.
 - Before the switch (owner decision): today's personal subscribers on
   admireveda.com need a home on the `all` or `paid` server. On `saas` they
-  can still sign in, read invoices and open the Stripe portal, but cannot buy
-  or change a personal plan.
+  can still sign in, but no Stripe path (portal, invoices) is reachable.
 - Serves: the marketing site in the organizations wording, company sign-in and
   SSO, the company console, Company Brain, teach workflows, enterprise billing.
 - Refuses: personal sign-up on every path, personal checkout, plan change and
@@ -633,7 +649,11 @@ capabilities, and the page source carries the matching
   copy gate prints how many legal strings still mention companies
   (`LEGAL_PENDING`). The DPA footer link is hidden; the page stays reachable
   because the terms link to it.
-- Serves: the marketing site in the individuals wording, personal sign-up,
-  personal plans and checkout, the app for individuals.
+- Serves: the individuals marketing site (`src/sites/individuals/`, capability
+  `individual_site`: home, how it works, pricing, who it is for, FAQ and
+  privacy, at the usual public paths, with the shared legal pages linked),
+  personal sign-up, personal plans and checkout, the app for individuals
+  (dashboard with the billing alert, `/work/billing` with in-app cancel at
+  period end and resume, invoices, the Stripe portal for the payment method).
 - Refuses: every company route family (403, neutral wording) and company
   creation.

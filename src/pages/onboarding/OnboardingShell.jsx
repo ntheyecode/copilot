@@ -2,7 +2,7 @@
 // subline, the step's content, and the small legal/help links underneath.
 // Nothing else (no marketing, no gradients, no step chrome). One primary action
 // per screen is the step's job; the shell only frames it.
-import { AVMark } from '../../components/AdmireVedaLogo.jsx'
+import { BrandMark as AVMark } from '../../components/brand/BrandLogo.jsx'   // the edition's brand mark
 import { useT } from '../../i18n/index.jsx'
 
 export default function OnboardingShell({ title, subtitle, children, aside = null, wide = false }) {

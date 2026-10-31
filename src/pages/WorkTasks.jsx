@@ -6,7 +6,7 @@ import { api, friendlyError } from '../api.js'
 import DownloadMenu from '../components/DownloadMenu.jsx'
 import { useAuth } from '../auth.jsx'
 import { useLocale } from '../i18n/index.jsx'
-import { AVMark } from '../components/AdmireVedaLogo.jsx'
+import { BrandMark as AVMark } from '../components/brand/BrandLogo.jsx'   // the edition's brand mark
 import WorkShell from '../workShell.jsx'
 import SessionRow from './work/SessionRow.jsx'
 
