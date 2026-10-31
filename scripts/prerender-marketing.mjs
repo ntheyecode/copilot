@@ -206,8 +206,8 @@ route({
   path: '/workcopilot/security',
   label: 'Security and privacy',
   source: 'WorkSecurity.jsx',
-  title: 'Security and Privacy - WorkCoPilot by AdmireVeda',
-  description: 'How WorkCoPilot protects your data: sensitive values redacted or tokenized on your device before anything is sent, code checked before you run it, an authenticator on every account, a per-session audit log, encryption at rest, and compliance evidence mapped to the frameworks you report to.',
+  title: en.securityPage.seo.title,
+  description: en.securityPage.seo.description,
   h1: 'See exactly what is protected',
   lede: [
     'Before anything is sent, sensitive data is stripped or tokenized on your own device, in screenshots and in text. You decide what counts as sensitive, on top of the industry-standard detectors.',
@@ -354,7 +354,7 @@ const BUNDLE_RE = /<(script)\b[^>]*\bsrc="\/copilot-assets\/[^"]+"[^>]*><\/scrip
 // cannot silently drift; the check instead confirms the page still reads the
 // expected catalog key (catches a page reverted to a hard-coded string or wired
 // to the wrong key). Routes not listed here still use a literal useSeo() and are
-// checked by matching the prerender copy against the page source (e.g. security).
+// checked by matching the prerender copy against the page source.
 const I18N_KEY = {
   '/workcopilot': 'login.meta',
   '/workcopilot/how-it-works': 'seo.how-it-works',
@@ -362,6 +362,7 @@ const I18N_KEY = {
   '/workcopilot/fields': 'seo.fields',
   '/workcopilot/pricing': 'seo.pricing',
   '/workcopilot/faq': 'seo.faq',
+  '/workcopilot/security': 'securityPage.seo',
 }
 
 // An individuals-site route's copy comes from the same table the page reads;
