@@ -60,3 +60,18 @@ test('the control-character gate catches what it exists for', () => {
   assert.ok(CONTROL.test('/(enterprise|dpa)' + String.fromCharCode(8) + '|x/'))
   assert.ok(!CONTROL.test('/(enterprise|dpa)\\b|x/\t'))
 })
+
+// The same class, third shape (2026-10-31, the live widget E2E fake): a
+// scripted edit turned the `\n` of a regex into a real line break. That is a
+// syntax error, but nothing parsed the e2e/ files until a Playwright run, so
+// every e2e module is syntax-checked here, inside npm test.
+test('every e2e module parses (a lost \n escape breaks a regex across lines)', async () => {
+  const { spawnSync } = await import('node:child_process')
+  const bad = []
+  for (const f of files(path.join(ROOT, 'e2e'))) {
+    if (!/\.mjs$/.test(f)) continue
+    const r = spawnSync(process.execPath, ['--check', f], { encoding: 'utf8' })
+    if (r.status !== 0) bad.push(`${path.relative(ROOT, f)}: ${(r.stderr || '').split('\n').find((l) => /Error/.test(l)) || 'does not parse'}`)
+  }
+  assert.deepEqual(bad, [])
+})

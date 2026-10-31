@@ -3354,7 +3354,9 @@ app.post('/api/work/coverage', wrap(async (req, res) => {
   const cfg = store.getActiveRuntime()
   if (!cfg) { logSearch(generic); return res.json(generic) }
   try {
-    const out = await work.workCoverage(ai, cfg, { question, pricing: store.getWorkPricing(), locale: readLocale(req) })
+    // Personal plans only where they are sold; the corporate site talks to sales.
+    const personalPlans = caps.has('individual_plans')
+    const out = await work.workCoverage(ai, cfg, { question, pricing: personalPlans ? store.getWorkPricing() : null, locale: readLocale(req), personalPlans })
     logSearch(out)
     res.json(out)
   } catch (e) {

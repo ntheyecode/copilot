@@ -12,7 +12,33 @@ import { withLocale } from './ai_locale.js'
 // "offtopic") WITHOUT answering it. Nothing but coverage questions get a
 // real answer from the AI/KB.
 // ===========================================================================
-export function workCoverageSystem(pricing = null) {
+// The corporate site sells to organizations only: the widget never names a
+// plan or a price there, it ends in a conversation with the team (owner rule,
+// 2026-10-31). Each swap must land, or the prompt still talks plans: a swap
+// that no longer matches throws, and the test suite runs this path.
+const ORG_SWAPS = [
+  [', and which plan fits.', ', and what it means for their team.'],
+  ['and suggest the plan that fits when relevant.', 'and, when it fits, invite them to talk to the team.'],
+  [' and set the plan that fits.', '.'],
+  ['"plan":"Lite"|"Basic"|"Advanced"|"Premium"|null', '"plan":null'],
+]
+function forOrganizations(text) {
+  let out = text
+  for (const [from, to] of ORG_SWAPS) {
+    if (!out.includes(from)) throw new Error(`coverage prompt: the organizations swap no longer matches: ${from}`)
+    out = out.split(from).join(to)
+  }
+  const a = out.indexOf('\nPLANS:\n'), b = out.indexOf('\nSIBLING PRODUCTS')
+  const c = out.indexOf('CHOOSING THE PLAN:'), d = out.indexOf('\n', c)
+  if (a < 0 || b < a || c < 0 || d < c) throw new Error('coverage prompt: the plan sections moved')
+  out = out.slice(0, c) + out.slice(d + 1)
+  return out.slice(0, a) + '\nORGANIZATIONS ONLY: this website serves companies. Never name a plan, a price, a trial or a subscription, and never send anyone to a pricing page; the next step is always a conversation with the team.\n' + out.slice(b)
+}
+export function workCoverageSystem(pricing = null, { personalPlans = true } = {}) {
+  const text = workCoveragePrompt(pricing)
+  return personalPlans ? text : forOrganizations(text)
+}
+function workCoveragePrompt(pricing) {
   const b = (pricing && pricing.plans) || {}
   const money = (n) => (n == null ? '' : ` ($${n})`)
   // Plan allowances come from the pricing catalog, never from this text:
@@ -88,8 +114,8 @@ function coverageParse(raw) {
   if (a >= 0 && z > a) { try { return JSON.parse(s.slice(a, z + 1)) } catch (_) {} }
   return {}
 }
-export async function workCoverage(ai, cfg, { question, pricing = null, locale = 'en' }) {
-  const system = withLocale(workCoverageSystem(pricing), locale)
+export async function workCoverage(ai, cfg, { question, pricing = null, locale = 'en', personalPlans = true }) {
+  const system = withLocale(workCoverageSystem(pricing, { personalPlans }), locale)
   let parsed = coverageParse(await ai.generate(cfg, system, workCoverageUser(question)))
   if (parsed.verdict === 'offtopic' || !parsed.verdict) {
     // One recheck only on a refusal, so a real task is not turned away by a
@@ -100,7 +126,7 @@ export async function workCoverage(ai, cfg, { question, pricing = null, locale =
     if (kept) parsed = again
   }
   const verdict = ['covered', 'partial', 'no', 'offtopic', 'about'].includes(parsed.verdict) ? parsed.verdict : 'offtopic'
-  const plan = ['Lite', 'Basic', 'Advanced', 'Premium'].includes(parsed.plan) ? parsed.plan : null
+  const plan = personalPlans && ['Lite', 'Basic', 'Advanced', 'Premium'].includes(parsed.plan) ? parsed.plan : null
   const product = ['WorkCoPilot', 'MeetAiGene', 'AI Cloud'].includes(parsed.product)
     ? parsed.product : (verdict === 'offtopic' ? null : 'WorkCoPilot')
   let answer = scrubGuidance(String(parsed.answer || '').trim())

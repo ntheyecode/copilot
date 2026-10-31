@@ -199,3 +199,18 @@ test('a second refusal stands, and a first answer that is not a refusal is never
   await workCoverage(no, {}, { question: 'review my contract' })
   assert.equal(no.calls.length, 1, 'an honest "no" is not second-guessed')
 })
+
+test('the corporate prompt never names a plan, a price or a pricing page', () => {
+  const org = workCoverageSystem(PRICING, { personalPlans: false })
+  for (const word of ['Lite', 'Basic', 'Advanced', 'Premium', 'PLANS:', 'CHOOSING THE PLAN', 'plan fits', '$']) assert.ok(!org.includes(word), `organizations prompt mentions ${word}`)
+  assert.match(org, /ORGANIZATIONS ONLY/)
+  assert.match(org, /"plan":null/)
+  assert.match(org, /SIBLING PRODUCTS/, 'the rest of the prompt is intact')
+  assert.match(workCoverageSystem(PRICING), /PLANS:/, 'the individuals prompt keeps its plans')
+})
+
+test('a corporate answer carries no plan even when the model names one', async () => {
+  const out = await workCoverage(fakeAi(CALENDAR), {}, { question: 'calendar', personalPlans: false })
+  assert.equal(out.plan, null)
+  assert.equal(out.preview.length, 3, 'the steps are unchanged')
+})

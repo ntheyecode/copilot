@@ -38,6 +38,7 @@ import Rich from './live_validate/rich.jsx'                 // the console's inl
 import { StepCards, LockedTeaser } from './live_validate/StepTaste.jsx'   // the step cards + the locked teaser (the taste of the depth)
 import { STEP_TASTE_CSS } from './live_validate/step_taste.css.js'
 import { planShape, simEvents, simState, STEP_STAGGER_MS } from './live_validate/plan_model.js'   // the ONE plan derivation + preview timeline
+import { contactPrefillFrom, setContactPrefill } from '../shared/contact_prefill.js'   // corporate: the widget ends in the contact form, filled in
 import { useEditionView } from '../edition/useCaps.js'   // edition: company field only where companies exist; plan pick only where personal plans are sold
 
 // The validator is a lead-capture widget for PUBLIC web visitors only. Inside the
@@ -637,10 +638,10 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
                             </div>
                             <p className="lv-trust"><span><Check size={12} /> {t('widgets.validate.trustCancel')}</span><span><Lock size={12} /> {t('widgets.validate.trustStripe')}</span></p>
                             </>) : (
-                              // Organizations only: no personal plan to pick; the next step is the sales conversation.
+                              // Organizations only: never plans or prices; the one next step is the
+                              // sales conversation, with the contact form already filled in.
                               <div className="lv-cta-btns">
-                                <a className="lv-start" href="/workcopilot/contact">{t('edition.validate.talk')} <ArrowRight size={16} className="lv-arrow" /></a>
-                                <a className="lv-compare" href="/workcopilot/pricing">{t('edition.validate.plans')}</a>
+                                <a className="lv-start" href="/workcopilot/contact" onClick={() => setContactPrefill(contactPrefillFrom({ lead, task: cleanAlways(pendingQ) }))}>{t('edition.validate.talk')} <ArrowRight size={16} className="lv-arrow" /></a>
                               </div>
                             )}
                           </div>

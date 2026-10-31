@@ -6,6 +6,7 @@
 import React, { useState } from 'react'
 import { Mail, Send, Check, Loader2, Building2 } from 'lucide-react'
 import { api } from '../api.js'
+import { takeContactPrefill } from '../shared/contact_prefill.js'   // the live widget's hand-off (corporate "talk to sales")
 import SiteHeader from '../components/SiteHeader.jsx'   // shared top nav (one link list, mobile disclosure menu)
 import SiteFooter from '../components/SiteFooter.jsx'
 import useSeo from '../useSeo.js'                        // per-route title / description / canonical (WEB-01)
@@ -18,7 +19,8 @@ export default function WorkContact() {
     description: t('seo.contact.description'),
     path: '/workcopilot/contact',
   })
-  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
+  // Arriving from the live widget ("talk to sales"): the form opens filled in.
+  const [form, setForm] = useState(() => ({ name: '', email: '', subject: '', message: '', ...(takeContactPrefill() || {}) }))
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
   const [err, setErr] = useState('')

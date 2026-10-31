@@ -105,6 +105,8 @@ const BROWSER_FLOOR = ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari14']
 // Windows and POSIX alike (the bundler sees native module ids).
 const VENDOR_RE = /[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/
 
+export const VITE_WATCH_IGNORED = ['**/out/**', '**/dist/**', '**/.claude/worktrees/**', '**/.e2e-results/**', '**/workcopilot/release-workcopilot/**', '**/workcopilot/node_modules/**']
+
 export default defineConfig(({ mode }) => ({
   plugins: [react(), ipHardenPlugin(mode)].filter(Boolean),
   build: {
@@ -137,5 +139,9 @@ export default defineConfig(({ mode }) => ({
   server: {
     port: 5180,
     proxy: { '/api': 'http://localhost:4444' },
+    // Never watch build output, other worktrees or test results: on Windows the
+    // watcher's handle on a new folder blocks renaming it (compose.test failed
+    // with EPERM while a dev server ran, 2026-10-31), and none of it is source.
+    watch: { ignored: VITE_WATCH_IGNORED },
   },
 }))

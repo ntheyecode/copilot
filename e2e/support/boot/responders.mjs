@@ -4,6 +4,7 @@
 // (server/work.js, work_deep_plan.js, workflow_step_reader.js). Order matters:
 // the harden prompt also contains "PLAN THE WORK", so it is checked first.
 const MARKERS = [
+  ['coverage', /You are the coverage assistant/],
   ['project', /PLAN A PROJECT AS AN ORDERED MAP OF TASKS/],
   ['harden', /HARDEN A DRAFT PLAN/],
   ['watch', /GUIDE CONTINUOUSLY BY WATCHING THE SCREEN/],
@@ -46,8 +47,25 @@ export const DEFAULT_PROJECT = Object.freeze({
   ],
 })
 
+// The public live widget's answer: a covered task, four steps, the first
+// three in full depth. Names a plan, so a corporate run proves the server
+// drops it.
+export const DEFAULT_COVERAGE = Object.freeze({
+  verdict: 'covered', answer: 'Your monthly summary, built step by step with you.', points: ['**Exact clicks** in your spreadsheet'],
+  sees: 'Your spreadsheet is open', ready: 'Signed in to your spreadsheet app',
+  steps: [
+    { do: 'Select the expense rows', url: '', path: '', cmd: '', how: ['Click the first cell', 'Press `Ctrl+Shift+Down`'], done: 'The rows are highlighted', drift: 'That is the header row. Start one row below it' },
+    { do: 'Insert a pivot table', url: '', path: 'Insert > PivotTable', cmd: '', how: ['Open the `Insert` tab', 'Choose `PivotTable`'], done: 'An empty pivot table appears', drift: 'That is the chart menu. Use PivotTable instead' },
+    { do: 'Total each month', url: '', path: '', cmd: '', how: ['Drag `Month` to Rows', 'Drag `Amount` to Values'], done: 'Each month shows its total', drift: 'Amount belongs in Values, not Rows' },
+    { do: 'Name the summary sheet', url: '', path: '', cmd: '', how: [], done: '', drift: '' },
+  ],
+  plan: 'Basic', product: 'WorkCoPilot',
+})
+
 export function defaultAnswer(kind, text) {
   switch (kind) {
+    case 'coverage':
+      return DEFAULT_COVERAGE
     case 'project':
       return DEFAULT_PROJECT
     case 'plan':

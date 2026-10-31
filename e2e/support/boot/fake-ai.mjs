@@ -51,7 +51,7 @@ export function startFakeAi() {
           const { text, images } = flatten(body.messages || [])
           const kind = classify(text, images)
           const rule = pickRule(kind, text)
-          calls.push({ host, path, kind, model: body.model, images, at: Date.now(), excerpt: text.slice(0, 160), scripted: !!rule })
+          calls.push({ host, path, kind, model: body.model, images, at: Date.now(), excerpt: text.slice(0, 160), scripted: !!rule, ...(kind === 'coverage' ? { plansListed: /\nPLANS:\n/.test(text), orgOnly: /ORGANIZATIONS ONLY/.test(text) } : {}) })
           if (rule && rule.delayMs) await new Promise((r) => setTimeout(r, rule.delayMs))
           if (rule && rule.status) return send(rule.status, { error: { message: rule.error || 'scripted failure', type: 'e2e' } })
           const answer = rule && rule.content !== undefined ? rule.content : defaultAnswer(kind, text)
