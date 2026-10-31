@@ -19,7 +19,7 @@ import { useT } from '../../i18n/index.jsx'
 // actions, and `doneReady` softly rings the primary Mark done when that
 // verdict says the step looks done (the shortcut is the button itself).
 export default function StepCard({
-  step, index, total, guidance, confirmN = 0, hint, onDone, doneLabel = 'Mark done', busy = false, extra, actions, notice, doneReady = false,
+  step, index, total, guidance, confirmN = 0, hint, onDone, doneLabel = null, busy = false, extra, actions, notice, doneReady = false,
 }) {
   const t = useT()
   if (!step) return null
@@ -54,7 +54,7 @@ export default function StepCard({
       {extra}
       {notice}
       <div className="gv-step-actions">
-        {onDone && <button type="button" className={`gv-btn primary${doneReady ? ' is-ready' : ''}`} onClick={onDone} disabled={busy} title={t('stepCard.markDoneTip')}><Check size={16} strokeWidth={2.6} aria-hidden="true" /> {doneLabel}</button>}
+        {onDone && <button type="button" className={`gv-btn primary${doneReady ? ' is-ready' : ''}`} onClick={onDone} disabled={busy} title={t('stepCard.markDoneTip')}><Check size={16} strokeWidth={2.6} aria-hidden="true" /> {doneLabel || t('floatPanel.markDone')}</button>}
         {actions}
       </div>
     </section>

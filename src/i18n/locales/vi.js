@@ -4826,6 +4826,9 @@ export default {
   helpShared: {
     flowLabel: 'Luồng chính',
     open: 'Mở {label}',
+    callout: 'Chú thích {n}',
+    calloutsLabel: 'Ý nghĩa của từng số',
+    pathLabel: 'Cách thực hiện',
   },
   emailAdmin: {
     checkingAccess: 'Đang kiểm tra quyền truy cập',
@@ -5194,6 +5197,7 @@ export default {
       freeAccessOn: 'Truy cập miễn phí ✓',
       freeAccessGrant: 'Cấp truy cập miễn phí',
       grantHours: 'Cấp giờ',
+      more: 'Khác',
       grantHoursTitle: 'Cấp số giờ đã mua',
       refundLast: 'Hoàn khoản cuối',
       refundLastTitle: 'Hoàn tiền cho khoản thanh toán gần nhất',
@@ -6255,6 +6259,94 @@ export default {
       shot: {
         alt: 'Danh sách cảnh báo bảo mật của công ty.',
         caption: 'Cảnh báo, mới nhất trước.',
+      },
+    },
+    trainer: {
+      title: 'Cấp quyền Người đào tạo cho một người',
+      lead: 'Người đào tạo ghi lại và phát hành các quy trình mà nhóm bạn làm theo. Hãy cấp quyền này cho những người nắm rõ công việc nhất.',
+      steps: {
+        open: {
+          t: 'Mở Đội ngũ',
+          d: 'Tìm người đó trong danh sách nhân sự.',
+        },
+        tick: {
+          t: 'Đánh dấu Người đào tạo',
+          d: 'Ô này hiện bên dưới vai trò của thành viên và quản lý dự án, và được lưu ngay.',
+        },
+        studio: {
+          t: 'Họ có thể đào tạo',
+          d: 'Studio Đào tạo và Vấn đề quy trình xuất hiện trong menu của họ.',
+        },
+      },
+      shots: {
+        grant: {
+          alt: 'Bảng Đội ngũ: Maya Lin với vai trò Thành viên và ô Người đào tạo được đánh dấu bên dưới.',
+          caption: 'Quản trị viên công ty có thể đào tạo mà không cần quyền này. Đổi người đó sang vai trò khác sẽ gỡ quyền.',
+          marks: {
+            role: '<b>Vai trò.</b> Quyền này dùng được với vai trò Thành viên hoặc Quản lý dự án.',
+            trainer: '<b>Người đào tạo.</b> Đánh dấu để người này có thể ghi lại và phát hành quy trình. Bỏ đánh dấu để thu lại quyền.',
+          },
+        },
+      },
+    },
+    developer: {
+      open: 'API và webhook',
+      title: 'API và webhook',
+      lead: 'Kết nối ứng dụng của bạn với WorkCoPilot: đọc và chạy quy trình, đọc vấn đề quy trình, truy vấn Bộ não công ty và nhận tin ngay khi có sự kiện xảy ra.',
+      steps: {
+        create: {
+          t: 'Tạo khóa',
+          d: 'Đặt tên, chỉ đánh dấu những phạm vi ứng dụng cần, và đặt thời hạn.',
+        },
+        store: {
+          t: 'Lưu một lần',
+          d: 'Khóa đầy đủ chỉ hiện một lần. Hãy cất vào trình quản lý bí mật của bạn.',
+        },
+        rotate: {
+          t: 'Xoay hoặc thu hồi',
+          d: 'Xoay khóa với thời gian chồng lấn ngắn, hoặc thu hồi ngay nếu khóa bị lộ.',
+        },
+        hooks: {
+          t: 'Thêm webhook',
+          d: 'Chọn sự kiện, rồi kiểm tra từng lần gửi.',
+        },
+      },
+      shots: {
+        keys: {
+          alt: 'Khóa API: nút Tạo khóa và danh sách khóa, một khóa đang mở với phạm vi, người tạo, danh sách IP cho phép và các nút Xoay và Thu hồi.',
+          caption: 'Sau khi tạo, chỉ phần tiền tố và bốn ký tự cuối của khóa được hiển thị.',
+          marks: {
+            create: '<b>Tạo khóa.</b> Tạo một khóa mới cho một ứng dụng.',
+            row: '<b>Mỗi khóa trong nháy mắt.</b> Trạng thái, phạm vi, thời hạn và lần dùng gần nhất.',
+            acts: '<b>Xoay hoặc Thu hồi.</b> Xoay sẽ cấp một mã bí mật mới với cùng thiết lập. Thu hồi sẽ dừng khóa ngay lập tức.',
+          },
+        },
+        create: {
+          alt: 'Biểu mẫu khóa API mới: tên, các phạm vi khóa được dùng, thời hạn và danh sách IP cho phép (tùy chọn).',
+          caption: 'Mỗi việc một khóa, để bạn có thể thu hồi một khóa mà không ảnh hưởng các khóa khác. Việc tạo hoặc xoay khóa có thể yêu cầu mã từ ứng dụng xác thực của bạn.',
+          marks: {
+            scopes: '<b>Phạm vi.</b> Chỉ đánh dấu những gì ứng dụng cần.',
+            expiry: '<b>Hết hạn sau.</b> Khóa có thời hạn là bớt một khóa phải nhớ thu hồi.',
+            ip: '<b>Danh sách IP cho phép.</b> Tùy chọn. Chỉ chấp nhận lệnh gọi từ các địa chỉ của chính bạn.',
+          },
+        },
+        secret: {
+          alt: 'Bảng Sao chép khóa của bạn ngay với một khóa mẫu, Sao chép khóa và Tôi đã lưu.',
+          caption: 'Chỉ đóng bảng sau khi đã lưu khóa an toàn.',
+          marks: {
+            copy: '<b>Sao chép khóa.</b> Đây là lần duy nhất khóa đầy đủ được hiển thị.',
+            done: '<b>Tôi đã lưu.</b> Đóng bảng. Khóa đầy đủ không thể hiển thị lại.',
+          },
+        },
+        hooks: {
+          alt: 'Webhook: một điểm cuối đang mở với các sự kiện, các nút điều khiển và những lần gửi gần đây kèm trạng thái.',
+          caption: 'Mọi lần gửi đều được ký, để ứng dụng của bạn kiểm tra được rằng nó đến từ WorkCoPilot.',
+          marks: {
+            events: '<b>Sự kiện.</b> Một quy trình được phát hành, hoặc một vấn đề quy trình được báo cáo.',
+            acts: '<b>Quản lý.</b> Bật hoặc tắt, gửi thử, xoay mã bí mật ký, hoặc xóa webhook.',
+            deliveries: '<b>Lần gửi gần đây.</b> Mỗi lần kèm kết quả. Thử lại lần gửi đã ngừng thử.',
+          },
+        },
       },
     },
   },
@@ -7417,6 +7509,8 @@ export default {
       support: 'Hỗ trợ',
       team: 'Nhóm',
       exec: 'Bảng điều khiển điều hành',
+      teach: 'Studio Đào tạo',
+      teachTip: 'Ghi lại và phát hành các quy trình mà nhóm bạn làm theo',
       admin: 'Bảng quản trị',
     },
     update: {
@@ -8711,33 +8805,207 @@ export default {
         ],
       },
     },
+    workflows: {
+      title: 'Quy trình của công ty',
+      lead: 'Làm việc đúng theo cách nhóm bạn đã thống nhất, với hướng dẫn từng bước ngay trên màn hình của bạn. Người đào tạo luôn cập nhật từng quy trình, nên bạn luôn làm theo phiên bản mới nhất.',
+      path: [
+        'Trên bảng điều khiển, bạn tìm thấy quy trình trong mục <b>Quy trình của công ty</b>. Hãy tìm kiếm hoặc chọn một danh mục khi danh sách dài.',
+        'Mở một hàng để xem quy trình bắt đầu từ đâu và cần chuẩn bị những gì.',
+        'Nhấn <b>Chạy</b>, chia sẻ màn hình và làm theo từng bước.',
+      ],
+      list: {
+        h: 'Tìm quy trình bạn cần',
+        alt: 'Mục Quy trình của công ty trên bảng điều khiển: ô tìm kiếm, bộ lọc danh mục, các hàng quy trình với sản phẩm, danh mục, số bước và thời gian, và một hàng đang mở cho thấy nơi bắt đầu, những gì cần chuẩn bị, người phụ trách và nút Chạy.',
+        caption: 'Mọi quy trình mà người đào tạo của bạn đã phát hành, sẵn sàng để chạy.',
+        marks: {
+          search: '<b>Tìm kiếm và lọc.</b> Tìm quy trình theo tên, hoặc thu hẹp danh sách về một danh mục.',
+          details: '<b>Nắm rõ trước khi bắt đầu.</b> Bắt đầu từ đâu, cần chuẩn bị gì và ai phụ trách quy trình.',
+          run: '<b>Chạy.</b> Bắt đầu một tác vụ có hướng dẫn từ quy trình này, với mọi bước đã được lên kế hoạch sẵn.',
+        },
+      },
+      guide: {
+        h: 'Làm theo từng bước, kèm màn hình bạn sẽ thấy',
+        alt: 'Chế độ hướng dẫn đang chạy quy trình Hoàn tiền cho khách hàng: kế hoạch ở bên trái, bước hiện tại với điều kiện hoàn tất, hình thu nhỏ Màn hình sẽ trông như thế này, nhãn Quy trình của công ty và nút Đánh dấu đã xong.',
+        caption: 'Khi chạy, quy trình đi theo đúng các bước người đào tạo đã ghi lại, theo đúng thứ tự.',
+        marks: {
+          plan: '<b>Toàn bộ kế hoạch.</b> Mọi bước của quy trình, và bạn đang ở đâu.',
+          shot: '<b>Màn hình sẽ trông như thế này.</b> Ảnh chụp màn hình của người đào tạo cho bước này, để bạn kiểm tra mình đang ở đúng chỗ.',
+          source: '<b>Quy trình của công ty.</b> Quy trình và phiên bản bạn đang làm theo.',
+          done: '<b>Đánh dấu đã xong.</b> Chuyển tiếp khi bước đã xong, hoặc nhấn Xác minh trên màn hình của tôi để kiểm tra trước.',
+        },
+      },
+      larger: {
+        h: 'So màn hình của bạn với màn hình của người đào tạo',
+        alt: 'Ảnh chụp màn hình của bước được mở ở kích thước đầy đủ bên trong thẻ bước.',
+        caption: 'Nhấn Xem lớn hơn ở bất kỳ bước nào có ảnh chụp màn hình.',
+        marks: {
+          full: '<b>Ảnh chụp màn hình đầy đủ.</b> Đối chiếu với màn hình của bạn trước khi thao tác.',
+        },
+      },
+    },
+    teach: {
+      title: 'Studio Đào tạo',
+      lead: 'Chỉ cần làm mẫu một lần, mọi người trong công ty đều có thể làm theo ngay trên màn hình của họ. Ghi lại hoặc viết các bước, kiểm tra, phát hành và cập nhật khi ứng dụng của bạn thay đổi.',
+      path: [
+        'Nhấn <b>Quy trình mới</b> và điền bốn thông tin thiết yếu.',
+        'Thêm các bước: ghi lại một bản trình diễn, nhập một bản ghi có sẵn, hoặc tự viết.',
+        'Đối chiếu từng bước với ảnh chụp màn hình và giữ lại các gợi ý bạn đồng ý.',
+        '<b>Phát hành</b>. Sau này, chọn <b>Sửa đổi</b> để cập nhật hoặc <b>Ngừng</b> để thôi cung cấp quy trình.',
+      ],
+      list: {
+        h: 'Mọi quy trình của bạn trong một danh sách',
+        alt: 'Studio Đào tạo: nút Quy trình mới, Vấn đề quy trình, các quy trình kèm phiên bản và trạng thái, và một quy trình đã phát hành đang mở với thông tin chi tiết, các bước và các thao tác Sửa đổi, Ngừng và Xóa.',
+        caption: 'Mở bất kỳ hàng nào để xem chi tiết, các bước và thao tác trên quy trình đó.',
+        marks: {
+          newWorkflow: '<b>Quy trình mới.</b> Mở trình hướng dẫn từng bước.',
+          issues: '<b>Vấn đề quy trình.</b> Những lúc một lần chạy không khớp với màn hình. Con số là số vấn đề mới.',
+          states: '<b>Bản nháp, Đã phát hành hoặc Đã ngừng.</b> Chỉ quy trình đã phát hành mới đến được với nhóm của bạn.',
+          actions: '<b>Sửa đổi, Ngừng, Xóa.</b> Sửa đổi sẽ tạo một phiên bản nháp mới. Phiên bản đang chạy vẫn hoạt động cho đến khi bạn phát hành phiên bản mới.',
+        },
+      },
+      wizard: {
+        h: 'Năm bước ngắn, thông tin thiết yếu trước',
+        alt: 'Trình hướng dẫn tạo quy trình mới ở bước Cơ bản: năm bước ở trên cùng, dòng xác nhận nội dung bạn đang dạy, các trường bắt buộc và các nút Lưu bản nháp và Phát hành.',
+        caption: 'Lưu bản nháp bất cứ lúc nào và quay lại sau.',
+        marks: {
+          stepper: '<b>Năm bước.</b> Cơ bản, Chi tiết, Phạm vi & quyền riêng tư, Các bước và Xem lại. Bạn có thể quay lại bất kỳ bước nào.',
+          reflect: '<b>Kiểm tra nhanh.</b> Xác nhận sản phẩm và tác vụ bạn đang dạy.',
+          required: '<b>Bốn thông tin thiết yếu.</b> Sản phẩm, tiêu đề, người phụ trách và nơi bắt đầu. Mọi thứ khác đều tùy chọn.',
+          footer: '<b>Lưu bản nháp hoặc Phát hành.</b> Nút Phát hành bật khi đã có đủ thông tin thiết yếu, ít nhất một bước và ghi chú phạm vi.',
+        },
+      },
+      scope: {
+        h: 'Rõ ràng ai sẽ thấy quy trình',
+        alt: 'Bước Phạm vi & quyền riêng tư: quy trình được chia sẻ với ai, quy trình lưu những gì, ô xác nhận và tùy chọn che thông tin.',
+        caption: 'Chỉ có thể phát hành sau khi bạn xác nhận ghi chú phạm vi.',
+        marks: {
+          note: '<b>Ai thấy quy trình.</b> Mọi người trong công ty bạn, sau khi quy trình được phát hành.',
+          ack: '<b>Xác nhận một lần.</b> Đánh dấu ô này trước khi phát hành.',
+          mask: '<b>Che văn bản nhạy cảm.</b> Thực hiện trên thiết bị của bạn, trước khi lưu bất kỳ ảnh chụp màn hình nào đã ghi. Luôn bật khi tính năng bảo vệ dữ liệu của công ty bạn đang bật.',
+        },
+      },
+      record: {
+        h: 'Ghi lại bản trình diễn trực tiếp',
+        alt: 'Phần thiết lập Ghi lại bản trình diễn: thuyết minh bằng micrô và ngôn ngữ thuyết minh, ghi âm thanh cuộc gọi kèm ô đồng ý, ghi chú về việc che thông tin và nút Chia sẻ màn hình và bắt đầu.',
+        caption: 'WorkCoPilot thấy màn hình của bạn, không thấy các cú nhấp chuột. Nhấn Đánh dấu bước mỗi khi cần bắt đầu một bước mới.',
+        marks: {
+          narrate: '<b>Thuyết minh.</b> Lời bạn nói trở thành nội dung của từng bước. Không lưu lại âm thanh.',
+          call: '<b>Âm thanh cuộc gọi.</b> Dành cho cuộc họp bạn đang ghi. Nút bắt đầu chỉ bật sau khi bạn xác nhận mọi người trong cuộc gọi đều biết.',
+          mask: '<b>Che trước tiên.</b> Văn bản nhạy cảm được che trước khi lưu bất kỳ ảnh chụp màn hình nào.',
+          start: '<b>Chia sẻ màn hình và bắt đầu.</b> Chỉ chia sẻ cửa sổ của ứng dụng bạn đang dạy.',
+        },
+      },
+      live: {
+        h: 'Trong lúc bạn ghi',
+        alt: 'Thanh ghi trực tiếp: nhãn Đang ghi và đồng hồ, số màn hình và điểm ngắt bước đến lúc này, Đánh dấu bước, Tạm dừng, Dừng và xem lại, và Hủy bỏ.',
+        caption: 'Không có gì được lưu cho đến khi bạn dừng. Hủy bỏ sẽ xóa bản ghi.',
+        marks: {
+          time: '<b>Thời gian và tiến độ.</b> Bạn đã ghi được bao lâu, có bao nhiêu màn hình và điểm ngắt bước.',
+          mark: '<b>Đánh dấu bước.</b> Bắt đầu một bước mới ngay tại đây.',
+          stop: '<b>Dừng và xem lại.</b> Các bước của bạn được tải vào trình chỉnh sửa, sẵn sàng để kiểm tra.',
+        },
+      },
+      import: {
+        h: 'Hoặc nhập một bản ghi bạn đã có',
+        alt: 'Nhập bản ghi với một video đã chọn: tên tệp và thời lượng, ngôn ngữ nói và nút Tạo các bước từ video này.',
+        caption: 'Dùng được video từ Teams hoặc Zoom. Video được đọc trên thiết bị của bạn và không được tải lên: chỉ những ảnh chụp màn hình mà các bước của bạn dùng và các đoạn lời nói ngắn mới rời khỏi thiết bị.',
+        marks: {
+          file: '<b>Video của bạn.</b> Tên và thời lượng, được đọc trên thiết bị này.',
+          lang: '<b>Ngôn ngữ nói.</b> Để lời nói trở thành nội dung bước bằng đúng ngôn ngữ.',
+          start: '<b>Tạo các bước từ video này.</b> Soạn nháp một bước mỗi khi màn hình dừng lại ở nội dung mới.',
+        },
+      },
+      review: {
+        h: 'Đối chiếu từng bước với ảnh chụp màn hình',
+        alt: 'Trình chỉnh sửa Các bước của một bản nháp đã ghi: thẻ Đối chiếu từng bước với ảnh chụp màn hình, một bước đang mở với ảnh chụp màn hình và một gợi ý được đánh giá Có lẽ đúng kèm Đọc lại và Dùng gợi ý, và một bước khác có nhãn Gợi ý.',
+        caption: 'Gợi ý nằm cạnh nội dung của bạn. Các bước của bạn chỉ thay đổi khi bạn chọn Dùng gợi ý.',
+        marks: {
+          read: '<b>Đọc các bước.</b> Đọc lần lượt từng bước có ảnh chụp màn hình, trong khi bạn vẫn tiếp tục chỉnh sửa.',
+          shot: '<b>Ảnh chụp màn hình của bước.</b> Những gì đồng nghiệp cần thấy ở bước này.',
+          band: '<b>Mức độ rõ ràng.</b> Trông rõ ràng, Có lẽ đúng, hoặc Chưa chắc, kiểm tra.',
+          use: '<b>Dùng gợi ý hoặc Đọc lại.</b> Bạn quyết định, từng bước một.',
+          mark: '<b>Gợi ý đang chờ.</b> Hiện trên mọi bước có gợi ý cần kiểm tra.',
+        },
+      },
+    },
     issues: {
       title: 'Vấn đề quy trình',
-      lead: 'Vấn đề quy trình tập hợp những lúc một quy trình đã phát hành không khớp với những gì đồng nghiệp thấy trên màn hình: màn hình đã thay đổi, có lỗi hiển thị, họ không thể tiếp tục, họ cần một bước mà quy trình không có, hoặc một bước bị bỏ qua. Mỗi vấn đề là về quy trình, không phải về công việc của bất kỳ ai.',
-      shot: {
-        alt: 'Vấn đề quy trình: các thẻ tóm tắt, bộ lọc Chưa giải quyết, danh sách mới kể từ lần ghé gần nhất, và một vấn đề đang mở với bước được gợi ý cùng màn hình mà hướng dẫn đã thấy.',
-        caption: 'Vấn đề quy trình. Các lần lặp lại ở cùng bước và cùng loại được cộng vào một vấn đề thay vì tạo vấn đề mới.',
-      },
-      howTo: 'Cách xử lý các vấn đề quy trình',
-      steps: [
-        'Mở <b>Vấn đề quy trình</b> từ mục Quản lý trong menu, hoặc từ Studio Đào tạo. Con số bên cạnh là số vấn đề mới kể từ lần ghé gần nhất của bạn.',
-        'Các thẻ ở trên cùng đếm số vấn đề đang mở và đã ghi nhận, cùng số vấn đề chưa giải quyết theo từng loại. Chọn <b>Chưa giải quyết</b>, <b>Đã giải quyết</b>, <b>Đã bỏ qua</b> hoặc <b>Tất cả</b>, và chọn một quy trình để thu hẹp danh sách.',
-        'Nhấp vào một hàng để xem điều hướng dẫn nhận thấy, màn hình nó đã thấy và thời điểm xảy ra.',
-        '<b>Ghi nhận</b> một vấn đề để nhóm biết đã có người đang xử lý. Sau khi cập nhật quy trình, hãy <b>Giải quyết</b> vấn đề. Nếu không cần thay đổi gì, hãy <b>Bỏ qua</b>, các lần lặp lại sẽ không được báo nữa. Thêm ghi chú để nói rõ lý do.',
+      lead: 'Xem mọi lúc một quy trình đã phát hành không khớp với màn hình của đồng nghiệp. Sửa quy trình một lần là mọi người chạy quy trình đó đều nhận được bản sửa. Mỗi vấn đề là về quy trình, không bao giờ là về công việc của một người.',
+      path: [
+        'Mở <b>Vấn đề quy trình</b> từ menu hoặc từ Studio Đào tạo. Con số là số vấn đề mới.',
+        'Lọc theo trạng thái hoặc quy trình, rồi mở một vấn đề.',
+        '<b>Ghi nhận</b> vấn đề, cập nhật quy trình, rồi <b>Giải quyết</b>. Hoặc <b>Bỏ qua</b> nếu không cần thay đổi gì.',
       ],
+      pathWatch: [
+        'Mở <b>Vấn đề quy trình</b> từ menu. Con số là số vấn đề mới.',
+        'Lọc theo trạng thái hoặc quy trình, rồi mở một vấn đề để xem chuyện gì đã xảy ra.',
+        'Theo dõi đến cùng: những người giữ cho quy trình luôn cập nhật sẽ ghi nhận vấn đề, sửa quy trình rồi giải quyết nó.',
+      ],
+      badge: {
+        h: 'Vấn đề mới tự tìm đến bạn',
+        alt: 'Menu với mục Vấn đề quy trình và số vấn đề mới.',
+        caption: 'Con số cho biết các vấn đề mới kể từ lần ghé gần nhất của bạn.',
+        marks: {
+          badge: '<b>Vấn đề quy trình.</b> Mở hộp thư vấn đề. Con số cho biết có gì mới.',
+        },
+      },
+      inbox: {
+        h: 'Xem chuyện gì đã xảy ra và xử lý',
+        alt: 'Vấn đề quy trình: các thẻ tóm tắt, bộ lọc trạng thái, và một vấn đề đang mở với điều hướng dẫn nhận thấy, màn hình nó đã thấy, bước được gợi ý, người gặp phải và các thao tác.',
+        caption: 'Các lần lặp lại ở cùng bước và cùng loại được cộng vào một vấn đề, nên danh sách luôn ngắn gọn.',
+        marks: {
+          chips: '<b>Trong nháy mắt.</b> Các vấn đề đang mở và đã ghi nhận, cùng các vấn đề chưa giải quyết theo từng loại.',
+          filters: '<b>Lọc.</b> Chưa giải quyết, Đã giải quyết, Đã bỏ qua hoặc Tất cả, và từng quy trình một.',
+          shot: '<b>Màn hình mà hướng dẫn đã thấy.</b> Mở lớn hơn để thấy chính xác điều gì đã thay đổi.',
+          suggest: '<b>Bước được gợi ý.</b> Bước mà đồng nghiệp cần nhưng quy trình chưa có.',
+          actions: '<b>Xử lý.</b> Thêm bước vào bản nháp, Ghi nhận, Giải quyết hoặc Bỏ qua, kèm ghi chú nói rõ lý do.',
+          actionsPlain: '<b>Xử lý.</b> Ghi nhận, Giải quyết hoặc Bỏ qua, kèm ghi chú nói rõ lý do.',
+        },
+      },
       adopt: {
         h: 'Thêm bước còn thiếu vào quy trình',
-        steps: [
-          'Khi một đồng nghiệp cần một bước mà quy trình không có, vấn đề sẽ hiển thị bước được gợi ý.',
-          'Tác giả của quy trình hoặc quản trị viên công ty nhấn <b>Thêm bước này vào bản nháp quy trình</b> và xác nhận. Quy trình đang phát hành vẫn chạy như hiện tại.',
-          'Mở bản nháp trong Studio Đào tạo, kiểm tra bước mới và phát hành khi thấy đã ổn.',
-        ],
-      },
-      shotAdopt: {
         alt: 'Hộp xác nhận thêm bước được gợi ý vào bản nháp của quy trình.',
         caption: 'Không có gì thay đổi với nhóm của bạn cho đến khi có người phát hành bản nháp.',
       },
+      exec: {
+        h: 'Trên bảng điều khiển điều hành',
+        alt: 'Thẻ Vấn đề quy trình trên bảng điều khiển điều hành: các vấn đề chưa giải quyết được đếm theo loại và nút Xem lại vấn đề quy trình.',
+        caption: 'Biết quy trình nào cần chú ý mà không phải mở từng vấn đề.',
+        marks: {
+          kinds: '<b>Vấn đề chưa giải quyết theo loại.</b> Màn hình thay đổi, Lỗi trên màn hình, Không thể tiếp tục, Bước không có trong quy trình, Bước bị bỏ qua.',
+          review: '<b>Xem lại vấn đề quy trình.</b> Mở toàn bộ hộp thư vấn đề.',
+        },
+      },
       watch: 'GRC và lãnh đạo theo dõi mọi vấn đề ở chế độ chỉ đọc. Lãnh đạo còn thấy các vấn đề chưa giải quyết theo từng loại trên bảng điều khiển điều hành.',
+    },
+    exec: {
+      title: 'Bảng điều khiển điều hành',
+      lead: 'Nắm được tình hình từng dự án và ai đang đẩy công việc tiến lên, mà không cần yêu cầu ai báo cáo tình trạng.',
+      path: [
+        'Mở <b>Bảng điều khiển điều hành</b> ở cuối menu.',
+        'Chọn 7, 30 hoặc 90 ngày, rồi xem phần dự án và phần nhân sự.',
+        'Xuất PDF, hình ảnh hoặc CSV khi bạn cần chia sẻ.',
+      ],
+      drill: {
+        h: 'Dự án và nhân sự trong nháy mắt',
+        alt: 'Phần chi tiết của bảng điều khiển điều hành: các ô trạng thái dự án, những dự án lớn nhất với người quản lý, tác vụ, nhân sự và thanh hoàn thành, và những người làm tốt nhất theo số tác vụ hoàn thành và theo dự án.',
+        caption: 'Chỉ đọc, và bao quát toàn bộ công ty của bạn.',
+        marks: {
+          status: '<b>Trạng thái dự án.</b> Bao nhiêu dự án đang thực hiện, đã xong hoặc đang tạm hoãn.',
+          table: '<b>Dự án lớn nhất.</b> Người quản lý, tác vụ, nhân sự và mức độ hoàn thành của từng dự án.',
+          people: '<b>Người làm tốt nhất, theo hai cách.</b> Theo số tác vụ có hướng dẫn đã hoàn thành, và theo các dự án họ tham gia hoặc quản lý.',
+        },
+      },
+      brain: {
+        h: 'Tải Bộ não công ty (chỉ dành cho lãnh đạo)',
+        alt: 'Bảng Bộ não công ty: ghi chú về mã hóa, thông báo rằng cụm mật khẩu xuất dữ liệu đã được đặt cùng Xem cụm mật khẩu và Thay cụm mật khẩu, và Tải Bộ não công ty.',
+        caption: 'Trên dịch vụ được lưu trữ, việc xem hoặc thay cụm mật khẩu sẽ yêu cầu mã từ ứng dụng xác thực của bạn.',
+        marks: {
+          note: '<b>Được mã hóa bằng cụm mật khẩu của bạn.</b> Không có nó thì không mở được tệp, vì vậy hãy giữ nó an toàn.',
+          key: '<b>Xem hoặc thay cụm mật khẩu.</b> Đặt một lần, rồi xem hoặc đổi bất cứ khi nào bạn cần.',
+          download: '<b>Tải Bộ não công ty.</b> Một tệp .wcpx đã mã hóa chứa kho kiến thức của công ty bạn.',
+        },
+      },
     },
     admin: {
       title: 'Luồng và vai trò',

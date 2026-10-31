@@ -77,6 +77,10 @@ export function canReceiveWorkflowIncidents(role, grants) {
 export function canManageWorkflowIncidents(role, grants) {
   return hasTrainerGrant(grants) || isPM(role) || isCompanyAdmin(role)
 }
+// Executive dashboard (/work/exec): executives and company admins. The Company
+// Brain export on it is executive-only (the server enforces requireExecutiveOnly).
+export function isExecutive(role) { return role === 'executive' }
+export function canSeeExecDashboard(role) { return isExecutive(role) || isCompanyAdmin(role) }
 export function canCreateProject(role) { return isPM(role) || isCompanyAdmin(role) }
 export function canAssignTask(role) { return isPM(role) || isCompanyAdmin(role) }
 export function canReassignProject(role) { return isSrPM(role) || isCompanyAdmin(role) }
@@ -113,6 +117,9 @@ export function roleViewOf(user) {
     // Teach studio: anyone holding the trainer grant; a company admin can too.
     showTeach: trainer || admin,               // /work/teach (record + author)
     showIncidents: company && canReceiveWorkflowIncidents(role, user && user.grants),   // workflow deviation inbox
+    canManageIncidents: company && canManageWorkflowIncidents(role, user && user.grants), // acknowledge / resolve / dismiss
+    isExecutive: company && isExecutive(role),
+    showExec: company && canSeeExecDashboard(role),   // /work/exec (Brain export inside: executives only)
     showPm: pm || admin,                       // /work/pm  (projects I manage)
     showSrPm: srpm || admin,                   // /work/srpm (all managers)
     showGrc: grc || srpm || admin,             // /work/grc  (oversight, read-only for GRC)
@@ -147,6 +154,6 @@ export default {
   WORK_FLOWS, COMPANY_ROLES, RISK_SLA_DAYS, WORK_FLOW_OPTIONS, COMPANY_ROLE_OPTIONS,
   roleLabelKey, flowLabelKey, normalizeFlow, canStartOwnTask, canReceiveAssignment,
   GRANTS, GRANT_OPTIONS, canGrantTrainer, hasTrainerGrant, sanitizeGrants,
-  isSrPM, isGRC, isPM, isCompanyAdmin, canCreateProject, canAssignTask, canReassignProject,
+  isSrPM, isGRC, isPM, isCompanyAdmin, isExecutive, canSeeExecDashboard, canCreateProject, canAssignTask, canReassignProject,
   canAssignProjectManager, canSeeAllProjects, canManageProject, canAuthorWorkflow, canReceiveWorkflowIncidents, canManageWorkflowIncidents, roleViewOf, assignablePeople, managerCandidates,
 }

@@ -3789,6 +3789,9 @@ export default {
   helpShared: {
     flowLabel: 'Alur utama',
     open: 'Buka {label}',
+    callout: 'Keterangan {n}',
+    calloutsLabel: 'Arti setiap nomor',
+    pathLabel: 'Cara melakukannya',
   },
   overviewAdmin: {
     loading: 'Memuat ikhtisar',
@@ -5964,6 +5967,7 @@ export default {
       freeAccessOn: 'Akses gratis ✓',
       freeAccessGrant: 'Berikan akses gratis',
       grantHours: 'Berikan jam',
+      more: 'Lainnya',
       grantHoursTitle: 'Berikan jam yang dibeli',
       refundLast: 'Kembalikan terakhir',
       refundLastTitle: 'Kembalikan pembayaran terbaru',
@@ -6553,6 +6557,94 @@ export default {
       shot: {
         alt: 'Daftar peringatan keamanan untuk perusahaan.',
         caption: 'Peringatan, terbaru dulu.',
+      },
+    },
+    trainer: {
+      title: 'Berikan hak Pelatih kepada seseorang',
+      lead: 'Pelatih merekam dan menerbitkan alur kerja yang diikuti tim Anda. Berikan hak ini kepada orang yang paling menguasai sebuah tugas.',
+      steps: {
+        open: {
+          t: 'Buka Tim',
+          d: 'Cari orangnya di daftar orang.',
+        },
+        tick: {
+          t: 'Centang Pelatih',
+          d: 'Muncul di bawah peran untuk anggota dan manajer proyek, dan langsung tersimpan.',
+        },
+        studio: {
+          t: 'Mereka bisa mengajar',
+          d: 'Studio Ajar dan Masalah alur kerja muncul di menu mereka.',
+        },
+      },
+      shots: {
+        grant: {
+          alt: 'Tabel Tim: Maya Lin dengan peran Anggota dan kotak centang Pelatih yang dicentang di bawahnya.',
+          caption: 'Admin perusahaan bisa mengajar tanpa hak ini. Mengubah peran seseorang ke peran lain akan mencabutnya.',
+          marks: {
+            role: '<b>Peran.</b> Hak ini berlaku untuk peran Anggota atau Manajer proyek.',
+            trainer: '<b>Pelatih.</b> Centang agar orang ini bisa merekam dan menerbitkan alur kerja. Hapus centang untuk mencabutnya.',
+          },
+        },
+      },
+    },
+    developer: {
+      open: 'API & webhook',
+      title: 'API dan webhook',
+      lead: 'Hubungkan aplikasi Anda sendiri ke WorkCoPilot: baca dan jalankan alur kerja, baca masalah alur kerja, ajukan kueri ke Otak Perusahaan, dan dapatkan kabar saat sesuatu terjadi.',
+      steps: {
+        create: {
+          t: 'Buat kunci',
+          d: 'Beri nama, centang hanya cakupan yang diperlukan aplikasi, dan atur masa berlakunya.',
+        },
+        store: {
+          t: 'Simpan sekali',
+          d: 'Kunci lengkap hanya ditampilkan satu kali. Simpan di pengelola rahasia Anda.',
+        },
+        rotate: {
+          t: 'Rotasi atau cabut',
+          d: 'Rotasi dengan masa tumpang tindih yang singkat, atau cabut segera jika kunci bocor.',
+        },
+        hooks: {
+          t: 'Tambahkan webhook',
+          d: 'Pilih peristiwanya, lalu periksa setiap pengiriman.',
+        },
+      },
+      shots: {
+        keys: {
+          alt: 'Kunci API: tombol Buat kunci dan daftar kunci, satu dibuka dengan cakupan, pembuat, daftar izin IP, serta tombol Rotasi dan Cabut.',
+          caption: 'Setelah dibuat, hanya awalan dan empat karakter terakhir kunci yang ditampilkan.',
+          marks: {
+            create: '<b>Buat kunci.</b> Memulai kunci baru untuk satu aplikasi.',
+            row: '<b>Setiap kunci sekilas.</b> Status, cakupan, masa berlaku, dan kapan terakhir dipakai.',
+            acts: '<b>Rotasi atau Cabut.</b> Rotasi menerbitkan rahasia baru dengan pengaturan yang sama. Cabut menghentikan kunci saat itu juga.',
+          },
+        },
+        create: {
+          alt: 'Formulir kunci API baru: nama, cakupan yang boleh dipakai kunci, masa berlaku, dan daftar izin IP opsional.',
+          caption: 'Satu kunci untuk satu pekerjaan, sehingga Anda bisa mencabut satu tanpa mengganggu yang lain. Membuat atau merotasi kunci mungkin akan meminta kode autentikator Anda.',
+          marks: {
+            scopes: '<b>Cakupan.</b> Centang hanya yang diperlukan aplikasi.',
+            expiry: '<b>Kedaluwarsa dalam.</b> Kunci yang bisa kedaluwarsa berarti satu kunci lebih sedikit yang harus Anda ingat untuk dicabut.',
+            ip: '<b>Daftar izin IP.</b> Opsional. Terima panggilan hanya dari alamat Anda sendiri.',
+          },
+        },
+        secret: {
+          alt: 'Panel Salin kunci Anda sekarang dengan contoh kunci, Salin kunci, dan Sudah saya simpan.',
+          caption: 'Tutup panel hanya setelah kunci tersimpan dengan aman.',
+          marks: {
+            copy: '<b>Salin kunci.</b> Hanya kali ini kunci lengkap ditampilkan.',
+            done: '<b>Sudah saya simpan.</b> Menutup panel. Kunci lengkap tidak bisa ditampilkan lagi.',
+          },
+        },
+        hooks: {
+          alt: 'Webhook: sebuah endpoint dibuka dengan peristiwanya, kontrolnya, dan pengiriman terbarunya beserta statusnya.',
+          caption: 'Setiap pengiriman ditandatangani, sehingga aplikasi Anda bisa memastikan pengiriman itu berasal dari WorkCoPilot.',
+          marks: {
+            events: '<b>Peristiwa.</b> Alur kerja diterbitkan, atau masalah alur kerja dilaporkan.',
+            acts: '<b>Kelola.</b> Aktifkan atau nonaktifkan, kirim uji coba, rotasi rahasia penandatanganan, atau hapus.',
+            deliveries: '<b>Pengiriman terbaru.</b> Masing-masing dengan hasilnya. Coba lagi pengiriman yang sudah berhenti dicoba.',
+          },
+        },
       },
     },
   },
@@ -7413,6 +7505,8 @@ export default {
       support: 'Dukungan',
       team: 'Tim',
       exec: 'Dasbor eksekutif',
+      teach: 'Studio Ajar',
+      teachTip: 'Rekam dan terbitkan alur kerja yang diikuti tim Anda',
       admin: 'Konsol admin',
     },
     update: {
@@ -8707,33 +8801,207 @@ export default {
         ],
       },
     },
+    workflows: {
+      title: 'Alur kerja perusahaan',
+      lead: 'Kerjakan tugas sesuai cara yang disepakati tim Anda, dipandu langsung di layar Anda selangkah demi selangkah. Pelatih Anda menjaga setiap alur kerja tetap terbaru, jadi Anda selalu mengikuti versi terakhir.',
+      path: [
+        'Di dasbor Anda, cari di bagian <b>Alur kerja perusahaan</b>. Jika daftarnya panjang, gunakan pencarian atau pilih kategori.',
+        'Buka sebuah baris untuk melihat dari mana alur kerja dimulai dan apa yang perlu disiapkan.',
+        'Tekan <b>Jalankan</b>, bagikan layar Anda, lalu ikuti setiap langkah.',
+      ],
+      list: {
+        h: 'Temukan alur kerja yang Anda perlukan',
+        alt: 'Bagian Alur kerja perusahaan di dasbor: kotak pencarian, filter kategori, baris alur kerja dengan produk, kategori, langkah, dan waktu, serta satu baris yang dibuka berisi titik awal, apa yang perlu disiapkan, siapa pengelolanya, dan tombol Jalankan.',
+        caption: 'Setiap alur kerja yang diterbitkan pelatih Anda, siap dijalankan.',
+        marks: {
+          search: '<b>Cari dan saring.</b> Temukan alur kerja berdasarkan nama, atau persempit daftar ke satu kategori.',
+          details: '<b>Ketahui sebelum mulai.</b> Titik awal, apa yang perlu disiapkan, dan siapa pengelolanya.',
+          run: '<b>Jalankan.</b> Memulai tugas terpandu dari alur kerja ini, dengan semua langkah sudah direncanakan.',
+        },
+      },
+      guide: {
+        h: 'Ikuti setiap langkah, dengan gambaran layar yang diharapkan',
+        alt: 'Tampilan pemandu yang menjalankan alur kerja Proses pengembalian dana pelanggan: rencana di kiri, langkah saat ini dengan tanda selesainya, gambar kecil Seperti ini seharusnya tampilan layar, label Alur kerja perusahaan, dan tombol Tandai selesai.',
+        caption: 'Saat alur kerja dijalankan, Anda mengikuti langkah yang direkam pelatih, sesuai urutannya.',
+        marks: {
+          plan: '<b>Seluruh rencana.</b> Setiap langkah alur kerja, dan posisi Anda sekarang.',
+          shot: '<b>Seperti ini seharusnya tampilan layar.</b> Tangkapan layar pelatih untuk langkah ini, agar Anda bisa memastikan sudah berada di tempat yang tepat.',
+          source: '<b>Alur kerja perusahaan.</b> Alur kerja dan versi yang sedang Anda ikuti.',
+          done: '<b>Tandai selesai.</b> Lanjutkan saat langkah sudah selesai, atau tekan Verifikasi di layar saya untuk memeriksanya dulu.',
+        },
+      },
+      larger: {
+        h: 'Bandingkan layar Anda dengan milik pelatih',
+        alt: 'Tangkapan layar langkah yang dibuka dalam ukuran penuh di dalam kartu langkah.',
+        caption: 'Tekan Perbesar pada langkah mana pun yang memiliki tangkapan layar.',
+        marks: {
+          full: '<b>Tangkapan layar penuh.</b> Bandingkan dengan layar Anda sebelum bertindak.',
+        },
+      },
+    },
+    teach: {
+      title: 'Studio Ajar',
+      lead: 'Tunjukkan sebuah tugas sekali, dan semua orang di perusahaan Anda bisa mengikutinya di layar masing-masing. Rekam atau tulis langkahnya, periksa, terbitkan, dan perbarui saat aplikasi Anda berubah.',
+      path: [
+        'Tekan <b>Alur kerja baru</b> dan isi empat hal pokok.',
+        'Tambahkan langkah: rekam demonstrasi, impor rekaman, atau tulis sendiri.',
+        'Periksa setiap langkah dengan tangkapan layarnya dan pakai saran yang Anda setujui.',
+        'Tekan <b>Terbitkan</b>. Nanti, gunakan <b>Revisi</b> untuk memperbaruinya atau <b>Hentikan</b> agar tidak lagi ditawarkan.',
+      ],
+      list: {
+        h: 'Semua alur kerja Anda dalam satu daftar',
+        alt: 'Studio Ajar: tombol Alur kerja baru, Masalah alur kerja, daftar alur kerja dengan versi dan statusnya, serta satu alur kerja yang diterbitkan dibuka dengan detail, langkah, dan tindakan Revisi, Hentikan, dan Hapus.',
+        caption: 'Buka baris mana pun untuk melihat detail dan langkahnya, lalu ambil tindakan.',
+        marks: {
+          newWorkflow: '<b>Alur kerja baru.</b> Membuka wizard terpandu.',
+          issues: '<b>Masalah alur kerja.</b> Saat-saat ketika alur kerja yang dijalankan tidak cocok dengan layar. Angkanya menghitung yang baru.',
+          states: '<b>Draf, Diterbitkan, atau Dihentikan.</b> Hanya alur kerja yang diterbitkan yang sampai ke tim Anda.',
+          actions: '<b>Revisi, Hentikan, Hapus.</b> Revisi memulai versi draf baru. Versi yang aktif tetap berjalan sampai Anda menerbitkan yang baru.',
+        },
+      },
+      wizard: {
+        h: 'Lima tahap singkat, hal pokok lebih dulu',
+        alt: 'Wizard alur kerja baru di tahap Dasar: lima tahap di bagian atas, baris yang mengonfirmasi apa yang Anda ajarkan, kolom wajib, serta tombol Simpan draf dan Terbitkan.',
+        caption: 'Simpan draf kapan saja dan lanjutkan nanti.',
+        marks: {
+          stepper: '<b>Lima tahap.</b> Dasar, Detail, Cakupan & privasi, Langkah, dan Tinjau. Anda bisa kembali ke tahap mana pun.',
+          reflect: '<b>Pengecekan singkat.</b> Mengonfirmasi produk dan tugas yang Anda ajarkan.',
+          required: '<b>Empat hal pokok.</b> Produk, judul, pemilik, dan titik awal. Selebihnya opsional.',
+          footer: '<b>Simpan draf atau Terbitkan.</b> Terbitkan aktif setelah hal pokok, minimal satu langkah, dan catatan cakupan sudah lengkap.',
+        },
+      },
+      scope: {
+        h: 'Tidak ada kejutan soal siapa yang melihatnya',
+        alt: 'Tahap Cakupan & privasi: dengan siapa alur kerja dibagikan, apa yang disimpannya, kotak centang konfirmasi, dan opsi penyamaran.',
+        caption: 'Penerbitan menunggu sampai Anda mengonfirmasi catatan cakupan.',
+        marks: {
+          note: '<b>Siapa yang melihatnya.</b> Semua orang di perusahaan Anda, setelah diterbitkan.',
+          ack: '<b>Konfirmasi sekali.</b> Centang ini sebelum Anda menerbitkan.',
+          mask: '<b>Samarkan teks sensitif.</b> Dilakukan di perangkat Anda, sebelum tangkapan layar rekaman mana pun disimpan. Selalu aktif selama perlindungan data perusahaan Anda aktif.',
+        },
+      },
+      record: {
+        h: 'Rekam demonstrasi langsung',
+        alt: 'Pengaturan Rekam demonstrasi: narasi dengan mikrofon dan bahasa narasi, rekam audio panggilan dengan kotak centang persetujuan, catatan penyamaran, dan tombol Bagikan layar dan mulai.',
+        caption: 'WorkCoPilot melihat layar Anda, bukan klik Anda. Tekan Tandai langkah setiap kali langkah baru harus dimulai.',
+        marks: {
+          narrate: '<b>Narasikan.</b> Apa yang Anda ucapkan menjadi teks setiap langkah. Tidak ada audio yang disimpan.',
+          call: '<b>Audio panggilan.</b> Untuk rapat yang sedang Anda rekam. Perekaman tidak bisa dimulai sampai Anda mengonfirmasi semua peserta panggilan mengetahuinya.',
+          mask: '<b>Disamarkan dulu.</b> Teks sensitif disamarkan sebelum tangkapan layar apa pun disimpan.',
+          start: '<b>Bagikan layar dan mulai.</b> Bagikan hanya jendela aplikasi yang Anda ajarkan.',
+        },
+      },
+      live: {
+        h: 'Selama Anda merekam',
+        alt: 'Bilah rekaman langsung: lencana Merekam dan pengatur waktu, layar dan pemisah langkah sejauh ini, Tandai langkah, Jeda, Berhenti dan tinjau, serta Buang.',
+        caption: 'Tidak ada yang disimpan sampai Anda berhenti. Buang menghapus rekaman.',
+        marks: {
+          time: '<b>Waktu dan progres.</b> Berapa lama Anda sudah merekam, dan berapa banyak layar dan pemisah langkah yang terekam.',
+          mark: '<b>Tandai langkah.</b> Memulai langkah baru tepat di sini.',
+          stop: '<b>Berhenti dan tinjau.</b> Langkah Anda dimuat ke editor, siap diperiksa.',
+        },
+      },
+      import: {
+        h: 'Atau impor rekaman yang sudah Anda punya',
+        alt: 'Impor rekaman dengan video yang dipilih: nama file dan durasinya, bahasa yang diucapkan, dan tombol Buat langkah dari video ini.',
+        caption: 'Video Teams atau Zoom bisa dipakai. Video dibaca di perangkat Anda dan tidak diunggah: yang keluar dari perangkat hanya tangkapan layar yang dipakai langkah Anda dan potongan singkat ucapan.',
+        marks: {
+          file: '<b>Video Anda.</b> Nama dan durasinya, dibaca di perangkat ini.',
+          lang: '<b>Bahasa yang diucapkan.</b> Agar ucapan menjadi teks langkah dalam bahasa yang tepat.',
+          start: '<b>Buat langkah dari video ini.</b> Menyusun draf langkah setiap kali layar berhenti pada sesuatu yang baru.',
+        },
+      },
+      review: {
+        h: 'Periksa setiap langkah dengan tangkapan layarnya',
+        alt: 'Editor Langkah pada draf hasil rekaman: kartu Periksa setiap langkah dengan tangkapan layarnya, satu langkah dibuka dengan tangkapan layarnya dan saran bertanda Mungkin benar beserta Baca lagi dan Pakai saran, serta langkah lain bertanda Saran.',
+        caption: 'Saran ditampilkan di samping teks Anda sendiri. Langkah Anda hanya berubah saat Anda memilih Pakai saran.',
+        marks: {
+          read: '<b>Baca langkah.</b> Membaca setiap langkah yang memiliki tangkapan layar, satu per satu, sementara Anda tetap mengedit.',
+          shot: '<b>Tangkapan layar langkah.</b> Apa yang seharusnya dilihat rekan tim pada langkah ini.',
+          band: '<b>Seberapa jelas tampilannya.</b> Tampak jelas, Mungkin benar, atau Kurang yakin, periksa.',
+          use: '<b>Pakai saran atau Baca lagi.</b> Anda yang memutuskan, satu per satu langkah.',
+          mark: '<b>Saran menunggu.</b> Muncul di setiap langkah yang punya saran untuk diperiksa.',
+        },
+      },
+    },
     issues: {
       title: 'Masalah alur kerja',
-      lead: 'Masalah alur kerja mengumpulkan saat-saat ketika alur kerja yang diterbitkan tidak cocok dengan yang dilihat rekan tim di layar: layarnya berubah, muncul kesalahan, mereka tidak bisa melanjutkan, mereka memerlukan langkah yang tidak ada di alur kerja, atau ada langkah yang terlewati. Setiap masalah adalah tentang alur kerja, bukan tentang pekerjaan siapa pun.',
-      shot: {
-        alt: 'Masalah alur kerja: chip ringkasan, filter Aktif, daftar baru sejak kunjungan terakhir Anda, dan satu masalah yang dibuka dengan langkah yang disarankan serta layar yang dilihat pemandu.',
-        caption: 'Masalah alur kerja. Pengulangan pada langkah dan jenis yang sama ditambahkan ke satu masalah, bukan menjadi masalah baru.',
-      },
-      howTo: 'Cara menangani masalah alur kerja',
-      steps: [
-        'Buka <b>Masalah alur kerja</b> dari bagian Manajemen di menu, atau dari Studio Ajar. Angka di sebelahnya menghitung masalah baru sejak kunjungan terakhir Anda.',
-        'Chip di bagian atas menghitung masalah yang terbuka dan yang sedang ditangani, serta masalah aktif menurut jenisnya. Pilih <b>Aktif</b>, <b>Selesai</b>, <b>Diabaikan</b>, atau <b>Semua</b>, lalu pilih satu alur kerja untuk mempersempit daftar.',
-        'Klik sebuah baris untuk melihat apa yang diperhatikan pemandu, layar yang dilihatnya, dan kapan terjadinya.',
-        'Tekan <b>Tangani</b> agar tim tahu ada yang sedang mengurusnya. Setelah Anda memperbarui alur kerja, tekan <b>Selesaikan</b>. Jika tidak ada yang perlu diubah, tekan <b>Abaikan</b>, dan pengulangannya tidak akan diberitahukan lagi. Tambahkan catatan untuk menjelaskan alasannya.',
+      lead: 'Lihat setiap saat ketika alur kerja yang diterbitkan tidak cocok dengan layar rekan tim. Perbaiki alur kerja sekali, dan semua orang yang menjalankannya mendapat perbaikannya. Setiap masalah adalah tentang alur kerja, tidak pernah tentang pekerjaan seseorang.',
+      path: [
+        'Buka <b>Masalah alur kerja</b> dari menu atau dari Studio Ajar. Angkanya menghitung masalah baru.',
+        'Saring menurut status atau alur kerja, lalu buka sebuah masalah.',
+        'Tekan <b>Tangani</b>, perbarui alur kerja, lalu tekan <b>Selesaikan</b>. Atau tekan <b>Abaikan</b> jika tidak ada yang perlu diubah.',
       ],
+      pathWatch: [
+        'Buka <b>Masalah alur kerja</b> dari menu. Angkanya menghitung masalah baru.',
+        'Saring menurut status atau alur kerja, lalu buka sebuah masalah untuk melihat apa yang terjadi.',
+        'Ikuti sampai tuntas: orang yang menjaga alur kerja tetap terkini menangani masalahnya, memperbaiki alur kerja, lalu menyelesaikannya.',
+      ],
+      badge: {
+        h: 'Masalah baru langsung sampai ke Anda',
+        alt: 'Menu dengan Masalah alur kerja dan jumlah masalah barunya.',
+        caption: 'Angka menunjukkan masalah yang baru sejak kunjungan terakhir Anda.',
+        marks: {
+          badge: '<b>Masalah alur kerja.</b> Membuka kotak masuk. Angkanya menghitung yang baru.',
+        },
+      },
+      inbox: {
+        h: 'Lihat apa yang terjadi dan tindak lanjuti',
+        alt: 'Masalah alur kerja: chip ringkasan, filter status, dan satu masalah dibuka dengan apa yang diperhatikan pemandu, layar yang dilihatnya, langkah yang disarankan, siapa yang mengalaminya, dan tindakan.',
+        caption: 'Pengulangan pada langkah dan jenis yang sama ditambahkan ke satu masalah, jadi daftarnya tetap pendek.',
+        marks: {
+          chips: '<b>Sekilas.</b> Masalah yang terbuka dan yang sedang ditangani, serta masalah aktif menurut jenisnya.',
+          filters: '<b>Saring.</b> Aktif, Selesai, Diabaikan, atau Semua, dan satu alur kerja dalam satu waktu.',
+          shot: '<b>Layar yang dilihat pemandu.</b> Perbesar untuk melihat persis apa yang berubah.',
+          suggest: '<b>Langkah yang disarankan.</b> Langkah yang diperlukan rekan tim tetapi belum ada di alur kerja.',
+          actions: '<b>Tindak lanjuti.</b> Tambahkan langkah ini ke draf alur kerja, Tangani, Selesaikan, atau Abaikan, dengan catatan untuk menjelaskan alasannya.',
+          actionsPlain: '<b>Tindak lanjuti.</b> Tangani, Selesaikan, atau Abaikan, dengan catatan untuk menjelaskan alasannya.',
+        },
+      },
       adopt: {
         h: 'Tambahkan langkah yang kurang ke alur kerja',
-        steps: [
-          'Saat rekan tim memerlukan langkah yang tidak ada di alur kerja, masalah tersebut menampilkan langkah yang disarankan.',
-          'Pembuat alur kerja atau admin perusahaan menekan <b>Tambahkan langkah ini ke draf alur kerja</b> lalu mengonfirmasi. Alur kerja yang sedang aktif tetap berjalan apa adanya.',
-          'Buka draf di Studio Ajar, periksa langkah barunya, lalu terbitkan jika sudah tepat.',
-        ],
-      },
-      shotAdopt: {
         alt: 'Konfirmasi untuk menambahkan langkah yang disarankan ke draf alur kerja.',
         caption: 'Tidak ada yang berubah bagi tim Anda sampai seseorang menerbitkan draf.',
       },
+      exec: {
+        h: 'Di dasbor eksekutif',
+        alt: 'Kartu Masalah alur kerja di dasbor eksekutif: masalah aktif dihitung menurut jenisnya dan tombol Tinjau masalah alur kerja.',
+        caption: 'Lihat alur kerja mana yang perlu perhatian tanpa membuka setiap masalah.',
+        marks: {
+          kinds: '<b>Masalah aktif menurut jenis.</b> Layar berubah, kesalahan di layar, tidak bisa lanjut, langkah tidak ada di alur, langkah terlewati.',
+          review: '<b>Tinjau masalah alur kerja.</b> Membuka seluruh kotak masuk.',
+        },
+      },
       watch: 'GRC dan eksekutif mengikuti setiap masalah secara hanya-baca. Eksekutif juga melihat masalah aktif menurut jenisnya di dasbor eksekutif.',
+    },
+    exec: {
+      title: 'Dasbor eksekutif',
+      lead: 'Lihat posisi setiap proyek dan siapa yang menggerakkan pekerjaan, tanpa meminta laporan status kepada siapa pun.',
+      path: [
+        'Buka <b>Dasbor eksekutif</b> di bagian bawah menu.',
+        'Pilih 7, 30, atau 90 hari, lalu baca tampilan proyek dan orang.',
+        'Ekspor PDF, gambar, atau CSV saat Anda perlu membagikannya.',
+      ],
+      drill: {
+        h: 'Proyek dan orang dalam sekilas',
+        alt: 'Rincian dasbor eksekutif: ubin status proyek, proyek terbesar dengan manajer, tugas, orang, dan bilah penyelesaian, serta orang dengan kinerja terbaik menurut tugas yang diselesaikan dan menurut proyek.',
+        caption: 'Hanya-baca, dan mencakup seluruh perusahaan Anda.',
+        marks: {
+          status: '<b>Status proyek.</b> Berapa proyek yang berjalan, selesai, atau ditunda.',
+          table: '<b>Proyek terbesar.</b> Manajer, tugas, orang, dan seberapa jauh tiap proyek selesai.',
+          people: '<b>Kinerja terbaik, dari dua sisi.</b> Menurut tugas terpandu yang diselesaikan, dan menurut proyek yang mereka kerjakan atau kelola.',
+        },
+      },
+      brain: {
+        h: 'Unduh Otak Perusahaan (khusus eksekutif)',
+        alt: 'Panel Otak Perusahaan: catatan enkripsi, pesan bahwa frasa sandi ekspor Anda sudah diatur dengan Lihat frasa sandi dan Ganti frasa sandi, serta Unduh Otak Perusahaan.',
+        caption: 'Pada layanan yang di-hosting, melihat atau mengganti frasa sandi akan meminta kode autentikator Anda.',
+        marks: {
+          note: '<b>Dienkripsi dengan frasa sandi Anda.</b> Tanpanya file tidak bisa dibuka, jadi simpan baik-baik.',
+          key: '<b>Lihat atau ganti.</b> Atur sekali, lalu lihat atau ubah kapan pun Anda perlu.',
+          download: '<b>Unduh Otak Perusahaan.</b> Satu file .wcpx terenkripsi berisi penyimpanan pengetahuan perusahaan Anda.',
+        },
+      },
     },
     admin: {
       title: 'Alur dan peran',
