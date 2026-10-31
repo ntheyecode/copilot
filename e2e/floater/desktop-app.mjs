@@ -14,12 +14,18 @@ const ELECTRON = path.join(APP_DIR, 'node_modules', 'electron', 'dist', process.
 
 export function newUserDataDir() { return fs.mkdtempSync(path.join(os.tmpdir(), 'wc-e2e-desktop-')) }
 
+// E2E_DESKTOP_PACKAGED=<a win-unpacked folder> runs the suite against the
+// PACKAGED app (obfuscated main/preload, no source maps: what customers get)
+// instead of the source, so code protection is proven not to break a flow.
+const PACKAGED = process.env.E2E_DESKTOP_PACKAGED ? path.join(process.env.E2E_DESKTOP_PACKAGED, 'WorkCoPilot.exe') : null
+
 export async function launchDesktop({ serverURL, userDataDir }) {
-  if (!fs.existsSync(ELECTRON)) throw new Error(`Electron is not installed for the desktop app. Run: npm ci --prefix workcopilot (expected ${ELECTRON})`)
+  if (PACKAGED && !fs.existsSync(PACKAGED)) throw new Error(`E2E_DESKTOP_PACKAGED points at no packaged app (expected ${PACKAGED})`)
+  if (!PACKAGED && !fs.existsSync(ELECTRON)) throw new Error(`Electron is not installed for the desktop app. Run: npm ci --prefix workcopilot (expected ${ELECTRON})`)
   const app = await electron.launch({
-    executablePath: ELECTRON,
-    args: [APP_DIR, `--user-data-dir=${userDataDir}`],
-    cwd: APP_DIR,
+    executablePath: PACKAGED || ELECTRON,
+    args: PACKAGED ? [`--user-data-dir=${userDataDir}`] : [APP_DIR, `--user-data-dir=${userDataDir}`],
+    cwd: PACKAGED ? path.dirname(PACKAGED) : APP_DIR,
     env: { ...process.env, WORK_SERVER: serverURL, ELECTRON_ENABLE_LOGGING: '1' },
     timeout: 60_000,
   })

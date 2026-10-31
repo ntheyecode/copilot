@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { nullIndirectCallZeros } from './scripts/harden-indirect-calls.mjs'
+import { obfuscationOptions } from './scripts/obfuscation_options.mjs'
 
 // Everything is bundled locally - no CDN, no external runtime deps.
 // In dev, /api is proxied to the Express server on :4444.
@@ -79,46 +80,8 @@ function ipHardenPlugin(mode) {
           if (pre.skipped) this.warn(`${file.fileName}: indirect-call pre-pass skipped (${pre.skipped}); the chunk is still obfuscated, only larger`)
           nulled += pre.count
 
-          const options = {
-            target: 'browser',
-            compact: true,
-            sourceMap: false,
-            // "jumble names" - rename every local/function identifier to hex.
-            identifierNamesGenerator: 'hexadecimal',
-            // SAFETY: never rename module-scope (exported/imported) bindings or
-            // real globals - that is what preserves ESM import/export wiring and
-            // is the #1 thing that breaks React obfuscation.
-            renameGlobals: false,
-            // "optionally encrypt" - collect string literals into a rotated array
-            // and base64-encode them (light: raises the bar without the runtime
-            // cost of rc4 on a 2.5 MB bundle).
-            stringArray: true,
-            stringArrayThreshold: 0.75,
-            stringArrayEncoding: ['base64'],
-            stringArrayRotate: true,
-            stringArrayShuffle: true,
-            // splitStrings fragments every literal - strong, but it roughly
-            // doubles the string-array cost on top of base64. It adds little once
-            // strings are already base64-encoded, so keep it for the heaviest tier.
-            splitStrings: HARDEN_MAX,
-            splitStringsChunkLength: 10,
-            numbersToExpressions: true,
-            simplify: true,
-            // Deliberately OFF by default (SUPREME RULE VI - never degrade):
-            //  - selfDefending / debugProtection break some WebView/Electron
-            //    contexts and are trivially stripped anyway.
-            //  - disableConsoleOutput would hide the app's own real logs.
-            //  - deadCodeInjection + transformObjectKeys bloat size / risk props.
-            selfDefending: false,
-            debugProtection: false,
-            disableConsoleOutput: false,
-            deadCodeInjection: false,
-            transformObjectKeys: false,
-            // HARDEN=max adds control-flow flattening (the heaviest layer) - this
-            // is the knob the on-prem/desktop "heaviest protection" path uses.
-            controlFlowFlattening: HARDEN_MAX,
-            controlFlowFlatteningThreshold: HARDEN_MAX ? 0.5 : 0,
-          }
+          // The one option set for every shipped build (scripts/obfuscation_options.mjs).
+          const options = obfuscationOptions({ target: 'browser', max: HARDEN_MAX })
 
           file.code = obfuscator.obfuscate(pre.code, options).getObfuscatedCode()
           hardened++
