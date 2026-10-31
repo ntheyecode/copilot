@@ -13,6 +13,11 @@
 // ---------------------------------------------------------------------------
 
 import { reportUsage, usageFromResponse, withKeySource } from './ai_usage.js'
+import { dropRetired, isRetired, preferredReplacement, retiredModelMessage } from './ai_model_lifecycle.js'
+import { chatParamsFor } from './ai_model_params.js'
+import { rateFor, isVisionModel, RANK_META, modelRank, isPremiumModel } from './ai_ratecard.js'
+
+export { isVisionModel, RANK_META, modelRank, isPremiumModel }
 
 export const PROVIDERS = {
   groq: {
@@ -28,10 +33,11 @@ export const PROVIDERS = {
   openai: {
     id: 'openai',
     label: 'OpenAI',
-    blurb: 'gpt-4o / gpt-4o-mini. Reads screens reliably, including code and small text.',
+    blurb: 'GPT models. Read screens reliably, including code and small text.',
     base: 'https://api.openai.com/v1',
     kind: 'openai',
-    chatModels: ['gpt-4o-mini', 'gpt-4o'],
+    // Cheapest dependable first (lifecycle + prices: ai_model_lifecycle.js, model-prices.js).
+    chatModels: ['gpt-6-luna', 'gpt-5.6-luna', 'gpt-5.6-terra'],
     keyHint: 'sk-...',
     keysUrl: 'https://platform.openai.com/api-keys',
   },
@@ -41,7 +47,8 @@ export const PROVIDERS = {
     blurb: 'Gemini Flash. Fast, and reads screens well on the free tier.',
     base: 'https://generativelanguage.googleapis.com/v1beta',
     kind: 'gemini',                       // native REST (generateContent)
-    chatModels: ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash'],
+    // Google's picks for new projects (3.5 Flash-Lite, 3.8 Flash), then 3.6 Flash.
+    chatModels: ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.6-flash'],
     keyHint: 'AIza...',
     keysUrl: 'https://aistudio.google.com/app/apikey',
   },
@@ -131,7 +138,7 @@ export const CAPABILITIES = {
   },
   openai: {
     chat: { supported: true, quality: 'good', note: 'Strong on reasoning, a little slower than Groq.' },
-    vision: { supported: true, quality: 'best', note: 'gpt-4o and gpt-4o-mini read screens reliably. The recommended choice for screen reading.' },
+    vision: { supported: true, quality: 'best', note: 'Current GPT models read screens reliably. The recommended choice for screen reading.' },
   },
   gemini: {
     chat: { supported: true, quality: 'good', note: 'Gemini Flash is fast and capable.' },
@@ -188,7 +195,7 @@ async function openaiChat(p, apiKey, model, system, turns, _retry = 0) {
         { role: 'system', content: system },
         ...turns.map((t) => ({ role: t.role, content: t.content })),
       ],
-      temperature: 0.3,
+      ...chatParamsFor(p.id, model),
     }
     if (isOpenRouter(p)) chatPayload.reasoning = { enabled: false }
     res = await fetch(`${p.base}/chat/completions`, {
@@ -226,7 +233,7 @@ async function openaiVision(p, apiKey, model, prompt, imageDataUrls, mediaRes = 
   const detail = mediaRes === 'low' || mediaRes === 'medium' ? 'low' : (mediaRes === 'high' ? 'high' : null)
   const content = [{ type: 'text', text: prompt }]
   for (const u of imgs) content.push({ type: 'image_url', image_url: detail ? { url: u, detail } : { url: u } })
-  const payload = { model, messages: [{ role: 'user', content }], temperature: 0.3 }
+  const payload = { model, messages: [{ role: 'user', content }], ...chatParamsFor(p.id, model) }
   if (isOpenRouter(p)) payload.reasoning = { enabled: false }   // no chain-of-thought for a screen read
   const res = await fetch(`${p.base}/chat/completions`, {
     method: 'POST',
@@ -310,8 +317,23 @@ function pickPreferredModel(models, { avoid = null } = {}) {
   const by = (re) => pool.find((x) => re.test(String(x)))
   return by(/flash-latest/i) || by(/pro-latest/i) || by(/-latest$/i)
     || by(/gpt-oss-20b/i) || by(/gpt-oss/i)
-    || by(/flash-lite/i) || by(/flash/i) || by(/mini|instant|8b|small/i)
+    || by(/flash-lite/i) || by(/flash/i) || by(/luna/i) || by(/mini|instant|8b|small/i)
     || by(/llama/i) || pool[0]
+}
+
+// A model the lifecycle registry says is shut down is never sent to the provider
+// (that call can only fail or, worse, be silently re-routed by the provider). It
+// raises the same "model retired" error the provider itself would, so the
+// self-heal ladder substitutes a current model and records the switch through
+// cfg.onSwitch for the superadmin (SUPREME RULE III: a pinned choice that cannot
+// be honored is surfaced, never silently swapped).
+function assertNotRetired(p, model) {
+  if (isRetired(model, { provider: p.id })) throw httpErr(404, retiredModelMessage(model), AI_CODES.RETIRED)
+}
+// The model to heal to on the same key: the provider's named replacement when
+// the key has it, else the dependable pick from the live catalog.
+function healModel(model, live) {
+  return preferredReplacement(model, live) || pickPreferredModel(live, { avoid: model })
 }
 
 function runChat(p, apiKey, model, system, turns) {
@@ -337,12 +359,13 @@ async function failoverChat(alternates, fromP, fromModel, system, turns, notify)
     if (!ap || !a.apiKey || a.providerId === fromP.id) continue
     let m = a.chatModel || ap.chatModels[0]
     try {
+      assertNotRetired(ap, m)
       notify({ scope: 'chat', reason: 'failover', crossProvider: true, fromProvider: fromP.id, fromModel, toProvider: ap.id, toModel: m })
       return await runChat(ap, a.apiKey, m, system, turns)
     } catch (e) {
       if (!looksLikeModelError(e) && !isRateLimited(e) && !isEmptyResponse(e)) continue   // key/5xx on this alt: try the next; empty heals on-key like retired/rate
       const live = await listModels(a).catch(() => [])
-      const alt = pickPreferredModel(live, { avoid: m })
+      const alt = healModel(m, live)
       if (alt && alt !== m) {
         try {
           notify({ scope: 'chat', reason: reasonOf(e), crossProvider: true, fromProvider: fromP.id, fromModel, toProvider: ap.id, toModel: alt })
@@ -379,15 +402,16 @@ async function chatOnKey(cfg, system, turns, tele = null) {
     if (tele && typeof tele === 'object') { tele.provider = usedProvider; tele.model = usedModel; tele.roundRobin = !!roundRobin }
   }
   try {
+    assertNotRetired(p, model)
     const out = await runChat(p, cfg.apiKey, model, system, turns)
     mark(p.id, model, false)
     return out
   } catch (e) {
     if (!looksLikeModelError(e) && !isRateLimited(e) && !isEmptyResponse(e)) throw e   // key/other: surface, never mask (empty flows through the ladder)
     const reason = reasonOf(e)
-    // (2) another current model on the same key
+    // (2) another current model on the same key (the named replacement first)
     const live = await listModels(cfg).catch(() => [])
-    const same = pickPreferredModel(live, { avoid: model })
+    const same = healModel(model, live)
     if (same && same !== model) {
       try {
         notify({ scope: 'chat', reason, crossProvider: false, fromProvider: p.id, fromModel: model, toProvider: p.id, toModel: same })
@@ -461,6 +485,7 @@ async function analyseImagesOnKey(cfg, prompt, imageDataUrls, model, opts = {}, 
     // Transient-empty tolerance (e.g. <=2 of 5) is a stateful WATCH-LOOP policy
     // (see the mid-journey resilience work); one-off reads escalate an empty result
     // to the strong backup via escalateVision's weak-result check.
+    assertNotRetired(p, model)
     const out = await run(model)
     mark(model, false)
     return out
@@ -473,7 +498,8 @@ async function analyseImagesOnKey(cfg, prompt, imageDataUrls, model, opts = {}, 
     const reason = reasonOf(e)
     const live = await listModels(cfg).catch(() => [])
     const vis = live.filter((x) => isVisionModel(p.id, x))
-    const alt = pickPreferredModel(vis, { avoid: model }) || vis.find((x) => x !== model) || null
+    const named = preferredReplacement(model, vis)
+    const alt = (named && isVisionModel(p.id, named) ? named : null) || pickPreferredModel(vis, { avoid: model }) || vis.find((x) => x !== model) || null
     if (!alt || alt === model) {
       const code = reason === 'rate_limit' ? AI_CODES.RATE : AI_CODES.EXHAUSTED
       notify({ scope: 'vision', reason, fatal: true, code, fromProvider: p.id, fromModel: model, toProvider: null, toModel: null })
@@ -512,7 +538,10 @@ export async function findVisionModel(cfg) {
 }
 
 // Live model discovery - the provider's CURRENT catalog, using the saved key.
-const NON_CHAT = /whisper|distil-whisper|tts|text-to-speech|speech|embed|embedding|dall|image|moderation|guard|playai|rerank|vision-only|orpheus/i
+// Speech-to-text ids (gpt-transcribe, gpt-4o-mini-transcribe) and realtime
+// models are not chat models either: without `transcri` here a heal could pick
+// a transcription model for a chat call because its name says "mini".
+const NON_CHAT = /whisper|distil-whisper|tts|text-to-speech|speech|transcri|realtime|embed|embedding|dall|image|moderation|guard|playai|rerank|vision-only|orpheus/i
 export async function listModels(cfg) {
   const p = providerOf(cfg)
   if (!p) throw httpErr(400, `Unknown provider: ${cfg.providerId}`)
@@ -521,16 +550,18 @@ export async function listModels(cfg) {
     const res = await fetch(`${p.base}/models?pageSize=200&key=${encodeURIComponent(cfg.apiKey)}`)
     const data = await res.json().catch(() => null)
     if (!res.ok) throw httpErr(res.status, data?.error?.message || `Gemini model list failed (${res.status})`)
-    return (data?.models || [])
+    return dropRetired((data?.models || [])
       .filter((m) => (m.supportedGenerationMethods || []).includes('generateContent'))
       .map((m) => m.name.replace(/^models\//, ''))
       .filter((id) => /gemini/i.test(id) && !NON_CHAT.test(id))
-      .sort()
+      .sort(), { provider: p.id })
   }
   const res = await fetch(`${p.base}/models`, { headers: { Authorization: `Bearer ${cfg.apiKey}` } })
   const data = await res.json().catch(() => null)
   if (!res.ok) throw httpErr(res.status, data?.error?.message || `${p.label} model list failed (${res.status})`)
-  return (data?.data || []).map((m) => m.id).filter((id) => id && !NON_CHAT.test(id)).sort()
+  // A provider can keep listing a model after its shutdown date; every picker
+  // reads this list, so removing retired ids here covers them all.
+  return dropRetired((data?.data || []).map((m) => m.id).filter((id) => id && !NON_CHAT.test(id)).sort(), { provider: p.id })
 }
 
 // Lightweight key check for the "Test" button. Resolves the requested model
@@ -545,7 +576,7 @@ export async function testKey(cfg) {
   try {
     const live = await listModels({ ...cfg, chatModel: requested })
     if (live.length && !live.includes(requested)) {
-      const fallback = pickPreferredModel(live)
+      const fallback = healModel(requested, live)
       if (fallback) { model = fallback; requestedModel = requested }
     }
   } catch { /* live discovery failed - let chat() report the real error */ }
@@ -554,97 +585,8 @@ export async function testKey(cfg) {
 }
 
 // ---- Daily best/cheapest recommendation -----------------------------------
-// A curated rate card: approximate published INPUT list price ($/million tokens)
-// plus a coarse quality tier (1-5) and whether the model can see screens. Matched
-// against the LIVE catalog (most-specific pattern first), so the recommendation
-// is always a model that is CURRENTLY available on the key - it never names a
-// retired model. Prices are approximate and for guidance only (providers change
-// them); refreshed daily by the caller. Keep patterns specific-first.
-const RATECARD = {
-  gemini: [
-    { re: /flash-lite/i, usd: 0.10, q: 3, vision: true },
-    { re: /2\.0-flash(?!-lite)/i, usd: 0.10, q: 3, vision: true },
-    { re: /3(\.\d)?-flash(?!-lite)/i, usd: 0.30, q: 4, vision: true },
-    { re: /flash-latest/i, usd: 0.30, q: 4, vision: true },
-    { re: /1\.5-flash/i, usd: 0.08, q: 3, vision: true },
-    { re: /3(\.\d)?-pro|2\.5-pro|pro-latest/i, usd: 2.50, q: 5, vision: true },
-  ],
-  openai: [
-    { re: /gpt-4o-mini/i, usd: 0.15, q: 3, vision: true },
-    { re: /4\.1-nano/i, usd: 0.10, q: 3, vision: true },
-    { re: /4\.1-mini/i, usd: 0.40, q: 4, vision: true },
-    { re: /o4-mini/i, usd: 1.10, q: 4, vision: true },
-    { re: /gpt-4o(?!-mini)/i, usd: 2.50, q: 5, vision: true },
-    { re: /gpt-4\.1(?!-nano|-mini)/i, usd: 2.00, q: 5, vision: true },
-  ],
-  groq: [
-    { re: /gpt-oss-20b/i, usd: 0.10, q: 3, vision: false },
-    { re: /gpt-oss-120b/i, usd: 0.25, q: 4, vision: false },
-    { re: /scout/i, usd: 0.11, q: 3, vision: true },
-    { re: /maverick/i, usd: 0.20, q: 4, vision: true },
-    { re: /llama.*vl|vision/i, usd: 0.20, q: 3, vision: true },
-  ],
-  // OpenRouter and Moonshot reach cheap screen-reading models. Prices approximate
-  // (guidance only, providers change them); most-specific first.
-  openrouter: [
-    { re: /qwen.*vl/i, usd: 0.20, q: 4, vision: true },
-    { re: /qwen3?\.?\d?.*flash|qwen.*flash/i, usd: 0.05, q: 3, vision: true },
-    { re: /qwen/i, usd: 0.12, q: 3, vision: true },
-    { re: /gemini.*flash/i, usd: 0.10, q: 3, vision: true },
-    { re: /llava|pixtral/i, usd: 0.20, q: 3, vision: true },
-    { re: /deepseek/i, usd: 0.14, q: 4, vision: false },
-  ],
-  moonshot: [
-    { re: /kimi.*vl|kimi.*thinking|kimi-?k2\.\d|k2\.\d/i, usd: 0.60, q: 4, vision: true },
-    { re: /kimi|moonshot/i, usd: 0.60, q: 4, vision: false },
-  ],
-}
-// Rough speed tier from the model name: fast = flash/lite/nano/mini/haiku/8b/
-// scout/instant/turbo. 2 = fast, 1 = normal. For the "fastest" recommendation.
-const FAST_HINT = /flash|lite|nano|mini|haiku|instant|turbo|\b8b\b|scout|-fast\b/i
-const speedOf = (model) => (FAST_HINT.test(String(model)) ? 2 : 1)
-// Last-resort name hint for a model not in any ratecard row (new/unlisted). The
-// ratecard is the authority; this only decides a model the ratecard has never
-// seen. Kept broad but conservative.
-const VISION_HINT = /vision|scout|maverick|gpt-4o|gpt-4\.1|o4|gemini|llava|pixtral|qwen.*(vl|flash|omni)/i
-function rateFor(providerId, model) {
-  for (const row of (RATECARD[providerId] || [])) if (row.re.test(String(model))) return { ...row, speed: speedOf(model) }
-  return { usd: null, q: 2, vision: VISION_HINT.test(String(model)), speed: speedOf(model) } // unknown model: conservative
-}
-// ONE source of truth for "can this model read a screen": the curated ratecard's
-// vision flag (matched most-specific-first), with VISION_HINT only as the
-// unlisted-model fallback inside rateFor. Replaces a second VISION_HINT regex
-// that drifted - it missed qwen*-flash while the ratecard priced them as vision,
-// so the vision failover dropped valid cheap screen readers (SUPREME II).
-export function isVisionModel(providerId, model) {
-  if (!model) return false
-  return !!rateFor(providerId, model).vision
-}
-
-// Where our model ranking comes from, so the "best model plans your work" claim
-// is sourced and dated, not asserted. The quality tiers above are curated to
-// reflect the public community leaderboards; keep RANK_UPDATED current when they
-// are revised (a superadmin confirmation / periodic auto-fetch can supersede it).
-export const RANK_META = { source: 'community AI leaderboards (LMArena, Artificial Analysis)', updated: '2026-10-22' }
-// A model's standing: tier + whether it is in our TOP tier (the "top-ranked"
-// badge is shown only for 'top'). Honest: this is our tracked ranking, dated.
-export function modelRank(providerId, model) {
-  const r = rateFor(providerId, model)
-  const tier = r.q >= 5 ? 'top' : r.q >= 4 ? 'strong' : 'standard'
-  return { quality: r.q, tier, topRanked: r.q >= 5, vision: !!r.vision, source: RANK_META.source, updated: RANK_META.updated }
-}
-// Is this model a TOP-tier ("premium") model? Model-only check across every
-// provider's ratecard (the per-session telemetry knows the model used but not
-// always the provider). A match with quality >= 5 is premium. Used to count a
-// session's "premium calls" for the superadmin view.
-export function isPremiumModel(model) {
-  const m = String(model || '')
-  if (!m) return false
-  for (const rows of Object.values(RATECARD)) {
-    for (const row of rows) if (row.re.test(m)) return row.q >= 5
-  }
-  return false
-}
+// The curated rate card (price, quality tier, vision flag) lives in
+// ai_ratecard.js; its helpers are re-exported here so callers keep using ai.*.
 // Per-provider recommendation from the live catalog, or null when the key cannot
 // list models (bad key / provider down - the caller surfaces that separately).
 export async function recommendModels(cfg) {
