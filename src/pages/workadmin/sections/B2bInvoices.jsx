@@ -100,7 +100,7 @@ function ContractForm({ companyId, contract, onSaved }) {
         </div>
         <div className="wka-field"><label htmlFor="b2b-ref">{t('b2bInvoices.reference')}</label><input id="b2b-ref" className="wka-input" value={f.reference} onChange={(e) => setF({ ...f, reference: e.target.value })} /></div>
       </div>
-      <div className="b2b-calc" data-testid="b2b-calc">{rate == null ? null : t('b2bInvoices.calc', { users: billableUsers(Number(f.users)), rate: money(rate), monthly: money(monthly) })}{f.plan === 'managed' ? ` ${t('companyBilling.contract.aiAtUsage')}` : ''}</div>
+      <div className="b2b-calc" data-testid="b2b-calc">{rate == null ? null : t('b2bInvoices.calc', { users: new Intl.NumberFormat().format(billableUsers(Number(f.users))), rate: money(rate), monthly: money(monthly) })}{f.plan === 'managed' ? ` ${t('companyBilling.contract.aiAtUsage')}` : ''}</div>
       <div className="b2b-actions">
         <button type="button" className="wka-btn primary" disabled={busy} onClick={save}>{busy ? <Spinning /> : <Save size={14} />} {t('b2bInvoices.saveContract')}</button>
         <SavedTag show={saved} />

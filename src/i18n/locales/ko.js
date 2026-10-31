@@ -3635,7 +3635,7 @@ export default {
       },
       sso: {
         title: '싱글 사인온(SSO)',
-        sub: '구성원이 회사의 ID 공급자(Google, Microsoft 또는 Okta)로 로그인하게 하세요.',
+        sub: 'ID 공급자(Microsoft Entra ID, Okta, Google Workspace 등)를 SAML 또는 OpenID Connect로 연결하고, SCIM으로 구성원 계정을 프로비저닝하세요.',
       },
       ai: {
         title: 'AI 키',
@@ -3643,7 +3643,7 @@ export default {
       },
       billing: {
         title: '청구',
-        sub: '요금제 청구와 추가 항목. WorkCoPilot 팀이 설정합니다.',
+        sub: '계약 내용, 이번 달 시간 풀, AdmireVeda가 발행한 청구서입니다.',
       },
       governance: {
         title: '데이터 거버넌스(DLP)',
@@ -3911,7 +3911,7 @@ export default {
     sso: {
       loading: 'SSO를 불러오는 중',
       registerCallback: 'ID 공급자에 정확히 이 리디렉션 / 콜백 URL을 등록하세요:',
-      inviteNote: '회사는 <b>초대 전용</b> 로그인을 사용합니다. 팀 탭에서 이메일로 추가한 사람(또는 WorkCoPilot 팀이 추가한 사람)만 SSO로 로그인할 수 있습니다. ID 공급자가 허용하더라도 그 외에는 거부됩니다. 아래 가이드에서 설명하는 자동 계정 생성은 회사에는 적용되지 않습니다.',
+      inviteNote: '회사는 <b>초대 전용</b> 로그인을 사용합니다. 팀 탭에서 이메일로 추가한 사람이나 ID 공급자가 SCIM으로 프로비저닝한 사람만 SSO로 로그인할 수 있습니다. 그 외에는 ID 공급자가 허용하더라도 거부됩니다.',
       openPre: '회사는 <b>도메인 개방형</b> 로그인을 사용합니다. ID 공급자가 ',
       yourEmailDomain: '회사 이메일 도메인',
       openPost: '의 이메일로 인증한 사람은 사용자 라이선스가 남아 있는 한 첫 로그인 시 구성원 계정을 받습니다.',

@@ -2062,7 +2062,7 @@ export default {
       },
       sso: {
         title: 'Single Sign-on (SSO)',
-        sub: 'Lassen Sie Ihre Personen sich mit Ihrem Identitätsanbieter anmelden (Google, Microsoft oder Okta).',
+        sub: 'Verbinden Sie Ihren Identitätsanbieter (Microsoft Entra ID, Okta, Google Workspace und andere) per SAML oder OpenID Connect, und stellen Sie Ihre Mitarbeitenden per SCIM bereit.',
       },
       ai: {
         title: 'KI-Schlüssel',
@@ -2070,7 +2070,7 @@ export default {
       },
       billing: {
         title: 'Abrechnung',
-        sub: 'Ihre Tarifgebühren und etwaige Zusätze. Vom WorkCoPilot-Team festgelegt.',
+        sub: 'Ihr Vertrag, der Stundenpool dieses Monats und die Rechnungen, die AdmireVeda ausgestellt hat.',
       },
       governance: {
         title: 'Daten-Governance (DLP)',
@@ -2338,7 +2338,7 @@ export default {
     sso: {
       loading: 'SSO wird geladen',
       registerCallback: 'Registrieren Sie genau diese Weiterleitungs-/Callback-URL in Ihrem Identitätsanbieter:',
-      inviteNote: 'Ihr Unternehmen nutzt die Anmeldung <b>nur auf Einladung</b>: Nur Personen, die Sie im Reiter Team per E-Mail hinzufügen (oder die das WorkCoPilot-Team hinzufügt), können sich über SSO anmelden. Alle anderen werden abgewiesen, selbst wenn Ihr Identitätsanbieter sie durchlässt. Die automatische Kontoerstellung aus dem nachstehenden Leitfaden gilt für Ihr Unternehmen nicht.',
+      inviteNote: 'Ihr Unternehmen nutzt die Anmeldung <b>nur auf Einladung</b>: Nur Personen, die Sie im Reiter Team per E-Mail hinzufügen oder die Ihr Identitätsanbieter per SCIM bereitstellt, können sich per SSO anmelden. Alle anderen werden abgewiesen, auch wenn Ihr Identitätsanbieter sie durchlässt.',
       openPre: 'Ihr Unternehmen nutzt die Anmeldung mit <b>offener Domain</b>: Jede Person, die Ihr Identitätsanbieter mit einer E-Mail auf ',
       yourEmailDomain: 'Ihrer E-Mail-Domain',
       openPost: ' authentifiziert, erhält bei der ersten Anmeldung ein Mitgliedskonto, solange eine Benutzerlizenz frei ist.',

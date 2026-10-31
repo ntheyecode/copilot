@@ -23,7 +23,7 @@ import { usePrefs } from '../theme/usePrefs.js'
 import { useT } from '../i18n/index.jsx'
 
 const PP_CSS = `
-.pp{--pp-line:var(--wka-line-2,#d5d9e6);--pp-line-soft:var(--wka-line,#e7eaf2);--pp-muted:var(--wka-muted,#5c6484);--pp-text:var(--wka-text,#1b2033);--pp-panel:var(--wka-panel,#ffffff);--pp-chip:var(--wka-surface-2,#f3f5f9);--pp-ring:var(--wka-accent,#0e9f6e);--pp-ring-soft:var(--wka-accent-soft,rgba(14,159,110,.12));--pp-h:34px;
+.pp{--pp-line:var(--wka-line-2,#d5d9e6);--pp-line-soft:var(--wka-line,#e7eaf2);--pp-muted:var(--wka-muted,#5c6484);--pp-text:var(--wka-text,#1b2033);--pp-panel:var(--wka-panel,#ffffff);--pp-chip:var(--wka-bg-2,#f3f5f9);--pp-ring:var(--wka-accent,#0e9f6e);--pp-ring-soft:var(--wka-accent-soft,rgba(14,159,110,.12));--pp-h:34px;
   display:flex;flex-direction:column;gap:18px;min-width:0;max-width:100%;font-size:13px;color:var(--pp-text)}
 .pp.pp-guide{--pp-line:var(--border,#e7eaf2);--pp-line-soft:var(--border,#e7eaf2);--pp-muted:var(--text-muted,#5c6484);--pp-text:var(--text,#1b2033);--pp-panel:var(--surface,#ffffff);--pp-chip:var(--surface-2,#f3f5f9);--pp-ring:var(--em,#0e9f6e);--pp-ring-soft:var(--em-soft,rgba(14,159,110,.12));--pp-h:30px;gap:12px}
 .pp.pp-wd{--pp-line:var(--line-2,#d3d8e4);--pp-line-soft:var(--line-soft,#eef0f5);--pp-muted:var(--mut,#5f6887);--pp-text:var(--tx,#1a1f33);--pp-panel:var(--panel,#ffffff);--pp-chip:var(--panel-3,#f3f5f9);--pp-ring:var(--em,#0e9f6e);--pp-ring-soft:var(--em-fill,#eaf7f0)}

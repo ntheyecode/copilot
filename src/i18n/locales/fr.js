@@ -6019,7 +6019,7 @@ export default {
       },
       sso: {
         title: 'Authentification unique (SSO)',
-        sub: "Laissez vos personnes se connecter avec votre fournisseur d'identité (Google, Microsoft ou Okta).",
+        sub: 'Connectez votre fournisseur d\'identité (Microsoft Entra ID, Okta, Google Workspace et d\'autres) en SAML ou OpenID Connect, et provisionnez vos collaborateurs avec SCIM.',
       },
       ai: {
         title: 'Clés IA',
@@ -6027,7 +6027,7 @@ export default {
       },
       billing: {
         title: 'Facturation',
-        sub: "Vos frais d'offre et tout supplément. Définis par l'équipe WorkCoPilot.",
+        sub: 'Votre contrat, le forfait d\'heures de ce mois et les factures émises par AdmireVeda.',
       },
       governance: {
         title: 'Gouvernance des données (DLP)',
@@ -6295,7 +6295,7 @@ export default {
     sso: {
       loading: 'Chargement du SSO',
       registerCallback: "Enregistrez cette URL exacte de redirection / rappel dans votre fournisseur d'identité :",
-      inviteNote: "Votre entreprise utilise une connexion <b>sur invitation</b> : seules les personnes que vous ajoutez par e-mail dans l'onglet Équipe (ou que l'équipe WorkCoPilot ajoute) peuvent se connecter via le SSO. Toutes les autres sont refusées, même si votre fournisseur d'identité les laisse entrer. La création automatique de compte décrite dans le guide ci-dessous ne s'applique pas à votre entreprise.",
+      inviteNote: 'Votre entreprise utilise une connexion <b>sur invitation</b> : seules les personnes que vous ajoutez par e-mail dans l\'onglet Équipe, ou que votre fournisseur d\'identité provisionne avec SCIM, peuvent se connecter via SSO. Toutes les autres sont refusées, même si votre fournisseur d\'identité les laisse passer.',
       openPre: "Votre entreprise utilise une connexion <b>à domaine ouvert</b> : toute personne que votre fournisseur d'identité authentifie avec un e-mail sur ",
       yourEmailDomain: "votre domaine d'e-mail",
       openPost: " obtient un compte membre à la première connexion, tant qu'une licence utilisateur est libre.",

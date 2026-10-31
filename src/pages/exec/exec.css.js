@@ -18,7 +18,7 @@ export const EXEC_DRILL_CSS = `
 .wka .xd-name { font-weight:600; color:var(--wka-text); min-width:0; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .wka .xd-sub { color:var(--wka-faint); font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .wka .xd-prog { display:flex; align-items:center; gap:8px; min-width:120px; }
-.wka .xd-prog-track { flex:1 1 auto; height:8px; border-radius:999px; background:var(--wka-track); overflow:hidden; min-width:40px; }
+.wka .xd-prog-track { flex:1 1 auto; height:8px; border-radius:999px; background:var(--wka-line-2); overflow:hidden; min-width:40px; }
 .wka .xd-prog-fill { height:100%; border-radius:999px; background:var(--wka-accent); min-width:3px; }
 .wka .xd-prog-v { font-size:11.5px; font-weight:700; color:var(--wka-text); font-variant-numeric:tabular-nums; width:34px; text-align:right; flex:0 0 auto; }
 .wka .xd-scroll { overflow-x:auto; }

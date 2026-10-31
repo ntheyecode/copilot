@@ -3085,7 +3085,7 @@ export default {
       },
       sso: {
         title: 'Đăng nhập một lần (SSO)',
-        sub: 'Cho phép người của bạn đăng nhập bằng nhà cung cấp danh tính của bạn (Google, Microsoft hoặc Okta).',
+        sub: 'Kết nối nhà cung cấp danh tính của bạn (Microsoft Entra ID, Okta, Google Workspace và các bên khác) bằng SAML hoặc OpenID Connect, rồi cấp tài khoản cho mọi người bằng SCIM.',
       },
       ai: {
         title: 'Khóa AI',
@@ -3093,7 +3093,7 @@ export default {
       },
       billing: {
         title: 'Thanh toán',
-        sub: 'Các khoản phí theo gói và mọi mục phụ thu. Do đội ngũ WorkCoPilot thiết lập.',
+        sub: 'Hợp đồng của bạn, quỹ giờ tháng này và các hóa đơn AdmireVeda đã phát hành.',
       },
       governance: {
         title: 'Quản trị dữ liệu (DLP)',
@@ -3361,7 +3361,7 @@ export default {
     sso: {
       loading: 'Đang tải SSO',
       registerCallback: 'Đăng ký chính xác URL chuyển hướng / callback này trong nhà cung cấp danh tính của bạn:',
-      inviteNote: 'Công ty bạn dùng đăng nhập <b>chỉ theo lời mời</b>: chỉ những người bạn thêm bằng email trong tab Đội ngũ (hoặc do đội ngũ WorkCoPilot thêm) mới đăng nhập được qua SSO. Mọi người khác đều bị từ chối, ngay cả khi nhà cung cấp danh tính của bạn cho họ vào. Việc tự động tạo tài khoản nêu trong hướng dẫn bên dưới không áp dụng cho công ty bạn.',
+      inviteNote: 'Công ty bạn dùng đăng nhập <b>chỉ theo lời mời</b>: chỉ những người bạn thêm bằng email trong tab Nhóm, hoặc được nhà cung cấp danh tính cấp qua SCIM, mới đăng nhập được qua SSO. Mọi người khác đều bị từ chối, kể cả khi nhà cung cấp danh tính cho qua.',
       openPre: 'Công ty bạn dùng đăng nhập <b>mở theo tên miền</b>: bất kỳ ai được nhà cung cấp danh tính của bạn xác thực với một email thuộc ',
       yourEmailDomain: 'tên miền email của bạn',
       openPost: ' sẽ có tài khoản thành viên ở lần đăng nhập đầu tiên, miễn là còn một giấy phép người dùng trống.',

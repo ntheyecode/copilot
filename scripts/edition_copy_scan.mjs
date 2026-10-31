@@ -66,7 +66,11 @@ const APP = ['onboarding', 'setPasswordPage', 'helpPage', 'helpShared', 'dashboa
   'buddyPage', 'fullGuide', 'answerBody', 'resultCard', 'composeCard', 'computeCard', 'floatPanel', 'readingStrip', 'guideLevel',
   'guideFontScale', 'accentPicker', 'buddyPicker', 'downloadMenu', 'destructiveGate', 'askFocus', 'securityNote', 'scrubRules', 'supportTickets', 'legalShared']
 
-export const VISIBLE = { individuals: [...PUBLIC, ...APP], organizations: [...PUBLIC, ...APP] }
+// The company console is read by the customer's own administrators (a role
+// dashboard, not an AdmireVeda staff tool), so the organizations site scans it
+// too (2026-10-31). The individuals site has no company console.
+const COMPANY_CONSOLE = ['companyAdmin', 'ssoSetup', 'companyBilling', 'companyBrain', 'brainSecurity', 'apiKeys', 'helpCompany', 'companyGovernance', 'policyRules', 'companyAdminPlan']
+export const VISIBLE = { individuals: [...PUBLIC, ...APP], organizations: [...PUBLIC, ...APP, ...COMPANY_CONSOLE] }
 
 // Legal and partner pages (terms, privacy, refund, acceptable use,
 // sub-processors, disclaimer, affiliate program). They are public on every

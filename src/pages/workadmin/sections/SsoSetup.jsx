@@ -14,6 +14,7 @@ import { api } from '../../../api.js'
 import { useT } from '../../../i18n/index.jsx'
 import { Loading, ErrorBox, Spinning, SavedTag, RecRow, EmptyState, useReasonModal } from './_shared.jsx'
 import { OIDC_PROVIDERS, SAML_PROVIDERS, IDP_LABELS, oidcIssuerExample } from '../../../shared/oidc_providers.js'
+import { useEditionView } from '../../../edition/useCaps.js'
 
 const TABS = ['oidc', 'saml', 'scim']
 const fmtWhen = (s) => { try { return new Date(s).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) } catch { return '' } }
@@ -45,6 +46,8 @@ function Steps({ prefix }) {
 
 export default function SsoSetup({ company }) {
   const t = useT()
+  // The "not the social buttons" note only makes sense where social buttons exist.
+  const { socialLogin } = useEditionView()
   const [state, setState] = useState({ loading: true, error: null, data: null })
   const [tab, setTab] = useState(null)
   const load = useCallback(() => {
@@ -70,7 +73,7 @@ export default function SsoSetup({ company }) {
   return (
     <div className="sso" data-testid="sso-setup">
       <style>{SSO_CSS}</style>
-      <div className="wka-note"><Info size={14} /> <span style={{ minWidth: 0 }}>{t('companyAdmin.sso.notSocial')}</span></div>
+      {socialLogin ? <div className="wka-note"><Info size={14} /> <span style={{ minWidth: 0 }}>{t('companyAdmin.sso.notSocial')}</span></div> : null}
       <div className={`wka-note${d.ssoRequired ? '' : ' sso-quiet'}`} data-testid="sso-required-note"><Lock size={14} /> <span style={{ minWidth: 0 }}>{d.ssoRequired ? t('ssoSetup.status.requiredHelp') : t('ssoSetup.status.optional')}</span></div>
       <div className="wka-note" style={{ color: inviteOnly ? 'var(--wka-amber)' : undefined }}><Users size={14} /> <span style={{ minWidth: 0 }}>{inviteOnly ? t.rich('companyAdmin.sso.inviteNote') : t('ssoSetup.autoNote')}</span></div>
 

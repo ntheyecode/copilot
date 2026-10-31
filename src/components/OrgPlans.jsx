@@ -88,7 +88,7 @@ const CSS = `
 .orgp-bands th{text-align:left;font-weight:500;color:var(--o-mut);padding:5px 0;border-top:1px solid var(--o-line)}
 .orgp-bands td{text-align:right;font-weight:700;padding:5px 0;border-top:1px solid var(--o-line);font-variant-numeric:tabular-nums;white-space:nowrap}
 .orgp-lead{color:var(--o-mut);font-size:14.5px;line-height:1.5;margin:0 0 14px}
-.orgp-card ul{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:8px;flex:1}
+.orgp-card ul{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:8px;flex:1;align-content:start}
 .orgp-card li{display:flex;gap:8px;align-items:flex-start;font-size:14px;line-height:1.45}
 .orgp-card li svg{flex-shrink:0;margin-top:2px;color:var(--o-em)}
 .orgp-card li span{min-width:0;overflow-wrap:anywhere}

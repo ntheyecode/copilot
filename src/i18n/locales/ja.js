@@ -3635,7 +3635,7 @@ export default {
       },
       sso: {
         title: 'シングルサインオン（SSO）',
-        sub: 'ご利用の ID プロバイダー（Google、Microsoft、Okta）で、あなたの人材がサインインできるようにします。',
+        sub: 'ID プロバイダー（Microsoft Entra ID、Okta、Google Workspace など）を SAML または OpenID Connect で接続し、SCIM でメンバーのアカウントを自動作成します。',
       },
       ai: {
         title: 'AI キー',
@@ -3643,7 +3643,7 @@ export default {
       },
       billing: {
         title: '請求',
-        sub: 'プランの料金と追加分。WorkCoPilot チームが設定します。',
+        sub: 'ご契約内容、今月の時間プール、AdmireVeda が発行した請求書です。',
       },
       governance: {
         title: 'データガバナンス（DLP）',
@@ -3911,7 +3911,7 @@ export default {
     sso: {
       loading: 'SSO を読み込んでいます',
       registerCallback: 'この正確なリダイレクト / コールバック URL を ID プロバイダーに登録してください:',
-      inviteNote: '会社は<b>招待制</b>のサインインを使っています。チームタブでメールで追加した人（または WorkCoPilot チームが追加した人）だけが SSO でサインインできます。ID プロバイダーが許可しても、それ以外は拒否されます。下のガイドで説明する自動アカウント作成は、あなたの会社には適用されません。',
+      inviteNote: '会社は<b>招待制</b>のサインインを使っています。SSO でサインインできるのは、チームタブでメールで追加した人、または ID プロバイダーが SCIM で作成した人だけです。それ以外の人は、ID プロバイダーが通しても拒否されます。',
       openPre: '会社は<b>ドメイン開放</b>のサインインを使っています。ID プロバイダーが ',
       yourEmailDomain: 'あなたのメールドメイン',
       openPost: ' のメールで認証した人は、ユーザーライセンスに空きがある限り、初回サインイン時にメンバーアカウントを得ます。',

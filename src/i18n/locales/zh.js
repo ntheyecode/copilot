@@ -3608,7 +3608,7 @@ export default {
       },
       sso: {
         title: '单点登录(SSO)',
-        sub: '让您的成员用您的身份提供商(Google、Microsoft 或 Okta)登录。',
+        sub: '通过 SAML 或 OpenID Connect 连接您的身份提供方(Microsoft Entra ID、Okta、Google Workspace 等),并用 SCIM 为员工开通账号。',
       },
       ai: {
         title: 'AI 密钥',
@@ -3616,7 +3616,7 @@ export default {
       },
       billing: {
         title: '账单',
-        sub: '您的套餐费用和任何额外项。由 WorkCoPilot 团队设定。',
+        sub: '您的合同、本月的时长池,以及 AdmireVeda 开具的发票。',
       },
       governance: {
         title: '数据治理(DLP)',
@@ -3884,7 +3884,7 @@ export default {
     sso: {
       loading: '正在加载 SSO',
       registerCallback: '在您的身份提供商中注册这个完全一致的重定向 / 回调 URL:',
-      inviteNote: '您公司使用<b>仅限邀请</b>的登录:只有您在团队标签页按邮箱添加(或 WorkCoPilot 团队添加)的人才能通过 SSO 登录。其他所有人都会被拒绝,即使您的身份提供商放行他们。下方指南中描述的自动创建账户不适用于您公司。',
+      inviteNote: '您公司使用<b>仅限邀请</b>的登录:只有您在团队标签页按邮箱添加的人,或由您的身份提供方通过 SCIM 开通的人,才能通过 SSO 登录。其他人一律拒绝,即使身份提供方放行也一样。',
       openPre: '您公司使用<b>开放域名</b>的登录:凡是您的身份提供商以 ',
       yourEmailDomain: '您的邮箱域名',
       openPost: ' 下的邮箱完成验证的人,只要尚有空闲的用户许可,首次登录即获得一个成员账户。',

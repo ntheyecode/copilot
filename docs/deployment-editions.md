@@ -531,7 +531,7 @@ not repeat steps 1 to 3.
 |---|---|---|---|
 | Wording | base catalog, unchanged | organizations overlay | individuals overlay |
 | Home | as today | the personal plan cards become the organization plans (hosted, managed, on-premises); every "start" leads to Talk to us | no enterprise section, no company wording |
-| Pricing | as today | organization plans only: no personal plan, price, checkout or Stripe line | Lite to Premium only: no Enterprise column, seat or enterprise rows |
+| Pricing | as today | organization plans with the owner's per-user prices (server/org_pricing.js), Talk to us only: no personal plan, checkout or Stripe line | Lite to Premium only: no Enterprise column, seat or enterprise rows |
 | Sign-up | as today | `/workcopilot/signup` shows "WorkCoPilot is for organizations" with Talk to us and Sign in; the sign-in page has no create switch | as today, without the company field or company SSO |
 | App | as today | no personal upgrade, top-up or plan chooser; an account with no plan is told to ask its company administrator | no company routes (company console, exec, teach, PM, GRC, templates, launch); no knowledge-space picker |
 | Header / footer | as today | "Get started" reads Talk to us and goes to contact | no Enterprise or DPA link |
@@ -609,14 +609,21 @@ capabilities, and the page source carries the matching
   (the manifest defaults the origin to `https://admireveda.com`), or for the
   tar flow `npm run build && npm run stamp:spa -- --edition saas`.
 - Env: `WORK_EDITION=saas`, `WORK_PUBLIC_URL=https://admireveda.com`.
-- Stripe: company billing only. Personal plan prices are not needed, and no
-  personal checkout can start. The Stripe customer portal opens with a
-  configuration the server creates (invoices, card, cancel; no plan switch),
-  so a legacy personal subscriber cannot change plans there either.
+- Stripe: none (owner, 2026-10-30). `saas` has no `stripe_billing`: every
+  Stripe path (webhook, checkout, portal, Stripe invoices, refunds, Connect)
+  answers 403 `stripeDisabled`, and Stripe keys are ignored. AdmireVeda bills
+  each company under contract: the superadmin records the contract and issues
+  invoices in the console's Invoices section (`server/b2b_invoices.js`,
+  prices from `server/org_pricing.js`); the company admin reads them, with
+  PDFs, under Billing. No Stripe webhook is registered for this server.
+- Sign-in: no social sign-in (`social_login` off). Company accounts use a
+  password plus authenticator, or the company's OIDC or SAML 2.0 connection;
+  SCIM 2.0 provisioning at `/api/work/scim/v2`. `WORK_PUBLIC_URL` must be the
+  real origin: it is the base of the SAML entity id and ACS URL companies
+  register in their identity provider.
 - Before the switch (owner decision): today's personal subscribers on
   admireveda.com need a home on the `all` or `paid` server. On `saas` they
-  can still sign in, read invoices and open the Stripe portal, but cannot buy
-  or change a personal plan.
+  can still sign in, but no Stripe path (portal, invoices) is reachable.
 - Serves: the marketing site in the organizations wording, company sign-in and
   SSO, the company console, Company Brain, teach workflows, enterprise billing.
 - Refuses: personal sign-up on every path, personal checkout, plan change and

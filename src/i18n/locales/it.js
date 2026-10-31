@@ -2730,7 +2730,7 @@ export default {
       },
       sso: {
         title: 'Single sign-on (SSO)',
-        sub: 'Lascia che le tue persone accedano con il tuo identity provider (Google, Microsoft o Okta).',
+        sub: 'Collega il tuo identity provider (Microsoft Entra ID, Okta, Google Workspace e altri) con SAML o OpenID Connect, e crea gli account delle tue persone con SCIM.',
       },
       ai: {
         title: 'Chiavi IA',
@@ -2738,7 +2738,7 @@ export default {
       },
       billing: {
         title: 'Fatturazione',
-        sub: 'Gli addebiti del tuo piano ed eventuali extra. Impostati dal team di WorkCoPilot.',
+        sub: 'Il tuo contratto, il pacchetto di ore di questo mese e le fatture emesse da AdmireVeda.',
       },
       governance: {
         title: 'Governance dei dati (DLP)',
@@ -3006,7 +3006,7 @@ export default {
     sso: {
       loading: 'Caricamento SSO',
       registerCallback: 'Registra esattamente questo URL di reindirizzamento / callback nel tuo identity provider:',
-      inviteNote: "La tua azienda usa l'accesso <b>solo su invito</b>: solo le persone che aggiungi tramite email nella scheda Team (o che aggiunge il team di WorkCoPilot) possono accedere tramite SSO. Tutti gli altri vengono rifiutati, anche se il tuo identity provider li fa passare. La creazione automatica dell'account descritta nella guida qui sotto non si applica alla tua azienda.",
+      inviteNote: 'La tua azienda usa l\'accesso <b>solo su invito</b>: possono accedere tramite SSO solo le persone che aggiungi via email nella scheda Team, o che il tuo identity provider crea con SCIM. Tutti gli altri vengono rifiutati, anche se il tuo identity provider li fa entrare.',
       openPre: "La tua azienda usa l'accesso <b>a dominio aperto</b>: chiunque il tuo identity provider autentichi con un'email su ",
       yourEmailDomain: 'il tuo dominio email',
       openPost: ' ottiene un account membro al primo accesso, purché sia disponibile una licenza utente.',

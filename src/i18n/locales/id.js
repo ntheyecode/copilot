@@ -3081,7 +3081,7 @@ export default {
       },
       sso: {
         title: 'Single sign-on (SSO)',
-        sub: 'Biarkan orang-orang Anda masuk dengan penyedia identitas Anda (Google, Microsoft, atau Okta).',
+        sub: 'Hubungkan penyedia identitas Anda (Microsoft Entra ID, Okta, Google Workspace, dan lainnya) dengan SAML atau OpenID Connect, lalu siapkan akun orang-orang Anda dengan SCIM.',
       },
       ai: {
         title: 'Kunci AI',
@@ -3089,7 +3089,7 @@ export default {
       },
       billing: {
         title: 'Penagihan',
-        sub: 'Tagihan paket Anda dan ekstra apa pun. Diatur oleh tim WorkCoPilot.',
+        sub: 'Kontrak Anda, kumpulan jam bulan ini, dan faktur yang diterbitkan AdmireVeda.',
       },
       governance: {
         title: 'Tata kelola data (DLP)',
@@ -3357,7 +3357,7 @@ export default {
     sso: {
       loading: 'Memuat SSO',
       registerCallback: 'Daftarkan URL pengalihan / callback persis ini di penyedia identitas Anda:',
-      inviteNote: 'Perusahaan Anda memakai proses masuk <b>hanya lewat undangan</b>: hanya orang yang Anda tambahkan lewat email di tab Tim (atau yang ditambahkan tim WorkCoPilot) yang bisa masuk lewat SSO. Yang lain ditolak, meski penyedia identitas Anda mengizinkan mereka masuk. Pembuatan akun otomatis yang dijelaskan di panduan di bawah tidak berlaku untuk perusahaan Anda.',
+      inviteNote: 'Perusahaan Anda memakai proses masuk <b>hanya lewat undangan</b>: hanya orang yang Anda tambahkan lewat email di tab Tim, atau yang disiapkan penyedia identitas Anda lewat SCIM, yang bisa masuk lewat SSO. Selain itu ditolak, meski penyedia identitas Anda mengizinkannya.',
       openPre: 'Perusahaan Anda memakai proses masuk <b>domain terbuka</b>: siapa pun yang diautentikasi penyedia identitas Anda dengan email di ',
       yourEmailDomain: 'domain email Anda',
       openPost: ' mendapat akun anggota saat pertama masuk, selama ada lisensi pengguna yang kosong.',

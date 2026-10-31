@@ -3089,7 +3089,7 @@ export default {
       },
       sso: {
         title: 'Çoklu oturum açma (SSO)',
-        sub: 'Kişilerinizin kimlik sağlayıcınızla (Google, Microsoft veya Okta) giriş yapmasını sağlayın.',
+        sub: 'Kimlik sağlayıcınızı (Microsoft Entra ID, Okta, Google Workspace ve diğerleri) SAML veya OpenID Connect ile bağlayın, çalışanlarınızın hesaplarını SCIM ile oluşturun.',
       },
       ai: {
         title: 'Yapay zeka anahtarları',
@@ -3097,7 +3097,7 @@ export default {
       },
       billing: {
         title: 'Faturalama',
-        sub: 'Plan ücretleriniz ve ek kalemler. WorkCoPilot ekibi tarafından belirlenir.',
+        sub: 'Sözleşmeniz, bu ayın saat havuzu ve AdmireVeda\'nın kestiği faturalar.',
       },
       governance: {
         title: 'Veri yönetişimi (DLP)',
@@ -3365,7 +3365,7 @@ export default {
     sso: {
       loading: 'SSO yükleniyor',
       registerCallback: 'Bu tam yönlendirme / geri çağrı URL’sini kimlik sağlayıcınızda kaydedin:',
-      inviteNote: 'Şirketiniz <b>yalnızca davetle</b> giriş kullanıyor: yalnızca Ekip sekmesinde e-posta ile eklediğiniz (ya da WorkCoPilot ekibinin eklediği) kişiler SSO ile giriş yapabilir. Kimlik sağlayıcınız izin verse bile diğer herkes reddedilir. Aşağıdaki kılavuzda anlatılan otomatik hesap oluşturma şirketiniz için geçerli değildir.',
+      inviteNote: 'Şirketiniz <b>yalnızca davetle</b> giriş kullanıyor: SSO ile yalnızca Ekip sekmesinde e-posta ile eklediğiniz ya da kimlik sağlayıcınızın SCIM ile oluşturduğu kişiler giriş yapabilir. Kimlik sağlayıcınız izin verse bile diğer herkes reddedilir.',
       openPre: 'Şirketiniz <b>alan adına açık</b> giriş kullanıyor: kimlik sağlayıcınızın ',
       yourEmailDomain: 'e-posta alan adınızdaki',
       openPost: ' bir e-postayla kimliğini doğruladığı herkes, bir kullanıcı lisansı boşta olduğu sürece ilk girişte bir üye hesabı alır.',

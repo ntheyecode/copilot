@@ -122,7 +122,12 @@ export function registerSamlRoutes(app, deps = {}) {
   if (!app || !store || !establishSession || !wrap) throw new Error('registerSamlRoutes: missing required deps')
   const loginError = (res, msg) => res.redirect('/workcopilot/login?sso_error=' + encodeURIComponent(msg || 'Single sign-on could not be completed.'))
   const spFor = (req, companyId) => spValues(publicOrigin(req), companyId)
-  const secureCookie = (req) => hosted || /^https:/i.test(publicOrigin(req))
+  // The IdP posts to the ACS cross-site, so the RelayState cookie must be
+  // SameSite=None, which browsers accept only with Secure: on HTTPS, and on a
+  // loopback host (browsers treat http://localhost and 127.0.0.1 as a secure
+  // context), which is how local development and the E2E suite run.
+  const loopback = (req) => /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(String(req.headers.host || ''))
+  const secureCookie = (req) => hosted || /^https:/i.test(publicOrigin(req)) || loopback(req)
   const cookieOpts = (req) => ({ httpOnly: true, secure: secureCookie(req), sameSite: secureCookie(req) ? 'none' : 'lax', path: RELAY_PATH, maxAge: REQUEST_TTL_MS })
 
   app.get('/api/work/sso/saml/:companyId/metadata', wrap((req, res) => {

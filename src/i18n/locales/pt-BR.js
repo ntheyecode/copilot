@@ -6013,7 +6013,7 @@ export default {
       },
       sso: {
         title: 'Login único (SSO)',
-        sub: 'Deixe suas pessoas entrarem com seu provedor de identidade (Google, Microsoft ou Okta).',
+        sub: 'Conecte seu provedor de identidade (Microsoft Entra ID, Okta, Google Workspace e outros) com SAML ou OpenID Connect, e provisione sua equipe com SCIM.',
       },
       ai: {
         title: 'Chaves de IA',
@@ -6021,7 +6021,7 @@ export default {
       },
       billing: {
         title: 'Cobrança',
-        sub: 'As cobranças do seu plano e quaisquer extras. Definidas pela equipe do WorkCoPilot.',
+        sub: 'Seu contrato, o pacote de horas deste mês e as faturas emitidas pela AdmireVeda.',
       },
       governance: {
         title: 'Governança de dados (DLP)',
@@ -6289,7 +6289,7 @@ export default {
     sso: {
       loading: 'Carregando SSO',
       registerCallback: 'Registre esta URL de redirecionamento / callback exata no seu provedor de identidade:',
-      inviteNote: 'Sua empresa usa login <b>somente por convite</b>: só as pessoas que você adicionar por e-mail na aba Equipe (ou que a equipe do WorkCoPilot adicionar) podem entrar pelo SSO. Todos os demais são recusados, mesmo que seu provedor de identidade os deixe entrar. A criação automática de conta descrita no guia abaixo não se aplica à sua empresa.',
+      inviteNote: 'Sua empresa usa login <b>somente por convite</b>: só as pessoas que você adicionar por e-mail na aba Equipe, ou que seu provedor de identidade provisionar com SCIM, podem entrar via SSO. Todas as outras são recusadas, mesmo que seu provedor de identidade as deixe passar.',
       openPre: 'Sua empresa usa login de <b>domínio aberto</b>: qualquer pessoa que seu provedor de identidade autenticar com um e-mail em ',
       yourEmailDomain: 'seu domínio de e-mail',
       openPost: ' recebe uma conta de membro no primeiro login, desde que haja uma licença de usuário livre.',
