@@ -17,7 +17,12 @@ export function newUserDataDir() { return fs.mkdtempSync(path.join(os.tmpdir(), 
 // E2E_DESKTOP_PACKAGED=<a win-unpacked folder> runs the suite against the
 // PACKAGED app (obfuscated main/preload, no source maps: what customers get)
 // instead of the source, so code protection is proven not to break a flow.
-const PACKAGED = process.env.E2E_DESKTOP_PACKAGED ? path.join(process.env.E2E_DESKTOP_PACKAGED, 'WorkCoPilot.exe') : null
+// The product's own executable (WorkCoPilot.exe or LinkNotes.exe: one per brand build).
+const packagedExe = (dir) => {
+  const exe = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => /^(WorkCoPilot|LinkNotes)\.exe$/.test(f)) : []
+  return path.join(dir, exe[0] || 'WorkCoPilot.exe')
+}
+const PACKAGED = process.env.E2E_DESKTOP_PACKAGED ? packagedExe(process.env.E2E_DESKTOP_PACKAGED) : null
 
 export async function launchDesktop({ serverURL, userDataDir }) {
   if (PACKAGED && !fs.existsSync(PACKAGED)) throw new Error(`E2E_DESKTOP_PACKAGED points at no packaged app (expected ${PACKAGED})`)
