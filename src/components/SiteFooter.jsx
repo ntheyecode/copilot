@@ -17,6 +17,7 @@ import { useT } from '../i18n/index.jsx'
 import { openPreferences } from '../consent.js'   // re-open the cookie consent panel
 import { useEditionView } from '../edition/useCaps.js'
 import { shows, startPath } from '../edition/surfaces.js'   // which links an edition shows (capability-driven)
+import IndivFooter from '../sites/individuals/IndivFooter.jsx'   // the individuals site's footer, where that site is served
 
 // Link groups: the catalog key for each label (footer.<key> / nav.<key>) and the
 // href (+ what the link needs, src/edition/surfaces.js). Labels are translated
@@ -38,8 +39,14 @@ const GROUPS = [
 
 // `dark` (default true) forces the dark palette regardless of data-theme.
 export default function SiteFooter({ dark = true }) {
-  const t = useT()
   const ed = useEditionView()
+  // Same rule as SiteHeader: the individuals site's footer on every public page.
+  if (shows(ed, 'individualSite') && ed.individualSite) return <IndivFooter />
+  return <OrgFooter dark={dark} ed={ed} />
+}
+
+function OrgFooter({ dark, ed }) {
+  const t = useT()
   const start = startPath(ed)
   return (
     <footer className={`sf${dark ? ' sf-dark' : ''}`} aria-label={t('footer.aria')}>

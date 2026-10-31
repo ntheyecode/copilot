@@ -57,12 +57,37 @@ export const INDIVIDUALS_BANNED_LOCAL = {
 // are AdmireVeda's own staff tools, not something a customer reads.
 const PUBLIC = ['nav', 'footer', 'common', 'seo', 'home', 'login', 'pricing', 'rel', 'residency', 'widgets', 'guide', 'how', 'notChat',
   'fieldsPage', 'howItWorks', 'faqPage', 'securityPage', 'contactPage', 'useCases', 'demoPage', 'benchmarkPage', 'edition', 'demo', 'enterprise']
+// The individuals site (src/sites/individuals/, capability individual_site):
+// rendered for individuals only (an organizations edition never serves it), so
+// its namespace is scanned for that audience alone. Its whole namespace, in
+// English and in every language, must never carry company wording;
+// src/shared/edition_copy.test.mjs proves every namespace that site reads is
+// listed for the individuals audience.
+const INDIVIDUALS_SITE = ['indiv']
 const APP = ['onboarding', 'setPasswordPage', 'helpPage', 'helpShared', 'dashboardsHelp', 'workDashboard', 'workShell', 'workStart',
   'workProjects', 'skillsPage', 'stepCard', 'guideConsole', 'usage', 'policyNote', 'billingWidget', 'errorBoundary', 'prefs',
   'buddyPage', 'fullGuide', 'answerBody', 'resultCard', 'composeCard', 'computeCard', 'floatPanel', 'readingStrip', 'guideLevel',
   'guideFontScale', 'accentPicker', 'buddyPicker', 'downloadMenu', 'destructiveGate', 'askFocus', 'securityNote', 'scrubRules', 'supportTickets', 'legalShared']
 
-export const VISIBLE = { individuals: [...PUBLIC, ...APP], organizations: [...PUBLIC, ...APP] }
+export const VISIBLE = { individuals: [...PUBLIC, ...APP, ...INDIVIDUALS_SITE], organizations: [...PUBLIC, ...APP] }
+
+// Every i18n namespace the individuals site's own code reads (t('ns.key') in
+// src/sites/individuals/**), so the test can prove each one is scanned. A
+// namespace used there but missing from VISIBLE.individuals would let company
+// wording onto the individuals site unscanned; the gate fails instead.
+export function individualsSiteNamespaces(root) {
+  const dir = path.join(root, 'src', 'sites', 'individuals')
+  const out = new Set()
+  const walk = (d) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name)
+      if (e.isDirectory()) walk(p)
+      else if (/\.(jsx?|mjs)$/.test(e.name)) for (const m of fs.readFileSync(p, 'utf8').matchAll(/\bt(?:\.rich|\.n)?\(\s*[`'"]([A-Za-z]\w*)\./g)) out.add(m[1])
+    }
+  }
+  if (fs.existsSync(dir)) walk(dir)
+  return [...out].sort()
+}
 
 // Legal and partner pages (terms, privacy, refund, acceptable use,
 // sub-processors, disclaimer, affiliate program). They are public on every
