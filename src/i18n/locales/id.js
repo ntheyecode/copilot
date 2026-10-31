@@ -3129,6 +3129,10 @@ export default {
       totalForCompany: 'Total untuk perusahaan Anda',
       noDataYet: 'Belum ada data',
       aiNotConfigured: 'AI belum dikonfigurasi.',
+      aiReason: {
+        keysMissing: 'Perusahaan Anda memakai kunci AI sendiri, tetapi belum ada yang diatur.',
+        sourceUnset: 'Pilih sumber AI Anda: platform, atau kunci milik perusahaan Anda.',
+      },
       aiSetKeys: 'Buka kunci AI',
       licensesByPlan: 'Lisensi per paket',
       licensesByPlanHelp: 'Berapa banyak dari setiap paket yang dibeli perusahaan Anda, dan berapa yang ditetapkan. Menetapkan melebihi alokasi sebuah paket akan diblokir.',
@@ -8238,6 +8242,15 @@ export default {
   },
   buddyPicker: {
     groupAria: 'Pilih buddy Anda',
+    surprise: 'Kejutan (hewan peliharaan acak)',
+    buddyAria: 'Buddy WorkCoPilot ({name})',
+    characters: {
+      boy: 'Anak laki-laki',
+      girl: 'Anak perempuan',
+      dog: 'Anjing',
+      cat: 'Kucing',
+      bot: 'Bot',
+    },
   },
   composeCard: {
     emptyBody: 'Tidak ada dokumen yang dikembalikan.',
@@ -11553,6 +11566,12 @@ export default {
     plan: 'Rencana',
     doneWhen: 'Selesai ketika',
     markDoneTip: 'Tandai langkah ini selesai dan lanjut ke berikutnya',
+    stepOf: 'Langkah {n} dari {total}',
+    stepN: 'Langkah {n}',
+    confirmed: 'Langkah {n} dikonfirmasi',
+    markDone: 'Tandai selesai',
+    yourPlan: 'Rencana Anda',
+    collapse: 'Ciutkan',
     shot: {
       label: 'Seperti ini seharusnya tampilan layar',
       larger: 'Perbesar',

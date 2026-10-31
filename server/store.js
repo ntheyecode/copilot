@@ -1331,6 +1331,11 @@ function publicCompany(c) {
     aiReason: c.aiSource === 'company'
       ? ((c.companyAi && c.companyAi.apiKey) ? null : 'Company uses its own AI keys, but none are set yet.')
       : (c.aiSource === 'platform' ? null : 'AI source not selected yet (choose platform or company keys).'),
+    // The same reason as a code, so a console words it in the reader's language
+    // (aiReason stays the English text for API readers and logs).
+    aiReasonCode: c.aiSource === 'company'
+      ? ((c.companyAi && c.companyAi.apiKey) ? null : 'keysMissing')
+      : (c.aiSource === 'platform' ? null : 'sourceUnset'),
     imageGen: !!c.imageGen,
     trial: t ? { sessions: t.sessions || 0, used: t.used || 0, remaining: Math.max(0, (t.sessions || 0) - (t.used || 0)), minutesPer: t.minutesPer || 60 } : null,
     hasCompanyAi: !!(c.companyAi && c.companyAi.apiKey),

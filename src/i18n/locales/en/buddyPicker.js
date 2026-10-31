@@ -5,5 +5,9 @@
 export default {
   buddyPicker: {
     groupAria: 'Choose your buddy',
+    surprise: 'Surprise (a random pet)',
+    // {name} = the character's name below.
+    buddyAria: 'WorkCoPilot buddy ({name})',
+    characters: { boy: 'Boy', girl: 'Girl', dog: 'Dog', cat: 'Cat', bot: 'Bot' },
   },
 }

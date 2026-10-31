@@ -3682,6 +3682,10 @@ export default {
       totalForCompany: '회사 전체 합계',
       noDataYet: '아직 데이터 없음',
       aiNotConfigured: 'AI가 아직 구성되지 않았습니다.',
+      aiReason: {
+        keysMissing: '회사가 자체 AI 키를 사용하지만 아직 설정된 키가 없습니다.',
+        sourceUnset: 'AI를 어디서 가져올지 선택하세요: 플랫폼 또는 회사 자체 키.',
+      },
       aiSetKeys: 'AI 키 열기',
       licensesByPlan: '요금제별 라이선스',
       licensesByPlanHelp: '회사가 각 요금제를 몇 개 구매했고 몇 개 배정했는지입니다. 요금제 할당량을 초과한 배정은 차단됩니다.',
@@ -8118,6 +8122,15 @@ export default {
   },
   buddyPicker: {
     groupAria: '버디 선택',
+    surprise: '깜짝 선택 (무작위 반려동물)',
+    buddyAria: 'WorkCoPilot 버디 ({name})',
+    characters: {
+      boy: '소년',
+      girl: '소녀',
+      dog: '강아지',
+      cat: '고양이',
+      bot: '봇',
+    },
   },
   composeCard: {
     emptyBody: '돌아온 문서가 없습니다.',
@@ -11406,6 +11419,12 @@ export default {
     plan: '계획',
     doneWhen: '완료 조건',
     markDoneTip: '이 단계를 완료로 표시하고 다음으로 이동',
+    stepOf: '{total}단계 중 {n}단계',
+    stepN: '{n}단계',
+    confirmed: '{n}단계 확인됨',
+    markDone: '완료로 표시',
+    yourPlan: '내 계획',
+    collapse: '접기',
     shot: {
       label: '예상 화면',
       larger: '크게 보기',

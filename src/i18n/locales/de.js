@@ -2110,6 +2110,10 @@ export default {
       totalForCompany: 'Gesamt für Ihr Unternehmen',
       noDataYet: 'Noch keine Daten',
       aiNotConfigured: 'Die KI ist noch nicht eingerichtet.',
+      aiReason: {
+        keysMissing: 'Ihr Unternehmen nutzt eigene KI-Schlüssel, aber es ist noch keiner hinterlegt.',
+        sourceUnset: 'Wählen Sie, woher Ihre KI kommt: von der Plattform oder aus den eigenen Schlüsseln Ihres Unternehmens.',
+      },
       aiSetKeys: 'KI-Schlüssel öffnen',
       licensesByPlan: 'Lizenzen nach Tarif',
       licensesByPlanHelp: 'Wie viele Lizenzen jedes Tarifs Ihr Unternehmen gekauft hat und wie viele zugewiesen sind. Eine Zuweisung über die Lizenzmenge eines Tarifs hinaus wird blockiert.',
@@ -8259,6 +8263,15 @@ export default {
   },
   buddyPicker: {
     groupAria: 'Wählen Sie Ihren Begleiter',
+    surprise: 'Überraschung (ein zufälliges Haustier)',
+    buddyAria: 'WorkCoPilot-Begleiter ({name})',
+    characters: {
+      boy: 'Junge',
+      girl: 'Mädchen',
+      dog: 'Hund',
+      cat: 'Katze',
+      bot: 'Bot',
+    },
   },
   composeCard: {
     emptyBody: 'Es kam kein Dokument zurück.',
@@ -11574,6 +11587,12 @@ export default {
     plan: 'Plan',
     doneWhen: 'Fertig, wenn',
     markDoneTip: 'Diesen Schritt als erledigt markieren und zum nächsten gehen',
+    stepOf: 'Schritt {n} von {total}',
+    stepN: 'Schritt {n}',
+    confirmed: 'Schritt {n} bestätigt',
+    markDone: 'Als erledigt markieren',
+    yourPlan: 'Ihr Plan',
+    collapse: 'Einklappen',
     shot: {
       label: 'So sollte der Bildschirm aussehen',
       larger: 'Größer anzeigen',

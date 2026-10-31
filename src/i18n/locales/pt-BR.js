@@ -5801,6 +5801,10 @@ export default {
       totalForCompany: 'Total da sua empresa',
       noDataYet: 'Nenhum dado ainda',
       aiNotConfigured: 'A IA ainda não está configurada.',
+      aiReason: {
+        keysMissing: 'Sua empresa usa as próprias chaves de IA, mas nenhuma foi definida ainda.',
+        sourceUnset: 'Escolha de onde vem sua IA: da plataforma ou das chaves da sua empresa.',
+      },
       aiSetKeys: 'Abrir chaves de IA',
       licensesByPlan: 'Licenças por plano',
       licensesByPlanHelp: 'Quantas de cada plano sua empresa comprou, e quantas estão atribuídas. Atribuir além da alocação de um plano é bloqueado.',
@@ -8266,6 +8270,15 @@ export default {
   },
   buddyPicker: {
     groupAria: 'Escolha seu Buddy',
+    surprise: 'Surpresa (um pet aleatório)',
+    buddyAria: 'Buddy do WorkCoPilot ({name})',
+    characters: {
+      boy: 'Menino',
+      girl: 'Menina',
+      dog: 'Cachorro',
+      cat: 'Gato',
+      bot: 'Bot',
+    },
   },
   composeCard: {
     emptyBody: 'Nenhum documento foi retornado.',
@@ -11581,6 +11594,12 @@ export default {
     plan: 'Plano',
     doneWhen: 'Concluído quando',
     markDoneTip: 'Marque este passo como concluído e vá para o próximo',
+    stepOf: 'Passo {n} de {total}',
+    stepN: 'Passo {n}',
+    confirmed: 'Passo {n} confirmado',
+    markDone: 'Marcar como concluído',
+    yourPlan: 'Seu plano',
+    collapse: 'Recolher',
     shot: {
       label: 'Como a tela deve ficar',
       larger: 'Ampliar',

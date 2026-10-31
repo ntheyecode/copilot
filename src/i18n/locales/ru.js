@@ -3152,6 +3152,10 @@ export default {
       totalForCompany: 'Всего по вашей компании',
       noDataYet: 'Пока нет данных',
       aiNotConfigured: 'ИИ ещё не настроен.',
+      aiReason: {
+        keysMissing: 'Ваша компания использует собственные ключи ИИ, но ни один ещё не задан.',
+        sourceUnset: 'Выберите источник ИИ: платформа или собственные ключи компании.',
+      },
       aiSetKeys: 'Открыть ключи ИИ',
       licensesByPlan: 'Лицензии по тарифам',
       licensesByPlanHelp: 'Сколько лицензий каждого тарифа купила ваша компания и сколько назначено. Назначение сверх выделенного по тарифу заблокировано.',
@@ -8261,6 +8265,15 @@ export default {
   },
   buddyPicker: {
     groupAria: 'Выберите своего помощника',
+    surprise: 'Сюрприз (случайный питомец)',
+    buddyAria: 'Помощник WorkCoPilot ({name})',
+    characters: {
+      boy: 'Мальчик',
+      girl: 'Девочка',
+      dog: 'Собака',
+      cat: 'Кошка',
+      bot: 'Бот',
+    },
   },
   composeCard: {
     emptyBody: 'Документ не вернулся.',
@@ -11576,6 +11589,12 @@ export default {
     plan: 'План',
     doneWhen: 'Готово, когда',
     markDoneTip: 'Отметить этот шаг выполненным и перейти к следующему',
+    stepOf: 'Шаг {n} из {total}',
+    stepN: 'Шаг {n}',
+    confirmed: 'Шаг {n} подтверждён',
+    markDone: 'Отметить выполненным',
+    yourPlan: 'Ваш план',
+    collapse: 'Свернуть',
     shot: {
       label: 'Как должен выглядеть экран',
       larger: 'Увеличить',

@@ -3137,6 +3137,10 @@ export default {
       totalForCompany: 'Şirketiniz için toplam',
       noDataYet: 'Henüz veri yok',
       aiNotConfigured: 'Yapay zeka henüz yapılandırılmadı.',
+      aiReason: {
+        keysMissing: 'Şirketiniz kendi yapay zeka anahtarlarını kullanıyor, ancak henüz hiçbiri ayarlanmadı.',
+        sourceUnset: 'Yapay zekanızın nereden geleceğini seçin: platform veya şirketinizin kendi anahtarları.',
+      },
       aiSetKeys: 'Yapay zeka anahtarlarını aç',
       licensesByPlan: 'Plana göre lisanslar',
       licensesByPlanHelp: 'Şirketinizin her plandan kaç tane satın aldığı ve kaçının atandığı. Bir planın tahsisini aşan atamalar engellenir.',
@@ -8246,6 +8250,15 @@ export default {
   },
   buddyPicker: {
     groupAria: 'Yardımcınızı seçin',
+    surprise: 'Sürpriz (rastgele bir evcil hayvan)',
+    buddyAria: 'WorkCoPilot yardımcısı ({name})',
+    characters: {
+      boy: 'Erkek çocuk',
+      girl: 'Kız çocuk',
+      dog: 'Köpek',
+      cat: 'Kedi',
+      bot: 'Bot',
+    },
   },
   composeCard: {
     emptyBody: 'Hiçbir belge dönmedi.',
@@ -11561,6 +11574,12 @@ export default {
     plan: 'Plan',
     doneWhen: 'Şu olunca tamam',
     markDoneTip: 'Bu adımı tamamlandı olarak işaretleyip sonrakine geç',
+    stepOf: 'Adım {n} / {total}',
+    stepN: 'Adım {n}',
+    confirmed: 'Adım {n} onaylandı',
+    markDone: 'Tamamlandı olarak işaretle',
+    yourPlan: 'Planınız',
+    collapse: 'Daralt',
     shot: {
       label: 'Ekran nasıl görünmeli',
       larger: 'Büyüt',

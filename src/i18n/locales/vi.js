@@ -3133,6 +3133,10 @@ export default {
       totalForCompany: 'Tổng cho công ty của bạn',
       noDataYet: 'Chưa có dữ liệu',
       aiNotConfigured: 'AI chưa được thiết lập.',
+      aiReason: {
+        keysMissing: 'Công ty của bạn dùng khóa AI riêng nhưng chưa thiết lập khóa nào.',
+        sourceUnset: 'Chọn nguồn AI của bạn: nền tảng hoặc khóa riêng của công ty.',
+      },
       aiSetKeys: 'Mở khóa AI',
       licensesByPlan: 'Giấy phép theo gói',
       licensesByPlanHelp: 'Công ty bạn đã mua bao nhiêu giấy phép mỗi gói, và đã gán bao nhiêu. Việc gán vượt hạn mức của một gói sẽ bị chặn.',
@@ -8242,6 +8246,15 @@ export default {
   },
   buddyPicker: {
     groupAria: 'Chọn người đồng hành của bạn',
+    surprise: 'Bất ngờ (một thú cưng ngẫu nhiên)',
+    buddyAria: 'Người đồng hành WorkCoPilot ({name})',
+    characters: {
+      boy: 'Bé trai',
+      girl: 'Bé gái',
+      dog: 'Chó',
+      cat: 'Mèo',
+      bot: 'Bot',
+    },
   },
   composeCard: {
     emptyBody: 'Không có tài liệu nào được trả về.',
@@ -11557,6 +11570,12 @@ export default {
     plan: 'Kế hoạch',
     doneWhen: 'Hoàn thành khi',
     markDoneTip: 'Đánh dấu bước này đã hoàn thành và chuyển sang bước tiếp theo',
+    stepOf: 'Bước {n}/{total}',
+    stepN: 'Bước {n}',
+    confirmed: 'Đã xác nhận bước {n}',
+    markDone: 'Đánh dấu hoàn thành',
+    yourPlan: 'Kế hoạch của bạn',
+    collapse: 'Thu gọn',
     shot: {
       label: 'Màn hình sẽ trông như thế này',
       larger: 'Xem lớn hơn',

@@ -8,6 +8,14 @@ export default {
     plan: 'Plan',
     doneWhen: 'Done when',
     markDoneTip: 'Mark this step done and move to the next',
+    // {n} = this step's number, {total} = how many steps the plan has.
+    stepOf: 'Step {n} of {total}',
+    stepN: 'Step {n}',
+    confirmed: 'Step {n} confirmed',
+    markDone: 'Mark done',
+    // The quiet goal line above the step card (GoalLine.jsx).
+    yourPlan: 'Your plan',
+    collapse: 'Collapse',
     // The step's screenshot from the company workflow it came from (StepShot.jsx).
     shot: {
       label: 'What the screen should look like',

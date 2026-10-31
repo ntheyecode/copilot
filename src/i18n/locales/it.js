@@ -2778,6 +2778,10 @@ export default {
       totalForCompany: 'Totale per la tua azienda',
       noDataYet: 'Ancora nessun dato',
       aiNotConfigured: "L'IA non è ancora configurata.",
+      aiReason: {
+        keysMissing: 'La Sua azienda usa chiavi IA proprie, ma non ne è ancora stata impostata nessuna.',
+        sourceUnset: 'Scelga da dove arriva la Sua IA: dalla piattaforma o dalle chiavi della Sua azienda.',
+      },
       aiSetKeys: 'Apri chiavi IA',
       licensesByPlan: 'Licenze per piano',
       licensesByPlanHelp: "Quante licenze di ciascun piano ha acquistato la tua azienda e quante sono assegnate. L'assegnazione oltre la dotazione di un piano è bloccata.",
@@ -8272,6 +8276,15 @@ export default {
   },
   buddyPicker: {
     groupAria: 'Scelga il Suo assistente',
+    surprise: 'Sorpresa (un animale a caso)',
+    buddyAria: 'Assistente WorkCoPilot ({name})',
+    characters: {
+      boy: 'Ragazzo',
+      girl: 'Ragazza',
+      dog: 'Cane',
+      cat: 'Gatto',
+      bot: 'Bot',
+    },
   },
   composeCard: {
     emptyBody: 'Non è tornato alcun documento.',
@@ -11587,6 +11600,12 @@ export default {
     plan: 'Piano',
     doneWhen: 'Completato quando',
     markDoneTip: 'Segna questo passo come completato e passa al successivo',
+    stepOf: 'Passaggio {n} di {total}',
+    stepN: 'Passaggio {n}',
+    confirmed: 'Passaggio {n} confermato',
+    markDone: 'Segna come completato',
+    yourPlan: 'Il Suo piano',
+    collapse: 'Comprimi',
     shot: {
       label: 'Come dovrebbe apparire lo schermo',
       larger: 'Ingrandisci',

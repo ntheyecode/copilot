@@ -3742,6 +3742,10 @@ export default {
       totalForCompany: 'الإجمالي لشركتك',
       noDataYet: 'لا بيانات بعد',
       aiNotConfigured: 'لم يُهيَّأ الذكاء الاصطناعي بعد.',
+      aiReason: {
+        keysMissing: 'تستخدم شركتك مفاتيح ذكاء اصطناعي خاصة بها، لكن لم يُضبط أي مفتاح بعد.',
+        sourceUnset: 'اختر مصدر الذكاء الاصطناعي: المنصة، أو مفاتيح شركتك الخاصة.',
+      },
       aiSetKeys: 'فتح مفاتيح الذكاء الاصطناعي',
       licensesByPlan: 'التراخيص حسب الباقة',
       licensesByPlanHelp: 'كم اشترت شركتك من كل باقة، وكم جرى إسناده. الإسناد بما يتجاوز حصة الباقة ممنوع.',
@@ -8178,6 +8182,15 @@ export default {
   },
   buddyPicker: {
     groupAria: 'اختر رفيقك',
+    surprise: 'مفاجأة (حيوان أليف عشوائي)',
+    buddyAria: 'رفيق WorkCoPilot ({name})',
+    characters: {
+      boy: 'ولد',
+      girl: 'بنت',
+      dog: 'كلب',
+      cat: 'قطة',
+      bot: 'روبوت',
+    },
   },
   composeCard: {
     emptyBody: 'لم يُعَد أي مستند.',
@@ -11493,6 +11506,12 @@ export default {
     plan: 'الخطة',
     doneWhen: 'يكتمل عند',
     markDoneTip: 'علّم هذه الخطوة منجزة وانتقل إلى التالية',
+    stepOf: 'الخطوة {n} من {total}',
+    stepN: 'الخطوة {n}',
+    confirmed: 'تم تأكيد الخطوة {n}',
+    markDone: 'تحديد كمنجزة',
+    yourPlan: 'خطتك',
+    collapse: 'طيّ',
     shot: {
       label: 'كيف يجب أن تبدو الشاشة',
       larger: 'تكبير',

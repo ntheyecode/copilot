@@ -6155,6 +6155,10 @@ export default {
       totalForCompany: 'आपकी कंपनी के लिए कुल',
       noDataYet: 'अभी कोई डेटा नहीं',
       aiNotConfigured: 'AI अभी कॉन्फ़िगर नहीं है।',
+      aiReason: {
+        keysMissing: 'आपकी कंपनी अपनी AI कुंजियाँ इस्तेमाल करती है, लेकिन अभी कोई कुंजी सेट नहीं है।',
+        sourceUnset: 'चुनें कि आपका AI कहाँ से आए: प्लेटफ़ॉर्म से, या आपकी कंपनी की अपनी कुंजियों से।',
+      },
       aiSetKeys: 'AI कुंजियाँ खोलें',
       licensesByPlan: 'प्लान के अनुसार लाइसेंस',
       licensesByPlanHelp: 'आपकी कंपनी ने हर प्लान के कितने खरीदे, और कितने असाइन किए गए हैं। किसी प्लान के आवंटन से ऊपर असाइन करना रोका जाता है।',
@@ -8235,6 +8239,15 @@ export default {
   },
   buddyPicker: {
     groupAria: 'अपना बडी चुनें',
+    surprise: 'सरप्राइज़ (कोई भी पालतू)',
+    buddyAria: 'WorkCoPilot बडी ({name})',
+    characters: {
+      boy: 'लड़का',
+      girl: 'लड़की',
+      dog: 'कुत्ता',
+      cat: 'बिल्ली',
+      bot: 'बॉट',
+    },
   },
   composeCard: {
     emptyBody: 'कोई दस्तावेज़ वापस नहीं आया।',
@@ -11541,6 +11554,12 @@ export default {
     plan: 'योजना',
     doneWhen: 'पूरा जब',
     markDoneTip: 'इस चरण को पूरा चिह्नित करें और अगले पर जाएँ',
+    stepOf: 'चरण {n} / {total}',
+    stepN: 'चरण {n}',
+    confirmed: 'चरण {n} की पुष्टि हुई',
+    markDone: 'पूरा चिह्नित करें',
+    yourPlan: 'आपकी योजना',
+    collapse: 'समेटें',
     shot: {
       label: 'स्क्रीन कैसी दिखनी चाहिए',
       larger: 'बड़ा दिखाएँ',

@@ -88,6 +88,11 @@ export default {
       totalForCompany: 'Total for your company',
       noDataYet: 'No data yet',
       aiNotConfigured: 'AI is not configured yet.',
+      // Why AI is not ready yet (server aiReasonCode).
+      aiReason: {
+        keysMissing: 'Your company uses its own AI keys, but none are set yet.',
+        sourceUnset: 'Choose where your AI comes from: the platform, or your own company keys.',
+      },
       aiSetKeys: 'Open AI keys',
       licensesByPlan: 'Licenses by plan',
       licensesByPlanHelp: 'How many of each plan your company bought, and how many are assigned. Assigning beyond a plan\'s allocation is blocked.',

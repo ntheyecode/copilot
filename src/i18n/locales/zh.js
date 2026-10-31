@@ -3655,6 +3655,10 @@ export default {
       totalForCompany: '您公司的总计',
       noDataYet: '暂无数据',
       aiNotConfigured: 'AI 尚未配置。',
+      aiReason: {
+        keysMissing: '贵公司使用自己的 AI 密钥，但尚未设置任何密钥。',
+        sourceUnset: '请选择 AI 的来源：平台，或贵公司自己的密钥。',
+      },
       aiSetKeys: '打开 AI 密钥',
       licensesByPlan: '按套餐分列的许可',
       licensesByPlanHelp: '您公司各套餐购买了多少、已分配多少。超出某套餐配额的分配会被阻止。',
@@ -8091,6 +8095,15 @@ export default {
   },
   buddyPicker: {
     groupAria: '选择您的伙伴',
+    surprise: '惊喜（随机宠物）',
+    buddyAria: 'WorkCoPilot 伙伴（{name}）',
+    characters: {
+      boy: '男孩',
+      girl: '女孩',
+      dog: '小狗',
+      cat: '小猫',
+      bot: '机器人',
+    },
   },
   composeCard: {
     emptyBody: '没有返回任何文档。',
@@ -11365,6 +11378,12 @@ export default {
     plan: '计划',
     doneWhen: '完成条件',
     markDoneTip: '将此步骤标记为完成并进入下一步',
+    stepOf: '第 {n} 步，共 {total} 步',
+    stepN: '第 {n} 步',
+    confirmed: '第 {n} 步已确认',
+    markDone: '标记为完成',
+    yourPlan: '您的计划',
+    collapse: '收起',
     shot: {
       label: '屏幕应如下所示',
       larger: '放大查看',

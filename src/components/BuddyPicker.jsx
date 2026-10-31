@@ -8,7 +8,7 @@
 // white/boxless) floating buddy - and fully keyboard + screen-reader reachable.
 import React from 'react'
 import { Shuffle } from 'lucide-react'
-import AliveBuddy, { CHARACTERS, writeBuddyPref, CHARACTER_LABELS as LABELS } from './AliveBuddy.jsx'
+import AliveBuddy, { CHARACTERS, writeBuddyPref } from './AliveBuddy.jsx'
 import { useT } from '../i18n/index.jsx'
 
 // Product green (the #0e9f6e family used across the light surfaces), NOT the old
@@ -32,7 +32,7 @@ export default function BuddyPicker({ pref = 'bot', onPick, size = 34 }) {
       {options.map((p) => {
         const on = pref === p
         const isSurprise = p === 'surprise'
-        const label = isSurprise ? 'Surprise (a random pet)' : LABELS[p] || p
+        const label = isSurprise ? t('buddyPicker.surprise') : t(`buddyPicker.characters.${p}`)
         return (
           <button
             key={p}
