@@ -4,8 +4,9 @@ import { useT } from '../i18n/index.jsx'
 import { useEditionView } from '../edition/useCaps.js'   // edition: plan changes only where personal plans are sold
 import {
   CreditCard, ExternalLink, FileText, AlertTriangle, Loader2, Check,
-  ArrowUpRight, ArrowDownRight, CalendarClock, ShieldCheck, Ban, Info, Lock,
+  ArrowUpRight, ArrowDownRight, CalendarClock, ShieldCheck, Ban, Info, Lock, RotateCcw,
 } from 'lucide-react'
+import CancelPlanModal from './billing/CancelPlanModal.jsx'   // in-app cancel at the period end (billing_lifecycle.js)
 
 // Self-serve Billing section for the authenticated /work dashboard. It is the
 // single place a personal (non-company) account manages money: see the current
@@ -35,7 +36,10 @@ import {
 const PLAN_ORDER = ['lite', 'basic', 'advanced', 'premium']
 const cap = (s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : '')
 
-export default function WorkBilling({ user, pricing, invoices, billingConfigured = true, onReload }) {
+// `subscription` is the FULL safe subscription the shell loads (cycle, renewal
+// date, cancel-at-period-end, a scheduled downgrade); user.subscription carries
+// status + plan only and is the fallback.
+export default function WorkBilling({ user, subscription = null, pricing, invoices, billingConfigured = true, onReload }) {
   const t = useT()
   // Where personal plans are not sold, an existing subscriber keeps the
   // status, invoices and the billing portal, but is not offered a plan change
@@ -48,7 +52,7 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
   // made overrides the (possibly stale) prop so the panel never shows the old
   // plan after an upgrade (SUPREME RULE III: operator sees the true state).
   const [liveSub, setLiveSub] = useState(null)
-  const sub = liveSub || (user && user.subscription) || {}
+  const sub = liveSub || subscription || (user && user.subscription) || {}
   const status = sub.status || 'none'
   const plan = sub.plan || null
   // cycle is not in the safe subscription contract; show it only if present.
@@ -68,6 +72,17 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
   const [portalBusy, setPortalBusy] = useState(false)
   const [portalErr, setPortalErr] = useState('')
   const [cancelOpen, setCancelOpen] = useState(false)
+  // Resume a plan set to end at the period end (billing_lifecycle.js).
+  const [resumeBusy, setResumeBusy] = useState(false)
+  const [resumeErr, setResumeErr] = useState('')
+  const resume = async () => {
+    setResumeBusy(true); setResumeErr('')
+    try {
+      const r = await api.workResumeSubscription()
+      if (r && r.subscription) setLiveSub(r.subscription)
+      if (typeof onReload === 'function') { try { onReload() } catch { /* best-effort refresh */ } }
+    } catch (e) { setResumeErr((e && e.message) || t('billingWidget.lifecycle.errResume')) } finally { setResumeBusy(false) }
+  }
 
   const currency = (pricing && pricing.currency) || 'usd'
   const money = (amount, opts) => {
@@ -188,9 +203,16 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
 
       {/* Canceled banner: honest about access continuing until period end. */}
       {cancelAtPeriodEnd && status !== 'past_due' && periodEnd && (
-        <div className="wb-note muted">
+        <div className="wb-note muted wb-ending">
           <CalendarClock size={15} />
           <span>{status === 'canceled' ? t('billingWidget.canceledNote.canceled') : t('billingWidget.canceledNote.scheduled')} {t.rich('billingWidget.canceledNote.access', { date: fmtDate(periodEnd) })}</span>
+          {status !== 'canceled' && (
+            <button className="wb-btn solid wb-resume" onClick={resume} disabled={resumeBusy}>
+              {resumeBusy ? <Loader2 size={15} className="spin" /> : <RotateCcw size={15} />}
+              <span>{t('billingWidget.lifecycle.resume')}</span>
+            </button>
+          )}
+          {resumeErr && <span className="wb-ending-err" role="alert">{resumeErr}</span>}
         </div>
       )}
 
@@ -376,23 +398,9 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
         )
       })()}
 
-      {/* Confirm cancel. Routes to the portal, which performs the cancel. */}
+      {/* Cancel in the app (ends at the period end; resumable until then). */}
       {cancelOpen && (
-        <div className="wb-ov" onClick={() => !portalBusy && setCancelOpen(false)}>
-          <div className="wb-modal" role="dialog" aria-modal="true" aria-label={t('billingWidget.cancelModal.aria')} onClick={(e) => e.stopPropagation()}>
-            <h3><Ban size={18} /> {t('billingWidget.cancelModal.title')}</h3>
-            <p className="wb-modal-note">{periodEnd ? t.rich('billingWidget.cancelModal.noteDate', { date: fmtDate(periodEnd) }) : t('billingWidget.cancelModal.note')}</p>
-            <p className="wb-modal-fine">{t('billingWidget.cancelModal.fine')}</p>
-            {portalErr && <div className="wb-note warn" role="alert"><AlertTriangle size={15} /> <span>{portalErr}</span></div>}
-            <div className="wb-modal-btns">
-              <button className="wb-btn ghost" onClick={() => setCancelOpen(false)} disabled={portalBusy}>{t('billingWidget.cancelModal.keep')}</button>
-              <button className="wb-btn danger" onClick={openPortal} disabled={portalBusy}>
-                {portalBusy ? <Loader2 size={15} className="spin" /> : <ExternalLink size={15} />}
-                <span>{t('billingWidget.cancelModal.continue')}</span>
-              </button>
-            </div>
-          </div>
-        </div>
+        <CancelPlanModal periodEnd={periodEnd} onClose={() => setCancelOpen(false)} onDone={(s) => { setCancelOpen(false); if (s) setLiveSub(s); if (typeof onReload === 'function') { try { onReload() } catch { /* best-effort */ } } }} />
       )}
     </div>
   )
@@ -450,6 +458,14 @@ const CSS = `
 .wb-note.warn svg{color:var(--warm)}
 .wb-note.muted{border-color:var(--line-2);background:var(--panel-3)}
 .wb-note.muted svg{color:var(--mut)}
+.wb-ending{flex-wrap:wrap}
+.wb-ending>span:first-of-type{flex:1 1 240px}
+.wb-resume{flex:0 0 auto}
+.wb-ending-err{flex-basis:100%;color:var(--danger);font-size:13px}
+.wb-reason{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+.wb-reason span{font-size:13px;font-weight:600;color:var(--mut)}
+.wb-reason textarea{width:100%;resize:vertical;border:1px solid var(--line);border-radius:10px;background:var(--panel-2,var(--panel));color:var(--tx);font:inherit;font-size:14px;padding:9px 11px}
+.wb-reason textarea:focus{outline:2px solid var(--em);outline-offset:1px}
 .wb-note .wb-link{margin:0}
 
 .wb-banner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;padding:13px 15px;border-radius:14px;border:1px solid var(--warm-line);background:var(--warm-fill)}

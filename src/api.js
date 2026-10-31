@@ -161,6 +161,10 @@ export const api = {
   // The account's Stripe invoices, and a Customer Portal link to manage/cancel.
   workInvoices: () => req('GET', '/api/work/invoices'),
   workBillingPortal: () => req('POST', '/api/work/billing/portal'),
+  // A person's own plan lifecycle (server/billing_lifecycle.js): end it at the
+  // period end (optional reason), or keep it renewing again before it ends.
+  workCancelSubscription: (reason) => req('POST', '/api/work/subscription/cancel', { reason: reason || '' }),
+  workResumeSubscription: () => req('POST', '/api/work/subscription/resume'),
   // sessions. Every free-text field is scrubbed CLIENT-SIDE (clean()) before it
   // leaves the browser, so raw PII/PHI/secrets never reach our server or the AI.
   workCreate: (body) => req('POST', '/api/work/sessions', { ...(body || {}), ...(body && body.goal != null ? { goal: clean(body.goal) } : {}) }),

@@ -885,7 +885,9 @@ export function freshSubscription() {
   // cancelled-subscribers list and the finance timeseries have a real end date
   // and a documented reason. pendingChange: a scheduled (period-end) downgrade
   // the dashboard can show and the renewal webhook flips into place.
-  return { status: 'none', plan: null, cycle: null, since: null, canceledAt: null, cancelReason: null, pendingChange: null, stripeCustomerId: null, stripeSubscriptionId: null, currentPeriodEnd: null }
+  // cancelAtPeriodEnd: the person (or Stripe's portal) asked the plan to end at
+  // the period end; status stays live until then and a resume clears it.
+  return { status: 'none', plan: null, cycle: null, since: null, canceledAt: null, cancelReason: null, pendingChange: null, cancelAtPeriodEnd: false, stripeCustomerId: null, stripeSubscriptionId: null, currentPeriodEnd: null }
 }
 function ensureSubscription(u) {
   if (!u.subscription || typeof u.subscription !== 'object') u.subscription = freshSubscription()
@@ -907,6 +909,7 @@ export function getSubscription(userId) {
     since: s.since || null,
     canceledAt: s.canceledAt || null,
     pendingChange: s.pendingChange || null,
+    cancelAtPeriodEnd: !!s.cancelAtPeriodEnd,
   }
 }
 // Merge a patch (from the webhook) into the account's subscription. Only known
@@ -921,9 +924,12 @@ export function setSubscription(userId, patch = {}) {
   // interval so the Subscribers view and MRR math know the billing period.
   // 'canceledAt'/'cancelReason' record the end of a subscription; 'pendingChange'
   // holds a scheduled period-end downgrade until the renewal webhook flips it.
-  for (const k of ['status', 'plan', 'cycle', 'canceledAt', 'cancelReason', 'pendingChange', 'stripeCustomerId', 'stripeSubscriptionId', 'currentPeriodEnd']) {
+  for (const k of ['status', 'plan', 'cycle', 'canceledAt', 'cancelReason', 'pendingChange', 'cancelAtPeriodEnd', 'stripeCustomerId', 'stripeSubscriptionId', 'currentPeriodEnd']) {
     if (patch[k] !== undefined) s[k] = patch[k]
   }
+  // A plan that has actually ended, or one that is no longer live, has nothing
+  // left to end at the period end.
+  if (s.status === 'canceled' || s.status === 'none') s.cancelAtPeriodEnd = false
   // Stamp when the subscription first became live, so the Subscribers list can
   // show a real "since" date rather than falling back to the account creation.
   if (!s.since && (s.status === 'active' || s.status === 'trialing' || s.status === 'comp')) s.since = now()
@@ -4656,6 +4662,7 @@ export function listSubscribers() {
       status,
       cycle,
       pendingChange: s.pendingChange || null,
+      cancelAtPeriodEnd: !!s.cancelAtPeriodEnd,
       since: s.since || u.createdAt || null,
       currentPeriodEnd: s.currentPeriodEnd || null,
       mrrUsd,
@@ -4674,6 +4681,17 @@ export function listSubscribers() {
   // Newest subscriptions first (by since), so the admin sees recent activity on top.
   subscribers.sort((a, b) => String(b.since || '').localeCompare(String(a.since || '')))
   return { subscribers, totals: { count: subscribers.length, activeCount, mrrUsd: round2(mrrTotal), byPlan } }
+}
+
+// Read-only inputs for the subscriber-health summary
+// (server/admin_subscription_health.js): each account's id, username, company
+// link and subscription, plus the ledger. No secrets; the Stripe ids never
+// leave that module's output either.
+export function subscriptionHealthInputs() {
+  return {
+    users: (db.users || []).map((u) => ({ id: u.id, username: u.username, companyId: u.companyId || null, subscription: u.subscription || null })),
+    transactions: (db.transactions || []).map((t) => ({ kind: t.kind, amount: t.amount, at: t.at, voided: !!t.voided, status: t.status })),
+  }
 }
 
 // The Cancelled Subscribers view (finance role): every account whose subscription
