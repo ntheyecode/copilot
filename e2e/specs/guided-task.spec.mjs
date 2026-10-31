@@ -72,6 +72,15 @@ test('start, plan, watch, flag, ask, finish and report', async ({ as, seed, edit
       const pdf = await api.get(`/api/work/sessions/${sessionId}/report.pdf`)
       expect(pdf.status).toBe(200)
       expect(pdf.headers['content-type']).toContain('application/pdf')
+      // What worked goes into a personal account's own brain (the company keeps
+      // its own); only the learning, under "Your sessions".
+      const brain = await api.get('/api/work/me/brain')
+      if (who === 'solo user') {
+        const fromSessions = brain.data.learnings.filter((l) => l.sources.includes('sessions'))
+        expect(fromSessions.map((l) => l.text).join(' '), 'the finished task was learned').toMatch(/monthly expense summary.*this worked: .*Expenses/i)
+      } else {
+        expect(brain.status, 'company members use the company brain').toBe(403)
+      }
       await page.context().close()
     })
   }

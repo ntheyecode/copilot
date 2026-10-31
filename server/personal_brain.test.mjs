@@ -123,3 +123,11 @@ test('no AI configured or an empty document is a clear, actionable refusal', asy
   const { brain: b3 } = brainWith(fakeAi([[]]))
   await assert.rejects(b3.learnFromDocument('u1', DOC), (e) => e.code === 'NOTHING_LEARNED')
 })
+
+test('a cleanly finished session becomes one "this worked" learning', async () => {
+  const { sessionLearning } = await import('./personal_brain_rules.js')
+  const rec = { app: 'excel', steps: [{ text: 'Open the **Expenses** sheet.' }, { text: 'Insert a `PivotTable` by month' }] }
+  assert.deepEqual(sessionLearning('Build my monthly summary', rec), { text: 'For "Build my monthly summary" in excel, this worked: Open the Expenses sheet; Insert a PivotTable by month.', kind: 'procedure' })
+  assert.equal(sessionLearning('', rec), null)
+  assert.equal(sessionLearning('x goal', { steps: [] }), null)
+})

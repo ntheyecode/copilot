@@ -94,6 +94,15 @@ export function mergeLearnings(brain, sourceId, incoming, { now = new Date().toI
   return { learnings, added, merged }
 }
 
+// One learning from a cleanly finished session (the distilled workflow record
+// of work.distillWorkflowTemplate): what worked, for which goal, in which app.
+export function sessionLearning(goal, rec) {
+  const steps = ((rec && rec.steps) || []).map((s) => String((s && s.text) || '').replace(/\*\*|__|`/g, '').replace(/\s+/g, ' ').trim().replace(/[.;:]+$/, '')).filter(Boolean)
+  const g = String(goal || '').replace(/\s+/g, ' ').trim()
+  if (!g || !steps.length) return null
+  return { text: normalizeLearning(`For "${g}"${rec.app ? ` in ${rec.app}` : ''}, this worked: ${steps.join('; ')}.`), kind: 'procedure' }
+}
+
 // Learnings that ground a task: ranked by overlap with the goal, newest first
 // on a tie, packed into maxChars. Nothing matches -> empty string.
 export function contextForGoal(learnings, goal, maxChars = 3000) {

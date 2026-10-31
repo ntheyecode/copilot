@@ -34,6 +34,7 @@ import { scheduleFrameSweep } from './workflow_frame_sweep.js'
 import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
 import { registerPersonalBrainRoutes } from './personal_brain_routes.js'
+import { sessionLearning } from './personal_brain_rules.js'
 import { verifyResponse } from './work_verify.js'
 import { registerWorkImageRoutes } from './work-images.js'
 import { registerWorkCustomerRoutes } from './work_customer_routes.js'
@@ -3763,7 +3764,14 @@ app.post('/api/work/sessions/:id/finalize', requireWorkAuth, async (req, res) =>
     // false templates). Best-effort: a capture failure never breaks finalize.
     // A session that followed a published workflow is not distilled: the trainer's
     // workflow is the authority, and a learned copy would compete with it.
-    try { const rec = s.workflowRef ? null : work.distillWorkflowTemplate(s); if (rec) store.captureWorkflowTemplate(req.workUser.id, rec) } catch (e) { console.warn(`[work] template capture failed: ${e.message}`) }
+    try {
+      const rec = s.workflowRef ? null : work.distillWorkflowTemplate(s)
+      if (rec) store.captureWorkflowTemplate(req.workUser.id, rec)
+      // A personal account also keeps what worked in its own brain (masked again
+      // on the way in), so its next similar task starts from it.
+      const learned = rec && !req.workUser.companyId ? sessionLearning(s.goal, rec) : null
+      if (learned) store.addPersonalBrainNotes(req.workUser.id, [learned])
+    } catch (e) { console.warn(`[work] template capture failed: ${e.message}`) }
     // If this session is a project task, close the forward-learning loop: mark the task
     // done, record its outcome + telemetry (completed-task storage), and keep the ledger
     // populated for the next task. Best-effort - never breaks finalize.
