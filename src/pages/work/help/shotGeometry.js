@@ -70,6 +70,36 @@ export const SHOT_GEOMETRY = {
       ]
     }
   },
+  "company/brain-add": {
+    "w": 1016,
+    "h": 1028,
+    "marks": {
+      "promise": [
+        33,
+        95,
+        950,
+        70
+      ],
+      "drop": [
+        33,
+        171,
+        950,
+        216
+      ],
+      "result": [
+        33,
+        431,
+        950,
+        110
+      ],
+      "rows": [
+        10,
+        923,
+        996,
+        95
+      ]
+    }
+  },
   "company/trainer-grant": {
     "w": 970,
     "h": 480,

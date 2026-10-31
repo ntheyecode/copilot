@@ -10,6 +10,7 @@ import { useT } from '../../../i18n/index.jsx'
 // Newer areas (Trainer grant, API & webhooks) live in their own module and use
 // annotated screenshots (numbered callouts over the real screen).
 import { HelpTrainerArea, HelpDeveloperArea } from './HelpCompanyNewAreas.jsx'
+import { HelpCompanyBrainArea } from './HelpCompanyBrainArea.jsx'
 import { ANNOTATED_SHOT_CSS } from '../../work/help/annotatedShot.css.js'
 
 const FLOW_IDS = ['signin', 'overview', 'team', 'ai', 'governance', 'billing']
@@ -91,6 +92,9 @@ export default function HelpCompany({ onOpen }) {
           { t: t('helpCompany.capture.steps.member.t'), d: t('helpCompany.capture.steps.member.d') },
         ]}
         shots={[{ src: '/help/company/camera-reading.png', w: 988, h: 200, alt: t('helpCompany.capture.shot.alt'), caption: t('helpCompany.capture.shot.caption') }]} />
+
+      {/* Company Brain: adding documents in the console (sections/companybrain/). */}
+      <HelpCompanyBrainArea onOpen={onOpen} />
 
       <HelpArea id="billing" icon={Receipt} title={t('helpCompany.billing.title')} open={{ id: 'billing', label: t('helpCompany.billing.open') }} onOpen={onOpen}
         lead={t('helpCompany.billing.lead')}

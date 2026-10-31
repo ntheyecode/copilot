@@ -166,6 +166,30 @@ export default {
         },
       },
     },
+    // Company Brain (HelpCompanyBrainArea.jsx): adding documents in the console.
+    brain: {
+      open: 'Company Brain',
+      title: 'Add documents to the Company Brain',
+      lead: 'Your SOPs, playbooks and policies become the first thing guidance draws on. You add them here in the console; the file itself is never stored.',
+      steps: {
+        open: { t: 'Open Company Brain', d: 'The Add documents area sits at the top of the section.' },
+        add: { t: 'Drop or choose files', d: 'PDF, Word, text or Markdown, up to 10 MB each. Several at once is fine; they are added one after another.' },
+        read: { t: 'Read the result', d: 'How many passages were kept, whether an earlier version was replaced, and how many private details were masked.' },
+        curate: { t: 'Curate the list', d: 'Every document shows its passages and date. Remove one, or clear everything, with a reason that lands in the audit trail.' },
+      },
+      shots: {
+        add: {
+          alt: 'The Company Brain section: the Add documents area with its promise and drop zone, a finished row reading Added: 2 passages from Expense SOP.txt, and the inventory table listing the document with its passages and date.',
+          caption: 'The same document name again replaces the earlier version, so a revised SOP never sits beside a stale one.',
+          marks: {
+            promise: '<b>The promise.</b> Read once, masked under your data policy, kept only as passages. The file is never stored.',
+            drop: '<b>Drop or choose.</b> PDF, Word, text or Markdown, up to 10 MB each.',
+            result: '<b>Per-file result.</b> Passages kept, an earlier version replaced, private details masked.',
+            rows: '<b>Your documents.</b> Title, kind, passages and date, with Remove and Clear all behind a reason.',
+          },
+        },
+      },
+    },
     developer: {
       open: 'API & webhooks',
       title: 'API and webhooks',

@@ -62,6 +62,32 @@ def _(b):
     })
     ctx.close()
 
+@shot('company/brain-add')
+def _(b):
+    # Company Brain: the admin adds a document through the real drop zone's
+    # file input; the finished row and the inventory row are real.
+    ctx = session(b, 'alex', h=1700)
+    # A fresh add (not "already up to date"): drop the document if an earlier run left it.
+    ctx.request.delete(BASE + '/api/work/brain/sources/doc:expense%20sop.txt', data={'reason': 'help shot refresh'})
+    pg = open_page(ctx, '/work/company', wait=3000)
+    nav_console(pg, 'Company Brain')
+    pg.locator('.wka-brain-drop').wait_for(timeout=8000)
+    sop = ('Monthly expense summary procedure.\n\nOpen the Expenses sheet in the finance workbook, sort the Month column A to Z, '
+           'then insert a PivotTable that totals Amount by Month.\n\nQuestions go to finance.lead@northwind.example before the report is sent.')
+    pg.set_input_files('.wka-brain-drop input[type=file]', {'name': 'Expense SOP.txt', 'mimeType': 'text/plain', 'buffer': sop.encode()})
+    pg.locator('.wka-brain-qrow.done').wait_for(timeout=30000)
+    pg.locator("tr:has-text('Expense SOP.txt')").wait_for(timeout=8000); pg.wait_for_timeout(500)
+    to_top(pg, '.wka-brain-add')
+    top = rect(pg, '.wka-brain-add'); tbl = rect(pg, '.wka-table-wrap')
+    clip = {'x': top['x'] - 14, 'y': top['y'] - 14, 'width': top['width'] + 28, 'height': tbl['y'] + tbl['height'] + 14 - (top['y'] - 14)}
+    shoot(pg, 'company/brain-add', clip, {
+        'promise': ('.wka-brain-promise', 4),
+        'drop': ('.wka-brain-drop', 4),
+        'result': ('.wka-brain-qrow.done', 4),
+        'rows': ('.wka-table-wrap', 4),
+    })
+    ctx.close()
+
 @shot('company/webhooks')
 def _(b):
     ctx = session(b, 'alex', h=2000); pg = open_page(ctx, '/work/company', wait=3000)

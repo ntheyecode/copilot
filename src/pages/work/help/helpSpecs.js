@@ -72,6 +72,7 @@ export const DASHBOARD_HELP_SPECS = { workflows: WORKFLOWS_SPEC, teach: TEACH_SP
 const m = (...keys) => keys.map((key) => ({ key }))
 export const COMPANY_HELP_SHOTS = {
   trainer: [{ id: 'grant', name: 'company/trainer-grant', marks: m('role', 'trainer') }],
+  brain: [{ id: 'add', name: 'company/brain-add', marks: m('promise', 'drop', 'result', 'rows') }],
   developer: [
     { id: 'keys', name: 'company/api-keys', marks: m('create', 'row', 'acts') },
     { id: 'create', name: 'company/api-key-create', marks: m('scopes', 'expiry', 'ip') },

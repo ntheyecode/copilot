@@ -517,6 +517,9 @@ export const api = {
   // Remove + clear are destructive, so they require a reason (logged server-side).
   //   inventory -> { stats: { chunks, sources, bytes }, sources: [{ sourceId, title, kind, version, chunks, status, updatedAt, policyVersion }] }
   workBrainInventory: () => req('GET', '/api/work/brain/inventory'),
+  // A company admin adds one document (name, mime, dataBase64): read in memory,
+  // masked under the company policy, kept only as passages; never the file.
+  workBrainDocumentAdd: (doc) => req('POST', '/api/work/brain/documents', doc),
   workBrainSourceDelete: (id, reason) => req('DELETE', `/api/work/brain/sources/${encodeURIComponent(id)}`, { reason }),
   workBrainClear: (reason) => req('POST', '/api/work/brain/clear', { reason }),
   // Company Brain custody (company admin): customer-held key. With private

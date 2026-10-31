@@ -1,27 +1,22 @@
-// Company Brain: the inventory of what is in this company's private knowledge
-// store. Documents are added from the desktop app only - scrubbed and embedded
-// on the member's device, so the server (and this console) only ever holds
-// scrubbed chunks and vectors, encrypted per company. Here a company admin can
-// SEE what is in the brain (sources, chunks, size) and REMOVE a source or clear
-// everything. Both destructive actions are reason-gated through the shared
-// ReasonModal and logged server-side (platform-wide destructive-action rule).
-// Company-scoped: the server resolves the company from the signed-in admin.
+// Company Brain: what is in this company's private knowledge store, and how
+// documents get in. The company admin ADDS documents here (companybrain/
+// AddDocuments.jsx -> POST /api/work/brain/documents: read in memory, masked
+// under the company policy, only passages stored, the file never kept), SEES
+// what is in the brain (documents, passages, size) and REMOVES a source or
+// clears everything. Both destructive actions are reason-gated through the
+// shared ReasonModal and logged server-side (platform-wide destructive-action
+// rule). Company-scoped: the server resolves the company from the signed-in
+// admin. Thin wiring here; the add flow lives in companybrain/.
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import { Brain, FileText, Layers, HardDrive, RefreshCw, Trash2, Search, ShieldCheck } from 'lucide-react'
 import { api } from '../../../api.js'
 import { Loading, ErrorBox, EmptyState, Spinning, ReasonModal } from './_shared.jsx'
 import { fmtDateTime } from '../workadmin.css.js'
 import { useT } from '../../../i18n/index.jsx'
+import AddDocuments from './companybrain/AddDocuments.jsx'
+import { fmtBytes } from './companybrain/fmtBytes.js'
 
-// Human-readable byte size (1024-based, one decimal above KB).
-export function fmtBytes(n) {
-  const v = Number(n)
-  if (!isFinite(v) || v <= 0) return '0 B'
-  const units = ['B', 'KB', 'MB', 'GB', 'TB']
-  let i = 0, x = v
-  while (x >= 1024 && i < units.length - 1) { x /= 1024; i++ }
-  return `${i === 0 ? Math.round(x) : x.toFixed(x >= 100 ? 0 : 1)} ${units[i]}`
-}
+export { fmtBytes }
 
 const fmtInt = (n) => { const v = Number(n); return isFinite(v) ? v.toLocaleString() : '0' }
 
@@ -43,7 +38,9 @@ function statusBadge(status, t) {
   return <span className="wka-badge">{s.charAt(0).toUpperCase() + s.slice(1)}</span>
 }
 
-export default function CompanyBrain() {
+// `onOpen(sectionId)` switches the console section (the locked-brain pointer
+// opens Encryption & export, where the unlock control lives).
+export default function CompanyBrain({ onOpen }) {
   const t = useT()
   const [state, setState] = useState({ loading: true, error: null, stats: null, sources: [] })
   const [refreshing, setRefreshing] = useState(false)
@@ -103,13 +100,17 @@ export default function CompanyBrain() {
   }, [state.sources, query])
 
   if (state.loading) return <Loading label={t('companyBrain.loading')} />
-  if (state.error) return <ErrorBox error={state.error} onRetry={() => load(false)} />
+  // Adding does not depend on the inventory read: the add area stays usable
+  // when the list cannot be loaded (and a successful add retries the list).
+  if (state.error) return (<div><AddDocuments onAdded={() => load(true)} onOpen={onOpen} /><ErrorBox error={state.error} onRetry={() => load(false)} /></div>)
 
   const stats = state.stats || { sources: 0, chunks: 0, bytes: 0 }
   const hasSources = state.sources.length > 0
 
   return (
     <div>
+      <AddDocuments onAdded={() => load(true)} onOpen={onOpen} />
+
       <div className="wka-cards">
         <div className="wka-card">
           <div className="k"><FileText size={15} /> {t('companyBrain.documents')}</div>
@@ -164,7 +165,6 @@ export default function CompanyBrain() {
               <tr>
                 <th className="no-sort">{t('companyBrain.colTitle')}</th>
                 <th className="no-sort">{t('companyBrain.colKind')}</th>
-                <th className="no-sort">{t('companyBrain.colVersion')}</th>
                 <th className="no-sort" style={{ textAlign: 'right' }}>{t('companyBrain.colChunks')}</th>
                 <th className="no-sort">{t('companyBrain.colUpdated')}</th>
                 <th className="no-sort">{t('companyBrain.colStatus')}</th>
@@ -173,13 +173,12 @@ export default function CompanyBrain() {
             </thead>
             <tbody>
               {rows.map((s) => (
-                <tr key={s.sourceId}>
+                <tr key={s.sourceId} data-testid="brain-source-row">
                   <td style={{ fontWeight: 600, maxWidth: 420 }}>
                     <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={s.title || s.sourceId}>{s.title || s.sourceId}</div>
-                    {s.policyVersion != null ? <div style={{ fontSize: 11, color: 'var(--wka-faint)', fontWeight: 400 }}>{t('companyBrain.scrubPolicy', { v: s.policyVersion })}</div> : null}
+                    {s.policyVersion != null && String(s.policyVersion).trim() !== '' ? <div style={{ fontSize: 11, color: 'var(--wka-faint)', fontWeight: 400 }}>{t('companyBrain.scrubPolicy', { v: s.policyVersion })}</div> : null}
                   </td>
                   <td>{kindBadge(s.kind)}</td>
-                  <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{s.version != null && s.version !== '' ? String(s.version) : '-'}</td>
                   <td className="wka-mono" style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{fmtInt(s.chunks)}</td>
                   <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{fmtDateTime(s.updatedAt)}</td>
                   <td>{statusBadge(s.status, t)}</td>

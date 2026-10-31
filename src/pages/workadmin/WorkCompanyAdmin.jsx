@@ -1716,7 +1716,9 @@ export default function WorkCompanyAdmin() {
       case 'ai': return <AiSection />
       case 'billing': return <CompanyBilling onOpen={setActive} />
       case 'governance': return (<><ReportShotsCard company={company} onCompany={setCompany} /><CameraCapture /><GovernanceSection companyId={viewer && viewer.companyId} /></>)
-      case 'brain': return (<><KbSpaces /><CompanyBrain /></>)
+      // Add documents + the inventory first (the section's reason to exist), the
+      // knowledge spaces under them.
+      case 'brain': return (<><CompanyBrain onOpen={setActive} /><KbSpaces /></>)
       case 'brainsecurity': return <BrainSecurity />
       case 'sessions': return <SessionsSection />
       case 'tickets': return <SupportTickets mode="user" />

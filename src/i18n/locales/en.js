@@ -64,7 +64,7 @@ export default {
       ai: { title: 'AI keys', sub: 'See how your company runs AI, and run WorkCoPilot on your own provider keys so usage is billed to your own provider account.' },
       billing: { title: 'Billing', sub: 'Your contract, this month\'s hours pool and the invoices AdmireVeda issued.' },
       governance: { title: 'Data governance (DLP)', sub: 'Decide what sensitive data may leave the device. Controls and evidence that support your compliance.' },
-      brain: { title: 'Company Brain', sub: 'What is in your company\'s private knowledge store. Documents are added from the desktop app, scrubbed on the device first; here you can see them and remove any.' },
+      brain: { title: 'Company Brain', sub: 'Your company\'s private knowledge store. Add your documents here; each one is masked under your data policy and kept only as passages. See what is in it and remove any.' },
       brainsecurity: { title: 'Private encryption and data export', sub: 'Hold the key to your Company Brain yourself (a passphrase plus a one-time recovery phrase - no backdoor), and take a complete, password-encrypted copy of your company\'s data whenever you want.' },
       alerts: { title: 'Security alerts', sub: 'When one of your people enters sensitive data (PII / PHI), it is redacted on their device before anything is sent, and you are told who, where and what kind - never the values themselves.' },
       integrations: { title: 'SOC / SIEM integrations', sub: 'Relay security alerts automatically into your SIEM, SOAR, chat and observability tools. Only alert metadata is ever sent - the kind and count of what was redacted plus who and where - never the values.' },
