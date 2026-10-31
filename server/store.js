@@ -4242,12 +4242,19 @@ export function setNotifySettings(patch = {}) {
 }
 
 // ---- Contact Us submissions -----------------------------------------------
-export function addContactSubmission({ name, email, subject, message } = {}, meta = {}) {
+// company / jobTitle / phone / country / topic: the contact form's details
+// (server/contact_form.js validates them); older callers simply omit them.
+export function addContactSubmission({ name, email, subject, message, company, jobTitle, phone, country, topic } = {}, meta = {}) {
   if (!db.contacts) db.contacts = []
   const rec = {
     id: 'ct' + id(),
     name: String(name || '').trim().slice(0, 120),
     email: String(email || '').trim().slice(0, 160),
+    company: String(company || '').trim().slice(0, 160),
+    jobTitle: String(jobTitle || '').trim().slice(0, 120),
+    phone: String(phone || '').trim().slice(0, 40),
+    country: String(country || '').trim().slice(0, 2).toUpperCase(),
+    topic: String(topic || '').trim().slice(0, 20),
     subject: String(subject || '').trim().slice(0, 200),
     message: String(message || '').trim().slice(0, 4000),
     at: now(), ip: String(meta.ip || '').slice(0, 64),

@@ -35,6 +35,7 @@ import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
 import { registerPersonalBrainRoutes } from './personal_brain_routes.js'
 import { registerPartnerRoutes } from './partner_apply.js'
+import { registerContactRoutes } from './contact_form.js'
 import { registerCompanyBrainDocumentRoutes } from './company_brain_documents.js'
 import { sessionLearning } from './personal_brain_rules.js'
 import { captureSourceOf, CAPTURE_HEADER } from './capture_sources.js'
@@ -3432,22 +3433,12 @@ registerPartnerRoutes(app, {
   store, wrap, rateOk: coverageRateOk, companiesOn: () => caps.has('saas_companies'),
   notify: (d) => { const n = store.getNotifySettings(); sendTemplateAsync('contact_notify', n.contactTo, d); if (n.thankYou) sendTemplateAsync('contact_thank_you', d.email, { name: d.name }) },
 })
-app.post('/api/work/contact', wrap((req, res) => {
-  const b = req.body || {}
-  const name = String(b.name || '').trim()
-  const email = String(b.email || '').trim()
-  const message = String(b.message || '').trim()
-  if (!name || !email || !message) return res.status(400).json({ error: 'Name, email and a message are required.' })
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return res.status(400).json({ error: 'Enter a valid email address.' })
-  if (message.length < 5) return res.status(400).json({ error: 'Please add a little more detail to your message.' })
-  const ip = String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim()
-  if (!coverageRateOk(ip)) return res.status(429).json({ error: 'Too many submissions just now - please try again shortly.' })
-  const rec = store.addContactSubmission({ name, email, subject: b.subject, message }, { ip })
-  const notify = store.getNotifySettings()
-  sendTemplateAsync('contact_notify', notify.contactTo, { name, email, subject: b.subject || '(no subject)', message, submittedAt: rec.at, ip })
-  if (notify.thankYou) sendTemplateAsync('contact_thank_you', email, { name })
-  res.json({ ok: true })
-}))
+// The contact form (server/contact_form.js): validated details, the Contacts
+// inbox and the notification email.
+registerContactRoutes(app, {
+  store, wrap, rateOk: coverageRateOk,
+  notify: (d) => { const n = store.getNotifySettings(); sendTemplateAsync('contact_notify', n.contactTo, d); if (n.thankYou) sendTemplateAsync('contact_thank_you', d.email, { name: d.name }) },
+})
 
 // ---- Password: set (via emailed token), forgot, validate token ------------
 // A strong throwaway password for accounts created without one (the person sets

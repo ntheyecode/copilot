@@ -48,7 +48,7 @@ export function registerPartnerRoutes(app, { store, wrap, rateOk, notify, compan
     if (!rateOk(ip)) return res.status(429).json({ error: 'Too many submissions just now. Please try again shortly.' })
     const subject = `Partner application: ${a.company}`
     const message = partnerMessage(a)
-    const rec = store.addContactSubmission({ name: a.name, email: a.email, subject, message }, { ip })
+    const rec = store.addContactSubmission({ name: a.name, email: a.email, subject, message, company: a.company, topic: 'partnership' }, { ip })
     notify({ name: a.name, email: a.email, subject, message, submittedAt: rec.at, ip })
     res.json({ ok: true })
   }))
