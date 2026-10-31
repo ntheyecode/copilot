@@ -18,6 +18,7 @@ import WorkAcceptableUse from './pages/WorkAcceptableUse.jsx'
 import WorkDPA from './pages/WorkDPA.jsx'
 import WorkRefund from './pages/WorkRefund.jsx'
 import WorkCookiePolicy from './pages/WorkCookiePolicy.jsx'
+import ProductThemeScope from './theme/ProductThemeScope.jsx'
 import WorkSubprocessors from './pages/WorkSubprocessors.jsx'
 import WorkAccessibility from './pages/WorkAccessibility.jsx'
 import WorkBenchmark from './pages/WorkBenchmark.jsx'
@@ -156,6 +157,9 @@ export default function App() {
       <Route path="/work/set-password" element={<WorkSetPassword />} />
       {/* All signed-in surfaces render through the legal consent gate (one place). */}
       <Route element={<GatedSurface />}>
+        {/* Every signed-in console paints the user's theme mode (one place). The
+            buddy and full-guide windows below keep their own surface scheme. */}
+        <Route element={<ProductThemeScope />}>
         {/* The signed-in app: a shared shell (rail + top bar + plan pill +
             desktop frame + app context) that self-gates on the session the
             server reports, with the per-route pages rendered through its
@@ -188,10 +192,6 @@ export default function App() {
           <Route path="templates/:id" element={<TemplateRollup />} />
           <Route path="session/:id" element={<Guiding />} />
         </Route>
-        {/* Chrome-free buddy window the desktop shell loads (workcopilot/main.js). */}
-        <Route path="/work/buddy" element={<WorkBuddy />} />
-        {/* Full-screen guidance for a second monitor (read-only; drive from /work). */}
-        <Route path="/work/guide" element={<WorkFullGuide />} />
         {/* Separate admin console (own module + /api/work/admin/*). Self-gates on admin. */}
         <Route path="/work/admin" element={<WorkAdmin />} />
         {/* Company-admin console (own-company scope, /api/work/* + /api/work/team/*). Self-gates on company_admin. */}
@@ -203,6 +203,11 @@ export default function App() {
             starts the workflow and opens /work/session/:id. Self-gates on the
             session (parks the token through the sign-in hop when needed). */}
         <Route path="/work/launch" element={<LaunchPage />} />
+        </Route>
+        {/* Chrome-free buddy window the desktop shell loads (workcopilot/main.js). */}
+        <Route path="/work/buddy" element={<WorkBuddy />} />
+        {/* Full-screen guidance for a second monitor (read-only; drive from /work). */}
+        <Route path="/work/guide" element={<WorkFullGuide />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

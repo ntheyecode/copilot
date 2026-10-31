@@ -14,7 +14,6 @@ import { api } from '../../api.js'
 import WorkShell from '../../workShell.jsx'
 import LanguagePinModal from '../../components/LanguagePinModal.jsx'
 import PreferencesPanel from '../../components/PreferencesPanel.jsx'
-import { setInProduct } from '../../theme/prefs.js'
 import { AVMark } from '../../components/AdmireVedaLogo.jsx'
 import { readBuddyPref } from '../../components/AliveBuddy.jsx'
 import { useLocale, useT } from '../../i18n/index.jsx'
@@ -190,10 +189,9 @@ export default function WorkAppLayout() {
   const [railOpen, setRailOpen] = useState(true)
   const [showBuy, setShowBuy] = useState(false)
   // Per-user Preferences (theme mode, brand colors, accessibility): a modal
-  // opened from the rail foot. The user's saved theme mode paints only while
-  // this product shell is mounted (the public site stays light).
+  // opened from the rail foot. The user's saved theme mode paints on every
+  // signed-in console (src/theme/ProductThemeScope.jsx); the public site stays light.
   const [prefsOpen, setPrefsOpen] = useState(false)
-  useEffect(() => { setInProduct(true); return () => setInProduct(false) }, [])
   // Buy top-up hours or an image bundle: a small quantity + price modal.
   const [buyErr, setBuyErr] = useState('')
   const [buyModal, setBuyModal] = useState(null)   // { kind: 'hours' | 'images' } | null
