@@ -34,6 +34,7 @@ import { scheduleFrameSweep } from './workflow_frame_sweep.js'
 import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
 import { registerPersonalBrainRoutes } from './personal_brain_routes.js'
+import { registerPartnerRoutes } from './partner_apply.js'
 import { registerCompanyBrainDocumentRoutes } from './company_brain_documents.js'
 import { sessionLearning } from './personal_brain_rules.js'
 import { captureSourceOf, CAPTURE_HEADER } from './capture_sources.js'
@@ -3426,6 +3427,11 @@ app.post('/api/work/leads', wrap((req, res) => {
 // ---- Contact Us (public) --------------------------------------------------
 // Capture the form, email the business (recipient is superadmin-set), and send
 // the submitter a thank-you. Rate-limited like the lead form.
+// Partner applications land in the contact inbox (server/partner_apply.js).
+registerPartnerRoutes(app, {
+  store, wrap, rateOk: coverageRateOk, companiesOn: () => caps.has('saas_companies'),
+  notify: (d) => { const n = store.getNotifySettings(); sendTemplateAsync('contact_notify', n.contactTo, d); if (n.thankYou) sendTemplateAsync('contact_thank_you', d.email, { name: d.name }) },
+})
 app.post('/api/work/contact', wrap((req, res) => {
   const b = req.body || {}
   const name = String(b.name || '').trim()
