@@ -25,6 +25,7 @@ import * as totp from './totp.js'
 import { PROVIDERS, allowAiHost, generate as aiGenerate } from './ai.js'
 import { extractText as extractDocText } from './docs.js'
 import { createPersonalBrain } from './personal_brain.js'
+import { cameraAllowed, cameraRefusal } from './capture_sources.js'
 import { COMPLIANCE_FRAMEWORKS, getFramework } from './compliance_frameworks.js'
 import { resolveGuidanceDepth, normalizeDepth as normalizeDepthId, clampDepth, canUseProjects as canUseProjectsPure } from './guidance_depth.js'
 import * as customers from './work_customers.js'
@@ -725,6 +726,7 @@ export function publicWorkUser(u) {
     idpManaged: managedView(u),   // { role, grants } the company's identity provider sets through group mappings, else null
     workFlow: (u.companyId ? (['worker', 'independent', 'mixed'].includes(u.workFlow) ? u.workFlow : 'independent') : null),  // how tasks reach a company user: worker | independent | mixed (null for individuals)
     companyName: co ? co.name : null,
+    cameraCapture: cameraAllowed({ user: u, company: co }),   // may the guide read from a camera (personal: on; company: its admin's switch)
     // Enterprise allocation GROUP (admin / supervisor / member) the company admin
     // governs the user by, and the per-user ceiling override (null = inherit the
     // group). Defaulted from the company role when the admin has not reassigned it.
@@ -1728,6 +1730,19 @@ export function clearLearnings(userId) {
 // NEVER touch the platform KB. The destructive ones are logged with a reason by
 // the caller via recordAdminAction.
 function _company(companyId) { return (db.companies || []).find((c) => c.id === companyId) || null }
+// Camera switch (company admin): OFF by default for a company; personal
+// accounts always have it (capture_sources.js holds the rule).
+export function getCompanyCameraCapture(companyId) { const c = _company(companyId); return !!(c && c.cameraCapture === true) }
+export function setCompanyCameraCapture(companyId, enabled) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
+  c.cameraCapture = !!enabled; persist()
+  return { camera: c.cameraCapture }
+}
+export function cameraRefusalFor(userId, source) {
+  const u = getUser(userId)
+  return cameraRefusal({ source, user: u, company: u && u.companyId ? _company(u.companyId) : null })
+}
+
 // Company-KB switch (admin): ON (default) stores learned app knowledge on our
 // servers, shared across the team; OFF learns/recalls nothing on our servers.
 export function getCompanyKbEnabled(companyId) { const c = _company(companyId); return c ? (c.kbEnabled !== false) : true }

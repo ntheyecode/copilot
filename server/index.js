@@ -35,6 +35,7 @@ import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
 import { registerPersonalBrainRoutes } from './personal_brain_routes.js'
 import { sessionLearning } from './personal_brain_rules.js'
+import { captureSourceOf, CAPTURE_HEADER } from './capture_sources.js'
 import { verifyResponse } from './work_verify.js'
 import { registerWorkImageRoutes } from './work-images.js'
 import { registerWorkCustomerRoutes } from './work_customer_routes.js'
@@ -1690,6 +1691,16 @@ function guardUserText(req, res, text, field, sessionId = null) {
   return { guard: { warning, severity: hit.severity, category: hit.category, blocked: false } }
 }
 
+// The one camera chokepoint: a session request that says it reads from a camera
+// (x-wc-capture: camera) goes ahead only where the camera is allowed.
+app.use('/api/work/sessions', (req, res, next) => {
+  if (captureSourceOf(req.get(CAPTURE_HEADER)) !== 'camera') return next()
+  requireWorkAuth(req, res, () => {
+    const refusal = store.cameraRefusalFor(req.workUser.id, 'camera')
+    if (refusal) return res.status(403).json(refusal)
+    next()
+  })
+})
 app.post('/api/work/sessions', requireWorkAuth, requireWorkSubscription, wrap((req, res) => {
   const { title, goal, scope } = req.body || {}
   // Work-flow segregation: a company user on the worker flow does not start their
@@ -1960,6 +1971,17 @@ app.get('/api/work/team/privacy-contacts', requireWorkAuth, requireCompanyAdmin,
   const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
   res.json(store.getCompanySensitivity(cid))
 }))
+// Camera reading (server/capture_sources.js): the company admin's switch, off
+// by default for a company; personal accounts always have it.
+app.get('/api/work/company/capture', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  res.json({ camera: store.getCompanyCameraCapture(req.workUser.companyId) })
+}))
+app.put('/api/work/company/capture', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const r = store.setCompanyCameraCapture(req.workUser.companyId, !!(req.body && req.body.camera))
+  store.recordAdminAction({ userId: req.workUser.id, companyId: req.workUser.companyId, action: 'camera_capture', reason: r.camera ? 'turned camera reading on' : 'turned camera reading off', detail: `camera=${r.camera}` })
+  res.json(r)
+}))
+
 app.post('/api/work/team/privacy-contacts', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
   const b = req.body || {}
@@ -3887,10 +3909,12 @@ app.post('/api/work/company/integrations/:id/test', requireWorkAuth, requireComp
 registerWorkBillingRoutes(app, { store, requireWorkAuth, requireAuth, requireSuperAdmin, requireAiStepUp, wrap })
 registerAffiliateRoutes(app, { store, requireWorkAuth, requireAuth, requireAffiliateAdmin, requireSuperAdmin, requireAiStepUp, wrap })
 
-// Public: the Windows desktop installer. A bare /downloads/... path hits the
+// The Windows desktop installer, for signed-in people only (owner, 2026-10-31:
+// downloads live in the dashboard, never on the public site; the MSI is for
+// company admins at /api/work/app/msi). A bare /downloads/... path hits the
 // nginx catch-all and returns the SPA HTML (a ~6 KB file renamed .exe), so it
 // MUST be served via an /api/work path that reaches this app, before the catch-all.
-app.get('/api/work/desktop-setup.exe', (req, res) => {
+app.get('/api/work/desktop-setup.exe', requireWorkAuth, (req, res) => {
   const f = path.join(ROOT, 'downloads', WORK_DESKTOP_FILE)
   if (!fs.existsSync(f)) return res.status(404).json({ error: 'The installer is not published yet.' })
   res.setHeader('Content-Type', 'application/octet-stream')

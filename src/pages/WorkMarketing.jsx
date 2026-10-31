@@ -2,9 +2,9 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Compass, ShieldCheck, Globe2, FileText,
-  ArrowRight, Check, Sparkles, Layers, Monitor, Smartphone, AppWindow,
+  ArrowRight, Check, Sparkles, Layers, Smartphone, AppWindow,
   Lock, Zap, Rocket, Target, ScanEye, ListChecks, AlertTriangle,
-  Building2, Download,
+  Building2,
   Server, Blocks, Bot, Megaphone, Calculator, Scale, Shapes, Trophy, X, MessageSquareOff,
   FileCheck2, ScrollText, Fingerprint, ClipboardCheck,
   UserCog, Copy, BrainCircuit, Lightbulb,
@@ -554,25 +554,23 @@ export default function WorkMarketing() {
           <p>{t('home.final.p')}</p>
           <button className="wm-cta big" onClick={() => go('')}>{t('common.getStarted')} <ArrowRight size={18} className="wm-arrow" /></button>
           <div className="wm-dl" data-reveal>
-            <span className="wm-dl-lbl">{t('home.final.useYourWay')}</span>
-            <div className="wm-dl-row">
+            {ed.individualPlans && <span className="wm-dl-lbl">{t('home.final.useYourWay')}</span>}
+            {/* Downloads live in the signed-in dashboard (owner, 2026-10-31): the
+                public site offers no installer. The organization site (pure
+                enterprise) shows no "use it your way" row at all. */}
+            {ed.individualPlans && <div className="wm-dl-row">
               <a className="wm-dl-btn primary" href="/workcopilot" title={t('home.final.browser.title')}>
                 <span className="wm-dl-rec">{t('home.final.browser.rec')}</span>
                 <Globe2 size={22} />
                 <span className="wm-dl-t"><b>{t('home.final.browser.b')}</b><i>{t('home.final.browser.i')}</i></span>
                 <ArrowRight size={16} className="wm-arrow" />
               </a>
-              <a className="wm-dl-btn" href="/api/work/desktop-setup.exe" aria-label={t('home.final.windows.aria')} title={t('home.final.windows.title')}>
-                <Monitor size={22} />
-                <span className="wm-dl-t"><b>{t('home.final.windows.b')}</b><i>{t('home.final.windows.i')}</i></span>
-                <Download size={16} />
-              </a>
               <div className="wm-dl-btn soon" aria-disabled="true">
                 <Smartphone size={22} />
                 <span className="wm-dl-t"><b>{t('home.final.android.b')}</b><i>{t('home.final.android.i')}</i></span>
                 <span className="wm-dl-soon">{t('common.comingSoon')}</span>
               </div>
-            </div>
+            </div>}
             <span className="wm-dl-note">{t.rich('home.final.note2', null, { a: (c) => <a href="/workcopilot/enterprise">{c}</a> })}</span>
           </div>
         </div>

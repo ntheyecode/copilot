@@ -12,11 +12,18 @@ const IS_APP = typeof window !== 'undefined' && !!window.refigold
 function chosenLocale() {
   try { return (typeof localStorage !== 'undefined' && localStorage.getItem('wc_locale')) || '' } catch { return '' }
 }
+// What the guiding console reads from right now ('screen' | 'camera'). Session
+// requests carry it (x-wc-capture) so the server can apply the company's camera
+// switch (server/capture_sources.js); the console sets it when capture starts.
+let captureSource = 'screen'
+export function setCaptureSource(s) { captureSource = s === 'camera' ? 'camera' : 'screen' }
+
 async function req(method, url, body, opts) {
   const headers = {}
   if (body) headers['Content-Type'] = 'application/json'
   if (IS_APP) headers['X-Refigold-App'] = '1'
   const loc = chosenLocale(); if (loc) headers['X-WC-Locale'] = loc
+  if (String(url).startsWith('/api/work/sessions')) headers['x-wc-capture'] = captureSource
   const res = await fetch(url, {
     method,
     credentials: 'include',
