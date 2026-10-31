@@ -97,7 +97,7 @@ const FIELDS = readFields()
 // ---- the routes -------------------------------------------------------------
 // label: short link text for the sibling-page nav. `source`: page file used by --check.
 const R = []
-const route = (r) => R.push(routeFor(r, AUDIENCE))
+const route = (r) => { const x = routeFor(r, AUDIENCE); if (x) R.push(x) }   // null: no such page for this audience
 
 route({
   path: '/workcopilot',

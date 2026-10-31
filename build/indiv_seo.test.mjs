@@ -69,5 +69,9 @@ test('the organization editions keep the organization copy', async () => {
   const read = stamped('saas')
   assert.equal(titleOf(read('/workcopilot/how-it-works')), base('seo.how-it-works.title'))
   assert.doesNotMatch(read('/'), /indiv|For people who do the work themselves/)
-  for (const p of INDIV_SEO_PAGES) assert.notEqual(titleOf(read(p.path)), indivSeo(base, p.page).title, `saas ${p.path} is not the individuals copy`)
+  for (const p of INDIV_SEO_PAGES) {
+    // No published prices for organizations: their pricing page is not prerendered (it redirects to contact).
+    if (p.path === '/workcopilot/pricing') { assert.throws(() => read(p.path), /ENOENT/, 'saas has no prerendered pricing page'); continue }
+    assert.notEqual(titleOf(read(p.path)), indivSeo(base, p.page).title, `saas ${p.path} is not the individuals copy`)
+  }
 })

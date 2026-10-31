@@ -501,9 +501,6 @@ export default function WorkMarketing() {
           <h2 className="wm-h2" data-reveal>{t('home.pricing.h2')}</h2>
           <p className="wm-sub" data-reveal>{t('home.pricing.sub')}</p>
           <OrgPlans compact />
-          <div className="wm-fld-more" data-reveal>
-            <a className="wm-cta alt" href="/workcopilot/pricing">{t('home.pricing.fullCompare')} <ArrowRight size={15} className="wm-arrow" /></a>
-          </div>
         </div>
       </section>
       ) : (

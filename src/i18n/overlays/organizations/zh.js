@@ -8,7 +8,7 @@ export default {
   seo: {
     pricing: {
       title: "组织方案 - WorkCoPilot by AdmireVeda",
-      description: "WorkCoPilot 组织方案：AdmireVeda 托管、AdmireVeda 代管，或部署在您自己云中的私有实例。至少 100 位用户起，按每用户每月计价，含公司策略、单点登录和引导小时池。联系我们。"
+      description: "WorkCoPilot 组织方案：AdmireVeda 托管、AdmireVeda 代管，或部署在您自己云中的私有实例，含公司策略、单点登录和引导小时池。欢迎联系我们获取报价。"
     }
   },
   home: {
@@ -42,7 +42,7 @@ export default {
     pricing: {
       eyebrow: "方案",
       h2: "面向组织的方案。",
-      sub: "AdmireVeda 托管、AdmireVeda 代管，或部署在您自己云中的私有实例。按每用户每月计价，费率由公司规模决定。",
+      sub: "AdmireVeda 托管、AdmireVeda 代管，或部署在您自己云中的私有实例。欢迎联系我们，获取适合您组织的报价。",
       fullCompare: "查看组织方案"
     },
     final: {
@@ -66,8 +66,8 @@ export default {
     notes: {
       items: [
         {
-          t: "按人计价",
-          d: "每个方案按每用户每月计价，公司规模决定每位用户的费率。另附由公司管理员分配的引导小时池。"
+          t: "按部署规模定价",
+          d: "欢迎联系我们，获取适合您组织及 WorkCoPilot 使用方式的报价。另附由公司管理员分配的引导小时池。"
         },
         {
           t: "按分钟，不按整块",
@@ -103,7 +103,7 @@ export default {
       pricing: {
         items: {
           0: {
-            a: "WorkCoPilot 面向组织销售，至少 100 位用户起，按每用户每月计价：AdmireVeda 托管、AdmireVeda 代管（AI 另按实际用量计费），或部署在您自己云中的私有实例。公司规模决定每位用户的费率。联系我们。",
+            a: "WorkCoPilot 面向组织销售，价格按部署规模而定：AdmireVeda 托管、AdmireVeda 代管，或部署在您自己云中的私有实例。欢迎联系我们获取报价。",
             d: "AdmireVeda 根据合同向贵公司开具发票；发票可在公司控制台中查看。"
           }
         }

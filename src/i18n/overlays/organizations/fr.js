@@ -8,7 +8,7 @@ export default {
   seo: {
     pricing: {
       title: "Offres pour les organisations - WorkCoPilot by AdmireVeda",
-      description: "Les offres WorkCoPilot pour les organisations : hébergé par AdmireVeda, géré par AdmireVeda ou instance privée dans votre propre cloud. Prix par utilisateur et par mois, pour 100 utilisateurs minimum, avec politique d'entreprise, connexion unique et un pool d'heures guidées. Parlez-nous."
+      description: "WorkCoPilot pour les organisations : hébergé par AdmireVeda, géré par AdmireVeda ou instance privée dans votre propre cloud, avec politique d'entreprise, connexion unique et un pool d'heures guidées. Parlez-nous pour obtenir un devis."
     }
   },
   home: {
@@ -42,7 +42,7 @@ export default {
     pricing: {
       eyebrow: "Offres",
       h2: "Des offres pour les organisations.",
-      sub: "Hébergé par AdmireVeda, géré par AdmireVeda ou instance privée dans votre propre cloud. Prix par utilisateur et par mois, fixé selon la taille de votre entreprise.",
+      sub: "Hébergé par AdmireVeda, géré par AdmireVeda ou instance privée dans votre propre cloud. Parlez-nous pour un devis adapté à votre organisation.",
       fullCompare: "Voir les offres pour les organisations"
     },
     final: {
@@ -66,8 +66,8 @@ export default {
     notes: {
       items: [
         {
-          t: "Un prix par personne",
-          d: "Chaque offre est tarifée par utilisateur et par mois, et la taille de votre entreprise fixe le tarif de chaque utilisateur. Un pool d'heures guidées que l'administrateur de votre entreprise répartit."
+          t: "Un prix adapté à votre déploiement",
+          d: "Parlez-nous pour un devis adapté à votre organisation et à votre façon d'utiliser WorkCoPilot. Un pool d'heures guidées que l'administrateur de votre entreprise répartit."
         },
         {
           t: "Des minutes, pas des blocs",
@@ -103,7 +103,7 @@ export default {
       pricing: {
         items: {
           0: {
-            a: "WorkCoPilot est vendu aux organisations, par utilisateur et par mois, pour 100 utilisateurs minimum : hébergé par AdmireVeda, géré par AdmireVeda (plus l'IA selon l'utilisation réelle) ou en instance privée dans votre propre cloud. La taille de votre entreprise fixe le tarif de chaque utilisateur. Parlez-nous.",
+            a: "WorkCoPilot est vendu aux organisations, avec un prix adapté à votre déploiement : hébergé par AdmireVeda, géré par AdmireVeda ou en instance privée dans votre propre cloud. Parlez-nous pour obtenir un devis.",
             d: "AdmireVeda facture votre entreprise selon votre contrat ; les factures sont dans votre console d'entreprise."
           }
         }

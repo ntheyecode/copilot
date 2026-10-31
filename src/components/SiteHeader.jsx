@@ -53,7 +53,7 @@ export const SITE_LINKS = [
   { key: 'fields', href: '/workcopilot/fields' },
   { key: 'security', href: '/workcopilot/security' },
   { key: 'enterprise', href: '/workcopilot/enterprise', needs: 'companies' },
-  { key: 'pricing', href: '/workcopilot/pricing' },
+  { key: 'pricing', href: '/workcopilot/pricing', needs: 'individualPlans' },   // no published prices for organizations
   { key: 'faq', href: '/workcopilot/faq' },
 ]
 

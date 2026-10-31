@@ -8,7 +8,7 @@ export default {
   seo: {
     pricing: {
       title: "Kuruluşlar için planlar - WorkCoPilot by AdmireVeda",
-      description: "Kuruluşlar için WorkCoPilot planları: AdmireVeda tarafından barındırılan, AdmireVeda tarafından yönetilen ya da kendi bulutunuzda özel kurulum. En az 100 kullanıcı için kullanıcı başına aylık fiyat; şirket politikası, tek oturum açma ve bir rehberlik saati havuzu ile. Bizimle konuşun."
+      description: "Kuruluşlar için WorkCoPilot: AdmireVeda tarafından barındırılan, AdmireVeda tarafından yönetilen ya da kendi bulutunuzda özel kurulum; şirket politikası, tek oturum açma ve bir rehberlik saati havuzu ile. Fiyat teklifi için bizimle konuşun."
     }
   },
   home: {
@@ -42,7 +42,7 @@ export default {
     pricing: {
       eyebrow: "Planlar",
       h2: "Kuruluşlar için planlar.",
-      sub: "AdmireVeda tarafından barındırılan, AdmireVeda tarafından yönetilen ya da kendi bulutunuzda özel kurulum. Kullanıcı başına aylık fiyat; ücreti şirketinizin büyüklüğü belirler.",
+      sub: "AdmireVeda tarafından barındırılan, AdmireVeda tarafından yönetilen ya da kendi bulutunuzda özel kurulum. Kuruluşunuza uygun bir fiyat teklifi için bizimle konuşun.",
       fullCompare: "Kuruluşlar için planları görün"
     },
     final: {
@@ -66,8 +66,8 @@ export default {
     notes: {
       items: [
         {
-          t: "Kişi başı fiyat",
-          d: "Her plan kullanıcı başına aylık fiyatlandırılır ve her kullanıcının ücretini şirketinizin büyüklüğü belirler. Şirket yöneticinizin dağıttığı bir rehberlik saati havuzu da dahildir."
+          t: "Kurulumunuza göre fiyat",
+          d: "Kuruluşunuza ve WorkCoPilot’u kullanma biçiminize uygun bir fiyat teklifi için bizimle konuşun. Şirket yöneticinizin dağıttığı bir rehberlik saati havuzu da dahildir."
         },
         {
           t: "Bloklar değil, dakikalar",
@@ -103,7 +103,7 @@ export default {
       pricing: {
         items: {
           0: {
-            a: "WorkCoPilot kuruluşlara, en az 100 kullanıcı için kullanıcı başına aylık fiyatla satılır: AdmireVeda tarafından barındırılan, AdmireVeda tarafından yönetilen (artı gerçek kullanıma göre yapay zeka) ya da kendi bulutunuzda özel kurulum. Her kullanıcının ücretini şirketinizin büyüklüğü belirler. Bizimle konuşun.",
+            a: "WorkCoPilot kuruluşlara, kurulumunuza göre belirlenen bir fiyatla satılır: AdmireVeda tarafından barındırılan, AdmireVeda tarafından yönetilen ya da kendi bulutunuzda özel kurulum. Fiyat teklifi için bizimle konuşun.",
             d: "AdmireVeda, sözleşmeniz kapsamında şirketinize fatura keser; faturalar şirket konsolunuzdadır."
           }
         }

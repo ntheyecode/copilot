@@ -115,7 +115,12 @@ const QUESTION_NEEDS = {
   'pricing.1': 'individualPlans', 'pricing.2': 'individualPlans', 'pricing.3': 'individualPlans', 'pricing.4': 'individualPlans',
   'pricing.5': 'companies', 'who.2': 'companies', 'compliance.3': 'companies', 'compliance.4': 'companies',
 }
-const linkNeeds = (href) => (/\/workcopilot\/(enterprise|dpa)\b|subject=WorkCoPilot%20Enterprise/.test(String(href || '')) ? 'companies' : null)
+const linkNeeds = (href) => {
+  const h = String(href || '')
+  if (/\/workcopilot\/(enterprise|dpa)\b|subject=WorkCoPilot%20Enterprise/.test(h)) return 'companies'
+  if (/^\/workcopilot\/pricing\b/.test(h)) return 'individualPlans'   // no published prices for organizations
+  return null
+}
 const ALL_IDS = NUMBERED.flatMap((g) => g.items.map((it) => it.id))
 
 // Resolve the skeleton against the active locale: titles, questions, answers,

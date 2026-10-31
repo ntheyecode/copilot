@@ -15,7 +15,7 @@ export default {
   seo: {
     pricing: {
       title: 'Plans for Organizations - WorkCoPilot by AdmireVeda',
-      description: 'WorkCoPilot plans for organizations: hosted by AdmireVeda, managed by AdmireVeda, or a private instance in your own cloud. Per user per month for at least 100 users, with company policy, single sign-on and a guided-hours pool. Talk to us.',
+      description: 'WorkCoPilot for organizations: hosted by AdmireVeda, managed by AdmireVeda, or a private instance in your own cloud, with company policy, single sign-on and a guided-hours pool. Talk to us for a quote.',
     },
   },
   home: {
@@ -36,7 +36,7 @@ export default {
     pricing: {
       eyebrow: 'Plans',
       h2: 'Plans for organizations.',
-      sub: 'Hosted by AdmireVeda, managed by AdmireVeda, or a private instance in your own cloud. Per user per month, and your company size sets the rate.',
+      sub: 'Hosted by AdmireVeda, managed by AdmireVeda, or a private instance in your own cloud. Talk to us for a quote that fits your organization.',
       fullCompare: 'See plans for organizations',
     },
     final: {
@@ -59,7 +59,7 @@ export default {
     sub: 'Choose how WorkCoPilot runs for you: hosted by AdmireVeda, managed by AdmireVeda, or a private instance in your own cloud. Security and privacy come with every plan, never as an upsell.',
     notes: {
       items: [
-        { t: 'Priced by people', d: 'Each plan is priced per user per month, and your company size sets the rate for every user. A guided-hours pool your company administrator shares out.' },
+        { t: 'Priced to your rollout', d: 'Talk to us for a quote that fits your organization and how you run WorkCoPilot. A guided-hours pool your company administrator shares out.' },
         { t: 'Minutes, not blocks', d: 'Guided time is counted per minute used, never rounded up to the hour.' },
         { t: 'Your rollout', d: 'A named owner for your rollout, with single sign-on and company policy set before your people start.' },
         { t: 'How companies buy', d: 'A contract that matches how your company buys, a DPA, and invoices you download from your company console.' },
@@ -79,7 +79,7 @@ export default {
       pricing: {
         items: {
           0: {
-            a: 'WorkCoPilot is sold to organizations, per user per month for at least 100 users: hosted by AdmireVeda, managed by AdmireVeda (plus AI at actual usage), or a private instance in your own cloud. Your company size sets the rate for every user. Talk to us.',
+            a: 'WorkCoPilot is sold to organizations and priced to your rollout: hosted by AdmireVeda, managed by AdmireVeda, or a private instance in your own cloud. Talk to us for a quote.',
             d: 'AdmireVeda invoices your company under your contract; invoices are in your company console.',
           },
         },

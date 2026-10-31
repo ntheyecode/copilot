@@ -149,7 +149,7 @@ export default function WorkFields() {
           <p>{t('fieldsPage.ctaP')}</p>
           <div className="wfl-cta-row">
             <button className="wfl-btn" onClick={() => nav(startPath(ed))}>{t('fieldsPage.startBtn')} <ArrowRight size={15} aria-hidden /></button>
-            <a className="wfl-btn alt" href="/workcopilot/pricing">{t('fieldsPage.pricingBtn')}</a>
+            {ed.individualPlans && <a className="wfl-btn alt" href="/workcopilot/pricing">{t('fieldsPage.pricingBtn')}</a>}
           </div>
         </div>
       </section>

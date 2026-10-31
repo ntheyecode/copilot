@@ -8,7 +8,7 @@ export default {
   seo: {
     pricing: {
       title: "Tarife für Organisationen - WorkCoPilot by AdmireVeda",
-      description: "Die WorkCoPilot-Tarife für Organisationen: gehostet von AdmireVeda, verwaltet von AdmireVeda oder als private Instanz in Ihrer eigenen Cloud. Pro Benutzer und Monat ab 100 Benutzern, mit Unternehmensrichtlinie, Single Sign-on und einem Pool geführter Stunden. Sprechen Sie mit uns."
+      description: "WorkCoPilot für Organisationen: gehostet von AdmireVeda, verwaltet von AdmireVeda oder als private Instanz in Ihrer eigenen Cloud, mit Unternehmensrichtlinie, Single Sign-on und einem Pool geführter Stunden. Sprechen Sie mit uns über ein Angebot."
     }
   },
   home: {
@@ -42,7 +42,7 @@ export default {
     pricing: {
       eyebrow: "Tarife",
       h2: "Tarife für Organisationen.",
-      sub: "Gehostet von AdmireVeda, verwaltet von AdmireVeda oder als private Instanz in Ihrer eigenen Cloud. Pro Benutzer und Monat, und die Größe Ihres Unternehmens bestimmt den Preis.",
+      sub: "Gehostet von AdmireVeda, verwaltet von AdmireVeda oder als private Instanz in Ihrer eigenen Cloud. Sprechen Sie mit uns über ein Angebot, das zu Ihrer Organisation passt.",
       fullCompare: "Tarife für Organisationen ansehen"
     },
     final: {
@@ -66,8 +66,8 @@ export default {
     notes: {
       items: [
         {
-          t: "Preis nach Personen",
-          d: "Jeder Tarif wird pro Benutzer und Monat berechnet, und die Größe Ihres Unternehmens bestimmt den Preis für jeden Benutzer. Dazu ein Pool geführter Stunden, den Ihr Unternehmensadministrator verteilt."
+          t: "Ein Preis für Ihren Rollout",
+          d: "Sprechen Sie mit uns über ein Angebot, das zu Ihrer Organisation und Ihrem Betrieb von WorkCoPilot passt. Dazu ein Pool geführter Stunden, den Ihr Unternehmensadministrator verteilt."
         },
         {
           t: "Minuten, keine Blöcke",
@@ -103,7 +103,7 @@ export default {
       pricing: {
         items: {
           0: {
-            a: "WorkCoPilot wird an Organisationen verkauft, pro Benutzer und Monat ab 100 Benutzern: gehostet von AdmireVeda, verwaltet von AdmireVeda (zuzüglich KI nach tatsächlicher Nutzung) oder als private Instanz in Ihrer eigenen Cloud. Die Größe Ihres Unternehmens bestimmt den Preis für jeden Benutzer. Sprechen Sie mit uns.",
+            a: "WorkCoPilot wird an Organisationen verkauft, mit einem Preis passend zu Ihrem Rollout: gehostet von AdmireVeda, verwaltet von AdmireVeda oder als private Instanz in Ihrer eigenen Cloud. Sprechen Sie mit uns über ein Angebot.",
             d: "AdmireVeda stellt Ihrem Unternehmen gemäß Ihrem Vertrag Rechnungen; Sie finden sie in Ihrer Unternehmenskonsole."
           }
         }

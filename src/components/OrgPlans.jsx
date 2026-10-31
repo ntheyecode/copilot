@@ -1,32 +1,20 @@
-// The plans an organizations-only edition sells, as three deployment cards:
-// hosted by AdmireVeda, managed by AdmireVeda, and a private instance in the
-// customer's own cloud with its own AI keys. Shown in place of the personal
-// plan cards on the pricing page and the home page wherever personal plans are
-// not sold (individual_plans off).
+// The ways an organization can run WorkCoPilot, as three cards: hosted by
+// AdmireVeda, managed by AdmireVeda, and a private instance in the customer's
+// own cloud with its own AI keys. Shown wherever personal plans are not sold
+// (individual_plans off), on the home page.
 //
-// Prices come from the ONE registry (server/org_pricing.js): per user per
-// month in US dollars, a 100-user minimum, and volume pricing (the company's
-// size band sets the rate for every user). Numbers are formatted per locale;
-// the words around them are edition.orgPlans.* (all 16 locales). Every card
-// leads to the sales conversation: no checkout, no card.
+// No prices (owner, 2026-10-31): admireveda.com publishes no rates; every card
+// leads to the sales conversation. The rates live only in server/org_pricing.js
+// for the superadmin's contracts and invoices.
 import { ArrowRight, Building2, Cloud, Server, Check } from 'lucide-react'
-import { useT, useLocale } from '../i18n/index.jsx'
-import { ORG_PLANS, BANDS, MIN_USERS } from '../../server/org_pricing.js'
+import { useT } from '../i18n/index.jsx'
+import { ORG_PLANS } from '../../server/org_pricing.js'
 
 const ICON = { hosted: Building2, managed: Cloud, private: Server }
 const POPULAR = 'hosted'
 
-function fmt(locale) {
-  const money = (n) => { try { return new Intl.NumberFormat(locale, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n) } catch { return `$${n}` } }
-  const count = (n) => { try { return new Intl.NumberFormat(locale).format(n) } catch { return String(n) } }
-  return { money, count }
-}
-
 export default function OrgPlans({ compact = false }) {
   const t = useT()
-  const locale = useLocale().tag   // BCP 47 tag for Intl (e.g. de-DE)
-  const { money, count } = fmt(locale)
-  const bandLabel = (b) => (b.max == null ? t('edition.orgPlans.bandOpen', { min: count(b.min) }) : t('edition.orgPlans.band', { min: count(b.min), max: count(b.max) }))
   return (
     <div className={`orgp${compact ? ' compact' : ''}`}>
       <style>{CSS}</style>
@@ -35,24 +23,10 @@ export default function OrgPlans({ compact = false }) {
           const Ic = ICON[p.id] || Building2
           const c = t(`edition.orgPlans.${p.id}`) || {}
           const pop = p.id === POPULAR
-          const low = p.flat != null ? p.flat : Math.min(...Object.values(p.rates))
           return (
             <article key={p.id} className={`orgp-card${pop ? ' pop' : ''}`} role="listitem" id={`orgp-${p.id}`} data-testid={`orgp-${p.id}`}>
               {pop && <div className="orgp-tag">{t('edition.orgPlans.popular')}</div>}
               <h3 className="orgp-name"><Ic size={17} aria-hidden="true" /> <span>{c.name}</span></h3>
-              <div className="orgp-price">
-                <span className="orgp-amt">{p.flat != null ? money(p.flat) : t('edition.orgPlans.from', { price: money(low) })}</span>
-                <span className="orgp-per">{t('edition.orgPlans.perUser')}</span>
-              </div>
-              {p.flat != null
-                ? <div className="orgp-flat">{t('edition.orgPlans.aiAtUsage')}</div>
-                : (
-                  <table className="orgp-bands" aria-label={t('edition.orgPlans.bandsAria', { name: c.name })}>
-                    <tbody>
-                      {BANDS.map((b) => <tr key={b.id}><th scope="row">{bandLabel(b)}</th><td>{money(p.rates[b.id])}</td></tr>)}
-                    </tbody>
-                  </table>
-                )}
               <p className="orgp-lead">{c.lead}</p>
               <ul>{[c.p1, c.p2, c.p3].filter(Boolean).map((x) => <li key={x}><Check size={15} aria-hidden="true" /><span>{x}</span></li>)}</ul>
               <a className={`orgp-btn${pop ? '' : ' alt'}`} href="/workcopilot/contact">{t('edition.orgPlans.cta')} <ArrowRight size={15} aria-hidden="true" /></a>
@@ -60,7 +34,6 @@ export default function OrgPlans({ compact = false }) {
           )
         })}
       </div>
-      <p className="orgp-note">{t('edition.orgPlans.note', { min: count(MIN_USERS) })}</p>
     </div>
   )
 }

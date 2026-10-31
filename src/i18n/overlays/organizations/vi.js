@@ -8,7 +8,7 @@ export default {
   seo: {
     pricing: {
       title: "Các gói cho tổ chức - WorkCoPilot by AdmireVeda",
-      description: "Các gói WorkCoPilot cho tổ chức: do AdmireVeda lưu trữ, do AdmireVeda quản lý, hoặc phiên bản riêng trên đám mây của chính bạn. Tính theo người dùng mỗi tháng cho tối thiểu 100 người dùng, kèm chính sách công ty, đăng nhập một lần và quỹ giờ hướng dẫn. Trao đổi với chúng tôi."
+      description: "WorkCoPilot cho tổ chức: do AdmireVeda lưu trữ, do AdmireVeda quản lý, hoặc phiên bản riêng trên đám mây của chính bạn, kèm chính sách công ty, đăng nhập một lần và quỹ giờ hướng dẫn. Trao đổi với chúng tôi để nhận báo giá."
     }
   },
   home: {
@@ -42,7 +42,7 @@ export default {
     pricing: {
       eyebrow: "Các gói",
       h2: "Các gói cho tổ chức.",
-      sub: "Do AdmireVeda lưu trữ, do AdmireVeda quản lý, hoặc phiên bản riêng trên đám mây của chính bạn. Tính theo người dùng mỗi tháng, và quy mô công ty bạn quyết định mức giá.",
+      sub: "Do AdmireVeda lưu trữ, do AdmireVeda quản lý, hoặc phiên bản riêng trên đám mây của chính bạn. Trao đổi với chúng tôi để nhận báo giá phù hợp với tổ chức của bạn.",
       fullCompare: "Xem các gói cho tổ chức"
     },
     final: {
@@ -66,8 +66,8 @@ export default {
     notes: {
       items: [
         {
-          t: "Tính theo số người",
-          d: "Mỗi gói được tính theo người dùng mỗi tháng, và quy mô công ty bạn quyết định mức giá cho mọi người dùng. Kèm một quỹ giờ hướng dẫn do quản trị viên công ty bạn phân bổ."
+          t: "Giá theo quy mô triển khai",
+          d: "Trao đổi với chúng tôi để nhận báo giá phù hợp với tổ chức của bạn và cách bạn vận hành WorkCoPilot. Kèm một quỹ giờ hướng dẫn do quản trị viên công ty bạn phân bổ."
         },
         {
           t: "Tính theo phút, không theo khối",
@@ -103,7 +103,7 @@ export default {
       pricing: {
         items: {
           0: {
-            a: "WorkCoPilot được bán cho tổ chức, tính theo người dùng mỗi tháng cho tối thiểu 100 người dùng: do AdmireVeda lưu trữ, do AdmireVeda quản lý (cộng AI theo mức sử dụng thực tế), hoặc phiên bản riêng trên đám mây của chính bạn. Quy mô công ty bạn quyết định mức giá cho mọi người dùng. Trao đổi với chúng tôi.",
+            a: "WorkCoPilot được bán cho tổ chức với mức giá theo quy mô triển khai của bạn: do AdmireVeda lưu trữ, do AdmireVeda quản lý, hoặc phiên bản riêng trên đám mây của chính bạn. Trao đổi với chúng tôi để nhận báo giá.",
             d: "AdmireVeda xuất hóa đơn cho công ty bạn theo hợp đồng; hóa đơn có trong bảng điều khiển công ty."
           }
         }

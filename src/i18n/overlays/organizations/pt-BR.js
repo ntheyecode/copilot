@@ -8,7 +8,7 @@ export default {
   seo: {
     pricing: {
       title: "Planos para organizações - WorkCoPilot by AdmireVeda",
-      description: "Planos do WorkCoPilot para organizações: hospedado pela AdmireVeda, gerenciado pela AdmireVeda ou uma instância privada na sua própria nuvem. Por usuário por mês, para no mínimo 100 usuários, com política da empresa, login único e um pool de horas guiadas. Fale conosco."
+      description: "WorkCoPilot para organizações: hospedado pela AdmireVeda, gerenciado pela AdmireVeda ou uma instância privada na sua própria nuvem, com política da empresa, login único e um pool de horas guiadas. Fale conosco para um orçamento."
     }
   },
   home: {
@@ -42,7 +42,7 @@ export default {
     pricing: {
       eyebrow: "Planos",
       h2: "Planos para organizações.",
-      sub: "Hospedado pela AdmireVeda, gerenciado pela AdmireVeda ou uma instância privada na sua própria nuvem. Por usuário por mês, e o tamanho da sua empresa define o valor.",
+      sub: "Hospedado pela AdmireVeda, gerenciado pela AdmireVeda ou uma instância privada na sua própria nuvem. Fale conosco para um orçamento sob medida para a sua organização.",
       fullCompare: "Ver planos para organizações"
     },
     final: {
@@ -66,8 +66,8 @@ export default {
     notes: {
       items: [
         {
-          t: "Preço por pessoa",
-          d: "Cada plano tem preço por usuário por mês, e o tamanho da sua empresa define o valor para cada usuário. Um pool de horas guiadas que o administrador da sua empresa distribui."
+          t: "Preço sob medida para a sua implantação",
+          d: "Fale conosco para um orçamento sob medida para a sua organização e para o jeito como você usa o WorkCoPilot. Um pool de horas guiadas que o administrador da sua empresa distribui."
         },
         {
           t: "Minutos, não blocos",
@@ -103,7 +103,7 @@ export default {
       pricing: {
         items: {
           0: {
-            a: "O WorkCoPilot é vendido para organizações, por usuário por mês, para no mínimo 100 usuários: hospedado pela AdmireVeda, gerenciado pela AdmireVeda (mais IA pelo uso real) ou como instância privada na sua própria nuvem. O tamanho da sua empresa define o valor para cada usuário. Fale conosco.",
+            a: "O WorkCoPilot é vendido para organizações com preço sob medida para a sua implantação: hospedado pela AdmireVeda, gerenciado pela AdmireVeda ou como instância privada na sua própria nuvem. Fale conosco para um orçamento.",
             d: "A AdmireVeda fatura a sua empresa conforme o seu contrato; as faturas ficam no console da sua empresa."
           }
         }

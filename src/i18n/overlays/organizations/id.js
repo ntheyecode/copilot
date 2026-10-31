@@ -8,7 +8,7 @@ export default {
   seo: {
     pricing: {
       title: "Paket untuk Organisasi - WorkCoPilot by AdmireVeda",
-      description: "Paket WorkCoPilot untuk organisasi: dihosting oleh AdmireVeda, dikelola oleh AdmireVeda, atau instans privat di cloud Anda sendiri. Harga per pengguna per bulan untuk minimal 100 pengguna, dengan kebijakan perusahaan, single sign-on, dan pool jam panduan. Hubungi kami."
+      description: "WorkCoPilot untuk organisasi: dihosting oleh AdmireVeda, dikelola oleh AdmireVeda, atau instans privat di cloud Anda sendiri, dengan kebijakan perusahaan, single sign-on, dan pool jam panduan. Hubungi kami untuk penawaran harga."
     }
   },
   home: {
@@ -42,7 +42,7 @@ export default {
     pricing: {
       eyebrow: "Paket",
       h2: "Paket untuk organisasi.",
-      sub: "Dihosting oleh AdmireVeda, dikelola oleh AdmireVeda, atau instans privat di cloud Anda sendiri. Harga per pengguna per bulan, dan ukuran perusahaan Anda menentukan tarifnya.",
+      sub: "Dihosting oleh AdmireVeda, dikelola oleh AdmireVeda, atau instans privat di cloud Anda sendiri. Hubungi kami untuk penawaran harga yang sesuai dengan organisasi Anda.",
       fullCompare: "Lihat paket untuk organisasi"
     },
     final: {
@@ -66,8 +66,8 @@ export default {
     notes: {
       items: [
         {
-          t: "Harga per orang",
-          d: "Setiap paket dihargai per pengguna per bulan, dan ukuran perusahaan Anda menentukan tarif untuk setiap pengguna. Termasuk pool jam panduan yang dibagikan oleh administrator perusahaan Anda."
+          t: "Harga sesuai peluncuran Anda",
+          d: "Hubungi kami untuk penawaran harga yang sesuai dengan organisasi Anda dan cara Anda menjalankan WorkCoPilot. Termasuk pool jam panduan yang dibagikan oleh administrator perusahaan Anda."
         },
         {
           t: "Menit, bukan blok",
@@ -103,7 +103,7 @@ export default {
       pricing: {
         items: {
           0: {
-            a: "WorkCoPilot dijual kepada organisasi, per pengguna per bulan untuk minimal 100 pengguna: dihosting oleh AdmireVeda, dikelola oleh AdmireVeda (ditambah AI sesuai pemakaian aktual), atau instans privat di cloud Anda sendiri. Ukuran perusahaan Anda menentukan tarif untuk setiap pengguna. Hubungi kami.",
+            a: "WorkCoPilot dijual kepada organisasi dengan harga yang sesuai peluncuran Anda: dihosting oleh AdmireVeda, dikelola oleh AdmireVeda, atau instans privat di cloud Anda sendiri. Hubungi kami untuk penawaran harga.",
             d: "AdmireVeda menagih perusahaan Anda berdasarkan kontrak; faktur tersedia di konsol perusahaan Anda."
           }
         }

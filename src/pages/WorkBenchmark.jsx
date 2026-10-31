@@ -9,6 +9,7 @@ import SiteFooter from '../components/SiteFooter.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'
 import useSeo from '../useSeo.js'   // per-route title / description / canonical (WEB-01)
 import { useT } from '../i18n/index.jsx'   // localized <title>/description (seo.* keys) + benchmark.* strings
+import { useEditionView } from '../edition/useCaps.js'   // organizations: no pricing link (sales instead)
 import { shouldRevealAtOnce } from '../reveal.js'   // reduced motion / crawler: no count-up, final value at once
 
 // Domain labels and the CI range wording come from the catalog (benchmarkPage.*);
@@ -127,6 +128,7 @@ function ModelScore({ title, summary }) {
 // blue that meets AA on the page tint.
 export default function WorkBenchmark() {
   const t = useT()
+  const ed = useEditionView()
   useSeo({
     title: t('seo.benchmark.title'),
     description: t('seo.benchmark.description'),
@@ -202,7 +204,10 @@ export default function WorkBenchmark() {
             <p>{t('benchmarkPage.ctaP')}</p>
           </div>
           <div className="wbm-ctabtns">
-            <a className="wbm-btn" href="/workcopilot/pricing">{t('benchmarkPage.seePricing')} <ArrowRight size={16} aria-hidden="true" /></a>
+            {/* No published prices for organizations: the next step there is sales. */}
+            {ed.individualPlans
+              ? <a className="wbm-btn" href="/workcopilot/pricing">{t('benchmarkPage.seePricing')} <ArrowRight size={16} aria-hidden="true" /></a>
+              : <a className="wbm-btn" href="/workcopilot/contact">{t('common.getStarted')} <ArrowRight size={16} aria-hidden="true" /></a>}
             <a className="wbm-btn alt" href="/workcopilot/how-it-works">{t('benchmarkPage.howItWorks')}</a>
           </div>
         </section>

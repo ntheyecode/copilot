@@ -8,7 +8,7 @@ export default {
   seo: {
     pricing: {
       title: "조직용 요금제 - WorkCoPilot by AdmireVeda",
-      description: "WorkCoPilot 조직용 요금제: AdmireVeda 호스팅, AdmireVeda 관리형, 또는 고객사 자체 클라우드의 프라이빗 인스턴스. 최소 100명부터 사용자 1인당 월 요금이며, 회사 정책, 싱글 사인온, 안내 시간 풀이 포함됩니다. 문의하세요."
+      description: "WorkCoPilot 조직용 요금제: AdmireVeda 호스팅, AdmireVeda 관리형, 또는 고객사 자체 클라우드의 프라이빗 인스턴스. 회사 정책, 싱글 사인온, 안내 시간 풀이 포함됩니다. 견적은 문의하세요."
     }
   },
   home: {
@@ -42,7 +42,7 @@ export default {
     pricing: {
       eyebrow: "요금제",
       h2: "조직을 위한 요금제.",
-      sub: "AdmireVeda 호스팅, AdmireVeda 관리형, 또는 고객사 자체 클라우드의 프라이빗 인스턴스. 사용자 1인당 월 요금이며, 회사 규모에 따라 요금이 정해집니다.",
+      sub: "AdmireVeda 호스팅, AdmireVeda 관리형, 또는 고객사 자체 클라우드의 프라이빗 인스턴스. 조직에 맞는 견적은 문의하세요.",
       fullCompare: "조직용 요금제 보기"
     },
     final: {
@@ -66,8 +66,8 @@ export default {
     notes: {
       items: [
         {
-          t: "인원수 기준 요금",
-          d: "각 요금제는 사용자 1인당 월 요금이며, 회사 규모에 따라 모든 사용자의 요금이 정해집니다. 회사 관리자가 배분하는 안내 시간 풀이 포함됩니다."
+          t: "도입 규모에 맞춘 요금",
+          d: "조직과 WorkCoPilot 운영 방식에 맞는 견적은 문의하세요. 회사 관리자가 배분하는 안내 시간 풀이 포함됩니다."
         },
         {
           t: "블록이 아닌 분 단위",
@@ -103,7 +103,7 @@ export default {
       pricing: {
         items: {
           0: {
-            a: "WorkCoPilot은 조직에 판매되며, 최소 100명부터 사용자 1인당 월 요금입니다: AdmireVeda 호스팅, AdmireVeda 관리형(AI는 실제 사용량 기준 별도), 또는 고객사 자체 클라우드의 프라이빗 인스턴스. 회사 규모에 따라 모든 사용자의 요금이 정해집니다. 문의하세요.",
+            a: "WorkCoPilot은 조직에 판매되며, 요금은 도입 규모에 맞춰 정해집니다: AdmireVeda 호스팅, AdmireVeda 관리형, 또는 고객사 자체 클라우드의 프라이빗 인스턴스. 견적은 문의하세요.",
             d: "AdmireVeda가 계약에 따라 회사에 청구서를 발행하며, 청구서는 회사 콘솔에서 확인할 수 있습니다."
           }
         }

@@ -156,28 +156,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://admireveda.com/workcopilot/pricing</loc>
-    <xhtml:link rel="alternate" hreflang="en-US" href="https://admireveda.com/workcopilot/pricing?lang=en"/>
-    <xhtml:link rel="alternate" hreflang="en-GB" href="https://admireveda.com/workcopilot/pricing?lang=en-GB"/>
-    <xhtml:link rel="alternate" hreflang="es" href="https://admireveda.com/workcopilot/pricing?lang=es"/>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://admireveda.com/workcopilot/pricing?lang=fr"/>
-    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://admireveda.com/workcopilot/pricing?lang=pt-BR"/>
-    <xhtml:link rel="alternate" hreflang="it" href="https://admireveda.com/workcopilot/pricing?lang=it"/>
-    <xhtml:link rel="alternate" hreflang="de" href="https://admireveda.com/workcopilot/pricing?lang=de"/>
-    <xhtml:link rel="alternate" hreflang="tr" href="https://admireveda.com/workcopilot/pricing?lang=tr"/>
-    <xhtml:link rel="alternate" hreflang="ru" href="https://admireveda.com/workcopilot/pricing?lang=ru"/>
-    <xhtml:link rel="alternate" hreflang="ar" href="https://admireveda.com/workcopilot/pricing?lang=ar"/>
-    <xhtml:link rel="alternate" hreflang="hi" href="https://admireveda.com/workcopilot/pricing?lang=hi"/>
-    <xhtml:link rel="alternate" hreflang="id" href="https://admireveda.com/workcopilot/pricing?lang=id"/>
-    <xhtml:link rel="alternate" hreflang="vi" href="https://admireveda.com/workcopilot/pricing?lang=vi"/>
-    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://admireveda.com/workcopilot/pricing?lang=zh"/>
-    <xhtml:link rel="alternate" hreflang="ja" href="https://admireveda.com/workcopilot/pricing?lang=ja"/>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://admireveda.com/workcopilot/pricing?lang=ko"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://admireveda.com/workcopilot/pricing"/>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://admireveda.com/workcopilot/benchmark</loc>
     <xhtml:link rel="alternate" hreflang="en-US" href="https://admireveda.com/workcopilot/benchmark?lang=en"/>
     <xhtml:link rel="alternate" hreflang="en-GB" href="https://admireveda.com/workcopilot/benchmark?lang=en-GB"/>
