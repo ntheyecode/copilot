@@ -15,6 +15,7 @@ import { useT } from '../../../i18n/index.jsx'
 import { Loading, ErrorBox, Spinning, SavedTag, RecRow, EmptyState, useReasonModal } from './_shared.jsx'
 import { OIDC_PROVIDERS, SAML_PROVIDERS, IDP_LABELS, oidcIssuerExample } from '../../../shared/oidc_providers.js'
 import { useEditionView } from '../../../edition/useCaps.js'
+import ScimGroupRoles from './ScimGroupRoles.jsx'   // SCIM tab: group -> role / grant mappings
 
 const TABS = ['oidc', 'saml', 'scim']
 const fmtWhen = (s) => { try { return new Date(s).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) } catch { return '' } }
@@ -90,6 +91,7 @@ export default function SsoSetup({ company }) {
         {tab === 'oidc' ? <OidcPanel data={d} onSaved={load} /> : null}
         {tab === 'saml' ? <SamlPanel data={d} onSaved={load} /> : null}
         {tab === 'scim' ? <ScimPanel data={d} onChanged={load} /> : null}
+        {tab === 'scim' ? <ScimGroupRoles /> : null}
         {tab === 'oidc' || tab === 'saml' ? <TestCard protocol={tab} connected={tab === 'oidc' ? oidcOn : samlOn} companyId={d.companyId} last={d.lastTest} onRefresh={load} /> : null}
       </div>
     </div>

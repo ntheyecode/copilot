@@ -38,7 +38,8 @@ import { Loading, ErrorBox, EmptyState, Spinning, SavedTag, RecRow, EditToggle, 
 import { Meter, VIZ_CSS } from './sections/_viz.jsx'
 import { AiSourceChoice, AI_SOURCE_CHOICE_CSS } from './sections/AiSourceChoice.jsx'
 import { aiSetupOf } from '../../shared/ai_source_options.js'
-import { COMPANY_ROLE_OPTIONS, WORK_FLOW_OPTIONS, normalizeFlow, GRANT_OPTIONS, canGrantTrainer, hasTrainerGrant } from '../../shared/work_roles_options.js'
+import { COMPANY_ROLE_OPTIONS, WORK_FLOW_OPTIONS, normalizeFlow } from '../../shared/work_roles_options.js'
+import TeamRoleCell from './sections/TeamRoleCell.jsx'   // Team row: role + trainer grant, locked where the identity provider manages them
 // Single sign-on setup (OIDC, SAML, SCIM) and Billing (contract, pool,
 // invoices) are their own modules (owner rule: no monolith files).
 import SsoSetup from './sections/SsoSetup.jsx'
@@ -629,7 +630,10 @@ function TeamSection({ meId, onCompany }) {
         // The user list also carries each person's additive grants (trainer); merge
         // them in so the Team row reflects (and can toggle) the current grant.
         const grantsOf = new Map((r.users || []).map((u) => [String(u.id), Array.isArray(u.grants) ? u.grants : []]))
-        setMembers((lic.members || []).map((m) => ({ ...m, workFlow: flowOf.get(String(m.id)) || 'independent', grants: grantsOf.get(String(m.id)) || [] })))
+        // ...and which of those fields the company's identity provider manages
+        // (a SCIM group mapping), so the row can lock them (TeamRoleCell).
+        const idpOf = new Map((r.users || []).map((u) => [String(u.id), u.idpManaged || null]))
+        setMembers((lic.members || []).map((m) => ({ ...m, workFlow: flowOf.get(String(m.id)) || 'independent', grants: grantsOf.get(String(m.id)) || [], idpManaged: idpOf.get(String(m.id)) || null })))
         setPool(lic.poolSeconds || 0)
         // Default the add mode to email when SSO is connected, else password.
         setMode(co && co.sso && co.sso.connected ? 'email' : 'password')
@@ -784,26 +788,7 @@ function TeamSection({ meId, onCompany }) {
                       return (
                         <tr key={m.id}>
                           <td>{m.displayName || m.username}<div style={{ fontSize: 11, color: 'var(--wka-faint)' }}>{m.email || m.username}{self ? t('companyAdmin.team.youSuffix') : ''}</div></td>
-                          <td>
-                            <select className="wka-select" value={m.companyRole || 'member'} disabled={self || rowBusy === m.id}
-                              title={self ? t('companyAdmin.team.cannotChangeOwnRole') : ''}
-                              onChange={(e) => patchUser(m, { companyRole: e.target.value })}>
-                              {COMPANY_ROLE_OPTIONS.map((o) => <option key={o.id} value={o.id}>{t(o.labelKey)}</option>)}
-                            </select>
-                            {/* Additive trainer grant: author guided workflows. Only a
-                                member or project-manager role may hold it (canGrantTrainer),
-                                so the checkbox appears for those roles only; the server
-                                drops the grant automatically if the role changes to one
-                                that cannot hold it. */}
-                            {canGrantTrainer(m.companyRole || 'member') && (
-                              <label className="wka-check" title={t('companyAdmin.grants.trainerHelp')} style={{ marginTop: 6, fontSize: 12 }}>
-                                <input type="checkbox" disabled={rowBusy === m.id}
-                                  checked={hasTrainerGrant(m.grants)}
-                                  onChange={(e) => patchUser(m, { grants: e.target.checked ? ['trainer'] : [] })} />
-                                {t('companyAdmin.grants.trainer')}
-                              </label>
-                            )}
-                          </td>
+                          <td><TeamRoleCell member={m} self={self} busy={rowBusy === m.id} onPatch={patchUser} /></td>
                           <td>
                             <select className="wka-select" value={m.workFlow || 'independent'} disabled={rowBusy === m.id} title={t('companyAdmin.team.flowHelp')} aria-label={t('companyAdmin.team.flow')}
                               onChange={(e) => patchUser(m, { workFlow: e.target.value })}>

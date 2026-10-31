@@ -329,6 +329,8 @@ export default {
       th2fa: '2FA',
       youSuffix: ' (you)',
       cannotChangeOwnRole: 'You cannot change your own role.',
+      idpManaged: 'Managed by your identity provider',
+      idpManagedHelp: 'Set by a group mapping in Company SSO. Change this person\'s groups in your identity provider.',
       roleExecutiveShort: 'Executive (read-only)',
       minPh: 'min',
       give: 'Give',
