@@ -33,6 +33,7 @@ import { registerWorkAdminRoutes } from './work-admin.js'
 import { scheduleFrameSweep } from './workflow_frame_sweep.js'
 import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
+import { registerPersonalBrainRoutes } from './personal_brain_routes.js'
 import { verifyResponse } from './work_verify.js'
 import { registerWorkImageRoutes } from './work-images.js'
 import { registerWorkCustomerRoutes } from './work_customer_routes.js'
@@ -2370,7 +2371,7 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     // passes the text in the request. It is used for THIS plan only and never
     // stored (store.getWorkDocsText is the web path, where docs are persisted).
     const ephemeralDocs = typeof (req.body && req.body.docsText) === 'string' ? req.body.docsText.slice(0, 8000) : ''
-    const rawDocs = ephemeralDocs || store.getWorkDocsText(req.workUser.id, { maxChars: 6000 })
+    const rawDocs = ephemeralDocs || store.getGroundingText(req.workUser.id, safeGoal, { maxChars: 6000 })
     const docScrub = scrubText(rawDocs)
     const userDocs = docScrub.clean
     const groundedResearch = userDocs
@@ -3049,7 +3050,7 @@ app.post('/api/work/sessions/:id/howto', requireWorkAuth, requireWorkSubscriptio
       new Promise((resolve) => setTimeout(() => resolve(''), 12000)),
     ]).catch(() => '')
     const ephemeralDocs2 = typeof (req.body && req.body.docsText) === 'string' ? req.body.docsText.slice(0, 5000) : ''
-    const userDocs = scrubIf(scrubOn, ephemeralDocs2 || store.getWorkDocsText(req.workUser.id, { maxChars: 4000 }), req.workUser.id)
+    const userDocs = scrubIf(scrubOn, ephemeralDocs2 || store.getGroundingText(req.workUser.id, `${s.goal || ''} ${act}`, { maxChars: 4000 }), req.workUser.id)
     const grounded = userDocs
       ? (`USER REFERENCE DOCUMENTS (ground in these, but verify against best practice and flag anything wrong):\n${userDocs}\n\n` + (notes || ''))
       : notes
@@ -3788,6 +3789,7 @@ app.get('/api/work/active', requireWorkAuth, wrap((req, res) => {
 registerWorkAdminRoutes(app, { store, work, ai, requireAuth, requireAdmin, requireSuperAdmin, wrap, resolveWorkRuntime })
 registerWorkShotRoutes(app, { store, requireWorkAuth, wrap })
 registerWorkDocsRoutes(app, { store, requireWorkAuth, wrap, extractDocText: docs.extractText })
+registerPersonalBrainRoutes(app, { store, requireWorkAuth, wrap })
 registerWorkCustomerRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap })
 registerKbSpaceRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap })
 registerGuidanceDepthRoutes(app, { store, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })

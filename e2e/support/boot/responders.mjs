@@ -5,6 +5,7 @@
 // the harden prompt also contains "PLAN THE WORK", so it is checked first.
 const MARKERS = [
   ['coverage', /You are the coverage assistant/],
+  ['distill', /You read part of a document a person uploaded to teach their own/],
   ['project', /PLAN A PROJECT AS AN ORDERED MAP OF TASKS/],
   ['harden', /HARDEN A DRAFT PLAN/],
   ['watch', /GUIDE CONTINUOUSLY BY WATCHING THE SCREEN/],
@@ -67,6 +68,9 @@ export function defaultAnswer(kind, text) {
   switch (kind) {
     case 'coverage':
       return DEFAULT_COVERAGE
+    case 'distill':
+      // What a personal brain learns from a document (server/personal_brain_rules.js).
+      return { learnings: [{ text: 'Monthly expense summaries use the Expenses sheet and a pivot table by month.', kind: 'procedure' }, { text: 'Amounts are always in euros, rounded to two decimals.', kind: 'preference' }] }
     case 'project':
       return DEFAULT_PROJECT
     case 'plan':

@@ -22,7 +22,9 @@ import { fileURLToPath } from 'node:url'
 import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import * as totp from './totp.js'
-import { PROVIDERS, allowAiHost } from './ai.js'
+import { PROVIDERS, allowAiHost, generate as aiGenerate } from './ai.js'
+import { extractText as extractDocText } from './docs.js'
+import { createPersonalBrain } from './personal_brain.js'
 import { COMPLIANCE_FRAMEWORKS, getFramework } from './compliance_frameworks.js'
 import { resolveGuidanceDepth, normalizeDepth as normalizeDepthId, clampDepth, canUseProjects as canUseProjectsPure } from './guidance_depth.js'
 import * as customers from './work_customers.js'
@@ -563,6 +565,10 @@ const scimRoleSync = createScimRoleSync({
   label: (u) => u.ssoEmail || u.email || u.username || u.id,
 })
 export const { listRoleMappings: listScimRoleMappings, addRoleMapping: addScimRoleMapping, removeRoleMapping: removeScimRoleMapping } = scimRoleSync
+// A person's own brain (personal_brain.js): learned from their documents and
+// sessions; the files themselves are never kept.
+const personalBrain = createPersonalBrain({ db: () => db, persist, ai: { generate: (...a) => aiGenerate(...a) }, runtime: () => getActiveRuntime(), extractText: extractDocText, newId: () => id() })
+export const { learnFromDocument: learnPersonalBrainDoc, addNotes: addPersonalBrainNotes, list: listPersonalBrain, forgetLearning: forgetPersonalLearning, forgetSource: forgetPersonalBrainSource, clear: clearPersonalBrain, contextFor: personalBrainContext } = personalBrain
 const scim = createScimState({
   db: () => db, persist, persistSoon, httpErr, company: _company, masterKey: encKey,
   createMember: (args) => createSsoAccount(args),
@@ -4346,6 +4352,11 @@ export function deleteWorkUser(userId, { reason = '', by = '' } = {}) {
   // matched, so a deleted account's tickets silently outlived the account.
   db.workTickets = (db.workTickets || []).filter((t) => t.userId !== userId)
   try { purgeWorkflowIncidents({ userId }) } catch { /* best-effort */ }
+  // The person's own material goes with the account: reference documents (and
+  // their text files) and everything their personal brain learned.
+  for (const d of ((db.workDocs && db.workDocs[userId]) || [])) { try { if (d.path && fs.existsSync(d.path)) fs.unlinkSync(d.path) } catch { /* best effort */ } }
+  if (db.workDocs) delete db.workDocs[userId]
+  if (db.personalBrain) delete db.personalBrain[userId]
   bumpSessionEpoch(userId)
   const i = (db.users || []).findIndex((x) => x.id === userId)
   if (i >= 0) db.users.splice(i, 1)
@@ -5529,6 +5540,15 @@ export function deleteWorkDoc(workUserId, docId, reason = '') {
     persist()
   }
   return { ok: true }
+}
+// What grounds one task: the person's reference documents, plus what their
+// personal brain learned that matches this goal. Learnings first take at most
+// half the room, so a long reference document never crowds them out.
+export function getGroundingText(workUserId, goal, { maxChars = 6000 } = {}) {
+  const learned = personalBrainContext(workUserId, goal, Math.floor(maxChars / 2))
+  const block = learned ? `WHAT THIS PERSON TAUGHT THEIR GUIDE (their own documents and sessions; use where it fits this task):\n${learned}` : ''
+  const docs = getWorkDocsText(workUserId, { maxChars: Math.max(0, maxChars - block.length - 2) })
+  return [docs, block].filter(Boolean).join('\n\n')
 }
 export function getWorkDocsText(workUserId, { maxChars = 6000 } = {}) {
   const docs = ((db.workDocs && db.workDocs[workUserId]) || []).slice().sort((a, b) => (b.at || '').localeCompare(a.at || ''))

@@ -30,6 +30,7 @@
 // No em dashes. No AI-language. No model/provider names. Every failure path is
 // explicit and distinct (SUPREME RULE III): nothing is stored silently empty.
 // ---------------------------------------------------------------------------
+import { readDocUpload } from './doc_upload.js'
 
 export function registerWorkDocsRoutes(app, deps = {}) {
   const { store, requireWorkAuth, wrap, extractDocText } = deps
@@ -37,24 +38,9 @@ export function registerWorkDocsRoutes(app, deps = {}) {
     throw new Error('registerWorkDocsRoutes: missing required deps (app, store, requireWorkAuth, wrap, extractDocText)')
   }
 
-  // Raw byte ceiling for an uploaded file (before base64 inflation).
-  const MAX_RAW_BYTES = 10 * 1024 * 1024
   // Document upload is gated by the SINGLE feature registry (store.tierAllows),
   // not a parallel tier list, so the entitlement has one source of truth.
   const workUid = (req) => req.workUser && req.workUser.id
-
-  // Classify by mime first, then by filename extension. Returns a short type id
-  // or null. The allowed set (pdf, docx, txt, md) is a strict subset of what the
-  // shared extractor handles, so an allowed type never trips its own 415.
-  function classify(name, mime) {
-    const lower = String(name || '').toLowerCase()
-    const m = String(mime || '').toLowerCase()
-    if (m === 'application/pdf' || lower.endsWith('.pdf')) return 'pdf'
-    if (m === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || lower.endsWith('.docx')) return 'docx'
-    if (m === 'text/markdown' || lower.endsWith('.md') || lower.endsWith('.markdown')) return 'md'
-    if (m === 'text/plain' || lower.endsWith('.txt')) return 'txt'
-    return null
-  }
 
   // Documents-feature gate, runs after requireWorkAuth so req.workUser is set.
   // Grounding is on for every tier now (store.TIER_FEATURES.documents), so this
@@ -82,43 +68,11 @@ export function registerWorkDocsRoutes(app, deps = {}) {
       if (used >= max) {
         return res.status(403).json({ error: `You can ground a plan with up to ${max} document${max === 1 ? '' : 's'} on your plan. Remove one, or upgrade for more.`, capReached: true, used, max, tier, upgrade: true })
       }
-      const body = req.body || {}
-      const name = typeof body.name === 'string' ? body.name.trim() : ''
-      const mime = typeof body.mime === 'string' ? body.mime.trim() : ''
-      let data = body.dataBase64
-
-      if (!name) return res.status(400).json({ error: 'Missing document name.' })
-      if (typeof data !== 'string' || !data.trim()) return res.status(400).json({ error: 'No file data received.' })
-
-      // Accept a data URL prefix (data:<mime>;base64,....) by stripping it, then
-      // drop any whitespace the client may have wrapped the base64 in.
-      data = data.trim()
-      if (data.startsWith('data:')) {
-        const comma = data.indexOf(',')
-        if (comma !== -1) data = data.slice(comma + 1)
-      }
-      const clean = data.replace(/\s+/g, '')
-      if (!/^[A-Za-z0-9+/]+={0,2}$/.test(clean)) {
-        return res.status(400).json({ error: 'The file data is not valid base64.' })
-      }
-
-      // Supported types only: pdf, docx, txt, md. Anything else is a clear 415.
-      const type = classify(name, mime)
-      if (!type) {
-        return res.status(415).json({ error: 'Unsupported file type. Upload a PDF, Word (.docx), text (.txt), or Markdown (.md) file.' })
-      }
-
-      // Size cap. Estimate from the base64 length first so an absurd payload is
-      // rejected without decoding, then confirm against the real byte length.
-      const approxBytes = Math.floor((clean.length * 3) / 4)
-      if (approxBytes > MAX_RAW_BYTES) {
-        return res.status(413).json({ error: 'That file is too large. The limit is 10 MB.' })
-      }
-      const buffer = Buffer.from(clean, 'base64')
-      if (!buffer.length) return res.status(400).json({ error: 'The file data decoded to nothing.' })
-      if (buffer.length > MAX_RAW_BYTES) {
-        return res.status(413).json({ error: 'That file is too large. The limit is 10 MB.' })
-      }
+      // Name, type, base64 and size are checked by the one shared reader
+      // (doc_upload.js, also used by the personal brain).
+      let upload
+      try { upload = readDocUpload(req.body) } catch (e) { return res.status(e.status || 400).json({ error: e.message }) }
+      const { name, mime, base64: clean, size } = upload
 
       // Extract text through the shared helper (docs.extractText, object form).
       let text
@@ -134,7 +88,7 @@ export function registerWorkDocsRoutes(app, deps = {}) {
         return res.status(422).json({ error: 'Could not read any text from that file. It may be empty, image-only, or password protected.' })
       }
 
-      const doc = store.addWorkDoc(workUid(req), { name, mime, text: String(text), size: buffer.length })
+      const doc = store.addWorkDoc(workUid(req), { name, mime, text: String(text), size })
       return res.json({ ok: true, doc })
     } catch (e) {
       return res.status(e.status || 500).json({ error: e.message || 'Server error' })
