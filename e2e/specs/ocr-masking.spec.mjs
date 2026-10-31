@@ -5,16 +5,21 @@
 // Guards the OCR engine upgrade: tesseract.js 6+ returns line boxes only when
 // asked for blocks, and a missed change would have masked nothing.
 import { test, expect } from '../support/fixtures.mjs'
-import { needCap } from '../support/editions.mjs'
+import { companyTest } from '../support/edition-branch.mjs'
 import { TeachStudio } from '../pages/TeachStudio.mjs'
 
-test.beforeEach(({ edition }) => needCap(test, edition, 'saas_companies'))
+// Without company tenants (paid) recording is refused and hidden instead.
+const REFUSE = {
+  what: 'recording a demonstration in the Teach studio (frame upload)',
+  api: [['POST', '/api/work/workflows/frames']],
+  pages: ['/work/teach'],
+}
 
 const BASICS = { productName: 'Billing portal', title: 'Masked card capture', owner: 'Finance operations', launchTarget: 'Billing > Credit notes' }
 // A Luhn-valid test card number: the built-in detector masks it.
 const CARD = 'Card on file 4111 1111 1111 1111'
 
-test('a card number on a recorded screen is masked on the device before upload', async ({ as, seed }) => {
+companyTest(test, 'a card number on a recorded screen is masked on the device before upload', REFUSE, async ({ as, seed }) => {
   test.setTimeout(180_000)
   const co = await seed.company({ personas: ['trainer'] })
   const { page, api } = await as.page(co.users.trainer, { path: null, syntheticScreen: { sensitiveLine: CARD } })

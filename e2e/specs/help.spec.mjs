@@ -50,8 +50,16 @@ test('each role sees exactly its help entries', async ({ as, seed, edition }) =>
 })
 
 test('company-only entries never appear for a personal account', async ({ as, seed, edition }) => {
-  test.skip(!capsOf(edition).has('solo_signup'), 'no personal accounts in this edition')
-  const { page } = await as.page(await seed.solo(), { path: '/work/help' })
+  // No personal accounts here: the same rule for a plain member, who holds none
+  // of the roles those entries belong to (Company workflows is theirs, though).
+  const plain = capsOf(edition).has('solo_signup') ? await seed.solo() : (await seed.company({ personas: ['member'] })).users.member
+  const { page } = await as.page(plain, { path: '/work/help' })
+  if (!capsOf(edition).has('solo_signup')) {
+    await page.locator('section[id^="help-dash-"]').first().waitFor()
+    for (const id of ['help-dash-teach', 'help-dash-issues', 'help-dash-exec', 'help-dash-admin', 'help-dash-pm']) await expect(page.locator(`#${id}`), id).toHaveCount(0)
+    await expect(page.locator('#help-dash-workflows')).toHaveCount(1)
+    return
+  }
   const text = await page.locator('main, body').first().innerText()
   for (const title of ['Teach studio', 'Company workflows', 'Workflow issues', 'Executive dashboard']) expect(text, title).not.toContain(title)
   // Personal plans are sold here: the top-up lines are still shown (no regression).
@@ -59,7 +67,14 @@ test('company-only entries never appear for a personal account', async ({ as, se
 })
 
 test('company members never read personal top-up lines', async ({ as, seed, edition }) => {
-  test.skip(!capsOf(edition).has('saas_companies'), 'no company members in this edition')
+  if (!capsOf(edition).has('saas_companies')) {
+    // No company members here: every account is personal and buys its own hours,
+    // so the top-up lines must be there (the other side of the same rule).
+    const { page } = await as.page(await seed.solo(), { path: '/work/help' })
+    await expect(page.getByText('Purchased top-up time never expires').first()).toBeVisible()
+    await expect(page.getByText('Add time').first()).toBeVisible()
+    return
+  }
   const co = await seed.company({ personas: ['member'] })
   const { page } = await as.page(co.users.member, { path: '/work/help' })
   await expect(page.getByRole('heading', { name: 'Your time and pausing' })).toBeVisible()
@@ -67,7 +82,22 @@ test('company members never read personal top-up lines', async ({ as, seed, edit
 })
 
 test('annotated screenshot callouts are reachable and usable from the keyboard', async ({ as, seed, edition }) => {
-  test.skip(!capsOf(edition).has('saas_companies'), 'the annotated help is for company features')
+  if (!capsOf(edition).has('saas_companies')) {
+    // The annotated screenshots belong to company features. A personal account's
+    // help is still keyboard-usable: every section link is a button in the tab
+    // order, and Enter on one marks it current.
+    const { page } = await as.page(await seed.solo(), { path: '/work/help' })
+    const nav = page.locator('.wd-help-nav button')
+    await nav.first().waitFor()
+    await expect(page.locator('button.hs-pin'), 'no company callouts for a personal account').toHaveCount(0)
+    const n = await nav.count()
+    for (let i = 0; i < n; i++) expect(await nav.nth(i).evaluate((el) => el.tabIndex >= 0 && !el.disabled), `section link ${i + 1} is in the tab order`).toBe(true)
+    const target = nav.nth(Math.min(2, n - 1))
+    await target.focus()
+    await page.keyboard.press('Enter')
+    await expect(target).toHaveAttribute('aria-current', 'true')
+    return
+  }
   const co = await seed.company({ personas: ['admin'] })
   const { page } = await as.page(co.users.admin, { path: '/work/help' })
   const pins = page.locator('button.hs-pin')

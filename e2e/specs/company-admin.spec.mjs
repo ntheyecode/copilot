@@ -3,16 +3,22 @@
 // and a launch link an employee opens straight into a guided workflow.
 import crypto from 'node:crypto'
 import { test, expect } from '../support/fixtures.mjs'
-import { needCap } from '../support/editions.mjs'
+import { companyTest } from '../support/edition-branch.mjs'
 import { CompanyAdmin } from '../pages/CompanyAdmin.mjs'
 import { makeWorkflow } from '../support/workflows.mjs'
 import { FAKE_HOOK_HOST } from '../support/boot/net-fakes.mjs'
 
-test.beforeEach(({ edition }) => needCap(test, edition, 'saas_companies'))
+// Without company tenants (paid) each test checks this is refused and hidden.
+const REFUSE = {
+  what: 'the company console (team and trainer grant, API keys, webhooks, launch links)',
+  api: [['GET', '/api/work/company/users'], ['GET', '/api/work/company/api-keys'], ['POST', '/api/work/company/api-keys'], ['GET', '/api/work/company/webhooks'], ['POST', '/api/work/company/webhooks'], ['GET', '/api/v1/workflows'], ['POST', '/api/work/launch/redeem']],
+  pages: ['/work/company', '/work/launch', '/work/teach'],
+}
+
 
 const bearer = (secret) => ({ authorization: `Bearer ${secret}` })
 
-test('the company admin grants the trainer role and it opens the Teach studio', async ({ as, seed }) => {
+companyTest(test, 'the company admin grants the trainer role and it opens the Teach studio', REFUSE, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['admin', 'member'] })
   const { page, api } = await as.page(co.users.admin, { path: null })
   const console_ = new CompanyAdmin(page)
@@ -32,7 +38,7 @@ test('the company admin grants the trainer role and it opens the Teach studio', 
   await expect(m.page.getByRole('heading', { level: 1, name: 'Teach a workflow' })).toBeVisible()
 })
 
-test('API keys: created in the console, scope enforced on /api/v1, revoked', async ({ as, seed }) => {
+companyTest(test, 'API keys: created in the console, scope enforced on /api/v1, revoked', REFUSE, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['admin', 'trainer'] })
   const trainer = await as.api(co.users.trainer)
   const wf = await makeWorkflow(trainer, { title: 'Key scoped workflow' })
@@ -73,7 +79,7 @@ test('API keys: created in the console, scope enforced on /api/v1, revoked', asy
   expect((await api.get('/api/work/company/api-keys')).data.keys.find((k) => k.id === key.id).status).toBe('revoked')
 })
 
-test('a webhook endpoint receives a signed workflow.published delivery', async ({ as, seed, server }) => {
+companyTest(test, 'a webhook endpoint receives a signed workflow.published delivery', REFUSE, async ({ as, seed, server }) => {
   const co = await seed.company({ personas: ['admin', 'trainer'] })
   const admin = await as.api(co.users.admin)
   await server.ctl('hooks.clear')
@@ -101,7 +107,7 @@ test('a webhook endpoint receives a signed workflow.published delivery', async (
   expect(deliveries.data.deliveries.some((x) => x.event === 'workflow.published' && x.status === 'delivered')).toBe(true)
 })
 
-test('a launch link opens the workflow for the named employee, once', async ({ as, seed }) => {
+companyTest(test, 'a launch link opens the workflow for the named employee, once', REFUSE, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['admin', 'trainer', 'member', 'worker'] })
   const trainer = await as.api(co.users.trainer)
   const wf = await makeWorkflow(trainer, { title: 'Launch link workflow' })

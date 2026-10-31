@@ -115,14 +115,17 @@ export function validateSteps(steps) {
 // frame wins; only a step with a new id falls back to an unclaimed reading of
 // the same frame whose after-frame fits (an exact after-frame match first).
 export function carryReadings(prevSteps, nextSteps) {
-  const held = (Array.isArray(prevSteps) ? prevSteps : []).filter((s) => s && s.shot && s.reading)
-  const byId = new Map(held.filter((s) => s.id).map((s) => [s.id, s]))
+  const prev = (Array.isArray(prevSteps) ? prevSteps : []).filter(Boolean)
+  const held = prev.filter((s) => s.shot && s.reading)
+  // Every step that existed before, reading or not: a known step keeps only
+  // its own reading and never borrows another step's (e2e/FINDINGS.md #11).
+  const byId = new Map(prev.filter((s) => s.id).map((s) => [s.id, s]))
   const nextIds = new Set(nextSteps.map((s) => s.id))
   const claimed = new Set(held.filter((p) => nextIds.has(p.id)))   // owned by a step still present
   return nextSteps.map((s, i) => {
     if (!s.shot) return { ...s, reading: null }
     const after = nextSteps[i + 1] ? nextSteps[i + 1].shot : null
-    const fits = (p) => p && p.shot === s.shot && (!p.reading.afterShot || p.reading.afterShot === after)
+    const fits = (p) => !!(p && p.reading && p.shot === s.shot) && (!p.reading.afterShot || p.reading.afterShot === after)
     const own = byId.get(s.id)
     let src = null
     if (own) src = fits(own) ? own : null

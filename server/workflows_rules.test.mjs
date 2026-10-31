@@ -82,3 +82,31 @@ test('carryReadings falls back to the frame when step ids changed, only where th
   assert.equal(out[1].reading && out[1].reading.controlLabel, 'Close')
   assert.equal(out[2].reading && out[2].reading.controlLabel, 'Done')
 })
+
+// E2E finding (e2e/FINDINGS.md #11): a recording can give two steps the SAME
+// screenshot. Keyed by screenshot alone, the second step's reading overwrote the
+// first's, so a save dropped step 1's reading (or gave it step 2's).
+const A = 'a'.repeat(32) + '.jpg', B = 'b'.repeat(32) + '.jpg'
+const rdE = (label, shot, afterShot) => ({ controlLabel: label, controlKind: 'button', doneWhen: `${label} done`, confidence: 0.9, shot, afterShot, at: '2026-01-01T00:00:00.000Z' })
+test('carryReadings keeps each step its own reading when two steps share a screenshot', () => {
+  const prev = [
+    { id: 's1', instruction: 'Open', shot: A, reading: rdE('Open', A, A) },
+    { id: 's2', instruction: 'Pick', shot: A, reading: rdE('Pick', A, B) },
+    { id: 's3', instruction: 'Save', shot: B, reading: rdE('Save', B, null) },
+  ]
+  const next = prev.map(({ reading, ...s }) => s)          // a plain re-save, nothing changed
+  const out = wf.carryReadings(prev, next)
+  assert.deepEqual(out.map((s) => s.reading && s.reading.controlLabel), ['Open', 'Pick', 'Save'])
+})
+test('carryReadings: a reading follows its step id, never another step with the same screenshot', () => {
+  const prev = [
+    { id: 's1', instruction: 'Open', shot: A, reading: rdE('Open', A, B) },
+    { id: 's2', instruction: 'Pick', shot: A, reading: null },
+    { id: 's3', instruction: 'Save', shot: B, reading: null },
+  ]
+  const out = wf.carryReadings(prev, [{ id: 's2', instruction: 'Pick', shot: A }, { id: 's3', instruction: 'Save', shot: B }])
+  assert.equal(out[0].reading, null, 's2 never had a reading and must not borrow s1\'s')
+  // A step whose id is new keeps a reading only when its screenshot is unique.
+  const single = wf.carryReadings([{ id: 's9', shot: B, reading: rdE('Save', B, null) }], [{ id: 'new1', instruction: 'Save', shot: B }])
+  assert.equal(single[0].reading.controlLabel, 'Save')
+})

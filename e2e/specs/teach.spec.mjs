@@ -3,15 +3,21 @@
 // (synthetic) screen; have each step read against its screenshot; use a
 // suggestion. Plus the access rule: only trainers and company admins author.
 import { test, expect } from '../support/fixtures.mjs'
-import { needCap } from '../support/editions.mjs'
+import { companyTest } from '../support/edition-branch.mjs'
 import { TeachStudio, PH } from '../pages/TeachStudio.mjs'
 import { makeScreenRecording } from '../pages/media.mjs'
 
-test.beforeEach(({ edition }) => needCap(test, edition, 'saas_companies'))
+// Without company tenants (paid) each test checks this is refused and hidden.
+const REFUSE = {
+  what: 'the Teach studio (authoring, recording, importing, reading steps)',
+  api: [['GET', '/api/work/workflows'], ['POST', '/api/work/workflows'], ['POST', '/api/work/workflows/frames']],
+  pages: ['/work/teach'],
+}
+
 
 const BASICS = { productName: 'Billing portal', title: 'Raise a credit note', owner: 'Finance operations', launchTarget: 'Billing > Credit notes' }
 
-test('a trainer authors, publishes, revises, retires and deletes a workflow', async ({ as, seed }) => {
+companyTest(test, 'a trainer authors, publishes, revises, retires and deletes a workflow', REFUSE, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['trainer', 'member'] })
   const { page, api } = await as.page(co.users.trainer, { path: null })
   const studio = new TeachStudio(page)
@@ -67,7 +73,7 @@ test('a trainer authors, publishes, revises, retires and deletes a workflow', as
   expect((await api.get(`/api/work/workflows/${v2.id}`)).status).toBe(404)
 })
 
-test('the wizard holds the trainer to the required basics and the scope note', async ({ as, seed }) => {
+companyTest(test, 'the wizard holds the trainer to the required basics and the scope note', REFUSE, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['trainer'] })
   const { page } = await as.page(co.users.trainer, { path: null })
   const studio = new TeachStudio(page)
@@ -80,7 +86,7 @@ test('the wizard holds the trainer to the required basics and the scope note', a
   await expect(studio.button('Publish').last()).toBeDisabled()
 })
 
-test('only trainers and company admins can author', async ({ as, seed }) => {
+companyTest(test, 'only trainers and company admins can author', REFUSE, async ({ as, seed }) => {
   const co = await seed.company()
   const body = { meta: { ...BASICS }, steps: [{ instruction: 'Do it' }] }
   for (const key of ['member', 'worker', 'pm', 'srpm', 'grc', 'exec']) {
@@ -97,7 +103,7 @@ test('only trainers and company admins can author', async ({ as, seed }) => {
   await expect(page.getByText('The Teach studio is for trainers')).toBeVisible()
 })
 
-test('import a screen recording: steps are drafted from its screens', async ({ as, seed }) => {
+companyTest(test, 'import a screen recording: steps are drafted from its screens', REFUSE, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['trainer'] })
   const { page, api } = await as.page(co.users.trainer, { path: null })
   const studio = new TeachStudio(page)
@@ -123,7 +129,7 @@ test('import a screen recording: steps are drafted from its screens', async ({ a
   expect(wf.steps.every((s) => /^[a-f0-9]{32}\.(jpg|png|webp)$/.test(s.shot || ''))).toBe(true)
 })
 
-test('record a demonstration, read each step against its screenshot, use a suggestion', async ({ as, seed, server }) => {
+companyTest(test, 'record a demonstration, read each step against its screenshot, use a suggestion', REFUSE, async ({ as, seed, server }) => {
   const co = await seed.company({ personas: ['trainer'] })
   const { page, api } = await as.page(co.users.trainer, { path: null, syntheticScreen: true })
   const studio = new TeachStudio(page)
@@ -146,6 +152,10 @@ test('record a demonstration, read each step against its screenshot, use a sugge
     await page.getByRole('button', { name: 'Mark step' }).click()
     await page.waitForTimeout(700)
   }
+  // One more mark with no screen change: two steps share a screenshot (the case
+  // that once lost a step's reading on save, e2e/FINDINGS.md #11).
+  await page.getByRole('button', { name: 'Mark step' }).click()
+  await page.waitForTimeout(700)
   await page.getByRole('button', { name: 'Stop and review' }).click()
   // Steps drafted with screenshots (masked on this device, uploaded encrypted).
   await expect(page.getByRole('img', { name: /Screenshot for step 1/ })).toBeVisible({ timeout: 60_000 })
@@ -169,6 +179,11 @@ test('record a demonstration, read each step against its screenshot, use a sugge
   expect(wf.steps[0].shot).toMatch(/^[a-f0-9]{32}\.(jpg|png|webp)$/)
   expect(wf.steps[0].target).toBe('Save')
   expect(wf.steps[0].reading.controlLabel).toBe('Save')
+  // Every step that was read still has its own reading after the save, even
+  // where two steps share one screenshot.
+  const shots = wf.steps.filter((s) => s.shot)
+  expect(shots.filter((s) => !s.reading).map((s) => s.id), 'no reading lost on save').toEqual([])
+  expect(new Set(shots.map((s) => s.shot)).size, 'this recording has two steps on one screenshot').toBeLessThan(shots.length)
   // The screenshot itself is served back to the company.
   const img = await api.get(`/api/work/workflows/frames/${wf.steps[0].shot}`)
   expect(img.status).toBe(200)

@@ -1,15 +1,15 @@
 // Invented scenarios: the awkward things real people and real networks do.
 import { test, expect } from '../support/fixtures.mjs'
-import { needCap } from '../support/editions.mjs'
+import { companyTest } from '../support/edition-branch.mjs'
+import * as Paid from '../support/paid-scenarios.mjs'
 import { makeWorkflow, pngDataUrl } from '../support/workflows.mjs'
 import { FAKE_HOOK_HOST } from '../support/boot/net-fakes.mjs'
 import { TeachStudio, PH } from '../pages/TeachStudio.mjs'
 
-test.beforeEach(({ edition }) => needCap(test, edition, 'saas_companies'))
 
 const bearer = (secret) => ({ authorization: `Bearer ${secret}` })
 
-test('two tabs editing the same draft: the second save does not silently erase the first', async ({ as, seed }) => {
+companyTest(test, 'two tabs editing the same draft: the second save does not silently erase the first', Paid.REFUSE_DRAFTS, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['trainer'] })
   const api = await as.api(co.users.trainer)
   const wf = await makeWorkflow(api, { title: 'Two tab draft', publish: false, shots: false })
@@ -28,7 +28,7 @@ test('two tabs editing the same draft: the second save does not silently erase t
   expect(now.steps[0].instruction).toBe('Open Credit notes from the Billing menu.')
 })
 
-test('two tabs in the browser: the stale tab is told to reload, and nothing is lost', async ({ as, seed }) => {
+companyTest(test, 'two tabs in the browser: the stale tab is told to reload, and nothing is lost', Paid.REFUSE_DRAFTS, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['trainer'] })
   const api = await as.api(co.users.trainer)
   await makeWorkflow(api, { title: 'Browser tabs draft', publish: false, shots: false })
@@ -51,7 +51,7 @@ test('two tabs in the browser: the stale tab is told to reload, and nothing is l
   expect(wf.steps[0].instruction).toBe('Tab one wrote this step.')
 })
 
-test('the network drops while a recording is being saved, and Try again recovers it', async ({ as, seed }) => {
+companyTest(test, 'the network drops while a recording is being saved, and Try again recovers it', Paid.REFUSE_RECORDING, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['trainer'] })
   const { page, context, api } = await as.page(co.users.trainer, { path: null, syntheticScreen: true })
   const studio = new TeachStudio(page)
@@ -83,7 +83,7 @@ test('the network drops while a recording is being saved, and Try again recovers
   expect(wf.steps[0].shot).toMatch(/^[a-f0-9]{32}\./)
 })
 
-test('an expired API key is refused on /api/v1 while its replacement works', async ({ as, seed, server }) => {
+companyTest(test, 'an expired API key is refused on /api/v1 while its replacement works', Paid.REFUSE_KEYS, async ({ as, seed, server }) => {
   const co = await seed.company({ personas: ['admin', 'trainer'] })
   await makeWorkflow(await as.api(co.users.trainer), { title: 'Expiry workflow' })
   const admin = await as.api(co.users.admin)
@@ -103,7 +103,7 @@ test('an expired API key is refused on /api/v1 while its replacement works', asy
   expect((await anon.get('/api/v1/workflows', bearer(rot.data.secret))).data.code).toBe('KEY_EXPIRED')
 })
 
-test('a member removed from the company mid-session is signed out at once', async ({ as, seed }) => {
+companyTest(test, 'a member removed from the company mid-session is signed out at once', Paid.soloDisabledMidSession, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['admin', 'member'] })
   const member = await as.page(co.users.member, { path: '/work' })
   await expect(member.page.getByRole('heading', { level: 1 }).first()).toHaveText(/^Hello/)
@@ -124,7 +124,7 @@ test('a member removed from the company mid-session is signed out at once', asyn
   expect((await member.api.get('/api/work/workflows')).status).toBe(403)
 })
 
-test('deleting a workflow while an employee runs it keeps their screenshots loading', async ({ as, seed }) => {
+companyTest(test, 'deleting a workflow while an employee runs it keeps their screenshots loading', Paid.REFUSE_RUN, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['trainer', 'member'] })
   const trainer = await as.api(co.users.trainer)
   const wf = await makeWorkflow(trainer, { title: 'Deleted mid-run' })
@@ -143,7 +143,7 @@ test('deleting a workflow while an employee runs it keeps their screenshots load
   await expect.poll(() => shot.evaluate((img) => img.complete && img.naturalWidth)).toBeGreaterThan(0)
 })
 
-test('a huge workflow (100 steps) is authored, published and run', async ({ as, seed }) => {
+companyTest(test, 'a huge workflow (100 steps) is authored, published and run', Paid.soloHugePlan, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['trainer', 'member'] })
   const trainer = await as.api(co.users.trainer)
   const wf = await makeWorkflow(trainer, { title: 'Hundred step workflow', steps: 100 })
@@ -161,7 +161,7 @@ test('a huge workflow (100 steps) is authored, published and run', async ({ as, 
   await expect(emp.page.getByText(/Step 1 of 100/).first()).toBeVisible()
 })
 
-test('rapid double clicks on Publish and Run make one version and one session', async ({ as, seed }) => {
+companyTest(test, 'rapid double clicks on Publish and Run make one version and one session', Paid.soloDoubleBegin, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['trainer', 'member'] })
   const { page, api } = await as.page(co.users.trainer, { path: null })
   const studio = new TeachStudio(page)
@@ -186,7 +186,7 @@ test('rapid double clicks on Publish and Run make one version and one session', 
   expect(after - before, 'one run, one session').toBe(1)
 })
 
-test('Back inside the wizard keeps what was typed, and browser Back leaves cleanly', async ({ as, seed }) => {
+companyTest(test, 'Back inside the wizard keeps what was typed, and browser Back leaves cleanly', Paid.soloWizardBack, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['trainer'] })
   const { page, api } = await as.page(co.users.trainer, { path: '/work' })
   await page.goto('/work/teach')
@@ -209,7 +209,7 @@ test('Back inside the wizard keeps what was typed, and browser Back leaves clean
   expect((await api.get('/api/work/workflows')).data.workflows.some((w) => w.meta.title === basics.title)).toBe(false)
 })
 
-test('a webhook endpoint that is down is retried, then dead-lettered', async ({ as, seed, server }) => {
+companyTest(test, 'a webhook endpoint that is down is retried, then dead-lettered', Paid.REFUSE_HOOKS, async ({ as, seed, server }) => {
   test.setTimeout(150_000)
   const co = await seed.company({ personas: ['admin', 'trainer'] })
   const admin = await as.api(co.users.admin)
@@ -239,7 +239,7 @@ test('a webhook endpoint that is down is retried, then dead-lettered', async ({ 
   await expect.poll(async () => (await delivery()).status, { timeout: 15_000 }).toBe('delivered')
 })
 
-test('company A can never read or change company B, by key or by session', async ({ as, seed }) => {
+companyTest(test, 'company A can never read or change company B, by key or by session', Paid.soloCrossAccount, async ({ as, seed }) => {
   const A = await seed.company({ personas: ['admin', 'trainer', 'pm', 'member'] })
   const B = await seed.company({ personas: ['admin', 'trainer', 'pm', 'member'] })
   const bTrainer = await as.api(B.users.trainer)

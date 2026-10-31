@@ -1,11 +1,17 @@
 // The executive surface: productivity dashboard with project and performer
 // drill-downs, and the executive-only Company Brain export behind a passphrase.
 import { test, expect } from '../support/fixtures.mjs'
-import { needCap } from '../support/editions.mjs'
+import { companyTest } from '../support/edition-branch.mjs'
 
-test.beforeEach(({ edition }) => needCap(test, edition, 'saas_companies'))
+// Without company tenants (paid) each test checks this is refused and hidden.
+const REFUSE = {
+  what: 'the executive dashboard and the Company Brain export',
+  api: [['GET', '/api/work/exec/overview'], ['GET', '/api/work/exec/productivity'], ['GET', '/api/work/brain/export/status'], ['POST', '/api/work/brain/export/key'], ['POST', '/api/work/brain/export']],
+  pages: ['/work/exec'],
+}
 
-test('the executive dashboard shows productivity with project and performer drill-downs', async ({ as, seed }) => {
+
+companyTest(test, 'the executive dashboard shows productivity with project and performer drill-downs', REFUSE, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['exec', 'pm', 'worker'] })
   const pm = await as.api(co.users.pm)
   const project = (await pm.post('/api/work/pm/projects', { goal: 'Close the quarter books for the finance team', name: 'Quarter close' })).data.project
@@ -27,7 +33,7 @@ test('the executive dashboard shows productivity with project and performer dril
   expect(csv.status).toBe(200)
 })
 
-test('only an executive downloads the Company Brain, with the export passphrase', async ({ as, seed }) => {
+companyTest(test, 'only an executive downloads the Company Brain, with the export passphrase', REFUSE, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['exec', 'admin', 'pm'] })
   const { page, api } = await as.page(co.users.exec, { path: '/work/exec' })
   await expect(page.getByRole('heading', { name: 'Company Brain' })).toBeVisible()
