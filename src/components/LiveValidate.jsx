@@ -30,13 +30,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Sparkles, ScanEye, Check, AlertTriangle, TerminalSquare, ShieldCheck, ArrowRight,
   RotateCcw, Loader2, ChevronDown, Lock, Zap, Eye, ListChecks, CheckCheck, Undo2, BadgeCheck, Footprints,
-} from 'lucide-react'
+} from 'lucide-react'   // (Lock / ListChecks / Undo2 are still used by the CTA promise pills and the "what you get" line)
 import { cleanAlways } from '../scrub.js'   // strip PII/PHI from the scenario before it leaves the browser (public form: always on)
 import { useLocale, getLocale } from '../i18n/index.jsx'   // every visible string comes from the catalog (widgets.validate.*); the live check carries the locale
 import { countryOptions, countryNameEn } from '../shared/countries.js'   // the ONE country list (ISO alpha-2 + localised names)
-import RichText from './RichText.jsx'                       // the ONE inline renderer (bold, code, keys, links), shared with the guiding console
-import { StepLink, CmdBlock } from './StepBlocks.jsx'       // the ONE step link / terminal renderer, shared with the guiding console
-import { hrefForUrl, looksLikeClickPath } from '../shared/links.js'
+import Rich from './live_validate/rich.jsx'                 // the console's inline renderer (shared RichText with the console accent)
+import { StepCards, LockedTeaser } from './live_validate/StepTaste.jsx'   // the step cards + the locked teaser (the taste of the depth)
+import { STEP_TASTE_CSS } from './live_validate/step_taste.css.js'
+import { planShape, simEvents, simState, STEP_STAGGER_MS } from './live_validate/plan_model.js'   // the ONE plan derivation + preview timeline
 import { useEditionView } from '../edition/useCaps.js'   // edition: company field only where companies exist; plan pick only where personal plans are sold
 
 // The validator is a lead-capture widget for PUBLIC web visitors only. Inside the
@@ -73,7 +74,6 @@ const PLAN_NAMES = { lite: 'Lite', basic: 'Basic', advanced: 'Advanced', premium
 // reveal never snaps from a blank beat to a wall of text.
 const SCAN_MIN_MS = 1900
 const SCAN_TICK_MS = 560
-const STEP_STAGGER_MS = 220
 
 // Does this element paint something a floating pill must not cover: its own
 // text, an image/icon, or a control the visitor could want to click?
@@ -133,76 +133,10 @@ const anonId = (() => {
   } catch { return '' }   // private window: live without it (leadId still associates)
 })()
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
-// Inline text in the console: the shared RichText with the console's accent,
-// bare URLs as real links, shortcuts as key chips, and a Copy chip after any
-// code span long enough to be a command or dependency line (never a code span
-// the visitor cannot copy).
-const ACCENT = '#8cf5c4'
-const COPY_OVER = 24
-const Rich = ({ text }) => <RichText text={text} accent={ACCENT} links keys copyOver={COPY_OVER} />
-
-// What the plan looks like: the first `shown` steps in full, the rest as the
-// roadmap of what a live session continues with. ONE derivation, used by the
-// render and by the reveal timeline (so the two can never disagree).
-function planShape(res) {
-  const preview = (res && Array.isArray(res.preview)) ? res.preview : []
-  const shown = preview.length
-  const roadmap = (res && Array.isArray(res.roadmap) && res.roadmap.length >= shown) ? res.roadmap : preview.map((p) => p.do)
-  const total = roadmap.length
-  return { preview, shown, roadmap, total, remaining: Math.max(0, total - shown) }
-}
-// What a step carries besides its text, named the way the server names it
-// (url / path / cmd, each empty when it does not apply). A response from before
-// those fields existed put all three in one "cmd" string: a link, a click path
-// ("Settings > Billing > Add card") or a terminal command, told apart here so
-// each still renders the right way (link-out, copy row, terminal).
-function stepMedia(p) {
-  const url = String((p && p.url) || '').trim(), path = String((p && p.path) || '').trim(), cmd = String((p && p.cmd) || '').trim()
-  if (url || path) {
-    const href = hrefForUrl(url)
-    return { href, path: path || (url && !href ? url : ''), cmd }
-  }
-  const href = hrefForUrl(cmd)
-  if (href) return { href, path: '', cmd: '' }
-  if (looksLikeClickPath(cmd)) return { href: '', path: cmd, cmd: '' }
-  return { href: '', path: '', cmd }
-}
-
-// ---- The live-session preview, played on the plan ------------------------
-// Simulated on purpose and labelled as such (the widget watches nothing): it
-// shows, on the visitor's OWN steps, the three things a live session does that
-// a list of steps cannot show. One step is seen done on screen (the guide
-// hand-holds and detects completion), the next gets the guide's correction in
-// its own words (it corrects a wrong turn the moment it happens), the rest tick
-// through and the plan ends confirmed on screen. The events run in order, each
-// after a delay from the previous one; under reduced motion the end state is
-// shown at once.
-function simEvents(shown, remaining) {
-  const ev = []
-  const driftAt = shown > 1 ? 1 : 0   // the correction plays on step 2 when there is one
-  for (let i = 0; i < shown; i++) {
-    ev.push({ k: 'watch', i, ms: i === 0 ? 0 : 380 })
-    if (i === driftAt) { ev.push({ k: 'drift', i, ms: 600 }); ev.push({ k: 'fixed', i, ms: 1250 }) }
-    ev.push({ k: 'done', i, ms: i === driftAt ? 760 : 560 })
-  }
-  for (let j = 0; j < remaining; j++) ev.push({ k: 'tick', j, ms: j === 0 ? 440 : 140 })
-  ev.push({ k: 'complete', ms: 380 })
-  return ev
-}
-// Fold the events up to `at` into what the plan shows right now.
-function simState(ev, at) {
-  const s = { on: at >= 0, cur: -1, done: 0, drift: -1, fixed: false, ticks: 0, complete: false }
-  for (let n = 0; n <= at && n < ev.length; n++) {
-    const e = ev[n]
-    if (e.k === 'watch') s.cur = e.i
-    else if (e.k === 'drift') s.drift = e.i
-    else if (e.k === 'fixed') s.fixed = true
-    else if (e.k === 'done') { s.done = e.i + 1; s.cur = -1 }
-    else if (e.k === 'tick') s.ticks = e.j + 1
-    else if (e.k === 'complete') s.complete = true
-  }
-  return s
-}
+// The plan model (planShape, the step cards, the locked teaser and the
+// live-session preview timeline) lives in live_validate/plan_model.js; the
+// cards + teaser render in live_validate/StepTaste.jsx. This file is the
+// wiring: stages, the lead gate, the live check and the reveal choreography.
 const reducedMotion = () => { try { return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) } catch { return false } }
 
 // Where the funnel goes next. The primary CTA takes the visitor to the PRICING
@@ -653,65 +587,10 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
                           </div>
                         )}
 
-                        {stepsLanded && shown > 0 && (
-                          <ol className="lv-steps">
-                            {preview.map((p, i) => {
-                              const m = stepMedia(p)
-                              const isCur = sim.cur === i, isOk = i < sim.done, isDrift = sim.drift === i
-                              return (
-                                <li key={i} className={`lv-step${isCur ? ' cur' : ''}${isOk ? ' ok' : ''}${isDrift && !sim.fixed ? ' drift' : ''}`} style={{ '--i': i }}>
-                                  <div className="lv-step-l">
-                                    {isOk
-                                      ? <span className="ok"><Check size={11} /> {t('widgets.validate.sim.stepDone')}</span>
-                                      : isCur
-                                        ? <span className="watch"><Eye size={11} /> {t('widgets.validate.sim.watching')}</span>
-                                        : <span><TerminalSquare size={11} /> {t('widgets.validate.doThisNow')}</span>}
-                                    <span className="lv-step-n">{t('widgets.validate.stepOf', { n: i + 1, total: total || shown })}</span>
-                                  </div>
-                                  <div className="lv-step-do"><Rich text={p.do} /></div>
-                                  {m.href && <StepLink url={m.href} />}
-                                  {m.path && <StepLink url={m.path} />}
-                                  {m.cmd && <CmdBlock lines={m.cmd.split('\n')} />}
-                                  {p.how && p.how.length > 0 && (
-                                    <details className="lv-how" open={i === 0}>
-                                      <summary>{t('widgets.validate.exactlyHow')}</summary>
-                                      <ol>{p.how.map((h, k) => <li key={k}><Rich text={h} /></li>)}</ol>
-                                    </details>
-                                  )}
-                                  {/* the guide's correction, in its own words, tied to this step */}
-                                  {isDrift && (
-                                    <div className="lv-bubble">
-                                      <span className="av" aria-hidden><Undo2 size={12} /></span>
-                                      <span className="who">{t('widgets.validate.sim.guide')}</span>
-                                      <Rich text={p.drift || t('widgets.validate.sim.driftFallback', { step: p.do })} />
-                                      {sim.fixed && <span className="fix"><Check size={12} /> {t('widgets.validate.sim.backOnTrack')}</span>}
-                                    </div>
-                                  )}
-                                  {isCur && !isDrift && <div className="lv-step-st watch"><i aria-hidden /><span>{t('widgets.validate.sim.watchingLine')}</span></div>}
-                                  {isOk && (
-                                    <div className="lv-step-st"><Check size={13} /><span><b>{t('widgets.validate.sim.seenDone')}</b>{p.done && <span className="m"> &middot; <Rich text={p.done} /></span>}</span></div>
-                                  )}
-                                </li>
-                              )
-                            })}
-                          </ol>
-                        )}
-
+                        {/* the previewed steps in full (sub-steps in view), then the rest as the live-session teaser */}
+                        {stepsLanded && shown > 0 && <StepCards t={t} preview={preview} total={total} sim={sim} />}
                         {stepsLanded && remaining > 0 && (
-                          <div className="lv-locked" style={{ '--d': `${afterSteps}ms` }}>
-                            <div className="lv-locked-h">
-                              <ListChecks size={14} /> {t.n('widgets.validate.lockedMore', remaining)}
-                              <span className="lv-lock"><Lock size={10} /> {t('widgets.validate.lockedTag')}</span>
-                            </div>
-                            <ol>
-                              {roadmap.slice(shown).map((title, i) => (
-                                <li key={i} className={i < sim.ticks ? 'tick' : ''}>
-                                  <span className="n">{i < sim.ticks ? <Check size={11} /> : shown + i + 1}</span>
-                                  <div className="t"><Rich text={title} /><span className="bars" aria-hidden><i /><i /><i /></span></div>
-                                </li>
-                              ))}
-                            </ol>
-                          </div>
+                          <LockedTeaser t={t} roadmap={roadmap} shown={shown} remaining={remaining} sim={sim} delayMs={afterSteps} />
                         )}
 
                         {/* the end of every live session: the result seen and confirmed */}
@@ -966,13 +845,8 @@ const LV_CSS = `
 .lv-seek{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#39d3ff}
 .lv-seetxt{flex:1;min-width:0;overflow-wrap:anywhere}
 @keyframes lv-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-/* the steps, one by one, exactly as the product shows them */
-.lv-steps{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
-.lv-step{--i:0;opacity:0;animation:lv-rise .45s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(var(--i) * ${STEP_STAGGER_MS}ms);border:1px solid rgba(140,245,196,.32);background:rgba(140,245,196,.06);border-radius:13px;padding:11px 13px;min-width:0}
-.lv-step-l{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8cf5c4;font-weight:800;margin-bottom:6px}
-.lv-step-l>span{display:inline-flex;align-items:center;gap:6px;min-width:0}
-.lv-step-n{color:#9aa0b4;letter-spacing:.06em;font-weight:700;white-space:nowrap;text-transform:none;flex:0 0 auto}
-.lv-step-do{font-size:14.5px;font-weight:600;line-height:1.5;color:#f3f5fa;overflow-wrap:anywhere}
+/* The step cards, "Exactly how" and the locked teaser: live_validate/step_taste.css.js */
+${STEP_TASTE_CSS}
 /* The step's link-out / copy row (shared StepLink markup, the console's look).
    The terminal block carries its own styles (shared CmdBlock), only its font
    scale variable is set here. Commands and paths stay LTR in RTL locales. */
@@ -986,26 +860,6 @@ const LV_CSS = `
 .lv-console .wc-copybtn:hover{background:rgba(255,255,255,.12)}
 .lv-console .wc-copybtn.done{color:#8cf5c4;border-color:rgba(140,245,196,.4);background:rgba(10,157,102,.18)}
 .lv-console pre{max-width:100%}
-.lv-how{margin-top:9px;border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:8px 11px;background:rgba(255,255,255,.02)}
-.lv-how summary{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#39d3ff;font-weight:800;cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px;user-select:none}
-.lv-how summary::-webkit-details-marker{display:none}
-.lv-how summary:before{content:'\\25B8';display:inline-block;transition:transform .15s;font-size:11px}
-.lv-how[open] summary:before{transform:rotate(90deg)}
-.lv-how ol{margin:8px 0 0;padding-inline-start:18px;display:flex;flex-direction:column;gap:6px}
-.lv-how li{font-size:13px;line-height:1.5;color:#c5cbdb;overflow-wrap:anywhere}
-/* what a live session continues with: real step titles, detail held back */
-.lv-locked{position:relative;margin-top:12px;border:1px dashed rgba(255,255,255,.16);border-radius:13px;padding:11px 13px;background:rgba(255,255,255,.02);opacity:0;animation:lv-rise .45s ease forwards;animation-delay:var(--d,0ms);min-width:0}
-.lv-locked-h{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#cfd6e6;margin-bottom:9px;min-width:0;flex-wrap:wrap}
-.lv-locked-h>svg{color:#8cf5c4;flex:0 0 auto}
-.lv-lock{display:inline-flex;align-items:center;gap:5px;margin-inline-start:auto;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:#ffb35c;border:1px solid rgba(255,179,92,.35);border-radius:999px;padding:2px 8px;white-space:nowrap}
-.lv-locked ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.lv-locked li{display:flex;gap:10px;align-items:flex-start;min-width:0}
-.lv-locked .n{flex:0 0 20px;width:20px;height:20px;border-radius:50%;border:1px solid rgba(255,255,255,.16);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#9aa0b4;margin-top:1px}
-.lv-locked .t{flex:1;min-width:0;font-size:13.5px;line-height:1.45;color:#dfe4f0;overflow-wrap:anywhere}
-.lv-locked .bars{display:flex;gap:6px;margin-top:5px}
-.lv-locked .bars i{display:block;height:7px;border-radius:4px;background:rgba(255,255,255,.09);filter:blur(1.5px)}
-.lv-locked .bars i:nth-child(1){width:46%}.lv-locked .bars i:nth-child(2){width:28%}.lv-locked .bars i:nth-child(3){width:16%}
-.lv-locked li.tick .n{background:#0a9d66;border-color:#0a9d66;color:#042;transition:background .25s,border-color .25s}
 /* ===== the live-session preview, on the plan ============================= */
 /* the one precondition line */
 .lv-ready{display:flex;align-items:flex-start;gap:8px;margin-top:12px;padding:0 2px;font-size:13px;line-height:1.5;color:#dfe4f0;overflow-wrap:anywhere;opacity:0;animation:lv-rise .45s ease .3s forwards}

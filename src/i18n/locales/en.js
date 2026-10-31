@@ -781,11 +781,25 @@ export default {
       doThisNow: 'Do this now',
       stepOf: 'Step {n} of {total}',
       exactlyHow: 'Exactly how',
+      // The sub-steps control on a step card: the count chip and the verb that
+      // changes with the state (aria-expanded carries it for screen readers too).
+      howCount_one: '{n} sub-step', howCount_two: '{n} sub-steps', howCount_other: '{n} sub-steps',
+      howShow: 'Show them',
+      howHide: 'Hide',
       step_one: '{n} step', step_two: '{n} steps', step_other: '{n} steps',
       lockedMore_one: '{n} more step, this detailed, in a live session',
       lockedMore_two: '{n} more steps, each this detailed, in a live session',
       lockedMore_other: '{n} more steps, each this detailed, in a live session',
       lockedTag: 'Live session',
+      // Each remaining step opens to what a live session gives for it. Generic
+      // on purpose: the server sent only the title, so nothing here pretends
+      // to be a sub-step of that step.
+      lockedShow: 'What you get live',
+      lockedHide: 'Hide',
+      lockedGive1: 'The exact clicks, fields and commands for this step',
+      lockedGive2: 'A check on your screen that it worked',
+      lockedGive3: 'A correction the moment you take a wrong turn',
+      lockedNote: 'Held back here. In a live session every remaining step unfolds like the ones above.',
       valExact: 'Exact commands and clicks',
       valCheck: 'Checks each step worked',
       valRo: 'Read-only, never clicks for you',
