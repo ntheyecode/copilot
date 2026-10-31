@@ -4546,8 +4546,8 @@ export function financialSummary(now = new Date()) {
     const prevStart = (() => {
       const s = new Date(start)
       if (startFn === startOfWeek) s.setUTCDate(s.getUTCDate() - 7)
-      else if (startFn === startOfMonth) s.setUTCMonth(s.getUTCMonth() - 1)
-      else if (startFn === startOfQuarter) s.setUTCMonth(s.getUTCMonth() - 3)
+      else if (startFn === startOfMonth) return new Date(Date.UTC(s.getUTCFullYear(), s.getUTCMonth() - 1, 1))
+      else if (startFn === startOfQuarter) return new Date(Date.UTC(s.getUTCFullYear(), s.getUTCMonth() - 3, 1))
       else s.setUTCFullYear(s.getUTCFullYear() - 1)
       return s
     })()

@@ -106,7 +106,8 @@ test('month end: carry forward keeps the leftover, up to the superadmin cap', ()
   const raw = store.getWorkUser(u.id)
   store.getWorkUsage(u.id)
   // Last month ended with 15 h unused: 15 + 60 = 75 h, capped at 70 h.
-  const prev = (() => { const d = new Date(); d.setUTCMonth(d.getUTCMonth() - 1); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}` })()
+  // From the 1st: stepping a 29th-31st back one month rolls into this month.
+  const prev = (() => { const n = new Date(); const d = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth() - 1, 1)); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}` })()
   raw.plan.poolPeriodKey = prev; raw.plan.poolSeconds = 15 * 3600
   assert.equal(store.getWorkUsage(u.id).plan.poolSeconds, 70 * 3600)
   store.setWorkPricing({ hoursExpiry: { mode: 'forfeit' } })
