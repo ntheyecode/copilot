@@ -38,3 +38,11 @@ cannot come back unnoticed even when the E2E suite is not run.
 - **Fix:** one route-level `src/theme/ProductThemeScope.jsx` wraps the `/work` shell and every standalone signed-in console in `src/App.jsx`; the shell no longer makes its own call. The buddy and full-screen guide windows stay outside it (they follow their own surface scheme). Checked by rendering the consoles dark at 1280 and 640.
 - **Regression gate:** `src/theme/product_scope.test.mjs` (every signed-in console route sits inside the scope, buddy and guide stay out, and nothing else turns product theming on) plus the E2E layout spec.
 - **No sideways scroll** was found on any role's key screen at 1280 or 640, light or dark.
+
+## 5. A signed-out visitor to the Teach studio was told to ask for the trainer grant
+
+- **Scenario:** `specs/invented.spec.mjs` › a member removed from the company mid-session is signed out at once; `specs/auth.spec.mjs` › a signed-out visitor to any console is sent to sign in.
+- **Symptom:** after a member was removed from their company (session ended server side), opening `/work/teach` showed "The Teach studio is for trainers ... Ask them to add it" instead of the sign-in page. The `/work` shell redirected correctly; the standalone consoles did not.
+- **Root cause:** every standalone console (Teach studio, Workflow issues, executive, company, admin) re-checked `/api/work/me` on its own and treated "nobody signed in" like "signed in without access", each in its own way. Only the `/work` shell redirected to sign-in.
+- **Fix:** one route-level `src/components/RequireSignIn.jsx` (reads the app-wide auth context) wraps the `/work` shell and every standalone console in `src/App.jsx` and sends a signed-out visitor to `/workcopilot`. `/work/launch` stays outside on purpose (it parks the launch token first), as do the desktop buddy and full-guide windows (they say "sign in on the main window").
+- **Regression gate:** `src/theme/product_scope.test.mjs` (every console inside `RequireSignIn`, launch/buddy/guide outside) and the two E2E tests above.

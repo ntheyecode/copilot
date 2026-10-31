@@ -14,10 +14,10 @@ const app = fs.readFileSync(path.join(SRC, 'App.jsx'), 'utf8')
 // The lines inside <Route element={<ProductThemeScope />}> ... its </Route>.
 // App.jsx writes one <Route> per line: a line ending in "/>" is self-closing,
 // any other <Route line opens a level.
-function scopeBlock() {
+function scopeBlock(name = 'ProductThemeScope') {
   const lines = app.split(/\r?\n/)
-  const start = lines.findIndex((l) => l.includes('<Route element={<ProductThemeScope />}>'))
-  assert.ok(start > 0, 'App.jsx wraps the signed-in consoles in ProductThemeScope')
+  const start = lines.findIndex((l) => l.includes(`<Route element={<${name} />}>`))
+  assert.ok(start > 0, `App.jsx wraps the signed-in consoles in ${name}`)
   let depth = 0
   for (let i = start; i < lines.length; i++) {
     const l = lines[i].trim()
@@ -34,6 +34,18 @@ test('every signed-in console renders inside the product theme scope', () => {
   }
   // The buddy and full-guide windows follow their own surface scheme.
   for (const p of ['"/work/buddy"', '"/work/guide"']) assert.ok(!block.includes(`path=${p}`), `${p} stays outside`)
+})
+
+// Same shape for sign-in: a signed-out visitor to any console goes to sign-in
+// (e2e/FINDINGS.md #5). The launch page parks its token first, so it handles
+// its own sign-in hop; the buddy and full-guide windows say "sign in on the main
+// window" instead.
+test('every signed-in console sends a signed-out visitor to sign in, from one place', () => {
+  const block = scopeBlock('RequireSignIn')
+  for (const p of ['"/work"', '"/work/admin"', '"/work/company"', '"/work/exec"', '"/work/teach"', '"/work/workflow-issues"']) {
+    assert.ok(block.includes(`path=${p}`), `${p} is inside RequireSignIn`)
+  }
+  for (const p of ['"/work/launch"', '"/work/buddy"', '"/work/guide"']) assert.ok(!block.includes(`path=${p}`), `${p} stays outside`)
 })
 
 test('only ProductThemeScope turns product theming on', () => {

@@ -19,6 +19,7 @@ import WorkDPA from './pages/WorkDPA.jsx'
 import WorkRefund from './pages/WorkRefund.jsx'
 import WorkCookiePolicy from './pages/WorkCookiePolicy.jsx'
 import ProductThemeScope from './theme/ProductThemeScope.jsx'
+import RequireSignIn from './components/RequireSignIn.jsx'
 import WorkSubprocessors from './pages/WorkSubprocessors.jsx'
 import WorkAccessibility from './pages/WorkAccessibility.jsx'
 import WorkBenchmark from './pages/WorkBenchmark.jsx'
@@ -160,6 +161,8 @@ export default function App() {
         {/* Every signed-in console paints the user's theme mode (one place). The
             buddy and full-guide windows below keep their own surface scheme. */}
         <Route element={<ProductThemeScope />}>
+        {/* Signed out (or removed, or expired): straight to sign-in, one place. */}
+        <Route element={<RequireSignIn />}>
         {/* The signed-in app: a shared shell (rail + top bar + plan pill +
             desktop frame + app context) that self-gates on the session the
             server reports, with the per-route pages rendered through its
@@ -199,6 +202,7 @@ export default function App() {
         <Route path="/work/exec" element={<WorkExec />} />
         <Route path="/work/teach" element={<TeachStudio />} />
         <Route path="/work/workflow-issues" element={<WorkflowIssues />} />
+        </Route>
         {/* Launch link from a company's own app: redeems the fragment token, then
             starts the workflow and opens /work/session/:id. Self-gates on the
             session (parks the token through the sign-in hop when needed). */}

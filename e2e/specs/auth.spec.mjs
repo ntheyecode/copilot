@@ -103,6 +103,17 @@ test.describe('sign in through the login page', () => {
   })
 })
 
+test('a signed-out visitor to any console is sent to sign in', async ({ as }) => {
+  const { context } = await as.context()
+  const page = await context.newPage()
+  for (const path of ['/work', '/work/start', '/work/teach', '/work/workflow-issues', '/work/exec', '/work/company', '/work/admin']) {
+    await test.step(path, async () => {
+      await page.goto(path)
+      await expect(page, `${path} sends a signed-out visitor to sign in`).toHaveURL(/\/workcopilot(\/login)?(\?|$)/)
+    })
+  }
+})
+
 test.describe('sign-up and tenancy follow the edition', () => {
   test('self sign-up is open only where the edition allows individuals', async ({ as, seed, edition }) => {
     const anon = await as.anon()
