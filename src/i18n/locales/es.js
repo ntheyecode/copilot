@@ -3770,6 +3770,12 @@ export default {
   billingAdmin: {
     loading: 'Cargando la configuración de facturación',
     stepUpLabel: 'Guardando las claves de facturación',
+    offByEdition: {
+      title: 'Stripe está desactivado en este servidor.',
+      license: 'Los planes vienen de la licencia de la instalación. Se ignoran las claves de Stripe de esta configuración o del entorno.',
+      invoiced: 'Esta instalación se factura directamente. Se ignoran las claves de Stripe de esta configuración o del entorno.',
+      generic: 'Se ignoran las claves de Stripe de esta configuración o del entorno.',
+    },
     readOnlyNote: 'Solo un superadministrador puede cambiar la configuración de facturación. El estado actual se muestra abajo.',
     plans: {
       lite: 'Lite',
@@ -9260,7 +9266,22 @@ export default {
   destructiveGate: {
     label: 'Paso destructivo.',
     reveal: 'Entiendo, muestra el comando',
-    body: 'Impacto: {why}. Léelo con atención antes de ejecutarlo.',
+    check: 'Léelo con atención antes de ejecutarlo.',
+    flagged: 'Marcado:',
+    reason: {
+      deleteFiles: 'Este comando elimina archivos de forma permanente y no se puede deshacer.',
+      forceDelete: 'Este comando fuerza la eliminación de archivos sin pedir confirmación.',
+      dropDbObject: 'Este comando elimina un objeto de la base de datos junto con sus datos.',
+      emptyTable: 'Este comando vacía una tabla.',
+      deleteAllRows: 'Este comando borra todas las filas porque no tiene cláusula WHERE.',
+      overwriteDisk: 'Este comando formatea o sobrescribe un disco.',
+      rewriteGitHistory: 'Este comando descarta cambios o sobrescribe a la fuerza el historial de Git.',
+      shutdown: 'Este comando apaga o reinicia el equipo.',
+      killProcesses: 'Este comando detiene a la fuerza procesos en ejecución.',
+      teardownInfra: 'Este comando desmantela infraestructura o recursos en la nube.',
+      recursivePermissions: 'Este comando cambia los permisos o el propietario de todo lo que hay dentro de una carpeta.',
+      unknown: 'Este paso hace cambios que pueden ser difíciles de deshacer.',
+    },
   },
   disclaimerPage: {
     seo: {

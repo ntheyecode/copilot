@@ -55,7 +55,7 @@ import { registerOnboardingRoutes } from './onboarding.js'
 // gate, the accept endpoint, and the re-consent gate all read from here.
 import { LEGAL_VERSION, legalManifest } from './legal.js'
 import * as integrations from './integrations.js'
-import { registerWorkBillingRoutes, workStripeWebhook, billingConfigured } from './billing.js'
+import { registerWorkBillingRoutes, workStripeWebhook, billingConfigured, annualCheckoutReady } from './billing.js'
 import { registerAffiliateRoutes, bindReferralOnSignup } from './affiliate.js'
 import { claimsReport, claimsMarkdown } from './claims.js'
 import { scrubSensitive, scrubWithPolicy, redactionSummary, POLICY_CATEGORIES } from './work-scrub.js'
@@ -77,6 +77,8 @@ import { enforceRules, extractRulesAI, extractRulesHeuristic, ruleSummary } from
 import { COMPLIANCE_PRESETS, COMPLIANCE_LABELS } from './compliance-presets.js'
 import { estimateCostUsd } from './model-prices.js'
 import { currentUsageScope, drainUsage, costForCall, setUsageSink, usageScopeMiddleware, runInBackgroundUsage } from './ai_usage.js'
+import { usageHolderOf } from './usage_holder.js'
+import { publicSitePageGate } from './public_site_gate.js'
 import * as llmGuard from './llm_guard.js'
 import * as extractionWatch from './extraction_watch.js'
 // Integration API (company API keys, /api/v1, webhooks, launch links). The routes,
@@ -120,17 +122,15 @@ app.use(express.json({ limit: '16mb' })) // generous: pasted base64 frames + upl
 // scope. Provider calls report the token / audio counts their responses carry;
 // meterCost takes them per call; whatever no meter took is booked to the
 // company's ledger when the request ends (and anything later, as it lands).
-// Who an AI call's spend belongs to: the signed-in person's company (or solo
-// account). Support work done while a superadmin views a customer is booked to
+// Who an AI call's spend belongs to (usage_holder.js): the signed-in person's
+// company (or solo account), or the company of the API key a /api/v1 request
+// carries. Support work done while a superadmin views a customer is booked to
 // the platform, never billed to that customer.
-const usageHolder = (req) => {
-  const u = req && !req.impersonating ? req.workUser : null
-  return { companyId: (u && u.companyId) || null, userId: (u && u.id) || null, kind: req && req.impersonating ? 'support' : null }
-}
+const usageHolder = usageHolderOf
 setUsageSink((r) => store.recordAiUsage(r))
 app.use('/api', usageScopeMiddleware((req, entries) => {
   const h = usageHolder(req)
-  store.recordAiUsage({ companyId: h.companyId, userId: h.userId, kind: h.kind || 'other', entries })
+  store.recordAiUsage({ companyId: h.companyId, userId: h.userId, kind: h.kind || 'other', apiKeyId: h.apiKeyId, entries })
 }))
 
 // express-session's default MemoryStore does not survive a restart, which would
@@ -560,7 +560,7 @@ function meterCost(sessionId, model, inText, outText, images = 0, opts = {}) {
     const who = h ? null : ((opts && opts.workUserId) ? store.getUser(opts.workUserId) : null)
     store.recordAiUsage({
       companyId: h ? h.companyId : ((who && who.companyId) || null), userId: h ? h.userId : ((who && who.id) || null),
-      kind: (h && h.kind) || (opts && opts.kind) || 'guide', entries, estimatedUsd: estimated, estimateKeySource,
+      kind: (h && h.kind) || (opts && opts.kind) || 'guide', apiKeyId: h ? h.apiKeyId : null, entries, estimatedUsd: estimated, estimateKeySource,
     })
     if (sessionId && typeof store.recordSessionCall === 'function') {
       const tele = opts && opts.tele
@@ -3299,9 +3299,10 @@ app.post('/api/work/report-shots', requireWorkAuth, wrap((req, res) => {
 // Pricing is public (the marketing site reads it); superadmin can change it.
 app.get('/api/work/pricing', wrap((req, res) => {
   // annualReady tells the marketing page whether annual CHECKOUT is wired (all
-  // three annual Stripe price ids set). When false, an annual pick shows the
+  // three annual Stripe price ids set, through billing.js cfg(), so it is false
+  // where this edition has no Stripe). When false, an annual pick shows the
   // 20%-off price and routes to sign-up rather than starting a charge.
-  const annualReady = (() => { try { return !!store.getBillingPublic().annualReady } catch { return false } })()
+  const annualReady = (() => { try { return annualCheckoutReady(store) } catch { return false } })()
   res.json({ ...store.getWorkPricing(), annualReady })
 }))
 
@@ -3908,6 +3909,9 @@ if (fs.existsSync(DIST)) {
   // The built SPA must carry this server's capability stamp (logged with the
   // fix when it does not; server/spa_stamp_check.js).
   checkSpaStamp(DIST, caps.list())
+  // No public site on this server: marketing pages go to sign-in and sign-in is
+  // the plain shell (server/public_site_gate.js).
+  app.use(publicSitePageGate({ shellFile: path.join(DIST, 'index.html') }))
   app.use(express.static(DIST, {
     etag: true,
     setHeaders: (res, filePath) => {

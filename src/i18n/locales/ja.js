@@ -4667,6 +4667,12 @@ export default {
   billingAdmin: {
     loading: '請求設定を読み込んでいます',
     stepUpLabel: '請求キーを保存',
+    offByEdition: {
+      title: 'このサーバーでは Stripe はオフです。',
+      license: 'プランはインストールのライセンスで決まります。この設定や環境変数にある Stripe キーは使われません。',
+      invoiced: 'このインストールは直接請求されます。この設定や環境変数にある Stripe キーは使われません。',
+      generic: 'この設定や環境変数にある Stripe キーは使われません。',
+    },
     readOnlyNote: '請求設定を変更できるのはスーパー管理者だけです。現在の状態を下に表示します。',
     plans: {
       lite: 'Lite',
@@ -9106,7 +9112,22 @@ export default {
   destructiveGate: {
     label: '取り消せない操作です。',
     reveal: '理解しました。コマンドを表示',
-    body: '影響: {why}。実行する前によく読んでください。',
+    check: '実行する前によく読んでください。',
+    flagged: '該当箇所:',
+    reason: {
+      deleteFiles: 'このコマンドはファイルを完全に削除します。元に戻すことはできません。',
+      forceDelete: 'このコマンドは確認なしでファイルを強制的に削除します。',
+      dropDbObject: 'このコマンドはデータベースのオブジェクトを、中のデータごと削除します。',
+      emptyTable: 'このコマンドはテーブルを空にします。',
+      deleteAllRows: 'このコマンドには WHERE 句がないため、すべての行を削除します。',
+      overwriteDisk: 'このコマンドはディスクをフォーマット、または上書きします。',
+      rewriteGitHistory: 'このコマンドは変更を破棄するか、Git の履歴を強制的に上書きします。',
+      shutdown: 'このコマンドはマシンをシャットダウン、または再起動します。',
+      killProcesses: 'このコマンドは実行中のプロセスを強制終了します。',
+      teardownInfra: 'このコマンドはインフラやクラウドのリソースを削除します。',
+      recursivePermissions: 'このコマンドはフォルダー内のすべての権限または所有者を変更します。',
+      unknown: 'この手順では、元に戻しにくい変更が行われます。',
+    },
   },
   disclaimerPage: {
     seo: {

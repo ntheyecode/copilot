@@ -30,8 +30,8 @@ const IMAGE_PROVIDERS = new Set(['openai', 'gemini'])
 // provider's own error text is surfaced loudly (no silent swap, SUPREME RULE III).
 import { reportUsage, usageFromResponse, withKeySource } from './ai_usage.js'
 
-const OPENAI_IMAGE_MODEL = 'gpt-image-1'
-const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image'
+export const OPENAI_IMAGE_MODEL = 'gpt-image-1'
+export const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image'
 
 const IMAGE_TIMEOUT_MS = 60000     // time-box the provider call
 const MAX_PROMPT_CHARS = 1000      // keep requests sane; plenty for an illustration

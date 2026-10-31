@@ -3770,6 +3770,12 @@ export default {
   billingAdmin: {
     loading: 'Caricamento della configurazione di fatturazione',
     stepUpLabel: 'Salvataggio delle chiavi di fatturazione',
+    offByEdition: {
+      title: 'Stripe è disattivato su questo server.',
+      license: "I piani derivano dalla licenza dell'installazione. Le chiavi Stripe in queste impostazioni o nell'ambiente vengono ignorate.",
+      invoiced: "Questa installazione viene fatturata direttamente. Le chiavi Stripe in queste impostazioni o nell'ambiente vengono ignorate.",
+      generic: "Le chiavi Stripe in queste impostazioni o nell'ambiente vengono ignorate.",
+    },
     readOnlyNote: 'Solo un superadmin può cambiare la configurazione di fatturazione. Lo stato attuale è mostrato qui sotto.',
     plans: {
       lite: 'Lite',
@@ -9260,7 +9266,22 @@ export default {
   destructiveGate: {
     label: 'Passo distruttivo.',
     reveal: 'Ho capito, mostra il comando',
-    body: 'Impatto: {why}. Lo legga con attenzione prima di eseguirlo.',
+    check: 'Lo legga con attenzione prima di eseguirlo.',
+    flagged: 'Segnalato:',
+    reason: {
+      deleteFiles: 'Questo comando elimina i file in modo permanente e non si può annullare.',
+      forceDelete: 'Questo comando elimina i file in modo forzato, senza chiedere conferma.',
+      dropDbObject: 'Questo comando elimina un oggetto del database insieme ai suoi dati.',
+      emptyTable: 'Questo comando svuota una tabella.',
+      deleteAllRows: 'Questo comando elimina tutte le righe, perché manca la clausola WHERE.',
+      overwriteDisk: 'Questo comando formatta o sovrascrive un disco.',
+      rewriteGitHistory: 'Questo comando scarta le modifiche o sovrascrive in modo forzato la cronologia Git.',
+      shutdown: 'Questo comando spegne o riavvia il computer.',
+      killProcesses: 'Questo comando termina in modo forzato i processi in esecuzione.',
+      teardownInfra: 'Questo comando smantella infrastruttura o risorse cloud.',
+      recursivePermissions: 'Questo comando modifica permessi o proprietario di tutto il contenuto di una cartella.',
+      unknown: 'Questo passaggio apporta modifiche che potrebbero essere difficili da annullare.',
+    },
   },
   disclaimerPage: {
     seo: {

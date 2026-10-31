@@ -115,7 +115,8 @@ export function pickPublishedWorkflow(session, published) {
     // The product name is the app signal, not part of the task: drop its WORDS
     // (whole tokens, never substrings) so "Zamina" does not dilute the goal.
     const taskTokens = named ? goalTokens.filter((t) => !productTokens.includes(t)) : goalTokens
-    const m = pickWorkflowTemplate({ ...q, goal: taskTokens.join(' ') }, [tpl])
+    // Tokens, not re-joined text: re-tokenizing CJK bigrams is not stable.
+    const m = pickWorkflowTemplate({ ...q, goal: taskTokens.join(' '), goalTokens: taskTokens }, [tpl])
     let tier = m.tier
     if (tier === 'strong') {
       const title = new Set(tpl.goalTokens)

@@ -23,7 +23,8 @@ import { sendTemplateAsync, sendOwnerSubscriptionAlertAsync } from './emails.js'
 // Shared with the onboarding confirm path (billing_checkout.js): one param
 // builder + one activation function, so webhook and confirm never drift.
 import { PLANS, mapStatus, planFromSub, periodEndIso, cycleFromSub, subscriptionCheckoutParams, applyCheckoutSession } from './billing_checkout.js'
-import { caps, stripeOffReason, individualPlanRefusal } from './edition.js'
+import { caps, stripeOffReason, stripeOffCode, individualPlanRefusal } from './edition.js'
+import { stripeClientOptions } from './stripe_endpoint.js'
 // Where Stripe sends the customer back. Fixed to the public site by default; an
 // operator can override it for a staging host via WORK_PUBLIC_URL.
 const SITE = (process.env.WORK_PUBLIC_URL || 'https://admireveda.com').replace(/\/+$/, '')
@@ -92,6 +93,14 @@ function cfg(store) {
 // "Billing is configured" = a usable secret key exists (store OR env). The gate
 // in index.js uses this: subscriptions are enforced only once billing is set up.
 export function billingConfigured(store) { return !!cfg(store).secret }
+// "Annual checkout is wired" = the three core annual price ids resolve through
+// cfg() (store or env), so it is false wherever this edition has no Stripe. The
+// public pricing page and the sign-up flow read this; the superadmin panel keeps
+// its own per-bundle view (store.getBillingPublic).
+export function annualCheckoutReady(store) {
+  const a = cfg(store).priceAnnual
+  return !!(a.basic && a.advanced && a.premium)
+}
 
 // Shared Stripe client for other modules (e.g. affiliate payouts via Connect).
 // Returns the configured client, or null when no secret key is set / the package
@@ -116,7 +125,7 @@ async function getStripe(secret) {
     const mod = await import('stripe')
     const Stripe = mod.default || mod
     _pkgTried = true; _pkgOk = true
-    _stripe = new Stripe(secret)
+    _stripe = new Stripe(secret, stripeClientOptions())   // {} = api.stripe.com (stripe_endpoint.js)
     _stripeKey = secret
   } catch (e) {
     _pkgTried = true; _pkgOk = false; _stripe = null; _stripeKey = null
@@ -759,7 +768,7 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
       res.json({ billing: store.getBillingPublic(), webhookUrl: `${SITE}/api/work/stripe/webhook`, envFallback: {
         secretKey: !!process.env.STRIPE_SECRET_KEY,
         webhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET,
-      }, ...(stripeOffReason() ? { offByEdition: true, offReason: stripeOffReason() } : {}) })
+      }, ...(stripeOffReason() ? { offByEdition: true, offReason: stripeOffReason(), offCode: stripeOffCode() } : {}) })
     }))
     app.post('/api/work/admin/billing', requireAuth, requireSuperAdmin, stepUp, wrap((req, res) => {
       res.json({ billing: store.setBillingConfig(req.body || {}) })

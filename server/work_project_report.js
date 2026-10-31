@@ -6,6 +6,8 @@
 //   error    - incomplete tasks + errors/flags encountered.
 // Pure (given the project + a map of its task sessions); the endpoint gathers the
 // sessions and the document engine renders the markdown in the unified style.
+import { destructiveReasonOf, destructiveEnglish } from './destructive_rules.js'
+
 export const REPORT_KINDS = ['success', 'security', 'error']
 const TITLE = { success: 'Project success report', security: 'Project security report', error: 'Project issues report' }
 
@@ -29,7 +31,8 @@ export function buildProjectReport(project, sessionsByTaskId = {}, kind = 'succe
   } else if (k === 'security') {
     sections = tasks.map((t) => ({
       task: t.title,
-      destructive: destructiveSteps(sess(t.sessionId)).map((st) => ({ text: st.text, why: st.destructiveWhy || null })),
+      // why: the English phrase for this English document; code: the stable id.
+      destructive: destructiveSteps(sess(t.sessionId)).map((st) => ({ text: st.text, code: (destructiveReasonOf(st) || {}).code || null, why: destructiveEnglish(st) })),
       flags: flagTexts(sess(t.sessionId)),
     })).filter((s) => s.destructive.length || s.flags.length)
   } else {

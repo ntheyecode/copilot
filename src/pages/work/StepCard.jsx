@@ -46,7 +46,7 @@ export default function StepCard({
       {step.shot && <StepShot key={`${n || 0}:${step.shot}`} id={`gv-shot-${n || 0}`} shot={step.shot} />}
       {step.url && <StepLink url={step.url} />}
       {((step.commands && step.commands.length > 0) || (step.code && step.code.content)) && (
-        <DestructiveGate why={step.destructive ? step.destructiveWhy : null}>
+        <DestructiveGate step={step}>
           {step.commands && step.commands.length > 0 && <CmdBlock lines={step.commands} />}
           {step.code && step.code.content && <CodeBlock file={step.code.file} content={step.code.content} />}
         </DestructiveGate>

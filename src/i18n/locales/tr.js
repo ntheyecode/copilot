@@ -4917,6 +4917,12 @@ export default {
   billingAdmin: {
     loading: 'Faturalama yapılandırması yükleniyor',
     stepUpLabel: 'Faturalama anahtarları kaydediliyor',
+    offByEdition: {
+      title: 'Stripe bu sunucuda kapalı.',
+      license: 'Planlar kurulum lisansından gelir. Bu ayarlardaki veya ortamdaki Stripe anahtarları yok sayılır.',
+      invoiced: 'Bu kurulum doğrudan faturalandırılır. Bu ayarlardaki veya ortamdaki Stripe anahtarları yok sayılır.',
+      generic: 'Bu ayarlardaki veya ortamdaki Stripe anahtarları yok sayılır.',
+    },
     readOnlyNote: 'Faturalama yapılandırmasını yalnızca bir süper yönetici değiştirebilir. Mevcut durum aşağıda gösterilir.',
     plans: {
       lite: 'Lite',
@@ -9234,7 +9240,22 @@ export default {
   destructiveGate: {
     label: 'Geri alınamaz adım.',
     reveal: 'Anladım, komutu göster',
-    body: 'Etkisi: {why}. Çalıştırmadan önce dikkatle okuyun.',
+    check: 'Çalıştırmadan önce dikkatle okuyun.',
+    flagged: 'İşaretlenen:',
+    reason: {
+      deleteFiles: 'Bu komut dosyaları kalıcı olarak siler ve geri alınamaz.',
+      forceDelete: 'Bu komut dosyaları onay istemeden zorla siler.',
+      dropDbObject: 'Bu komut bir veritabanı nesnesini içindeki verilerle birlikte kaldırır.',
+      emptyTable: 'Bu komut bir tabloyu tamamen boşaltır.',
+      deleteAllRows: 'Bu komut WHERE koşulu içermediği için tüm satırları siler.',
+      overwriteDisk: 'Bu komut bir diski biçimlendirir veya üzerine yazar.',
+      rewriteGitHistory: 'Bu komut değişiklikleri atar veya Git geçmişinin üzerine zorla yazar.',
+      shutdown: 'Bu komut bilgisayarı kapatır veya yeniden başlatır.',
+      killProcesses: 'Bu komut çalışan işlemleri zorla sonlandırır.',
+      teardownInfra: 'Bu komut altyapıyı veya bulut kaynaklarını kaldırır.',
+      recursivePermissions: 'Bu komut bir klasördeki her şeyin izinlerini veya sahibini değiştirir.',
+      unknown: 'Bu adım, geri alınması zor olabilecek değişiklikler yapar.',
+    },
   },
   disclaimerPage: {
     seo: {

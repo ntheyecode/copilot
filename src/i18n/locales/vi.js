@@ -5594,6 +5594,12 @@ export default {
   billingAdmin: {
     loading: 'Đang tải cấu hình thanh toán',
     stepUpLabel: 'Đang lưu khóa thanh toán',
+    offByEdition: {
+      title: 'Stripe đang tắt trên máy chủ này.',
+      license: 'Các gói đến từ giấy phép cài đặt. Khóa Stripe trong phần cài đặt này hoặc trong môi trường sẽ bị bỏ qua.',
+      invoiced: 'Bản cài đặt này được lập hóa đơn trực tiếp. Khóa Stripe trong phần cài đặt này hoặc trong môi trường sẽ bị bỏ qua.',
+      generic: 'Khóa Stripe trong phần cài đặt này hoặc trong môi trường sẽ bị bỏ qua.',
+    },
     readOnlyNote: 'Chỉ superadmin mới có thể thay đổi cấu hình thanh toán. Trạng thái hiện tại được hiển thị bên dưới.',
     plans: {
       lite: 'Lite',
@@ -9230,7 +9236,22 @@ export default {
   destructiveGate: {
     label: 'Bước có tính phá hủy.',
     reveal: 'Tôi hiểu, hiển thị lệnh',
-    body: 'Tác động: {why}. Hãy đọc kỹ trước khi chạy.',
+    check: 'Hãy đọc kỹ trước khi chạy.',
+    flagged: 'Phần được đánh dấu:',
+    reason: {
+      deleteFiles: 'Lệnh này xóa vĩnh viễn các tệp và không thể hoàn tác.',
+      forceDelete: 'Lệnh này buộc xóa các tệp mà không hỏi lại.',
+      dropDbObject: 'Lệnh này xóa một đối tượng cơ sở dữ liệu cùng toàn bộ dữ liệu trong đó.',
+      emptyTable: 'Lệnh này làm trống một bảng.',
+      deleteAllRows: 'Lệnh này xóa mọi hàng vì không có mệnh đề WHERE.',
+      overwriteDisk: 'Lệnh này định dạng hoặc ghi đè một ổ đĩa.',
+      rewriteGitHistory: 'Lệnh này hủy các thay đổi hoặc ghi đè cưỡng bức lịch sử Git.',
+      shutdown: 'Lệnh này tắt hoặc khởi động lại máy.',
+      killProcesses: 'Lệnh này buộc dừng các tiến trình đang chạy.',
+      teardownInfra: 'Lệnh này gỡ bỏ hạ tầng hoặc tài nguyên đám mây.',
+      recursivePermissions: 'Lệnh này thay đổi quyền hoặc chủ sở hữu của mọi thứ trong một thư mục.',
+      unknown: 'Bước này tạo ra những thay đổi có thể khó hoàn tác.',
+    },
   },
   disclaimerPage: {
     seo: {

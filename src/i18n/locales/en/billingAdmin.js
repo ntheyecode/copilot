@@ -7,6 +7,14 @@ export default {
     stepUpLabel: 'Saving billing keys',
     readOnlyNote: 'Only a superadmin can change the billing configuration. The current state is shown below.',
 
+    // ---- shown when this server's edition has no Stripe (server offCode) ----
+    offByEdition: {
+      title: 'Stripe is off on this server.',
+      license: 'Plans come from the installation license. Stripe keys in these settings or in the environment are ignored.',
+      invoiced: 'This installation is invoiced directly. Stripe keys in these settings or in the environment are ignored.',
+      generic: 'Stripe keys in these settings or in the environment are ignored.',
+    },
+
     // ---- plan names (ids are Stripe/plan field keys and stay as-is) ----
     plans: {
       lite: 'Lite',

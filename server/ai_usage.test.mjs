@@ -131,7 +131,7 @@ test('ledger: one monthly record per company with the actual / estimated split; 
 
 test('regression: transcription and image calls use their own prices, never the text rate; unknown ones are unpriced', () => {
   const mini = costOfEntry({ provider: 'openai', model: 'gpt-4o-mini-transcribe', call: 'transcribe', inTokens: 1_000_000, outTokens: 0 })
-  assert.deepEqual(mini, { usd: 3, priced: true })
+  assert.deepEqual(mini, { usd: 1.25, priced: true })   // OpenAI list price as of 2026-10-30 (ai_call_prices.js)
   assert.equal(costOfEntry({ provider: 'openai', model: 'gpt-image-1', call: 'image', inTokens: 0, outTokens: 1_000_000 }).usd, 40)
   assert.deepEqual(costOfEntry({ provider: 'gemini', model: 'gemini-3.5-flash', call: 'transcribe', inTokens: 1000 }), { usd: 0, priced: false })
 })

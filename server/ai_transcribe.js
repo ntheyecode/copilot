@@ -27,12 +27,12 @@ export const AUDIO_MIMES = ['audio/wav', 'audio/x-wav', 'audio/webm', 'audio/ogg
 const TIMEOUT_MS = 60000
 
 // Cheapest dependable first; the live catalog decides what exists on the key.
-const PREFS = {
+export const TRANSCRIBE_PREFS = {
   groq: [/^whisper-large-v3-turbo$/i, /^whisper-large-v3$/i, /whisper/i],
   openai: [/^gpt-4o-mini-transcribe$/i, /^gpt-transcribe$/i, /^whisper-1$/i, /transcribe/i, /whisper/i],
 }
 const NEVER = /diariz|tts|speech-to-speech|realtime|preview/i
-const FALLBACK = { groq: 'whisper-large-v3-turbo', openai: 'gpt-4o-mini-transcribe' }
+export const TRANSCRIBE_FALLBACK = { groq: 'whisper-large-v3-turbo', openai: 'gpt-4o-mini-transcribe' }
 
 const idOf = (rt) => { const p = providerOf(rt); return p ? p.id : null }
 
@@ -54,7 +54,7 @@ export function pickTranscribeRuntime(rt) {
 // Pure: choose a transcription model from a provider's model ids.
 export function chooseTranscribeModel(providerId, ids, { avoid = null } = {}) {
   const pool = (Array.isArray(ids) ? ids : []).map(String).filter((x) => x && x !== avoid && !NEVER.test(x))
-  for (const re of (PREFS[providerId] || [])) { const hit = pool.find((x) => re.test(x)); if (hit) return hit }
+  for (const re of (TRANSCRIBE_PREFS[providerId] || [])) { const hit = pool.find((x) => re.test(x)); if (hit) return hit }
   return null
 }
 // Whisper models return segment timestamps (verbose_json); the newer transcribe
@@ -164,7 +164,7 @@ async function pickModel(rt, { avoid = null, fresh = false } = {}) {
   const hit = modelCache.get(key)
   if (!fresh && !avoid && hit && Date.now() - hit.at < MODEL_TTL_MS && hit.model) return hit.model
   const ids = await rawModelIds(p, rt.apiKey).catch(() => null)
-  const model = ids ? chooseTranscribeModel(p.id, ids, { avoid }) : (avoid ? null : FALLBACK[p.id] || null)
+  const model = ids ? chooseTranscribeModel(p.id, ids, { avoid }) : (avoid ? null : TRANSCRIBE_FALLBACK[p.id] || null)
   if (!avoid) modelCache.set(key, { model, at: Date.now() })
   return model
 }

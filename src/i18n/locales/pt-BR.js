@@ -3018,6 +3018,12 @@ export default {
   billingAdmin: {
     loading: 'Carregando a configuração de cobrança',
     stepUpLabel: 'Salvando as chaves de cobrança',
+    offByEdition: {
+      title: 'O Stripe está desativado neste servidor.',
+      license: 'Os planos vêm da licença da instalação. As chaves do Stripe nestas configurações ou no ambiente são ignoradas.',
+      invoiced: 'Esta instalação é faturada diretamente. As chaves do Stripe nestas configurações ou no ambiente são ignoradas.',
+      generic: 'As chaves do Stripe nestas configurações ou no ambiente são ignoradas.',
+    },
     readOnlyNote: 'Só um superadmin pode alterar a configuração de cobrança. O estado atual é mostrado abaixo.',
     plans: {
       lite: 'Lite',
@@ -9254,7 +9260,22 @@ export default {
   destructiveGate: {
     label: 'Passo destrutivo.',
     reveal: 'Eu entendi, mostrar o comando',
-    body: 'Impacto: {why}. Leia com atenção antes de executar.',
+    check: 'Leia com atenção antes de executar.',
+    flagged: 'Sinalizado:',
+    reason: {
+      deleteFiles: 'Este comando exclui arquivos permanentemente, e isso não pode ser desfeito.',
+      forceDelete: 'Este comando força a exclusão de arquivos sem pedir confirmação.',
+      dropDbObject: 'Este comando remove um objeto do banco de dados junto com os dados dele.',
+      emptyTable: 'Este comando esvazia uma tabela.',
+      deleteAllRows: 'Este comando apaga todas as linhas porque não tem cláusula WHERE.',
+      overwriteDisk: 'Este comando formata ou sobrescreve um disco.',
+      rewriteGitHistory: 'Este comando descarta alterações ou sobrescreve à força o histórico do Git.',
+      shutdown: 'Este comando desliga ou reinicia a máquina.',
+      killProcesses: 'Este comando encerra à força processos em execução.',
+      teardownInfra: 'Este comando derruba infraestrutura ou recursos de nuvem.',
+      recursivePermissions: 'Este comando altera permissões ou o proprietário de tudo dentro de uma pasta.',
+      unknown: 'Esta etapa faz alterações que podem ser difíceis de desfazer.',
+    },
   },
   disclaimerPage: {
     seo: {

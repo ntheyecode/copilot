@@ -52,7 +52,7 @@ export default function Billing({ isSuperAdmin }) {
     try {
       const data = await workAdminApi.getBilling()
       const b = data.billing || {}
-      setState({ loading: false, error: null, billing: b, webhookUrl: data.webhookUrl || '', envFallback: data.envFallback || null })
+      setState({ loading: false, error: null, billing: b, webhookUrl: data.webhookUrl || '', envFallback: data.envFallback || null, offCode: data.offByEdition ? (data.offCode || 'generic') : null })
       setForm({
         secretKey: '', webhookSecret: '',
         priceLite: b.priceLite || '', priceBasic: b.priceBasic || '', priceAdvanced: b.priceAdvanced || '', pricePremium: b.pricePremium || '',
@@ -139,6 +139,13 @@ export default function Billing({ isSuperAdmin }) {
     <div>
       {stepUp ? <StepUpPrompt verify={workAdminApi.verifyAiStepUp} label={t('billingAdmin.stepUpLabel')} onUnlocked={() => { setStepUp(false); save() }} onCancel={() => setStepUp(false)} /> : null}
       {!isSuperAdmin ? <div className="wka-note"><Lock size={14} /> {t('billingAdmin.readOnlyNote')}</div> : null}
+      {/* This edition has no Stripe: the server says why (offCode), worded here. */}
+      {state.offCode ? (
+        <div className="wka-note" role="status" data-billing-off={state.offCode}>
+          <Lock size={14} /> <b>{t('billingAdmin.offByEdition.title')}</b>{' '}
+          {t(['license', 'invoiced'].includes(state.offCode) ? `billingAdmin.offByEdition.${state.offCode}` : 'billingAdmin.offByEdition.generic')}
+        </div>
+      ) : null}
 
       <div className="wka-panel">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
