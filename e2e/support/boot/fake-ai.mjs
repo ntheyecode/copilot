@@ -36,7 +36,9 @@ export function startFakeAi() {
       try {
         if (req.method === 'GET' && /\/models\/?(\?|$)/.test(path)) {
           calls.push({ host, path, kind: 'models', at: Date.now() })
-          return send(200, { object: 'list', data: ['gpt-4o-mini', 'gpt-4o'].map((id) => ({ id, object: 'model', owned_by: 'e2e' })) })
+          // Current OpenAI models only (server/ai_model_lifecycle.js), plus the
+          // transcription model, so the E2E run exercises the live ladders.
+          return send(200, { object: 'list', data: ['gpt-6-luna', 'gpt-5.6-luna', 'gpt-5.6-terra', 'gpt-5.6-sol', 'gpt-transcribe'].map((id) => ({ id, object: 'model', owned_by: 'e2e' })) })
         }
         if (/audio\/transcriptions/.test(path)) {
           calls.push({ host, path, kind: 'transcribe', at: Date.now() })
@@ -55,7 +57,7 @@ export function startFakeAi() {
           const answer = rule && rule.content !== undefined ? rule.content : defaultAnswer(kind, text)
           const content = typeof answer === 'string' ? answer : JSON.stringify(answer)
           return send(200, {
-            id: `chatcmpl-e2e-${calls.length}`, object: 'chat.completion', created: Math.floor(Date.now() / 1000), model: body.model || 'gpt-4o-mini',
+            id: `chatcmpl-e2e-${calls.length}`, object: 'chat.completion', created: Math.floor(Date.now() / 1000), model: body.model || 'gpt-6-luna',
             choices: [{ index: 0, message: { role: 'assistant', content }, finish_reason: 'stop' }],
             usage: { prompt_tokens: Math.ceil(text.length / 4), completion_tokens: Math.ceil(content.length / 4), total_tokens: Math.ceil((text.length + content.length) / 4) },
           })

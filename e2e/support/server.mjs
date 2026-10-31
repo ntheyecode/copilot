@@ -21,7 +21,7 @@ export async function bootServer({ edition = 'all', env = {}, label = 'e2e' } = 
   // runtime is openai, and net-fakes routes that host to the fake provider.
   if (!env.E2E_NO_AI) {
     fs.writeFileSync(path.join(dataDir, 'ai-seed.json'), JSON.stringify({
-      providers: { openai: { apiKey: 'sk-e2e-fake-key', chatModel: 'gpt-4o-mini', visionModel: 'gpt-4o-mini' } },
+      providers: { openai: { apiKey: 'sk-e2e-fake-key', chatModel: 'gpt-6-luna', visionModel: 'gpt-6-luna' } },
       activeProvider: 'openai',
       platformAiAllowed: true,
     }))

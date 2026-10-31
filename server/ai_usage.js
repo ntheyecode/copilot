@@ -16,7 +16,7 @@
 // call with no usage block is recorded as ESTIMATED, never silently as zero.
 // ===========================================================================
 import { AsyncLocalStorage } from 'node:async_hooks'
-import { MODEL_PRICES } from './model-prices.js'
+import { textPriceOf } from './model-prices.js'
 import { AUDIO_PRICES_PER_MIN, AUDIO_MIN_SECONDS, CALL_TOKEN_PRICES, priceAt, audioPerMinute } from './ai_call_prices.js'
 
 const als = new AsyncLocalStorage()
@@ -67,10 +67,8 @@ export function usageFromResponse(kind, data) {
 // silently $0 and never priced at the text rate).
 export { AUDIO_PRICES_PER_MIN, CALL_TOKEN_PRICES }
 
-const priceOf = (model) => {
-  const key = String(model || '')
-  return MODEL_PRICES[key] || MODEL_PRICES[key.split('/').pop()] || null
-}
+// Text/vision rate in force on the day of the call (dated periods resolve here).
+const priceOf = (model, at) => textPriceOf(model, at)
 
 // One usage entry -> { usd, priced }. Cached input tokens are priced at the
 // normal input rate (the table has no cached rates yet), so the figure is never
@@ -84,7 +82,7 @@ export function costOfEntry(e) {
     return { usd: (secs / 60) * per, priced: true }
   }
   const special = CALL_TOKEN_PRICES[e.call]
-  const p = special ? priceAt(special[String(e.model || '').split('/').pop()] || null, e.at) : priceOf(e.model)
+  const p = special ? priceAt(special[String(e.model || '').split('/').pop()] || null, e.at) : priceOf(e.model, e.at)
   if (!p) return { usd: 0, priced: false }
   return { usd: ((e.inTokens || 0) / 1e6) * (p.input || 0) + ((e.outTokens || 0) / 1e6) * (p.output || 0), priced: true }
 }

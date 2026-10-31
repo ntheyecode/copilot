@@ -18,6 +18,7 @@ import fs from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import * as store from './store.js'
 import * as ai from './ai.js'
+import { pickWorkVision, pickWorkVisionStrong } from './ai_vision_ladder.js'
 import * as docs from './docs.js'
 import * as work from './work.js'
 import { buildWorkReportPdf, buildDeliverablesPdf, buildComplianceReportPdf } from './pdf.js'
@@ -576,44 +577,9 @@ function meterCost(sessionId, model, inText, outText, images = 0, opts = {}) {
 }
 
 // ---- WorkCoPilot vision model resolution ----------------------------------
-// WorkCoPilot needs a VISION model (it reads the screen). Pick the cheapest
-// capable model per provider so the continuous watch stays cheap (the client
-// already downscales frames and only sends on change).
-const WORK_VISION_PREF = {
-  gemini: [/gemini-3\.1-flash-lite(?!-preview|-image)/i, /gemini-3(\.\d)?-flash-lite(?!-preview|-image)/i, /flash-lite-latest/i, /flash-latest/i, /2\.0-flash(?!-lite)/i, /gemini-3(\.\d)?-flash\b/i, /flash-image/i],
-  openai: [/gpt-4o-mini(?!-transcribe|-search|-audio)/i, /4\.1-nano/i, /4\.1-mini/i, /gpt-4o(?!-mini|-transcribe|-audio)/i, /gpt-4\.1\b/i, /o4-mini/i],
-  groq: [/scout/i, /maverick/i, /llama.*vl/i, /vision/i],
-  // OpenRouter: the cheapest verified screen-reader first (Qwen 3.7 Flash, reasoning
-  // off), then other cheap Qwen vision models.
-  openrouter: [/qwen3\.7-flash/i, /qwen3\.5-flash/i, /qwen3-vl-30b/i, /qwen.*vl.*instruct/i, /qwen.*flash/i],
-}
-async function pickWorkVision(rt) {
-  try {
-    const models = await ai.listModels(rt)
-    for (const re of (WORK_VISION_PREF[rt.providerId] || [])) {
-      const m = models.find((x) => re.test(x))
-      if (m) return m
-    }
-  } catch { /* fall through to the shared resolver */ }
-  return await ai.findVisionModel(rt).catch(() => null)
-}
-// Strongest-first patterns, for the just-in-time backup / Deep switch.
-const WORK_VISION_STRONG = {
-  gemini: [/gemini-3(\.\d)?-pro/i, /2\.5-pro/i, /gemini-pro.*vision/i, /flash-latest/i, /gemini-3(\.\d)?-flash\b/i, /2\.0-flash(?!-lite)/i],
-  openai: [/gpt-4o(?!-mini|-transcribe|-audio|-search)/i, /gpt-4\.1(?!-nano|-mini)/i, /o4\b/i, /gpt-4-turbo/i, /gpt-4o-mini/i],
-  groq: [/maverick/i, /scout/i, /llama.*vl/i, /vision/i],
-  openrouter: [/qwen3-vl-235b/i, /qwen3\.8/i, /qwen.*vl.*instruct/i, /qwen3\.7-flash/i],
-}
-async function pickWorkVisionStrong(rt, avoid) {
-  try {
-    const models = await ai.listModels(rt)
-    for (const re of (WORK_VISION_STRONG[rt.providerId] || [])) {
-      const m = models.find((x) => re.test(x) && x !== avoid)
-      if (m) return m
-    }
-  } catch { /* none */ }
-  return null
-}
+// The cheap and strong screen-reading ladders live in ai_vision_ladder.js
+// (pickWorkVision / pickWorkVisionStrong), which skip any model the lifecycle
+// registry says is shut down. Only the runtime wiring stays here.
 // A stronger backup {rt, visionModel} than the primary, or null. Prefers a
 // stronger model on the SAME provider first, then any other configured provider.
 async function findWorkVisionStrong(req, primary) {
@@ -888,10 +854,10 @@ async function resolveWorkRuntime(req, res, { needVision = false } = {}) {
   if (needVision) {
     res.status(400).json({
       error: companyRt
-        ? 'Your company AI key has no vision-capable model, so WorkCoPilot cannot read the screen. Ask your company admin to set a provider or model that can see images (Gemini, GPT-4o, or Llama 4 Scout) in Company, AI keys.'
+        ? 'Your company AI key has no vision-capable model, so WorkCoPilot cannot read the screen. Ask your company admin to set a provider or model that can see images (OpenAI, Gemini, or a Groq vision model) in Company, AI keys.'
         : platform
           ? 'The platform AI has no vision-capable model, so WorkCoPilot cannot read the screen. Ask the administrator to add a Gemini or OpenAI key in AI Settings.'
-          : 'Your AI key has no vision-capable model, so WorkCoPilot cannot read the screen. Use a provider or model that can see images (Gemini, GPT-4o, or Llama 4 Scout), then test it again.',
+          : 'Your AI key has no vision-capable model, so WorkCoPilot cannot read the screen. Use a provider or model that can see images (OpenAI, Gemini, or a Groq vision model), then test it again.',
       needsVision: true,
     })
     return null
@@ -1282,8 +1248,11 @@ app.post('/api/work/profile/password', requireWorkAuth, wrap((req, res) => {
 // ===========================================================================
 // AI gating
 // ===========================================================================
+// Readiness only. The provider catalog (provider labels and model ids) is a
+// superadmin concern served by /api/work/admin/ai/providers; it was sent here to
+// every signed-in user although no client reads it, which exposed model names.
 app.get('/api/work/ai', requireWorkAuth, wrap((req, res) => {
-  res.json({ status: store.workAiStatus(req.workUser.id), providers: ai.catalog() })
+  res.json({ status: store.workAiStatus(req.workUser.id) })
 }))
 app.post('/api/work/ai/key', requireWorkAuth, wrap((req, res) => {
   const { providerId, apiKey, chatModel, visionModel } = req.body || {}

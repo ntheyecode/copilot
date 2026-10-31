@@ -1,4 +1,4 @@
-// model-prices.js — public LIST prices for commonly used LLM chat/vision models.
+// model-prices.js: public LIST prices for commonly used LLM chat/vision models.
 //
 // Pure DATA module (no logic, no imports). Prices are USD per 1,000,000 tokens,
 // input and output quoted separately. Used to show an estimated per-session
@@ -20,8 +20,8 @@
 //   - gemini-2.5-pro: $1.25/$10 is the standard rate for prompts <=200K input
 //     tokens; prompts >200K are billed $2.50/$15.
 //   - gemini-2.5-flash: $0.30 input is text/image/video; audio input is $1.00.
-//   - gemini-2.0-flash: still widely offered; Google has announced a shutdown
-//     of 2.0 Flash on the API around mid-2026 — re-verify before relying on it.
+//   - gemini-2.0-flash: shut down on 2026-06-01 (server/ai_model_lifecycle.js);
+//     kept at its last rate so older ledger rows still price.
 //   - gemini-1.5-flash / gemini-1.5-pro: these are the last-published standard
 //     list rates (base tier, prompts <=128K tokens). The 1.5 family is no longer
 //     shown on the current official Gemini pricing page (deprecated/legacy), so
@@ -34,8 +34,21 @@
 //   - Groq openai/gpt-oss-20b: $0.075/$0.30 is the most commonly listed current
 //     rate across trackers; some list $0.10/$0.50. Re-verify on groq.com/pricing.
 
+import { priceAt } from './ai_call_prices.js'
+
 export const MODEL_PRICES = {
   // ---- OpenAI (USD per 1M tokens) ----
+  // Current family, standard tier, prompts <=272K input tokens (above that OpenAI
+  // bills 2x input and 1.5x output for the whole request). Reasoning tokens are
+  // billed as output; our calls ask for reasoning effort "none" (ai_model_params.js).
+  // Source: https://developers.openai.com/api/docs/pricing (checked 2026-10-31)
+  "gpt-6-luna":      { input: 0.10, output: 0.50,  label: "OpenAI GPT-6 Luna" },
+  "gpt-5.6-luna":    { input: 0.20, output: 1.20,  label: "OpenAI GPT-5.6 Luna" },
+  "gpt-5.6-terra":   { input: 2.00, output: 12.00, label: "OpenAI GPT-5.6 Terra" },
+  "gpt-5.6-sol":     { input: 4.00, output: 20.00, label: "OpenAI GPT-5.6 Sol" },
+  "gpt-5.6":         { input: 4.00, output: 20.00, label: "OpenAI GPT-5.6 (routes to Sol)" },
+  // Older family, served until 2027-01-14 (o4-mini was shut down 2026-10-23);
+  // kept so ledger rows booked before the switch still price.
   "gpt-4o":          { input: 2.50, output: 10.00, label: "OpenAI GPT-4o" },
   "gpt-4o-mini":     { input: 0.15, output: 0.60,  label: "OpenAI GPT-4o mini" },
   "gpt-4.1":         { input: 2.00, output: 8.00,  label: "OpenAI GPT-4.1" },
@@ -56,6 +69,11 @@ export const MODEL_PRICES = {
   "gemini-3.1-flash-lite":    { input: 0.25, output: 1.50, label: "Google Gemini 3.1 Flash-Lite" },
   "gemini-3.5-flash-lite":    { input: 0.30, output: 2.50, label: "Google Gemini 3.5 Flash-Lite" },
   "gemini-3.5-flash":         { input: 0.50, output: 3.00, label: "Google Gemini 3.5 Flash" },
+  // Gemini 3.6 / 3.8 Flash: the page announces the 2027-01-01 doubling; priceAt()
+  // picks the rate in force on the day of the call.
+  // Source: https://ai.google.dev/gemini-api/docs/pricing (checked 2026-10-31)
+  "gemini-3.6-flash": { periods: [{ from: null, input: 0.75, output: 3.75 }, { from: "2027-01-01", input: 1.50, output: 7.50 }], label: "Google Gemini 3.6 Flash" },
+  "gemini-3.8-flash": { periods: [{ from: null, input: 0.75, output: 3.75 }, { from: "2027-01-01", input: 1.50, output: 7.50 }], label: "Google Gemini 3.8 Flash" },
   // OpenRouter (cheapest screen-readers; images billed in input). Keyed by the
   // provider/model slug so metering prices them directly.
   "qwen/qwen3.7-flash":              { input: 0.03, output: 0.13, label: "Qwen 3.7 Flash (OpenRouter)" },
@@ -74,7 +92,7 @@ export const MODEL_PRICES = {
   "moonshot-v1-128k":     { input: 2.00, output: 2.00, label: "Moonshot v1 128k" },
   "moonshot-v1-8k":       { input: 0.20, output: 2.00, label: "Moonshot v1 8k" },
 
-  // ---- Anthropic Claude (USD per 1M tokens) — current generation ----
+  // ---- Anthropic Claude (USD per 1M tokens), current generation ----
   "claude-haiku-5-5":  { input: 0.10, output: 0.50,  label: "Anthropic Claude Haiku 5.5" },   // <=100K prompt; >100K is $0.50/$2.50
   "claude-sonnet-5-5": { input: 2.00, output: 10.00, label: "Anthropic Claude Sonnet 5.5" },
   "claude-opus-5-5":   { input: 4.00, output: 20.00, label: "Anthropic Claude Opus 5.5" },
@@ -86,7 +104,15 @@ export const MODEL_PRICES = {
   "openai/gpt-oss-20b":                       { input: 0.075, output: 0.30, label: "Groq GPT-OSS 20B" },
 };
 
-export const PRICES_UPDATED = "2026-10-21";
+export const PRICES_UPDATED = "2026-10-31";
+
+// The { input, output } rate for a model id (provider prefix ignored) in force
+// at `at`, or null when unpriced. Entries with dated `periods` resolve through
+// the one shared priceAt (ai_call_prices.js).
+export function textPriceOf(modelId, at = Date.now()) {
+  const key = String(modelId || '')
+  return priceAt(MODEL_PRICES[key] || MODEL_PRICES[key.split('/').pop()] || null, at)
+}
 
 // Approx input tokens charged per screen image sent to a vision model. Images are
 // the bulk of a watch-loop call's cost, so leaving them out of the estimate (as
@@ -101,8 +127,7 @@ const IMAGE_TOKENS_EST = 1200
 // any images sent. Operator-transparency ESTIMATE, not billing-grade. Unknown
 // model -> 0.
 export function estimateCostUsd(modelId, inChars = 0, outChars = 0, images = 0) {
-  const key = String(modelId || '')
-  const p = MODEL_PRICES[key] || MODEL_PRICES[key.split('/').pop()] || null
+  const p = textPriceOf(modelId)
   if (!p) return 0
   const inTok = Math.max(0, Number(inChars) || 0) / 4 + Math.max(0, Number(images) || 0) * IMAGE_TOKENS_EST
   const outTok = Math.max(0, Number(outChars) || 0) / 4

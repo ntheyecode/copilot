@@ -24,6 +24,11 @@ export const SOURCES = Object.freeze({
   gemini: Object.freeze({ url: 'https://ai.google.dev/gemini-api/docs/pricing', checked: '2026-10-30' }),
   groq: Object.freeze({ url: 'https://console.groq.com/docs/speech-to-text', checked: '2026-10-30' }),
   groqDeprecations: Object.freeze({ url: 'https://console.groq.com/docs/deprecations', checked: '2026-10-30' }),
+  // The 2026-10-31 model refresh (ai_model_lifecycle.js) re-read these pages.
+  openaiCurrent: Object.freeze({ url: 'https://developers.openai.com/api/docs/pricing', checked: '2026-10-31' }),
+  openaiSunburst: Object.freeze({ url: 'https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst', checked: '2026-10-31' }),
+  openaiTranscribe: Object.freeze({ url: 'https://developers.openai.com/api/docs/models/gpt-transcribe', checked: '2026-10-31' }),
+  geminiCurrent: Object.freeze({ url: 'https://ai.google.dev/gemini-api/docs/pricing', checked: '2026-10-31' }),
 })
 const S = SOURCES
 
@@ -48,9 +53,11 @@ export const AUDIO_PRICES_PER_MIN = Object.freeze({
   // OpenAI estimated cost $0.003 / minute (removed 2027-02-26).
   // Source: https://developers.openai.com/api/docs/pricing (checked 2026-10-30)
   'gpt-4o-mini-transcribe': { perMin: 0.003, src: S.openai },
-  // OpenAI's replacement for the models above: $0.0045 / minute (no token rates published).
-  // Source: https://developers.openai.com/api/docs/pricing (checked 2026-10-30)
-  'gpt-transcribe': { perMin: 0.0045, src: S.openai },
+  // OpenAI's replacement for the models above: $0.0045 / minute (no token rates
+  // published). The response may carry no usage, so it is booked from the audio
+  // length we sent (ai_transcribe.js transcribeUsage).
+  // Source: https://developers.openai.com/api/docs/models/gpt-transcribe (checked 2026-10-31)
+  'gpt-transcribe': { perMin: 0.0045, src: S.openaiTranscribe },
 })
 // Minimum billed seconds per request, by provider. Groq: 10 s.
 // Source: https://console.groq.com/docs/speech-to-text (checked 2026-10-30)
@@ -90,9 +97,16 @@ export const CALL_TOKEN_PRICES = Object.freeze({
     'gemini-3.5-transcribe': { input: 2.00, output: 12.00, src: S.gemini },
   }),
   image: Object.freeze({
+    // Current OpenAI image models (server/work-images.js IMAGE_MODELS). Text input
+    // $5.00 (cached $1.25), image input $8.00 (cached $2.00), image output $30.00.
+    // Our calls send a text prompt only, so `input` is the text rate.
+    // Source: https://developers.openai.com/api/docs/models/gpt-image-2.5-sunburst (checked 2026-10-31)
+    'gpt-image-2.5-sunburst': { input: 5.00, output: 30.00, cachedInput: 1.25, imageInput: 8.00, src: S.openaiSunburst },
+    // Same rates as sunburst. Source: https://developers.openai.com/api/docs/pricing (checked 2026-10-31)
+    'gpt-image-2.5-flare': { input: 5.00, output: 30.00, cachedInput: 1.25, imageInput: 8.00, src: S.openaiCurrent },
     // OpenAI shut gpt-image-1 down on 2026-10-23 and no longer lists it; kept at
-    // its last official rate (text input $5.00, image output $40.00) because the
-    // code still names it (server/work-images.js).
+    // its last official rate (text input $5.00, image output $40.00) so ledger
+    // rows booked before the switch still price.
     // Source: https://developers.openai.com/api/docs/deprecations (checked 2026-10-30)
     'gpt-image-1': { input: 5.00, output: 40.00, src: S.openaiDeprecations },
     // Text input $2.00, image output $8.00 (shutdown 2026-12-01).
@@ -114,6 +128,12 @@ export const CALL_TOKEN_PRICES = Object.freeze({
     // Input $0.50, image output $60.00.
     // Source: https://ai.google.dev/gemini-api/docs/pricing (checked 2026-10-30)
     'gemini-3.1-flash-image': { input: 0.50, output: 60.00, src: S.gemini },
+    // Nano Banana 2.1: input $1.50 (text/image/video), image output $30.00.
+    // Source: https://ai.google.dev/gemini-api/docs/pricing (checked 2026-10-31)
+    'gemini-nano-banana-2.1': { input: 1.50, output: 30.00, src: S.geminiCurrent },
+    // Input $2.00 (text/image), image output $120.00.
+    // Source: https://ai.google.dev/gemini-api/docs/pricing (checked 2026-10-31)
+    'gemini-3-pro-image': { input: 2.00, output: 120.00, src: S.geminiCurrent },
   }),
 })
 
@@ -135,4 +155,12 @@ export function audioPerMinute(model) {
   return e ? e.perMin : null
 }
 
-export default { SOURCES, AUDIO_PRICES_PER_MIN, AUDIO_MIN_SECONDS, CALL_TOKEN_PRICES, priceAt, audioPerMinute }
+// True when a transcription model is billed by audio minute only (it has a
+// per-minute price and no token rates), so its cost must come from the audio
+// length, whatever usage block the response carries.
+export function billsPerMinute(model) {
+  const id = String(model || '').split('/').pop()
+  return audioPerMinute(id) != null && !CALL_TOKEN_PRICES.transcribe[id]
+}
+
+export default { SOURCES, AUDIO_PRICES_PER_MIN, AUDIO_MIN_SECONDS, CALL_TOKEN_PRICES, priceAt, audioPerMinute, billsPerMinute }
