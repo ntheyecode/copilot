@@ -6,8 +6,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { pickPublishedWorkflow } from './workflow_playback.js'
-import { workflowGoalSignature } from './work.js'
-import { goalTokens, hasSegmenter } from './goal_tokens.js'
+import { workflowGoalSignature, matchWorkflowTemplate } from './work.js'
+import { goalTokens, legacyGoalTokens, hasSegmenter } from './goal_tokens.js'
 
 const wf = (id, title, productName = 'Okta') => ({ id, state: 'published', meta: { title, productName }, steps: [{ instruction: 'Open' }] })
 
@@ -68,7 +68,28 @@ test('without Intl.Segmenter, CJK and Thai fall back to character bigrams', () =
   assert.ok(th.length >= 2 && th.every((x) => !/^\p{M}/u.test(x)), JSON.stringify(th))   // never starts on a bare mark
 })
 
+test('the tokenizer is stable on its own output (stored signatures re-tokenize to the same tokens)', () => {
+  for (const [goal, title] of Object.values(CASES)) {
+    for (const s of [goal, title]) {
+      const t = goalTokens(s)
+      assert.deepEqual(goalTokens(t.join(' ')), t, s)
+    }
+  }
+})
+
+test('templates stored by the old [a-z0-9] tokenizer match no worse than before', () => {
+  // "Créer un utilisateur" was stored as "cr er un utilisateur", app "freee会計" as "freee".
+  const legacy = { id: 'old', goalSig: 'cr er un utilisateur', app: 'freee', environment: {}, steps: [] }
+  const m = matchWorkflowTemplate('Créer un utilisateur', 'freee会計', {}, [legacy])
+  assert.equal(m.tier, 'strong')
+  assert.equal(m.score, 0.925)
+  assert.deepEqual(legacyGoalTokens('Créer un utilisateur'), ['cr', 'er', 'un', 'utilisateur'])
+})
+
 test('ASCII goals tokenize exactly as before', () => {
+  for (const s of ["Deactivate a former employee's Okta account.", 'File my 2024 taxes in TurboTax v3 x', 'Reset the VPN password for user@example.com https://x.io/a']) {
+    assert.deepEqual(goalTokens(s), legacyGoalTokens(s), s)
+  }
   assert.deepEqual(workflowGoalSignature("Deactivate a former employee's Okta account.").tokens, ['deactivate', 'former', 'employee', 'okta', 'account'])
   assert.deepEqual(workflowGoalSignature('File my 2024 taxes in TurboTax v3 x').tokens, ['file', 'taxe', 'turbotax'])
 })

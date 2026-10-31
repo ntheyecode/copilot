@@ -18,7 +18,7 @@
 // stronger model is used only for planning and the on-demand "what is this".
 // ===========================================================================
 import { scrubGuidance } from './ai_language.js'
-import { goalTokens, unicodeWords } from './goal_tokens.js'
+import { goalTokens, legacyGoalTokens, unicodeWords } from './goal_tokens.js'
 import { classifyDestructive } from './destructive_rules.js'
 import { methodAnchorFor } from './method_anchors.js'
 import { validateSpec, describeSpecForAI } from './compute_spec.js'
@@ -2262,8 +2262,20 @@ function workflowTokenSim(a, b) {
 // App match: 1 (and match:true) when the normalized apps are equal or one is a
 // token-subset of the other; a partial token-overlap score (match:false) when
 // they differ; a neutral 0.5 (match:false) when either side is unknown.
+// A stored template's app was normalized when it was saved: templates saved
+// before normalizeApp became Unicode-aware hold the [a-z0-9]-only form
+// ("freee" for "freee会計"), so the score is also taken the old way and the
+// better of the two kept (no stored template matches worse than before).
+const normalizeAppLegacy = (v) => String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/)
+  .filter((w) => w && !WORKFLOW_APP_STOPWORDS.has(w)).join(' ').trim()
 function workflowAppScore(a, b) {
-  const na = normalizeApp(a), nb = normalizeApp(b)
+  const now = appScoreOf(normalizeApp(a), normalizeApp(b))
+  if (now.match) return now
+  const old = appScoreOf(normalizeAppLegacy(a), normalizeAppLegacy(b))
+  if (old.match) return old
+  return now
+}
+function appScoreOf(na, nb) {
   if (!na || !nb) return { score: 0.5, match: false }
   if (na === nb) return { score: 1, match: true }
   const sa = new Set(na.split(' ')), sb = new Set(nb.split(' '))
@@ -2314,13 +2326,17 @@ export function matchWorkflowTemplate(goal, app, environment, templates) {
   // goal: text, or tokens already made by workflowGoalSignature (re-tokenizing
   // joined tokens is not stable for CJK bigrams).
   const qTokens = Array.isArray(goal) ? goal : workflowGoalSignature(goal).tokens
+  // Templates stored before the any-script tokenizer carry [a-z0-9]-only
+  // signatures ("cr er un utilisateur"); scoring the goal the old way too and
+  // keeping the better score means none of them matches worse than before.
+  const qLegacy = Array.isArray(goal) ? null : legacyGoalTokens(goal)
   let best = null
   for (const t of list) {
     if (!t) continue
     const cTokens = (Array.isArray(t.goalTokens) && t.goalTokens.length)
       ? t.goalTokens
       : workflowGoalSignature(t.goalSig || '').tokens
-    const goalSim = workflowTokenSim(qTokens, cTokens)
+    const goalSim = Math.max(workflowTokenSim(qTokens, cTokens), qLegacy ? workflowTokenSim(qLegacy, cTokens) : 0)
     const appR = workflowAppScore(app, t.app)
     const envR = workflowEnvCompat(environment, t.environment)
     const score = Math.round(

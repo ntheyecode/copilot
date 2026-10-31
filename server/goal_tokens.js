@@ -103,6 +103,10 @@ function stripKoParticle(w) {
 // One spaced chunk (no separators inside) -> its words.
 function wordsOfChunk(chunk, { useSegmenter }) {
   if (!RE_HAS_NOSPACE.test(chunk)) return [chunk]
+  // One or two Han / Kana / Hangul characters standing alone are a word as they
+  // are. This also makes the tokenizer stable on its own output: a stored
+  // signature ("ユー ーザ 作成") tokenizes back to the same tokens.
+  if (RE_ALL_CJK.test(chunk) && chars(chunk).length <= 2) return [chunk]
   if (useSegmenter && segmenter) {
     const out = []
     for (const s of segmenter.segment(chunk)) if (s.isWordLike) out.push(s.segment)
@@ -140,10 +144,36 @@ export function goalTokens(text, opts = {}) {
       if (RE_HANGUL.test(w)) { w = stripKoParticle(w); if (STOP.has(w)) continue }
       if (RE_NUMBER.test(w)) continue                    // pure number, year, or v<n>: a volatile specific
       if (chars(w).length < 2 && !RE_ONE_CHAR_WORD.test(w)) continue   // stray single chars (e.g. the "x" from "2024.x"), unless a word on its own
-      if (RE_ALL_CJK.test(w)) { for (const b of bigrams(w)) push(b); continue }
+      // A bigram that is itself a function word is dropped too, so a stored
+      // signature re-tokenizes to the same tokens.
+      if (RE_ALL_CJK.test(w)) { for (const b of bigrams(w)) if (!STOP.has(b)) push(b); continue }
       if (RE_LATIN_WORD.test(w) && w.length > 3 && w.endsWith('s') && !w.endsWith('ss')) w = w.slice(0, -1)  // light singular
       push(w)
     }
+  }
+  return tokens
+}
+
+// The tokenizer as it was before this module ([a-z0-9] words only). Kept ONLY to
+// compare with signatures stored by it: a private-brain template distilled from
+// "Créer un utilisateur" was stored as "cr er un utilisateur", and the matcher
+// scores a goal against such a template both ways and keeps the better score,
+// so no stored template matches worse than it did. Never used to store anything.
+export function legacyGoalTokens(text) {
+  const words = String(text || '')
+    .toLowerCase()
+    .replace(/[\w.+-]+@[\w.-]+\.\w{2,}/g, ' ')
+    .replace(/https?:\/\/\S+/g, ' ')
+    .replace(/['’]s\b/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim().split(/\s+/).filter(Boolean)
+  const tokens = []
+  for (let w of words) {
+    if (w.length < 2) continue
+    if (/^v?\d+$/.test(w)) continue
+    if (STOP.has(w)) continue
+    if (w.length > 3 && w.endsWith('s') && !w.endsWith('ss')) w = w.slice(0, -1)
+    if (!tokens.includes(w)) tokens.push(w)
   }
   return tokens
 }
