@@ -99,6 +99,14 @@ let guideRestore = null       // the compact bounds to return to when un-maximiz
 function applyOnTop() {
   if (alive(win)) win.setAlwaysOnTop(onTop, onTop ? 'screen-saver' : 'normal')
 }
+// Every programmatic move/resize of the main window goes through here. On
+// Electron 45 (Windows) a bounds change can drop TOPMOST, so a floating window
+// is put back on top after it moves (user and OS moves: see keepOnTop events).
+function placeWin(b) {
+  if (!alive(win)) return
+  win.setBounds(b)
+  if (onTop) applyOnTop()
+}
 // Keep a window rectangle fully inside the work area of the display it is on
 // (or the nearest one). Two real failures this prevents: the 820px guide
 // overlay on a 768px laptop screen, whose Ask box and bottom controls were
@@ -158,9 +166,9 @@ function applyGuideMax(next) {
   if (want === guideMax) return guideMax
   if (want) {
     guideRestore = win.getBounds()
-    win.setBounds(clampBounds(centeredGuideBounds()))
+    placeWin(clampBounds(centeredGuideBounds()))
   } else {
-    win.setBounds(clampBounds(guideRestore || cornerBounds(GUIDE_W, GUIDE_H)))
+    placeWin(clampBounds(guideRestore || cornerBounds(GUIDE_W, GUIDE_H)))
   }
   guideMax = want
   sendState()
@@ -189,14 +197,14 @@ function applyMode(next) {
   mode = next
   if (mode === 'guide') {
     if (win.isMaximized()) win.unmaximize()
-    onTop = true; applyOnTop()
-    win.setBounds(clampBounds(guideBounds || cornerBounds(GUIDE_W, GUIDE_H)))
+    onTop = true
+    placeWin(clampBounds(guideBounds || cornerBounds(GUIDE_W, GUIDE_H)))   // on top after the move
     // opacity + click-behind stay as the user left them: guide mode is where they matter
   } else {
     onTop = false; applyOnTop()
     setClickThrough(false)              // you cannot plan through a click-through window
     opacityIdx = 0; win.setOpacity(1)   // planning is always fully opaque
-    win.setBounds(clampBounds(planBounds || centeredPlanBounds()))
+    placeWin(clampBounds(planBounds || centeredPlanBounds()))
   }
   sendState()
   return mode
@@ -754,6 +762,11 @@ function createWindow() {
   win.on('unmaximize', () => sendState())
   win.on('enter-full-screen', () => sendState())        // reflect OS-driven full screen (F11) back to the UI toggle
   win.on('leave-full-screen', () => sendState())
+  // A floating window stays on top through moves the user or the OS makes (a
+  // drag, Win+arrows, restore, leaving full screen, a display change): on
+  // Electron 45 (Windows) those can drop TOPMOST. Programmatic moves use placeWin.
+  const keepOnTop = () => { if (onTop) applyOnTop() }
+  for (const ev of ['moved', 'resized', 'restore', 'unmaximize', 'leave-full-screen', 'show']) win.on(ev, keepOnTop)
 
   // Closing the main window closes the product. Before this, the (hidden) buddy
   // and the monitor picker were separate BrowserWindows that outlived the main

@@ -70,6 +70,12 @@ test.describe('desktop overlay', () => {
     expect(await call('setAlwaysOnTop', false)).toBe(false)
     expect(win32Probe(st.hwnd).topmost).toBe(false)
     await call('setAlwaysOnTop', true)
+    // Moving the floating window (guide maximize and back) keeps it on top:
+    // on Electron 45 a bounds change could drop TOPMOST (main.js placeWin).
+    for (let i = 0; i < 2; i++) {
+      await call('winMaximize')
+      await expect.poll(() => win32Probe(st.hwnd).topmost, 'still on top after a guide maximize toggle').toBe(true)
+    }
 
     // Opacity.
     expect(await call('setOpacity', 0.6)).toBeCloseTo(0.6, 2)
