@@ -13,6 +13,7 @@ import { publicOrigin, callbackUrl } from './sso.js'
 import { spValues, parseIdpMetadata, normalizeCerts } from './saml_rules.js'
 import { SCIM_BASE_PATH } from './scim.js'
 import { makeMfaStepUp } from './mfa_step_up.js'
+import { registerScimRoleRoutes } from './scim_role_routes.js'
 
 export function registerSsoAdminRoutes(app, deps = {}) {
   const { store, requireAuth, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap, hosted = false } = deps
@@ -78,6 +79,8 @@ export function registerSsoAdminRoutes(app, deps = {}) {
   app.delete('/api/work/company/scim/tokens/:id', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
     res.json(store.revokeScimToken(req.workUser.companyId, req.params.id, req.workUser.id))
   }))
+  // Group -> role mappings (their own module; same company scope and gates).
+  registerScimRoleRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap })
 
   // ---- superadmin --------------------------------------------------------------
   app.get('/api/work/admin/companies/:id/sso-overview', requireAuth, requireSuperAdmin, wrap((req, res) => {

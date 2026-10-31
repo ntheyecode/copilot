@@ -22,7 +22,15 @@
 // ctx: { db, persist, persistSoon, httpErr, company(cid), masterKey(),
 //        createMember({ companyId, email, companyRole, tier, displayName }) -> raw user,
 //        setDisabled(userId, disabled, { reason, by }), setSsoEmail(userId, email),
-//        audit({ userId, companyId, action, reason, detail }), clock? }
+//        audit({ userId, companyId, action, reason, detail }), clock?,
+//        syncRoles?(companyId, { userIds, by, reason }) -> { ok } | { ok:false, status, detail } }
+//
+// Group membership decides roles where the company mapped a group to a role
+// or grant (scim_roles.js). Every change to a group's members or name, and a
+// PATCH on a user's `groups`, runs that sync for the people it touched; when
+// the sync is refused (it would demote the last company admin, or a seat is
+// not free) the group change is undone and the identity provider gets the
+// reason as a SCIM error.
 // ===========================================================================
 import crypto from 'node:crypto'
 import * as R from './scim_rules.js'
@@ -44,6 +52,14 @@ export function createScimState(ctx) {
     return d
   }
   const audit = (a) => { try { ctx.audit(a) } catch { /* audit never blocks */ } }
+  // Role sync for the people a group change touched. No mappings module wired
+  // (a unit harness) means nothing to sync.
+  const syncRoles = (cid, userIds, tokenId, reason) => (ctx.syncRoles ? ctx.syncRoles(cid, { userIds: [...new Set(userIds)], by: `scim token ${tokenId}`, reason }) : { ok: true })
+  // Snapshot / restore of the company's groups, so a refused role sync leaves
+  // every group exactly as it was.
+  const snapGroups = (cid) => db().scimGroups.filter((g) => g.companyId === cid).map((g) => ({ g, displayName: g.displayName, externalId: g.externalId, members: [...(g.members || [])], updatedAt: g.updatedAt }))
+  const restoreGroups = (snap) => { for (const s of snap) Object.assign(s.g, { displayName: s.displayName, externalId: s.externalId, members: s.members, updatedAt: s.updatedAt }) }
+  const refusal = (r) => R.scimError(r.status || 409, r.detail || 'The change was refused.')
 
   // ---- tokens --------------------------------------------------------------
   const pubToken = (t) => ({
@@ -117,6 +133,9 @@ export function createScimState(ctx) {
       name: { ...(formatted ? { formatted } : {}), ...(given ? { givenName: given } : {}), ...(family ? { familyName: family } : {}) },
       displayName: formatted || userName(u),
       emails: mail ? [{ value: mail, type: 'work', primary: true }] : [],
+      // Read-only membership (RFC 7643 4.1.2), so the identity provider can
+      // confirm what group pushes landed.
+      groups: db().scimGroups.filter((g) => g.companyId === u.companyId && (g.members || []).includes(u.id)).map((g) => ({ value: g.id, display: g.displayName, $ref: `${base}/Groups/${g.id}`, type: 'direct' })),
       active: !u.disabled,
       meta: { resourceType: 'User', created: u.createdAt || null, lastModified: u.scimUpdatedAt || u.createdAt || null, location: `${base}/Users/${u.id}` },
     }
@@ -195,6 +214,10 @@ export function createScimState(ctx) {
       persist()
       setActive(cid, u, active === undefined ? true : active, tokenId)
       audit({ userId: null, companyId: cid, action: 'scim_user_create', reason: 'provisioned by the identity provider', detail: `${mail} (token ${tokenId})` })
+      // A deprovisioned account that comes back left every group on the way out:
+      // a role its groups gave it returns to member (a refusal is audited and the
+      // account keeps its role; creation itself never fails on it).
+      if (existing) syncRoles(cid, [u.id], tokenId, 'account re-provisioned')
       return ok(201, userResource(u, base))
     }),
     replace: wrapOp((cid, id, body, base, tokenId) => {
@@ -216,6 +239,21 @@ export function createScimState(ctx) {
       const u = findUser(cid, id)
       if (!u) return R.scimError(404, 'User not found.')
       const ch = R.userPatchChanges(body)
+      // Membership written from the user side goes through the company's own
+      // groups first; a refused role sync undoes it and nothing else is changed.
+      if (ch.groups) {
+        const own = groups(cid)
+        const unknown = [...ch.groups.add, ...ch.groups.remove, ...(ch.groups.replace || [])].find((gid) => !own.some((g) => g.id === gid))
+        if (unknown) return R.scimError(400, `Unknown group: ${unknown}.`, 'invalidValue')
+        const snap = snapGroups(cid)
+        for (const g of own) {
+          const inNow = (g.members || []).includes(u.id)
+          const want = ch.groups.replace ? ch.groups.replace.includes(g.id) : (ch.groups.add.includes(g.id) || (inNow && !ch.groups.remove.includes(g.id)))
+          if (want !== inNow) { g.members = want ? [...(g.members || []), u.id] : (g.members || []).filter((m) => m !== u.id); g.updatedAt = nowIso() }
+        }
+        const r = syncRoles(cid, [u.id], tokenId, `groups of ${userName(u)} changed`)
+        if (!r.ok) { restoreGroups(snap); return refusal(r) }
+      }
       const mail = ch.email || (ch.userName && /@/.test(ch.userName) ? ch.userName.toLowerCase() : '')
       if (mail) changeEmail(cid, u, mail)
       applyNames(u, { displayName: ch.displayName, givenName: ch.givenName, familyName: ch.familyName, externalId: ch.externalId })
@@ -284,6 +322,8 @@ export function createScimState(ctx) {
       if (groups(cid).length >= 1000) return R.scimError(409, 'This company has reached the group limit.')
       const g = { id: crypto.randomUUID(), companyId: cid, displayName: name, externalId: String(b.externalId || '').slice(0, 256) || null, members: [...new Set(memberIds(cid, (Array.isArray(b.members) ? b.members : []).map((m) => String((m && m.value) || '').trim()).filter(Boolean)))], createdAt: nowIso(), updatedAt: nowIso() }
       db().scimGroups.push(g)
+      const r = syncRoles(cid, g.members, tokenId, `group "${name}" created`)
+      if (!r.ok) { db().scimGroups = db().scimGroups.filter((x) => x !== g); return refusal(r) }
       persist()
       audit({ userId: null, companyId: cid, action: 'scim_group_create', reason: 'group provisioned by the identity provider', detail: `${name} (token ${tokenId})` })
       return ok(201, groupResource(g, base))
@@ -294,10 +334,15 @@ export function createScimState(ctx) {
       const b = body || {}
       const name = cleanName(b.displayName)
       uniqueName(cid, name, g.id)
+      const nextMembers = [...new Set(memberIds(cid, (Array.isArray(b.members) ? b.members : []).map((m) => String((m && m.value) || '').trim()).filter(Boolean)))]
+      const snap = snapGroups(cid)
+      const touched = [...(g.members || []), ...nextMembers]
       g.displayName = name
       if (b.externalId !== undefined) g.externalId = String(b.externalId || '').slice(0, 256) || null
-      g.members = [...new Set(memberIds(cid, (Array.isArray(b.members) ? b.members : []).map((m) => String((m && m.value) || '').trim()).filter(Boolean)))]
+      g.members = nextMembers
       g.updatedAt = nowIso()
+      const r = syncRoles(cid, touched, tokenId, `group "${name}" replaced`)
+      if (!r.ok) { restoreGroups(snap); return refusal(r) }
       persist()
       audit({ userId: null, companyId: cid, action: 'scim_group_update', reason: 'group updated by the identity provider', detail: `${name} (token ${tokenId})` })
       return ok(200, groupResource(g, base))
@@ -306,13 +351,21 @@ export function createScimState(ctx) {
       const g = findGroup(cid, id)
       if (!g) return R.scimError(404, 'Group not found.')
       const ch = R.groupPatchChanges(body)
-      if (ch.displayName !== undefined) { const n = cleanName(ch.displayName); uniqueName(cid, n, g.id); g.displayName = n }
-      if (ch.externalId !== undefined) g.externalId = ch.externalId || null
+      // Validate everything before touching the group, so a bad member id never
+      // leaves a half-applied PATCH behind.
+      const newName = ch.displayName !== undefined ? cleanName(ch.displayName) : undefined
+      if (newName !== undefined) uniqueName(cid, newName, g.id)
       let members = ch.replaceMembers ? memberIds(cid, ch.replaceMembers) : [...(g.members || [])]
       if (ch.add.length) members.push(...memberIds(cid, ch.add))
       if (ch.remove.length) { const rm = new Set(ch.remove); members = members.filter((m) => !rm.has(m)) }
+      const snap = snapGroups(cid)
+      const touched = [...(g.members || []), ...members]
+      if (newName !== undefined) g.displayName = newName
+      if (ch.externalId !== undefined) g.externalId = ch.externalId || null
       g.members = [...new Set(members)]
       g.updatedAt = nowIso()
+      const r = syncRoles(cid, touched, tokenId, `group "${g.displayName}" updated`)
+      if (!r.ok) { restoreGroups(snap); return refusal(r) }
       persist()
       audit({ userId: null, companyId: cid, action: 'scim_group_update', reason: 'group updated by the identity provider', detail: `${g.displayName} (token ${tokenId})` })
       // Entra and Okta accept 204 or 200 with the resource; 200 lets a caller confirm.
@@ -321,7 +374,10 @@ export function createScimState(ctx) {
     remove: wrapOp((cid, id, tokenId) => {
       const g = findGroup(cid, id)
       if (!g) return R.scimError(404, 'Group not found.')
-      db().scimGroups = db().scimGroups.filter((x) => x !== g)
+      const before = db().scimGroups
+      db().scimGroups = before.filter((x) => x !== g)
+      const r = syncRoles(cid, g.members || [], tokenId, `group "${g.displayName}" removed`)
+      if (!r.ok) { db().scimGroups = before; return refusal(r) }
       persist()
       audit({ userId: null, companyId: cid, action: 'scim_group_delete', reason: 'group removed by the identity provider', detail: `${g.displayName} (token ${tokenId})` })
       return ok(204, null)

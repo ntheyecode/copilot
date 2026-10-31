@@ -106,7 +106,8 @@ export function displayNameOf(res) {
 }
 
 // A user PATCH (RFC 7644 3.5.2) -> a flat change set the store applies:
-// { active?, userName?, email?, displayName?, givenName?, familyName?, externalId? }
+// { active?, userName?, email?, displayName?, givenName?, familyName?, externalId?,
+//   groups?: { add:[ids], remove:[ids], replace?:[ids] } }
 export function userPatchChanges(body) {
   const ops = Array.isArray(body && body.Operations) ? body.Operations : null
   if (!ops) throw Object.assign(new Error('bad patch'), { scim: scimError(400, 'A PATCH needs an Operations list.', 'invalidSyntax') })
@@ -130,23 +131,45 @@ export function userPatchChanges(body) {
     // extension, locale...) are accepted and ignored, as RFC 7644 allows for
     // attributes the service provider does not support.
   }
+  // The user's `groups` (membership written from the user side): ids collected
+  // here, applied by the store to the company's own groups, which then decide
+  // roles where a group is mapped (scim_role_rules.js). RFC 7643 lists `groups`
+  // as read-only on User; a client that writes it anyway gets the change applied
+  // through the Group resources, never a silent drop.
+  const groupIds = (v) => (Array.isArray(v) ? v : (v ? [v] : [])).map((m) => String((m && m.value) || m || '').trim()).filter(Boolean)
+  const groupOp = (op, path, value) => {
+    const filter = /^groups\[\s*value\s+eq\s+"([^"]+)"\s*\]$/i.exec(path)
+    if (!out.groups) out.groups = { add: [], remove: [] }
+    if (op === 'remove' && filter) { out.groups.remove.push(filter[1]); return true }
+    if (path.toLowerCase() !== 'groups') return false
+    if (op === 'add') out.groups.add.push(...groupIds(value))
+    else if (op === 'remove') { if (value == null) out.groups.replace = []; else out.groups.remove.push(...groupIds(value)) }
+    else out.groups.replace = groupIds(value)
+    return true
+  }
   for (const raw of ops) {
     const op = String((raw && raw.op) || '').trim().toLowerCase()
     if (!['add', 'replace', 'remove'].includes(op)) throw Object.assign(new Error('bad op'), { scim: scimError(400, `Unsupported PATCH op "${raw && raw.op}".`, 'invalidSyntax') })
+    const path = String((raw && raw.path) || '').trim()
+    if (/^groups(\[|$)/i.test(path)) { if (!groupOp(op, path, raw.value)) throw Object.assign(new Error('bad path'), { scim: scimError(400, `Unsupported path "${path}".`, 'invalidPath') }); continue }
     if (op === 'remove') {
       // Removing a simple attribute clears it; removing active is not allowed.
-      const p = String(raw.path || '').trim().toLowerCase()
+      const p = path.toLowerCase()
       if (p === 'externalid') out.externalId = ''
       continue
     }
-    if (raw.path) setAttr(raw.path, raw.value)
+    if (path) setAttr(path, raw.value)
     else if (raw.value && typeof raw.value === 'object') {
       for (const [k, v] of Object.entries(raw.value)) {
         if (k === 'name' && v && typeof v === 'object') setAttr('name', v)
+        // `groups` inside a whole-resource value is the read-only echo some
+        // clients send back (often `[]`); it never empties a membership.
+        else if (k === 'groups') continue
         else setAttr(k, v)
       }
     }
   }
+  if (out.groups && !out.groups.add.length && !out.groups.remove.length && !out.groups.replace) delete out.groups
   return out
 }
 
