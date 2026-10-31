@@ -6,7 +6,7 @@
 // route is one GET behind the finance gate. Read-only; no secrets, no Stripe
 // ids. Consumed by src/pages/workadmin/sections/SubscriptionHealth.jsx.
 // ---------------------------------------------------------------------------
-import { ANNUAL_DISCOUNT } from '../src/pricingModel.js'
+import { ANNUAL_DISCOUNT } from './billing_terms.js'
 
 export const PLANS = ['lite', 'basic', 'advanced', 'premium']
 const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100

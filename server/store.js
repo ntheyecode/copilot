@@ -44,6 +44,7 @@ import { resolveLocale } from './locales.js'
 // Every account must have accepted the CURRENT version to use the platform; the
 // per-user acceptance record and the re-consent gate both read LEGAL_VERSION here.
 import { LEGAL_VERSION } from './legal.js'
+import { ANNUAL_DISCOUNT } from './billing_terms.js'
 // Password -> key derivation for the password-encrypted data export. ONE source of
 // truth for scrypt (SUPREME RULE II): the same KDF the Company Brain customer-held
 // key uses. We store ONLY a verifier (useless for decrypting anything) + its salt,
@@ -3871,7 +3872,8 @@ export function allocateCompanyPoolToUser(companyId, targetUserId, seconds) {
 // Annual plans bill yearly at 20% off (see billing.js cfg: priceAnnual = 20% off).
 // Used to normalize an annual subscriber's yearly charge to a monthly-equivalent
 // MRR: yearly = monthly * 12 * (1 - ANNUAL_DISCOUNT); mrr = yearly / 12.
-const ANNUAL_DISCOUNT = 0.2
+// The one definition lives in billing_terms.js (shared with the SPA's
+// pricing model and the subscriber-health summary).
 const WORK_PRICING_DEFAULT = {
   currency: 'usd',
   plans: { lite: 69, basic: 99, advanced: 299, premium: 399 },   // monthly plan price

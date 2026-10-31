@@ -19,6 +19,11 @@
 // There is NO per-day task cap any more (owner, 2026-10-27; server commit
 // e8679cc retired it): hours are the one usage story, so nothing here reads or
 // exposes a tasks figure and the pages have no tasks line to show.
+// The annual discount is defined once, server side (server/billing_terms.js is
+// pure data, imported here the way src/ imports the edition registry), so the
+// site, the plan change and the MRR figures can never disagree.
+import { ANNUAL_DISCOUNT } from '../server/billing_terms.js'
+
 export const PLAN_IDS = ['lite', 'basic', 'advanced', 'premium']
 
 const num = (v) => {
@@ -103,7 +108,7 @@ export function planHoursShare(model, id) {
 // yearly. ONE definition for the home teaser and the pricing page (the two
 // toggles can never disagree). The server applies the same discount at
 // checkout; annualReady says whether the yearly Stripe prices exist yet.
-export const ANNUAL_DISCOUNT = 0.2
+export { ANNUAL_DISCOUNT }
 export function annualMonthlyRate(p) {
   if (p == null) return null
   return Math.round(Number(p) * (1 - ANNUAL_DISCOUNT))

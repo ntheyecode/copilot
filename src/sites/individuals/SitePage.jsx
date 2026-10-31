@@ -4,9 +4,9 @@
 //
 //   <SitePage page="pricing" fallback={<WorkPricing />} />
 //
-// With the capability off (the `all` and `saas` editions, or a build that has
-// not learned its capabilities yet) the fallback renders exactly as before,
-// so those editions do not change. With it on, the individuals page renders
+// With the capability off (the organization editions, or a build that has not
+// learned its capabilities yet) the fallback renders exactly as before, so
+// those editions do not change. With it on, the individuals page renders
 // at the same path. The individuals pages are code-split: a visitor to the
 // organization site never downloads them.
 import { lazy, Suspense } from 'react'
