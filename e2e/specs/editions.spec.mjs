@@ -33,6 +33,14 @@ const INDIVIDUALS_REVIEWED = [
   [/SSO \/ OAuth/g, 'a technical topic WorkCoPilot guides (configuring sign-in in your own app)'],
 ]
 const withoutReviewed = (text) => INDIVIDUALS_REVIEWED.reduce((s, [re]) => s.replace(re, ' '), text)
+// Reviewed for the organizations rule: a payment provider named as WORK a
+// person is guided through (the same two keys the build scan lists as work
+// content in scripts/edition_copy_scan.mjs), never as a way to pay us.
+const ORGANIZATIONS_REVIEWED = [
+  [/Budgets\s+Stripe\s+Procurement/g, 'home.marquee: apps and tasks people work in'],
+  [/Add Stripe payment webhooks/g, 'useCases demo task: adding payment webhooks to an app'],
+]
+const withoutOrgReviewed = (text) => ORGANIZATIONS_REVIEWED.reduce((s, [re]) => s.replace(re, ' '), text)
 
 // Each banned word with the text around it, so a failure names its source.
 function bannedHits(text, re) {
@@ -104,7 +112,7 @@ test('public and account screens use the edition\'s wording and offers', async (
     const co = await seed.company({ personas: ['member'] })
     for (const path of PUBLIC_PAGES) {
       const { text } = await visibleText(anon, path)
-      const hits = bannedHits(text, ORGANIZATIONS_BANNED)
+      const hits = bannedHits(withoutOrgReviewed(text), ORGANIZATIONS_BANNED)
       if (hits.length) problems.push(`${path}: ${hits.join(', ')}`)
       if (/\$\s?\d+(?:\.\d{2})?\s*(?:\/|per)\s*(?:mo|month)/i.test(text) && /\b(Lite|Basic|Premium)\b/.test(text)) problems.push(`${path}: a personal plan price`)
       if (path === '/workcopilot/signup') expect(await anon.locator('form input[type="password"]').count(), 'the sign-up page is closed').toBe(0)
@@ -113,7 +121,7 @@ test('public and account screens use the edition\'s wording and offers', async (
     const { page } = await as.page(co.users.member, { path: null })
     for (const path of APP_PAGES) {
       const { text } = await visibleText(page, path)
-      const hits = bannedHits(text, ORGANIZATIONS_BANNED)
+      const hits = bannedHits(withoutOrgReviewed(text), ORGANIZATIONS_BANNED)
       if (hits.length) problems.push(`member ${path}: ${hits.join(', ')}`)
     }
   } else if (edition === 'paid') {

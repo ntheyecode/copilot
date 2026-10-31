@@ -24,23 +24,44 @@
 // No em dashes in any operator-facing text.
 // ---------------------------------------------------------------------------
 import crypto from 'node:crypto'
+import { ssoAccountRefusal } from './sign_in_rules.js'
 
-// Where the IdP sends the browser back. It MUST match a redirect URI registered
-// with the provider, so it is pinned by env in production and only derived from
-// the request as a local-dev fallback. See SSO-NOTES.md.
-//   WORK_SSO_REDIRECT_URI   full URL, wins outright
-//   WORK_PUBLIC_ORIGIN      e.g. https://admireveda.com  (path is appended)
-export function callbackUrl(req) {
-  if (process.env.WORK_SSO_REDIRECT_URI) return process.env.WORK_SSO_REDIRECT_URI
-  // WORK_PUBLIC_ORIGIN is the documented name; the hosted service actually sets
-  // WORK_PUBLIC_URL to the same value, so honor both. This pins the redirect URI
-  // deterministically in production instead of trusting forwarded headers (the
-  // URI MUST match what is registered at the IdP exactly, or sign-in is refused).
+// The public origin every identity provider value is built on (the OIDC
+// redirect URI, the SAML entity id and ACS URL). Pinned by env in production
+// and only derived from the request as a local-dev fallback.
+//   WORK_PUBLIC_ORIGIN / WORK_PUBLIC_URL   e.g. https://admireveda.com
+// WORK_PUBLIC_ORIGIN is the documented name; the hosted service actually sets
+// WORK_PUBLIC_URL to the same value, so honor both. This pins the values
+// deterministically in production instead of trusting forwarded headers (they
+// MUST match what is registered at the IdP exactly, or sign-in is refused).
+export function publicOrigin(req) {
   const origin = process.env.WORK_PUBLIC_ORIGIN || process.env.WORK_PUBLIC_URL
-  if (origin) return origin.replace(/\/+$/, '') + '/api/work/sso/callback'
+  if (origin) return origin.replace(/\/+$/, '')
   const proto = String(req.headers['x-forwarded-proto'] || req.protocol || 'https').split(',')[0].trim()
   const host = req.headers['x-forwarded-host'] || req.headers.host
-  return `${proto}://${host}/api/work/sso/callback`
+  return `${proto}://${host}`
+}
+
+// Where the IdP sends the browser back. It MUST match a redirect URI registered
+// with the provider. See SSO-NOTES.md.
+//   WORK_SSO_REDIRECT_URI   full URL, wins outright
+export function callbackUrl(req) {
+  if (process.env.WORK_SSO_REDIRECT_URI) return process.env.WORK_SSO_REDIRECT_URI
+  return publicOrigin(req) + '/api/work/sso/callback'
+}
+
+// Where a TEST sign-in (started from the company console) lands: back on the
+// single sign-on screen, which reads the result from the server. No personal
+// data ever rides in the URL.
+export const SSO_TEST_DONE_PATH = '/work/company?section=sso&ssoTest=done'
+
+// Is the signed-in session (real identity, current epoch) a company admin of
+// this company? Gates the console's test sign-in.
+export function sessionIsCompanyAdminOf(store, req, companyId) {
+  const uid = req.session && req.session.uid
+  const u = uid && store.getUser(uid)
+  if (!u || (req.session.epoch || 0) !== store.getSessionEpoch(u.id)) return false
+  return u.companyRole === 'company_admin' && String(u.companyId) === String(companyId)
 }
 
 // --- small helpers ---------------------------------------------------------
@@ -203,6 +224,7 @@ export function registerSsoRoutes(app, deps = {}) {
     throw new Error('registerSsoRoutes: missing required deps')
   }
   const loginError = (res, msg) => res.redirect('/workcopilot/login?sso_error=' + encodeURIComponent(msg || 'Single sign-on could not be completed.'))
+  const isCompanyAdminOf = (req, companyId) => sessionIsCompanyAdminOf(store, req, companyId)
 
   // Public: resolve a company domain to its id so the login page can start SSO
   // without the user knowing their company id. Non-secret (id + provider only).
@@ -211,19 +233,27 @@ export function registerSsoRoutes(app, deps = {}) {
     if (!domain) return res.status(400).json({ error: 'Enter your company domain.' })
     const c = store.findCompanyBySsoDomain(domain)
     if (!c) return res.status(404).json({ error: 'No company is set up for single sign-on with that domain.' })
-    res.json({ companyId: c.id, provider: c.sso ? c.sso.provider : null, name: c.name })
+    const protocol = c.ssoProtocol === 'saml' ? 'saml' : 'oidc'
+    const provider = protocol === 'saml' ? (c.saml && c.saml.provider) || 'saml' : (c.sso ? c.sso.provider : null)
+    // startUrl: the sign-in page follows it, whichever protocol the company uses.
+    const startUrl = protocol === 'saml' ? `/api/work/sso/saml/${encodeURIComponent(c.id)}/login` : `/api/work/sso/${encodeURIComponent(c.id)}/start`
+    res.json({ companyId: c.id, provider, protocol, startUrl, name: c.name })
   }))
 
-  // Start: build the authorize URL and redirect to the IdP.
+  // Start: build the authorize URL and redirect to the IdP. ?test=1 (a company
+  // admin of this company, from the console) runs the whole sign-in but only
+  // records what WOULD happen; nobody is signed in and nothing is created.
   app.get('/api/work/sso/:companyId/start', async (req, res) => {
     try {
       const cfg = store.getCompanySsoConfig(req.params.companyId)
       if (!cfg || !cfg.connected) return loginError(res, 'Single sign-on is not set up for this company yet.')
+      const test = req.query.test === '1' ? isCompanyAdminOf(req, req.params.companyId) : false
+      if (req.query.test === '1' && !test) return loginError(res, 'Only a company admin of this company can run a test sign-in.')
       const disco = await discover(cfg.issuer)
       const { verifier, challenge } = newPkce()
       const state = newState()
       const nonce = newState()
-      req.session.sso = { state, verifier, nonce, companyId: req.params.companyId }
+      req.session.sso = { state, verifier, nonce, companyId: req.params.companyId, test }
       const url = buildAuthorizeUrl(disco, cfg, { state, challenge, nonce, redirectUri: callbackUrl(req) })
       req.session.save(() => res.redirect(url))
     } catch (e) {
@@ -233,8 +263,10 @@ export function registerSsoRoutes(app, deps = {}) {
 
   // Callback: verify state, swap the code, verify the token, sign the user in.
   app.get('/api/work/sso/callback', async (req, res) => {
+    // A failed TEST sign-in is recorded for the console, never shown as a login error.
+    const testOf = (req.session && req.session.sso && req.session.sso.test) ? req.session.sso.companyId : null
     try {
-      if (req.query.error) return loginError(res, String(req.query.error_description || req.query.error))
+      if (req.query.error) throw new Error(String(req.query.error_description || req.query.error))
       const sess = req.session.sso || null
       const { code, state } = req.query
       if (!sess || !code || !state || state !== sess.state) {
@@ -253,13 +285,25 @@ export function registerSsoRoutes(app, deps = {}) {
       // to match someone else's pre-provisioned seat). Only reject when the
       // provider explicitly says false (many providers omit the claim).
       if (claims.email_verified === false) return loginError(res, 'Your email is not verified with your identity provider. Verify it, then sign in again.')
+      const displayName = String(claims.name || [claims.given_name, claims.family_name].filter(Boolean).join(' ') || '').trim() || null
+      if (sess.test) {
+        store.recordSsoTest(sess.companyId, { protocol: 'oidc', ok: true, ...store.previewSsoSignIn({ companyId: sess.companyId, email, displayName, via: 'oidc' }) })
+        return req.session.save(() => res.redirect(SSO_TEST_DONE_PATH))
+      }
       // Invite-only by default: the email must already be pre-provisioned on the
       // company (resolveSsoLogin refuses an unknown email in explicit mode, or
       // creates a member in auto mode). This is what caps the licenses.
-      const user = store.resolveSsoLogin({ companyId: sess.companyId, email })
+      const user = store.resolveSsoLogin({ companyId: sess.companyId, email, displayName, via: 'oidc' })
+      const refused = ssoAccountRefusal(user, store.getCompany(sess.companyId))
+      if (refused) return loginError(res, refused)
       establishSession(req, user)
       req.session.save(() => res.redirect('/work'))
     } catch (e) {
+      if (testOf) {
+        store.recordSsoTest(testOf, { protocol: 'oidc', ok: false, outcome: 'failed', reason: (e && e.message) || 'Single sign-on could not be completed.' })
+        if (req.session) req.session.sso = null
+        return req.session.save(() => res.redirect(SSO_TEST_DONE_PATH))
+      }
       loginError(res, e.message || 'Single sign-on could not be completed.')
     }
   })

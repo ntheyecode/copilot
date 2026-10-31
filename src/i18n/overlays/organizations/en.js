@@ -15,7 +15,7 @@ export default {
   seo: {
     pricing: {
       title: 'Plans for Organizations - WorkCoPilot by AdmireVeda',
-      description: 'WorkCoPilot plans for organizations: hosted for your company, a managed private cloud, or on-premises. Priced per person by company size, with company policy, single sign-on and a guided-hours pool. Talk to us for a quote.',
+      description: 'WorkCoPilot plans for organizations: hosted by AdmireVeda, managed by AdmireVeda, or a private instance in your own cloud. Per user per month for at least 100 users, with company policy, single sign-on and a guided-hours pool. Talk to us.',
     },
   },
   home: {
@@ -36,12 +36,13 @@ export default {
     pricing: {
       eyebrow: 'Plans',
       h2: 'Plans for organizations.',
-      sub: 'Hosted for your company, managed in your cloud, or on your own servers. Priced per person by company size, quoted by our team.',
+      sub: 'Hosted by AdmireVeda, managed by AdmireVeda, or a private instance in your own cloud. Per user per month, and your company size sets the rate.',
       fullCompare: 'See plans for organizations',
     },
     final: {
       h2: 'Bring guided work to your organization.',
       p: 'Talk to us about a rollout for your team, or watch the 60-second demo first.',
+      note2: 'Sign in with your company account, or with your work email for your company single sign-on. <a>Enterprise sign-in</a>.',
     },
   },
   login: {
@@ -55,16 +56,16 @@ export default {
   pricing: {
     eyebrow: 'Plans for organizations',
     h1: 'Guided work for <em>your whole organization.</em>',
-    sub: 'Choose how WorkCoPilot runs for you: hosted for your company, managed in your cloud, or on your own servers. Security and privacy come with every plan, never as an upsell.',
+    sub: 'Choose how WorkCoPilot runs for you: hosted by AdmireVeda, managed by AdmireVeda, or a private instance in your own cloud. Security and privacy come with every plan, never as an upsell.',
     notes: {
       items: [
-        { t: 'Priced by people', d: 'Plans are priced per person by company size, with a guided-hours pool your company administrator shares out.' },
+        { t: 'Priced by people', d: 'Each plan is priced per user per month, and your company size sets the rate for every user. A guided-hours pool your company administrator shares out.' },
         { t: 'Minutes, not blocks', d: 'Guided time is counted per minute used, never rounded up to the hour.' },
         { t: 'Your rollout', d: 'A named owner for your rollout, with single sign-on and company policy set before your people start.' },
-        { t: 'How companies buy', d: 'A quote that matches how your company buys, a DPA, and statements with downloadable invoices.' },
+        { t: 'How companies buy', d: 'A contract that matches how your company buys, a DPA, and invoices you download from your company console.' },
       ],
     },
-    fine: 'Final terms and prices are set in your quote. Taxes may apply by location.',
+    fine: 'Final terms are set in your contract. Taxes may apply by location.',
   },
   howItWorks: {
     cta: {
@@ -78,8 +79,15 @@ export default {
       pricing: {
         items: {
           0: {
-            a: 'WorkCoPilot is sold to organizations: hosted for your company, as a managed private cloud, or on your own servers, priced per person by company size. Talk to us for a quote.',
-            d: 'Billing follows your quote, with statements and downloadable invoices.',
+            a: 'WorkCoPilot is sold to organizations, per user per month for at least 100 users: hosted by AdmireVeda, managed by AdmireVeda (plus AI at actual usage), or a private instance in your own cloud. Your company size sets the rate for every user. Talk to us.',
+            d: 'AdmireVeda invoices your company under your contract; invoices are in your company console.',
+          },
+        },
+      },
+      compliance: {
+        items: {
+          3: {
+            a: 'A summary DPA is public and a signed DPA is available on request. Guidance is produced by a major AI provider and hosting is by a cloud provider; the current list with entity names is available on request.',
           },
         },
       },
@@ -96,6 +104,16 @@ export default {
   fieldsPage: {
     startBtn: 'Bring it to your team',
   },
+  securityPage: {
+    guarantees: {
+      2: { t: 'A second factor on every sign-in', d: 'Password sign-in needs an authenticator app on every account; company single sign-on uses the second factor your identity provider enforces.' },
+    },
+    mock: {
+      fields: {
+        2: 'Bank account',
+      },
+    },
+  },
   useCases: {
     final: {
       cta: 'Talk to us',
@@ -107,6 +125,7 @@ export default {
   },
   dashboardsHelp: {
     home: {
+      lead: 'The dashboard is your home: your hours this month and your company pool, open tasks, the one thing to do next, and where you left off.',
       steps: {
         0: '<b>Read your plan.</b> The three tiles show hours left this month, your company pool, and your open task slots. The time chip at the top turns amber before you run low.',
         2: '<b>Add time.</b> Press <b>Add time</b> at the top to ask your administrator for more hours.',
@@ -116,6 +135,9 @@ export default {
   workDashboard: {
     plan: {
       choose: 'No plan on this account yet',
+    },
+    meters: {
+      sub: 'Hours this month, your company pool and open tasks. Hover the info on a tile for how it works.',
     },
   },
 }

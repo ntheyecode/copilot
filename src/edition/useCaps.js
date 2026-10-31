@@ -18,6 +18,8 @@ export function useCaps() {
 //   audience         'organizations' | 'individuals' | null (both: base copy)
 //   publicSite       our public site (and its sales conversation) is served
 //                    here; off on a customer's own on-prem / managed install
+//   socialLogin      social sign-in buttons are offered (individuals only)
+//   stripe           card payments through Stripe exist
 export function editionView(caps) {
   return {
     caps,
@@ -26,6 +28,12 @@ export function editionView(caps) {
     soloSignup: caps.has('solo_signup'),
     audience: copyAudience(caps),
     publicSite: caps.has('public_site'),
+    // Individuals may sign in with Google, Microsoft or Facebook here. Company
+    // accounts never can, in any edition (server/sign_in_rules.js).
+    socialLogin: caps.has('social_login'),
+    // Card payments through Stripe exist here (off where companies are billed
+    // by contract and invoice).
+    stripe: caps.has('stripe_billing'),
   }
 }
 

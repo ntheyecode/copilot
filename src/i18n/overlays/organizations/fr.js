@@ -8,7 +8,7 @@ export default {
   seo: {
     pricing: {
       title: "Offres pour les organisations - WorkCoPilot by AdmireVeda",
-      description: "Les offres WorkCoPilot pour les organisations : hébergé pour votre entreprise, cloud privé géré ou sur site. Prix par personne selon la taille de l'entreprise, avec politique d'entreprise, connexion unique et un pool d'heures guidées. Parlez-nous pour un devis."
+      description: "Les offres WorkCoPilot pour les organisations : hébergé par AdmireVeda, géré par AdmireVeda ou instance privée dans votre propre cloud. Prix par utilisateur et par mois, pour 100 utilisateurs minimum, avec politique d'entreprise, connexion unique et un pool d'heures guidées. Parlez-nous."
     }
   },
   home: {
@@ -42,12 +42,13 @@ export default {
     pricing: {
       eyebrow: "Offres",
       h2: "Des offres pour les organisations.",
-      sub: "Hébergé pour votre entreprise, géré dans votre cloud ou sur vos propres serveurs. Prix par personne selon la taille de l'entreprise, sur devis de notre équipe.",
+      sub: "Hébergé par AdmireVeda, géré par AdmireVeda ou instance privée dans votre propre cloud. Prix par utilisateur et par mois, fixé selon la taille de votre entreprise.",
       fullCompare: "Voir les offres pour les organisations"
     },
     final: {
       h2: "Apportez le travail guidé à votre organisation.",
-      p: "Parlez-nous d'un déploiement pour votre équipe, ou regardez d'abord la démo de 60 secondes."
+      p: "Parlez-nous d'un déploiement pour votre équipe, ou regardez d'abord la démo de 60 secondes.",
+      note2: "Connectez-vous avec votre compte d'entreprise, ou avec votre e-mail professionnel pour la connexion unique de votre entreprise. <a>Connexion entreprise</a>."
     }
   },
   login: {
@@ -61,12 +62,12 @@ export default {
   pricing: {
     eyebrow: "Offres pour les organisations",
     h1: "Le travail guidé pour <em>toute votre organisation.</em>",
-    sub: "Choisissez comment WorkCoPilot fonctionne pour vous : hébergé pour votre entreprise, géré dans votre cloud ou sur vos propres serveurs. Sécurité et confidentialité sont incluses dans chaque offre, jamais en option payante.",
+    sub: "Choisissez comment WorkCoPilot fonctionne pour vous : hébergé par AdmireVeda, géré par AdmireVeda ou instance privée dans votre propre cloud. Sécurité et confidentialité sont incluses dans chaque offre, jamais en option payante.",
     notes: {
       items: [
         {
           t: "Un prix par personne",
-          d: "Les offres sont tarifées par personne selon la taille de l'entreprise, avec un pool d'heures guidées que l'administrateur de votre entreprise répartit."
+          d: "Chaque offre est tarifée par utilisateur et par mois, et la taille de votre entreprise fixe le tarif de chaque utilisateur. Un pool d'heures guidées que l'administrateur de votre entreprise répartit."
         },
         {
           t: "Des minutes, pas des blocs",
@@ -78,11 +79,11 @@ export default {
         },
         {
           t: "Comme achètent les entreprises",
-          d: "Un devis adapté à la façon dont votre entreprise achète, un DPA, et des relevés avec factures téléchargeables."
+          d: "Un contrat adapté à la façon dont votre entreprise achète, un DPA, et des factures à télécharger depuis votre console d'entreprise."
         }
       ]
     },
-    fine: "Les conditions et les prix définitifs sont fixés dans votre devis. Des taxes peuvent s'appliquer selon votre localisation."
+    fine: "Les conditions définitives sont fixées dans votre contrat. Des taxes peuvent s'appliquer selon votre localisation."
   },
   howItWorks: {
     cta: {
@@ -102,8 +103,15 @@ export default {
       pricing: {
         items: {
           0: {
-            a: "WorkCoPilot est vendu aux organisations : hébergé pour votre entreprise, en cloud privé géré ou sur vos propres serveurs, au prix par personne selon la taille de l'entreprise. Parlez-nous pour un devis.",
-            d: "La facturation suit votre devis, avec des relevés et des factures téléchargeables."
+            a: "WorkCoPilot est vendu aux organisations, par utilisateur et par mois, pour 100 utilisateurs minimum : hébergé par AdmireVeda, géré par AdmireVeda (plus l'IA selon l'utilisation réelle) ou en instance privée dans votre propre cloud. La taille de votre entreprise fixe le tarif de chaque utilisateur. Parlez-nous.",
+            d: "AdmireVeda facture votre entreprise selon votre contrat ; les factures sont dans votre console d'entreprise."
+          }
+        }
+      },
+      compliance: {
+        items: {
+          3: {
+            a: "Un DPA résumé est public et un DPA signé est disponible sur demande. Les conseils sont produits par un grand fournisseur d'IA et l'hébergement est assuré par un fournisseur cloud ; la liste actuelle avec les noms des entités est disponible sur demande."
           }
         }
       },
@@ -123,6 +131,19 @@ export default {
   fieldsPage: {
     startBtn: "Apportez-le à votre équipe"
   },
+  securityPage: {
+    guarantees: {
+      2: {
+        t: "Un second facteur à chaque connexion",
+        d: "La connexion par mot de passe exige une application d'authentification sur chaque compte ; la connexion unique de votre entreprise utilise le second facteur imposé par votre fournisseur d'identité."
+      }
+    },
+    mock: {
+      fields: {
+        2: "Compte bancaire"
+      }
+    }
+  },
   useCases: {
     final: {
       cta: "Parlez-nous"
@@ -135,10 +156,14 @@ export default {
   workDashboard: {
     plan: {
       choose: "Pas encore d'offre sur ce compte"
+    },
+    meters: {
+      sub: "Heures du mois, pool de votre entreprise et tâches ouvertes. Survolez l'info d'une tuile pour voir son fonctionnement."
     }
   },
   dashboardsHelp: {
     home: {
+      lead: "Le tableau de bord est votre accueil : vos heures ce mois-ci et le pool de votre entreprise, les tâches ouvertes, la seule chose à faire ensuite, et là où vous vous êtes arrêté.",
       steps: {
         0: "<b>Lisez votre plan.</b> Les trois tuiles indiquent les heures restantes ce mois-ci, votre pool d'entreprise et vos créneaux de tâches ouverts. La pastille de temps en haut passe à l'ambre avant que vous ne soyez à court.",
         2: "<b>Ajoutez du temps.</b> Appuyez sur <b>Ajouter du temps</b> en haut pour demander des heures supplémentaires à votre administrateur."

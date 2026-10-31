@@ -3,7 +3,7 @@
 //   - annualReady goes through billing.js cfg(), so it is false where
 //     stripe_billing is off even with annual price ids saved (it read db.billing
 //     directly before);
-//   - the superadmin billing panel gets the reason code it words (offCode);
+//   - the superadmin Stripe billing panel is not offered (section registry);
 //   - the public website's forms are refused where public_site is off.
 // The page gate (marketing pages to sign-in) is tested on its own below with a
 // shell file, because whether index.js serves dist/ depends on a build.
@@ -32,10 +32,13 @@ test('annualReady is false where Stripe is off, even with annual prices in the s
   assert.equal(r.data.annualReady, false)
 })
 
-test('the superadmin billing panel gets the reason code to word', async () => {
+// Without stripe_billing the Stripe billing section is not offered at all: the
+// one section registry (server/admin_sections.js) hides it in the console, which
+// names it in its "not offered here" note, and refuses its admin API.
+test('the superadmin Stripe billing panel is not offered without Stripe', async () => {
   const r = await req(await superadmin(), 'GET', '/api/work/admin/billing')
-  assert.equal(r.data.offByEdition, true)
-  assert.equal(r.data.offCode, 'license')
+  assert.equal(r.status, 403)
+  assert.equal(r.data.featureDisabled || r.data.companiesDisabled, true)
 })
 
 test('the public website forms are refused with a clear, actionable message', async () => {

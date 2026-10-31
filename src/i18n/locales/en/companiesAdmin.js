@@ -64,6 +64,18 @@ export default {
       emptyTitle: 'No guided time used yet this month',
       emptyDetail: 'Each member\'s hours appear here as soon as they are guided.',
     },
+    // "Single sign-on required" on a company card (SsoRequiredToggle.jsx).
+    ssoRequired: {
+      title: 'Single sign-on required',
+      help: 'When on, password sign-in is off for every account of this company: people sign in only through its identity provider.',
+      needConnection: 'Connect single sign-on (OpenID Connect or SAML) for this company first.',
+      onTitle: 'Require single sign-on?',
+      onDetail: 'Password sign-in stops for every account of this company. Enter a reason for the audit trail.',
+      offTitle: 'Stop requiring single sign-on?',
+      offDetail: 'People of this company can sign in with a password and authenticator again. Enter a reason for the audit trail.',
+      turnOn: 'Require',
+      turnOff: 'Stop requiring',
+    },
     sso: {
       // Provider names come from the single registry (src/shared/oidc_providers.js),
       // not i18n: brand names are the same in every locale (SUPREME RULE II).

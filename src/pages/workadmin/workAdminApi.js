@@ -237,6 +237,15 @@ export const workAdminApi = {
   // (leave clientSecret empty to keep the stored one unchanged).
   companySso: (id) => request('GET', `/api/work/admin/companies/${id}/sso`),
   setCompanySso: (id, cfg) => request('POST', `/api/work/admin/companies/${id}/sso`, cfg || {}),
+  // "Single sign-on required" for every account of a company (superadmin).
+  setCompanySsoRequired: (id, required, reason) => request('POST', `/api/work/admin/companies/${id}/sso-required`, { required: !!required, reason: reason || '' }),
+  // B2B contract + invoices (server/b2b_routes.js). No card payment anywhere.
+  b2bInvoices: (status) => request('GET', `/api/work/admin/b2b/invoices${status ? `?status=${encodeURIComponent(status)}` : ''}`),
+  b2bCompany: (id) => request('GET', `/api/work/admin/b2b/companies/${id}`),
+  b2bSetContract: (id, contract) => request('POST', `/api/work/admin/b2b/companies/${id}/contract`, contract || {}),
+  b2bCreateInvoice: (id, invoice) => request('POST', `/api/work/admin/b2b/companies/${id}/invoices`, invoice || {}),
+  b2bSetInvoiceStatus: (id, invoiceId, status, note) => request('POST', `/api/work/admin/b2b/companies/${id}/invoices/${invoiceId}/status`, { status, note: note || '' }),
+  b2bInvoicePdfUrl: (id, invoiceId) => `/api/work/admin/b2b/companies/${id}/invoices/${invoiceId}.pdf`,
   createUser: (body) => request('POST', '/api/work/admin/users', body),
   userScrub: (id, enabled) => request('POST', `/api/work/admin/users/${id}/scrub`, { enabled: !!enabled }),
   userFreeAccess: (id, free) => request('POST', `/api/work/admin/users/${id}/access`, { free: !!free }),

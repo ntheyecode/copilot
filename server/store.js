@@ -73,6 +73,10 @@ import { createWorkflowFrameSweep } from './workflow_frame_sweep.js'
 import { execOverview } from './exec_overview.js'
 import { makeExportKey } from './export_key.js'
 import { createIntegrationState } from './integration_store.js'
+import { createSsoState } from './sso_store.js'           // SAML connection, "SSO required", the shared sign-in domain
+import { createScimState } from './scim_store.js'         // SCIM 2.0 provisioning tokens, users and groups
+import { createB2bBilling } from './b2b_invoices.js'      // AdmireVeda's contract + invoice billing of companies
+import { OIDC_PROVIDER_IDS } from './idp_catalog.js'
 import { resolveDataDir } from './data_dir.js'
 import { assertResolvesPublic } from './egress_guard.js'
 // Persistence driver (server/storage/): json (db.json, the default) or postgres.
@@ -535,6 +539,28 @@ export const markWorkflowAlertsRead = (userId, idOrAll) => wfAlertInbox.markRead
 // (ai_usage_ledger.js). Superadmin-only; the record Managed billing reads.
 const aiUsageLedger = createAiUsageLedger({ db: () => db, persistSoon })
 export const { recordAiUsage, listAiUsage } = aiUsageLedger
+
+// ---- Company single sign-on beyond OIDC (module: sso_store.js) ----
+const ssoState = createSsoState({
+  db: () => db, persist, httpErr, normalizeDomain, isDomain: (d) => DOMAIN_RE.test(d),
+  findMember: (companyId, email) => findCompanyMemberByEmail(companyId, email),
+  audit: (a) => recordAdminAction(a),
+})
+export const { setCompanySaml, clearCompanySaml, getCompanySamlConfig, samlStatus, setCompanySsoRequired, previewSsoSignIn, recordSsoTest, lastSsoTest } = ssoState
+// ---- SCIM 2.0 provisioning (module: scim_store.js) ----
+// Tokens are hashed with the same peppered HMAC as the company API keys; every
+// account change goes through the store's own seat-gated, audited functions.
+const scim = createScimState({
+  db: () => db, persist, persistSoon, httpErr, company: _company, masterKey: encKey,
+  createMember: (args) => createSsoAccount(args),
+  setDisabled: (userId, disabled, opts) => setUserDisabled(userId, disabled, opts),
+  setSsoEmail: (userId, email) => setUserSsoEmail(userId, email),
+  audit: (a) => recordAdminAction(a),
+})
+export const { listScimTokens, createScimToken, revokeScimToken, resolveScimToken, scimUsers, scimGroups } = scim
+// ---- B2B contract + invoice billing (module: b2b_invoices.js) ----
+const b2b = createB2bBilling({ db: () => db, persist, httpErr, id, company: _company, publicCompany, poolDashboard: (cid) => companyPoolDashboard(cid), audit: (a) => recordAdminAction(a) })
+export const { getCompanyContract, setCompanyContract, listCompanyInvoices, listAllInvoices, createCompanyInvoice, setInvoiceStatus, getCompanyInvoice, invoiceStatement, companyBillingOverview } = b2b
 
 // ---- AI seed (one-time, at deploy) ---------------------------------------
 // If an ai-seed.json exists and the platform AI is not already configured, load
@@ -1324,6 +1350,8 @@ function publicCompany(c) {
     // admin owns this; the platform does not override it.
     retentionDays: (Number.isInteger(Number(c.retentionDays)) && Number(c.retentionDays) > 0) ? Number(c.retentionDays) : 0,
     sso: c.sso ? { provider: c.sso.provider || null, connected: !!c.sso.connected, domain: c.sso.domain || null } : null,
+    saml: c.saml ? { provider: c.saml.provider || 'saml', connected: !!c.saml.connected, domain: c.saml.domain || null } : null,
+    ssoRequired: !!c.ssoRequired,                      // superadmin: password sign-in refused for every account
     userCount: users.length,
     memberCount,
     adminCount,
@@ -2631,10 +2659,8 @@ export function listCompanyUsers(companyId) {
 // PKCE), so ANY standards-compliant provider works once its issuer is entered.
 // This allowlist is just what the UI offers by name; 'oidc' is the catch-all for
 // any other OpenID Connect identity provider. No code differs per provider.
-export const SSO_PROVIDERS = [
-  'google', 'microsoft', 'okta', 'auth0', 'onelogin', 'ping', 'jumpcloud',
-  'keycloak', 'cognito', 'azuread_b2c', 'authentik', 'duo', 'centrify', 'oidc',
-]
+// The list is the ONE identity provider catalog (idp_catalog.js), never a copy.
+export const SSO_PROVIDERS = OIDC_PROVIDER_IDS
 // An email domain as typed on the sign-in page: lowercase host name, no @, no
 // scheme, no path. Used for the SSO routing domain and the AUTO-provisioning check.
 const DOMAIN_RE = /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/
@@ -2665,10 +2691,8 @@ export function setCompanySso(companyId, cfg = {}) {
   // provider, so it must belong to exactly one company. Otherwise a second tenant
   // could claim another tenant's domain and have their sign-ins land in the
   // wrong company (or at the wrong IdP).
-  if (domain) {
-    const owner = (db.companies || []).find((x) => x.id !== c.id && x.sso && normalizeDomain(x.sso.domain) === domain)
-    if (owner) throw httpErr(409, 'That email domain is already connected to another company. Ask the WorkCoPilot team if you believe this is a mistake.')
-  }
+  // One check across BOTH protocols (sso_store.js domainOwnedByOther).
+  if (domain && ssoState.domainOwnedByOther(domain, c.id)) throw httpErr(409, 'That email domain is already connected to another company. Ask the WorkCoPilot team if you believe this is a mistake.')
   c.sso = { provider, issuer, clientId, clientSecret, domain, connected: true }
   persist()
   return publicCompany(c)
@@ -2679,11 +2703,26 @@ export function getCompanySsoConfig(companyId) {
   return (c && c.sso) ? { ...c.sso } : null
 }
 // Public resolver: a connected company whose SSO domain matches, non-secret.
+// Matches a connected OIDC or SAML sign-in domain; `ssoProtocol` says which one
+// the sign-in page starts ('saml' wins when both claim the domain).
 export function findCompanyBySsoDomain(domain) {
-  const d = normalizeDomain(domain)
-  if (!d) return null
-  const c = (db.companies || []).find((x) => x.sso && x.sso.connected && x.sso.domain && normalizeDomain(x.sso.domain) === d)
-  return c ? publicCompany(c) : null
+  const hit = ssoState.companyForSignInDomain(domain)
+  return hit ? { ...publicCompany(hit.company), ssoProtocol: hit.protocol } : null
+}
+// SCIM: change the SSO email (the stable sign-in key) of a company account.
+function setUserSsoEmail(userId, email) {
+  const u = getUser(userId)
+  if (!u) throw httpErr(404, 'Account not found.')
+  const mail = normalizeEmail(email)
+  if (!mail) throw httpErr(400, 'A valid work email is required.')
+  if (u.companyId) {
+    const other = findCompanyMemberByEmail(u.companyId, mail)
+    if (other && other.id !== u.id) throw httpErr(409, 'That email is already on this company.')
+  }
+  u.ssoEmail = mail
+  indexUsers()
+  persist()
+  return u
 }
 // Look up an already-provisioned SSO member of a company by email (the stable
 // key). Returns the raw user record or null.
@@ -2793,7 +2832,7 @@ export function addCompanyMemberByEmail({ companyId, email, companyRole = 'membe
 // be on the company, else the sign-in is refused (the allowlist). In AUTO mode a
 // member is created on first sign-in. This is the only place the SSO callback
 // turns a verified email into an account.
-export function resolveSsoLogin({ companyId, email } = {}) {
+export function resolveSsoLogin({ companyId, email, displayName = null, via = 'oidc' } = {}) {
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c) throw httpErr(404, 'Company not found.')
   const mail = normalizeEmail(email)
@@ -2810,13 +2849,14 @@ export function resolveSsoLogin({ companyId, email } = {}) {
   // only emails on that domain may be created on first sign-in. Without this, any
   // gmail.com account could join an acme.com company, take a seat, and run on the
   // company's AI keys and trial.
-  const want = c.sso ? normalizeDomain(c.sso.domain) : ''
+  // The domain of the protocol this sign-in came through (OIDC or SAML).
+  const want = ssoState.signInDomainOf(c, via)
   if (want) {
     const got = mail.slice(mail.lastIndexOf('@') + 1)
     if (got !== want) throw httpErr(403, `Only ${want} email addresses can join this company through single sign-on. Ask your company administrator to add you.`)
   }
   // Create a member on first sign-in (respects the user-seat pool).
-  return createSsoAccount({ companyId, email: mail, companyRole: 'member', tier: 'basic' })
+  return createSsoAccount({ companyId, email: mail, companyRole: 'member', tier: 'basic', displayName })
 }
 
 // Kept for backward compatibility with any caller that expects find-or-create in

@@ -8,7 +8,7 @@ export default {
   seo: {
     pricing: {
       title: "Piani per le organizzazioni - WorkCoPilot by AdmireVeda",
-      description: "I piani WorkCoPilot per le organizzazioni: in hosting per la tua azienda, cloud privato gestito oppure on-premise. Prezzo per persona in base alla dimensione dell'azienda, con policy aziendale, single sign-on e un pool di ore guidate. Parla con noi per una quotazione."
+      description: "I piani WorkCoPilot per le organizzazioni: in hosting da AdmireVeda, gestito da AdmireVeda oppure un'istanza privata nel tuo cloud. Per utente al mese, per almeno 100 utenti, con policy aziendale, single sign-on e un pool di ore guidate. Parla con noi."
     }
   },
   home: {
@@ -42,12 +42,13 @@ export default {
     pricing: {
       eyebrow: "Piani",
       h2: "Piani per le organizzazioni.",
-      sub: "In hosting per la tua azienda, gestito nel tuo cloud o sui tuoi server. Prezzo per persona in base alla dimensione dell'azienda, quotato dal nostro team.",
+      sub: "In hosting da AdmireVeda, gestito da AdmireVeda oppure un'istanza privata nel tuo cloud. Per utente al mese, con la tariffa fissata dalla dimensione della tua azienda.",
       fullCompare: "Vedi i piani per le organizzazioni"
     },
     final: {
       h2: "Porta il lavoro guidato nella tua organizzazione.",
-      p: "Parla con noi di un rollout per il tuo team, oppure guarda prima la demo di 60 secondi."
+      p: "Parla con noi di un rollout per il tuo team, oppure guarda prima la demo di 60 secondi.",
+      note2: "Accedi con il tuo account aziendale, oppure con la tua email di lavoro per il single sign-on della tua azienda. <a>Accesso per aziende</a>."
     }
   },
   login: {
@@ -61,12 +62,12 @@ export default {
   pricing: {
     eyebrow: "Piani per le organizzazioni",
     h1: "Lavoro guidato per <em>tutta la tua organizzazione.</em>",
-    sub: "Scegli come far funzionare WorkCoPilot: in hosting per la tua azienda, gestito nel tuo cloud o sui tuoi server. Sicurezza e privacy sono incluse in ogni piano, mai come extra a pagamento.",
+    sub: "Scegli come far funzionare WorkCoPilot: in hosting da AdmireVeda, gestito da AdmireVeda oppure un'istanza privata nel tuo cloud. Sicurezza e privacy sono incluse in ogni piano, mai come extra a pagamento.",
     notes: {
       items: [
         {
           t: "Prezzo per persona",
-          d: "I piani hanno un prezzo per persona in base alla dimensione dell'azienda, con un pool di ore guidate che l'amministratore della tua azienda distribuisce."
+          d: "Ogni piano ha un prezzo per utente al mese, e la dimensione della tua azienda fissa la tariffa per ogni utente. Un pool di ore guidate che l'amministratore della tua azienda distribuisce."
         },
         {
           t: "Minuti, non blocchi",
@@ -78,11 +79,11 @@ export default {
         },
         {
           t: "Come acquistano le aziende",
-          d: "Una quotazione in linea con il modo in cui la tua azienda acquista, un DPA ed estratti conto con fatture scaricabili."
+          d: "Un contratto in linea con il modo in cui la tua azienda acquista, un DPA e fatture da scaricare dalla console della tua azienda."
         }
       ]
     },
-    fine: "Condizioni e prezzi definitivi sono stabiliti nella tua quotazione. Possono applicarsi imposte in base alla località."
+    fine: "Le condizioni definitive sono stabilite nel tuo contratto. Possono applicarsi imposte in base alla località."
   },
   howItWorks: {
     cta: {
@@ -102,8 +103,15 @@ export default {
       pricing: {
         items: {
           0: {
-            a: "WorkCoPilot è venduto alle organizzazioni: in hosting per la sua azienda, come cloud privato gestito o sui suoi server, con prezzo per persona in base alla dimensione dell'azienda. Ci contatti per una quotazione.",
-            d: "La fatturazione segue la sua quotazione, con estratti conto e fatture scaricabili."
+            a: "WorkCoPilot è venduto alle organizzazioni, per utente al mese, per almeno 100 utenti: in hosting da AdmireVeda, gestito da AdmireVeda (più l'IA in base all'uso effettivo) oppure come istanza privata nel suo cloud. La dimensione della sua azienda fissa la tariffa per ogni utente. Ci contatti.",
+            d: "AdmireVeda fattura la sua azienda in base al contratto; le fatture sono nella console della sua azienda."
+          }
+        }
+      },
+      compliance: {
+        items: {
+          3: {
+            a: "Un DPA riepilogativo è pubblico e un DPA firmato è disponibile su richiesta. La guida è prodotta da un importante fornitore di AI e l'hosting da un fornitore cloud; l'elenco attuale con i nomi delle entità è disponibile su richiesta."
           }
         }
       },
@@ -123,6 +131,19 @@ export default {
   fieldsPage: {
     startBtn: "Portalo nel tuo team"
   },
+  securityPage: {
+    guarantees: {
+      2: {
+        t: "Un secondo fattore a ogni accesso",
+        d: "L'accesso con password richiede un'app di autenticazione su ogni account; il single sign-on aziendale usa il secondo fattore imposto dal vostro identity provider."
+      }
+    },
+    mock: {
+      fields: {
+        2: "Conto bancario"
+      }
+    }
+  },
   useCases: {
     final: {
       cta: "Parla con noi"
@@ -135,10 +156,14 @@ export default {
   workDashboard: {
     plan: {
       choose: "Nessun piano ancora su questo account"
+    },
+    meters: {
+      sub: "Ore di questo mese, il pool della Sua azienda e le attività aperte. Passi il cursore sull'icona info di un riquadro per vedere come funziona."
     }
   },
   dashboardsHelp: {
     home: {
+      lead: "La dashboard è la Sua base: le Sue ore di questo mese e il pool della Sua azienda, le attività aperte, l'unica cosa da fare dopo e il punto in cui si era fermato.",
       steps: {
         0: "<b>Legga il Suo piano.</b> I tre riquadri mostrano le ore rimaste questo mese, il pool aziendale e le Sue attività aperte. Il chip del tempo in alto diventa ambra prima che Lei stia per esaurirle.",
         2: "<b>Aggiunga tempo.</b> Prema <b>Aggiungi tempo</b> in alto per chiedere altre ore al Suo amministratore."

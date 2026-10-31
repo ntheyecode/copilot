@@ -8,7 +8,7 @@ export default {
   seo: {
     pricing: {
       title: "Planes para organizaciones - WorkCoPilot by AdmireVeda",
-      description: "Planes de WorkCoPilot para organizaciones: alojado para tu empresa, nube privada gestionada o en tus instalaciones. Precio por persona según el tamaño de la empresa, con política de empresa, inicio de sesión único y una bolsa de horas guiadas. Habla con nosotros para un presupuesto."
+      description: "Planes de WorkCoPilot para organizaciones: alojado por AdmireVeda, gestionado por AdmireVeda o una instancia privada en tu propia nube. Por usuario al mes para un mínimo de 100 usuarios, con política de empresa, inicio de sesión único y una bolsa de horas guiadas. Habla con nosotros."
     }
   },
   home: {
@@ -42,12 +42,13 @@ export default {
     pricing: {
       eyebrow: "Planes",
       h2: "Planes para organizaciones.",
-      sub: "Alojado para tu empresa, gestionado en tu nube o en tus propios servidores. Precio por persona según el tamaño de la empresa, presupuestado por nuestro equipo.",
+      sub: "Alojado por AdmireVeda, gestionado por AdmireVeda o una instancia privada en tu propia nube. Por usuario al mes, y el tamaño de tu empresa fija la tarifa.",
       fullCompare: "Ver planes para organizaciones"
     },
     final: {
       h2: "Lleva el trabajo guiado a tu organización.",
-      p: "Habla con nosotros sobre un despliegue para tu equipo, o mira primero la demo de 60 segundos."
+      p: "Habla con nosotros sobre un despliegue para tu equipo, o mira primero la demo de 60 segundos.",
+      note2: "Inicia sesión con tu cuenta de empresa, o con tu email de trabajo para el inicio de sesión único de tu empresa. <a>Inicio de sesión para empresas</a>."
     }
   },
   login: {
@@ -61,12 +62,12 @@ export default {
   pricing: {
     eyebrow: "Planes para organizaciones",
     h1: "Trabajo guiado para <em>toda tu organización.</em>",
-    sub: "Elige cómo funciona WorkCoPilot para ti: alojado para tu empresa, gestionado en tu nube o en tus propios servidores. La seguridad y la privacidad vienen con cada plan, nunca como extra de pago.",
+    sub: "Elige cómo funciona WorkCoPilot para ti: alojado por AdmireVeda, gestionado por AdmireVeda o una instancia privada en tu propia nube. La seguridad y la privacidad vienen con cada plan, nunca como extra de pago.",
     notes: {
       items: [
         {
           t: "Precio por personas",
-          d: "Los planes tienen precio por persona según el tamaño de la empresa, con una bolsa de horas guiadas que el administrador de tu empresa reparte."
+          d: "Cada plan tiene un precio por usuario al mes, y el tamaño de tu empresa fija la tarifa de cada usuario. Una bolsa de horas guiadas que el administrador de tu empresa reparte."
         },
         {
           t: "Minutos, no bloques",
@@ -78,11 +79,11 @@ export default {
         },
         {
           t: "Cómo compran las empresas",
-          d: "Un presupuesto que encaja con la forma de comprar de tu empresa, un DPA y extractos con facturas descargables."
+          d: "Un contrato que encaja con la forma de comprar de tu empresa, un DPA y facturas que descargas desde la consola de tu empresa."
         }
       ]
     },
-    fine: "Las condiciones y los precios definitivos se fijan en tu presupuesto. Pueden aplicarse impuestos según la ubicación."
+    fine: "Las condiciones definitivas se fijan en tu contrato. Pueden aplicarse impuestos según la ubicación."
   },
   howItWorks: {
     cta: {
@@ -102,8 +103,15 @@ export default {
       pricing: {
         items: {
           0: {
-            a: "WorkCoPilot se vende a organizaciones: alojado para tu empresa, como nube privada gestionada o en tus propios servidores, con precio por persona según el tamaño de la empresa. Habla con nosotros para un presupuesto.",
-            d: "La facturación sigue tu presupuesto, con extractos y facturas descargables."
+            a: "WorkCoPilot se vende a organizaciones, por usuario al mes para un mínimo de 100 usuarios: alojado por AdmireVeda, gestionado por AdmireVeda (más la IA según el uso real) o como instancia privada en tu propia nube. El tamaño de tu empresa fija la tarifa de cada usuario. Habla con nosotros.",
+            d: "AdmireVeda factura a tu empresa según tu contrato; las facturas están en la consola de tu empresa."
+          }
+        }
+      },
+      compliance: {
+        items: {
+          3: {
+            a: "Un resumen del DPA es público y hay un DPA firmado disponible a petición. La guía la produce un importante proveedor de IA y el alojamiento un proveedor en la nube; la lista actual con los nombres de las entidades está disponible a petición."
           }
         }
       },
@@ -123,6 +131,19 @@ export default {
   fieldsPage: {
     startBtn: "Llévalo a tu equipo"
   },
+  securityPage: {
+    guarantees: {
+      2: {
+        t: "Un segundo factor en cada inicio de sesión",
+        d: "El inicio de sesión con contraseña exige una app de autenticación en cada cuenta; el inicio de sesión único de tu empresa usa el segundo factor que impone tu proveedor de identidad."
+      }
+    },
+    mock: {
+      fields: {
+        2: "Cuenta bancaria"
+      }
+    }
+  },
   useCases: {
     final: {
       cta: "Habla con nosotros"
@@ -135,10 +156,14 @@ export default {
   workDashboard: {
     plan: {
       choose: "Esta cuenta aún no tiene plan"
+    },
+    meters: {
+      sub: "Horas de este mes, la bolsa de tu empresa y tareas abiertas. Pasa el cursor sobre la información de una ficha para ver cómo funciona."
     }
   },
   dashboardsHelp: {
     home: {
+      lead: "El panel es tu inicio: tus horas de este mes y la bolsa de tu empresa, las tareas abiertas, lo único que hay que hacer a continuación, y dónde lo dejaste.",
       steps: {
         0: "<b>Lee tu plan.</b> Las tres fichas muestran las horas que quedan este mes, tu grupo de empresa y tus espacios de tareas abiertas. El indicador de tiempo de arriba se pone ámbar antes de que te quedes sin saldo.",
         2: "<b>Añade tiempo.</b> Pulsa <b>Añadir tiempo</b> arriba para pedirle más horas a tu administrador."
