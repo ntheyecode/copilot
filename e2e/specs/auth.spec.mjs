@@ -1,7 +1,8 @@
 // Auth across editions: sign-in per role, sign-up and company creation per
 // edition rule, sign-out, session expiry, and one live session per account.
 import { test, expect } from '../support/fixtures.mjs'
-import { capsOf, needCap } from '../support/editions.mjs'
+import { capsOf } from '../support/editions.mjs'
+import { hasCompanies, hasSolo, companyFeatureRefused, personalAccountsRefused } from '../support/edition-branch.mjs'
 import { LANDING, SUPERADMIN } from '../support/personas.mjs'
 import { LoginPage } from '../pages/LoginPage.mjs'
 import { WorkShell } from '../pages/WorkShell.mjs'
@@ -27,7 +28,13 @@ test.describe('sign in through the login page', () => {
   })
 
   test('every company role lands on its home', async ({ as, seed, edition }) => {
-    needCap(test, edition, 'saas_companies')
+    if (!hasCompanies(edition)) {
+      return companyFeatureRefused({ as, seed, edition }, {
+        what: 'company roles and their consoles',
+        api: [['GET', '/api/work/company/users'], ['GET', '/api/work/my-company']],
+        pages: ['/work/company', '/work/exec', '/work/pm', '/work/srpm', '/work/grc', '/work/queue', '/work/teach', '/work/workflow-issues'],
+      })
+    }
     const co = await seed.company()
     for (const key of ['admin', 'exec', 'pm', 'srpm', 'grc', 'member', 'worker', 'trainer']) {
       await test.step(key, async () => {
@@ -44,7 +51,7 @@ test.describe('sign in through the login page', () => {
   })
 
   test('a solo user lands on the dashboard', async ({ as, seed, edition }) => {
-    needCap(test, edition, 'solo_signup')
+    if (!hasSolo(edition)) return personalAccountsRefused({ as, seed, edition })
     const solo = await seed.solo()
     const { context } = await as.context()
     const page = await context.newPage()
@@ -56,7 +63,18 @@ test.describe('sign in through the login page', () => {
   })
 
   test('a paying solo user picks their language once, on first sign-in', async ({ as, seed, edition }) => {
-    needCap(test, edition, 'solo_signup')
+    if (!hasSolo(edition)) {
+      // No personal accounts here: a company member's chosen language is pinned
+      // to the account and follows them on every load.
+      const co = await seed.company({ personas: ['member'] })
+      const { page, api } = await as.page(co.users.member, { pinLanguage: false })
+      expect((await api.post('/api/work/profile/language', { language: 'ja' })).status).toBe(200)
+      await page.reload()
+      await expect(page.locator('html')).toHaveAttribute('lang', /^ja/)
+      const me = await api.get('/api/work/me')
+      expect([me.data.user.languagePinned, me.data.user.language]).toEqual([true, 'ja'])
+      return
+    }
     const solo = await seed.solo()
     const { page, api } = await as.page(solo, { pinLanguage: false })
     const dialog = page.getByRole('dialog', { name: 'Choose your language' })

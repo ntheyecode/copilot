@@ -1,13 +1,19 @@
 // Managed projects across the PM roles: a PM creates and assigns, the worker
 // starts from the queue, the Sr PM moves work, GRC watches risks read-only.
 import { test, expect } from '../support/fixtures.mjs'
-import { needCap } from '../support/editions.mjs'
+import { companyTest } from '../support/edition-branch.mjs'
 import { PmPages } from '../pages/PmPages.mjs'
 import { DEFAULT_PROJECT } from '../support/boot/responders.mjs'
 
+// Without company tenants (paid) each test checks this is refused and hidden.
+const REFUSE = {
+  what: 'project management (projects, assignment, Sr PM moves, GRC oversight, the worker queue)',
+  api: [['GET', '/api/work/pm/projects'], ['POST', '/api/work/pm/projects'], ['GET', '/api/work/grc/risks'], ['GET', '/api/work/grc/stats'], ['GET', '/api/work/my/assigned'], ['GET', '/api/work/templates']],
+  pages: ['/work/pm', '/work/srpm', '/work/grc', '/work/queue', '/work/templates'],
+}
+
 const [T1, T2] = DEFAULT_PROJECT.tasks.map((t) => t.title)
 
-test.beforeEach(({ edition }) => needCap(test, edition, 'saas_companies'))
 
 async function createProjectApi(api, goal = 'Close the quarter books for the finance team') {
   const r = await api.post('/api/work/pm/projects', { goal, name: 'Quarter close' })
@@ -15,7 +21,7 @@ async function createProjectApi(api, goal = 'Close the quarter books for the fin
   return r.data.project
 }
 
-test('a PM creates a project in the console and assigns a task; the worker starts it from the queue', async ({ as, seed, server }) => {
+companyTest(test, 'a PM creates a project in the console and assigns a task; the worker starts it from the queue', REFUSE, async ({ as, seed, server }) => {
   const co = await seed.company({ personas: ['pm', 'worker'] })
   const pm = await as.page(co.users.pm, { path: null })
   const pmUi = new PmPages(pm.page)
@@ -47,7 +53,7 @@ test('a PM creates a project in the console and assigns a task; the worker start
   expect(t1.state).toBe('active')
 })
 
-test('the worker cannot start their own task, only assigned ones', async ({ as, seed }) => {
+companyTest(test, 'the worker cannot start their own task, only assigned ones', REFUSE, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['worker'] })
   const w = await as.api(co.users.worker)
   const r = await w.post('/api/work/sessions', { goal: 'Do something on my own' })
@@ -55,7 +61,7 @@ test('the worker cannot start their own task, only assigned ones', async ({ as, 
   expect(r.data.workerFlow).toBe(true)
 })
 
-test('a Sr PM moves a project to another manager and a task to another person', async ({ as, seed }) => {
+companyTest(test, 'a Sr PM moves a project to another manager and a task to another person', REFUSE, async ({ as, seed }) => {
   const co = await seed.company({ personas: ['pm', 'srpm', 'worker', 'member'] })
   const pm = await as.api(co.users.pm)
   const project = await createProjectApi(pm)
@@ -81,7 +87,7 @@ test('a Sr PM moves a project to another manager and a task to another person', 
   await expect(ui.page.getByRole('heading', { name: 'Project managers' })).toBeVisible()
 })
 
-test('GRC sees held, idle and overdue work as risks and cannot change anything', async ({ as, seed, server }) => {
+companyTest(test, 'GRC sees held, idle and overdue work as risks and cannot change anything', REFUSE, async ({ as, seed, server }) => {
   const co = await seed.company({ personas: ['pm', 'grc', 'worker'] })
   const pm = await as.api(co.users.pm)
   const project = await createProjectApi(pm)
@@ -120,7 +126,7 @@ test('GRC sees held, idle and overdue work as risks and cannot change anything',
   await expect(ui.page.getByText('Quarter close').first()).toBeVisible()
 })
 
-test('project permissions hold for every company role', async ({ as, seed }) => {
+companyTest(test, 'project permissions hold for every company role', REFUSE, async ({ as, seed }) => {
   const co = await seed.company()
   const pm = await as.api(co.users.pm)
   const project = await createProjectApi(pm)

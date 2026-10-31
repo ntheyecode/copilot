@@ -48,7 +48,18 @@ test('first sign-in enrolls an authenticator; later sign-ins need a code or a ba
 })
 
 test('creating an API key and replacing the export passphrase need a fresh code', async ({ server, seed, edition }) => {
-  test.skip(!capsOf(edition).has('saas_companies'), `Edition "${edition}" has no company tenants.`)
+  if (!capsOf(edition).has('saas_companies')) {
+    // No company keys or Company Brain here: an enrolled personal account is
+    // refused them even with a valid fresh code (the edition, not the code, decides).
+    const solo = await seed.solo()
+    const c = hostedClient(server.baseURL)
+    const s = await enroll(c, solo)
+    for (const [path, body] of [['/api/work/company/api-keys', { name: 'x', scopes: ['workflows:read'], expiresInDays: 30 }], ['/api/work/brain/export/key', { passphrase: 'first passphrase here' }]]) {
+      const r = await c.post(path, { ...body, mfaToken: currentToken(s.secret) })
+      expect([r.status, r.data && r.data.companiesDisabled], path).toEqual([403, true])
+    }
+    return
+  }
   const co = await seed.company({ personas: ['admin', 'exec'] })
   const admin = hostedClient(server.baseURL)
   const a = await enroll(admin, co.users.admin)

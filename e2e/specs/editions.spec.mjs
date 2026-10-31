@@ -42,42 +42,73 @@ function bannedHits(text, re) {
   return [...out]
 }
 
-test.describe('saas: organizations only', () => {
-  test.beforeEach(({ edition }) => test.skip(edition !== 'saas', 'saas edition only'))
+// Every test runs in every edition and checks THAT edition's contract: what it
+// refuses, and what it keeps open.
+const PLAN_BODY = { plan: 'basic', tier: 'basic', interval: 'month', hours: 5 }
 
-  test('every personal plan and sign-up route is refused, any letter case, signed in or not', async ({ as, seed }) => {
+test('personal plan and sign-up routes follow the edition, any letter case', async ({ as, seed, edition }) => {
+  const caps = capsOf(edition)
+  const clients = { anonymous: await as.anon() }
+  if (caps.has('saas_companies')) {
     const co = await seed.company({ personas: ['member', 'admin'] })
-    const clients = { anonymous: await as.anon(), member: await as.api(co.users.member), admin: await as.api(co.users.admin) }
-    for (const [who, api] of Object.entries(clients)) {
-      for (const [method, path] of INDIVIDUAL_PLAN_ROUTES) {
-        for (const p of [path, mixedCase(path), `${path}/`]) {
-          const r = await api.ctx.fetch(p, { method, data: { plan: 'basic', tier: 'basic', interval: 'month', hours: 5 }, failOnStatusCode: false })
-          const body = await r.json().catch(() => ({}))
-          expect([r.status(), body.individualPlansDisabled], `${who} ${method} ${p}`).toEqual([403, true])
-        }
-      }
-      for (const path of SIGNUP_ROUTES) {
-        for (const p of [path, mixedCase(path)]) {
-          const r = await api.post(p, { username: `${seed.prefix()}_x`, password: 'Signup-Pass-123!', email: `${seed.prefix()}@e2e-mail.net`, acceptTerms: true })
-          expect([r.status, r.data && r.data.signupDisabled], `${who} POST ${p}`).toEqual([403, true])
-        }
+    clients.member = await as.api(co.users.member)
+    clients.admin = await as.api(co.users.admin)
+  }
+  if (caps.has('solo_signup')) clients.solo = await as.api(await seed.solo())
+  for (const [who, api] of Object.entries(clients)) {
+    for (const [method, path] of INDIVIDUAL_PLAN_ROUTES) {
+      for (const p of [path, mixedCase(path), `${path}/`]) {
+        const r = await api.ctx.fetch(p, { method, data: PLAN_BODY, failOnStatusCode: false })
+        const body = (await r.json().catch(() => ({}))) || {}
+        if (caps.has('individual_plans')) expect(body.individualPlansDisabled, `${who} ${method} ${p} stays open on ${edition}`).toBeFalsy()
+        else expect([r.status(), body.individualPlansDisabled], `${who} ${method} ${p} refused on ${edition}`).toEqual([403, true])
       }
     }
-  })
+    for (const path of SIGNUP_ROUTES) {
+      for (const p of [path, mixedCase(path)]) {
+        const r = await api.post(p, { username: `${seed.prefix()}_x`, password: 'Signup-Pass-123!', email: `${seed.prefix()}@e2e-mail.net`, acceptTerms: true })
+        if (caps.has('solo_signup')) expect(r.data && r.data.signupDisabled, `${who} POST ${p} stays open on ${edition}`).toBeFalsy()
+        else expect([r.status, r.data && r.data.signupDisabled], `${who} POST ${p} refused on ${edition}`).toEqual([403, true])
+      }
+    }
+  }
+})
 
-  test('no personal plan, price, sign-up or upgrade path on any public or member screen', async ({ as, seed }) => {
+test('company route families follow the edition, any letter case', async ({ as, seed, edition }) => {
+  const caps = capsOf(edition)
+  const callers = [['anonymous', await as.anon()]]
+  if (caps.has('saas_companies')) callers.push(['company admin', await as.api((await seed.company({ personas: ['admin'] })).users.admin)])
+  if (caps.has('solo_signup')) callers.push(['solo', await as.api(await seed.solo())])
+  for (const pre of COMPANY_ROUTE_PREFIXES) {
+    for (const p of [underPrefix(pre), mixedCase(underPrefix(pre))]) {
+      for (const [who, api] of callers) {
+        const r = await api.ctx.fetch(p, { method: 'GET', failOnStatusCode: false })
+        const body = (await r.json().catch(() => ({}))) || {}
+        if (caps.has('saas_companies')) expect(body.companiesDisabled, `${who} GET ${p} is not edition-refused on ${edition}`).toBeFalsy()
+        else expect([r.status(), body.companiesDisabled], `${who} GET ${p} refused on ${edition}`).toEqual([403, true])
+      }
+    }
+  }
+  if (caps.has('saas_companies')) {
+    const admin = callers.find(([w]) => w === 'company admin')[1]
+    expect((await admin.get('/api/work/company/users')).status, 'the company console answers').toBe(200)
+  }
+})
+
+test('public and account screens use the edition\'s wording and offers', async ({ as, seed, edition }) => {
+  const caps = capsOf(edition)
+  const problems = []
+  const { context } = await as.context()
+  const anon = await context.newPage()
+  if (edition === 'saas') {
     const co = await seed.company({ personas: ['member'] })
-    const problems = []
-    const { context } = await as.context()
-    const anon = await context.newPage()
     for (const path of PUBLIC_PAGES) {
-      const { url, text } = await visibleText(anon, path)
+      const { text } = await visibleText(anon, path)
       const hits = bannedHits(text, ORGANIZATIONS_BANNED)
       if (hits.length) problems.push(`${path}: ${hits.join(', ')}`)
       if (/\$\s?\d+(?:\.\d{2})?\s*(?:\/|per)\s*(?:mo|month)/i.test(text) && /\b(Lite|Basic|Premium)\b/.test(text)) problems.push(`${path}: a personal plan price`)
       if (path === '/workcopilot/signup') expect(await anon.locator('form input[type="password"]').count(), 'the sign-up page is closed').toBe(0)
       if (path === '/workcopilot/login') expect(await anon.locator('a[href*="/workcopilot/signup"]').count(), 'no way to create an account').toBe(0)
-      expect(url.startsWith('http'), path).toBe(true)
     }
     const { page } = await as.page(co.users.member, { path: null })
     for (const path of APP_PAGES) {
@@ -85,33 +116,8 @@ test.describe('saas: organizations only', () => {
       const hits = bannedHits(text, ORGANIZATIONS_BANNED)
       if (hits.length) problems.push(`member ${path}: ${hits.join(', ')}`)
     }
-    expect(problems, problems.join('\n')).toEqual([])
-  })
-})
-
-test.describe('paid: individuals only', () => {
-  test.beforeEach(({ edition }) => test.skip(edition !== 'paid', 'paid edition only'))
-
-  test('every company route family is refused, any letter case', async ({ as, seed }) => {
-    const solo = await as.api(await seed.solo())
-    const anon = await as.anon()
-    for (const pre of COMPANY_ROUTE_PREFIXES) {
-      for (const p of [underPrefix(pre), mixedCase(underPrefix(pre))]) {
-        for (const [who, api] of [['solo', solo], ['anonymous', anon]]) {
-          const r = await api.ctx.fetch(p, { method: 'GET', failOnStatusCode: false })
-          const body = await r.json().catch(() => ({}))
-          expect([r.status(), body.companiesDisabled], `${who} GET ${p}`).toEqual([403, true])
-        }
-      }
-    }
-    // Company tenants cannot be created either (superadmin), covered in auth.spec.
-  })
-
-  test('no company wording on any public or account screen, and no company page opens', async ({ as, seed }) => {
+  } else if (edition === 'paid') {
     const solo = await seed.solo()
-    const problems = []
-    const { context } = await as.context()
-    const anon = await context.newPage()
     for (const path of PUBLIC_PAGES) {
       const { text } = await visibleText(anon, path)
       const hits = bannedHits(withoutReviewed(text), INDIVIDUALS_BANNED)
@@ -132,28 +138,19 @@ test.describe('paid: individuals only', () => {
       await page.waitForLoadState('networkidle')
       if (new URL(page.url()).pathname !== '/work') problems.push(`${path} opens instead of returning to /work`)
     }
-    expect(problems, problems.join('\n')).toEqual([])
-  })
-})
-
-test.describe('all: individuals and companies, as before', () => {
-  test.beforeEach(({ edition }) => test.skip(edition !== 'all', 'all edition only'))
-
-  test('personal plans and company routes are both open, and both appear on the site', async ({ as, seed }) => {
+  } else {
+    // all: both audiences on the site; both kinds of account reach their screens.
+    const { text } = await visibleText(anon, '/workcopilot/pricing')
+    if (!/Enterprise/.test(text)) problems.push('pricing: no Enterprise offer')
+    if (!/\b(Basic|Premium)\b/.test(text)) problems.push('pricing: no personal plans')
+    const { url: signupUrl } = await visibleText(anon, '/workcopilot/signup')
+    if (!/signup/.test(signupUrl)) problems.push('sign-up page does not open')
     const co = await seed.company({ personas: ['admin'] })
-    const solo = await as.api(await seed.solo())
-    for (const [method, path] of INDIVIDUAL_PLAN_ROUTES) {
-      const r = await solo.ctx.fetch(path, { method, data: {}, failOnStatusCode: false })
-      const body = await r.json().catch(() => ({}))
-      expect(body.individualPlansDisabled, `${method} ${path} is not edition-refused`).toBeFalsy()
-    }
-    const admin = await as.api(co.users.admin)
-    expect((await admin.get('/api/work/company/users')).status).toBe(200)
-    expect((await solo.post('/api/work/signup', {})).data.signupDisabled).toBeFalsy()
-    const { context } = await as.context()
-    const page = await context.newPage()
-    const { text } = await visibleText(page, '/workcopilot/pricing')
-    expect(text).toMatch(/Enterprise/)
-    expect(text).toMatch(/\b(Basic|Premium)\b/)
-  })
+    const admin = await as.page(co.users.admin, { path: '/work/company' })
+    await expect(admin.page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible()
+    const solo = await as.page(await seed.solo(), { path: '/work' })
+    await expect(solo.page.getByRole('heading', { level: 1 }).first()).toHaveText(/^Hello/)
+  }
+  expect(caps.list().length).toBeGreaterThan(0)
+  expect(problems, problems.join('\n')).toEqual([])
 })

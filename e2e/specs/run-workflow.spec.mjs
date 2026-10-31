@@ -3,17 +3,24 @@
 // deviation becomes a workflow incident. Trainers, PMs and executives are
 // alerted; viewers cannot act; the trainer adopts the missing step into a draft.
 import { test, expect } from '../support/fixtures.mjs'
-import { needCap } from '../support/editions.mjs'
+import { companyTest } from '../support/edition-branch.mjs'
 import { makeWorkflow } from '../support/workflows.mjs'
 
-test.beforeEach(({ edition }) => needCap(test, edition, 'saas_companies'))
+// Without company tenants (paid) each test checks this is refused and hidden.
+const REFUSE = {
+  what: 'company workflows and workflow issues',
+  api: [['GET', '/api/work/workflows?state=published'], ['GET', '/api/work/workflow-incidents'], ['GET', '/api/work/workflow-incidents-alerts']],
+  pages: ['/work/workflow-issues', '/work/exec'],
+  absentText: [['/work', 'Company workflows']],
+}
+
 
 const DEVIATION = {
   completed: [], current: 1, guidance: 'Close the approval dialog first.', observation: 'An approval dialog is open.', flag: '', done: false,
   deviation: { kind: 'untrained_path', why: 'The step expects the Credit notes list, but an approval dialog appeared first.', extraStep: 'Click Approve in the approval dialog.' },
 }
 
-test('an employee runs a published workflow, a deviation alerts the right people, the trainer adopts the step', async ({ as, seed, server }) => {
+companyTest(test, 'an employee runs a published workflow, a deviation alerts the right people, the trainer adopts the step', REFUSE, async ({ as, seed, server }) => {
   const co = await seed.company()
   const trainer = await as.api(co.users.trainer)
   const wf = await makeWorkflow(trainer, { title: 'Credit note run' })
@@ -82,7 +89,7 @@ test('an employee runs a published workflow, a deviation alerts the right people
   expect((await tp.api.get(`/api/work/workflows/${wf.id}`)).data.workflow.state).toBe('published')
 })
 
-test('an executive sees active issues on the executive dashboard card', async ({ as, seed, server }) => {
+companyTest(test, 'an executive sees active issues on the executive dashboard card', REFUSE, async ({ as, seed, server }) => {
   const co = await seed.company({ personas: ['trainer', 'member', 'exec'] })
   const trainer = await as.api(co.users.trainer)
   const wf = await makeWorkflow(trainer, { title: 'Exec card run' })
