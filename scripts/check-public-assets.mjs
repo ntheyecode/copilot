@@ -20,6 +20,11 @@ const MEDIA_DIRS = new Set(['buddies', 'media', 'img', 'images'])
 // referenced by the three dashboards' Help sections). Screenshot formats only.
 const HELP_DIR = 'help'
 const HELP_EXT = new Set(['.png', '.webp', '.jpg', '.jpeg'])
+// Brand assets: public/brand/<product>/ (logo, mark, favicons, app icons), one
+// folder per product the deploy stamp can point a page shell at
+// (build/spa_stamp.js; LinkNotes lives in public/brand/linknotes/). SVG + PNG only.
+const BRAND_DIR = 'brand'
+const BRAND_EXT = new Set(['.svg', '.png'])
 const ASSET_EXT = new Set(['.js', '.css', '.woff2', '.woff', '.ttf', '.png', '.jpg', '.jpeg', '.svg', '.webp', '.gif', '.ico', '.json', '.mp4', '.webm'])
 const ROOT_EXT = new Set(['.png', '.svg', '.ico', '.webmanifest', '.jpg', '.jpeg', '.webp', '.gif', '.mp4', '.webm', '.pdf'])
 const ROOT_NAMES = new Set(['index.html', 'robots.txt', 'sitemap.xml', 'favicon.ico', 'llms.txt'])
@@ -93,6 +98,11 @@ function classify(rel) {
   if (parts[0] === HELP_DIR) {
     if (HELP_EXT.has(ext)) return null
     return `extension "${ext || '(none)'}" not allowed under help/ (screenshots only: png, webp, jpg)`
+  }
+  // Brand assets under brand/<product>/**: SVG and PNG only.
+  if (parts[0] === BRAND_DIR) {
+    if (parts.length >= 3 && BRAND_EXT.has(ext)) return null
+    return `only brand/<product>/*.svg|png is allowed under ${BRAND_DIR}/`
   }
   // Public media directories (avatars, images): media file types only.
   if (MEDIA_DIRS.has(parts[0])) {

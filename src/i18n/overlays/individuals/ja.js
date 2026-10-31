@@ -198,7 +198,10 @@ export default {
   },
   widgets: {
     validate: {
-      workEmailPh: "taro@example.com"
+      workEmailPh: "taro@example.com",
+      workEmail: "メール",
+      chip1: "Google カレンダーを週表示に切り替えてクライアントと共有する",
+      chip5: "連絡先の CSV を HubSpot にインポートし、各連絡先にリードソースのプロパティを追加する"
     }
   },
   setPasswordPage: {

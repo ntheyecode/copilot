@@ -14,7 +14,7 @@ import { api } from '../../api.js'
 import WorkShell from '../../workShell.jsx'
 import LanguagePinModal from '../../components/LanguagePinModal.jsx'
 import PreferencesPanel from '../../components/PreferencesPanel.jsx'
-import { AVMark } from '../../components/AdmireVedaLogo.jsx'
+import { BrandMark as AVMark } from '../../components/brand/BrandLogo.jsx'   // the edition's brand mark
 import { readBuddyPref } from '../../components/AliveBuddy.jsx'
 import { useLocale, useT } from '../../i18n/index.jsx'
 import { useEditionView } from '../../edition/useCaps.js'   // edition: personal top-ups only where personal plans are sold

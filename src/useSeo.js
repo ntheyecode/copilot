@@ -5,7 +5,16 @@
 import { useEffect } from 'react'
 import { LOCALES } from './i18n/locales.js'   // single source for hreflang tags + ?lang codes
 
-const ORIGIN = 'https://admireveda.com'
+// The deployment's own origin, stamped into the page by build/spa_stamp.js
+// (data-origin on the capabilities meta; linknotes.com for LinkNotes through the
+// brand pass). An unstamped dev build keeps the default site.
+const ORIGIN = (() => {
+  try {
+    const o = document.querySelector('meta[name="wcp-capabilities"]')?.getAttribute('data-origin')
+    if (o && /^https:\/\/[^\s/]+/.test(o)) return o.replace(/\/+$/, '')
+  } catch { /* no DOM (tests, prerender) */ }
+  return 'https://admireveda.com'
+})()
 
 function setMeta(name, content) {
   if (!content) return null

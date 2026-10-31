@@ -4,7 +4,7 @@ import {
   ServerCog, Blocks, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass,
   ArrowRight, Check, Play,
 } from 'lucide-react'
-import { AVMark } from '../components/AdmireVedaLogo.jsx'
+import { BrandMark as AVMark } from '../components/brand/BrandLogo.jsx'   // the edition's brand mark
 import SiteHeader from '../components/SiteHeader.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
 import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)

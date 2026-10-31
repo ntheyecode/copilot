@@ -21,7 +21,7 @@ import {
   AlertTriangle, PauseCircle, FileText, Sparkles, Search, KeyRound, Gift, Phone, AtSign, Mail,
   Coins, Zap, Users,
 } from 'lucide-react'
-import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
+import BrandLogo from '../components/brand/BrandLogo.jsx'
 import { api } from '../api.js'
 import useSeo from '../useSeo.js'
 import { useT } from '../i18n/index.jsx'
@@ -128,7 +128,7 @@ export default function AffiliatePage() {
       <style>{CSS}</style>
       <header className="af-nav">
         <div className="af-wrap af-nav-in">
-          <a href="/" aria-label={t('affiliatePage.nav.homeAria')}><AdmireVedaLogo size={26} /></a>
+          <a href="/" aria-label={t('affiliatePage.nav.homeAria')}><BrandLogo size={26} /></a>
           <a className="af-back" href="/"><ArrowLeft size={15} /> {t('affiliatePage.nav.back')}</a>
         </div>
       </header>

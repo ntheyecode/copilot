@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ScanEye, AlertTriangle, ArrowRight, Check, FileText, Sparkles, Compass, Wand2, Bug, Award } from 'lucide-react'
-import { AVMark } from '../components/AdmireVedaLogo.jsx'
+import { BrandMark as AVMark } from '../components/brand/BrandLogo.jsx'   // the edition's brand mark
 import SiteHeader from '../components/SiteHeader.jsx'   // the shared site nav (full routes, language menu, mobile menu), same as every public page
 import SiteFooter from '../components/SiteFooter.jsx'
 import CopyChip from '../components/CopyChip.jsx'

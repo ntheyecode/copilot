@@ -16,7 +16,7 @@ import {
 // and the locale registry (the language chips are its own endonyms).
 import { COMPLIANCE_FRAMEWORKS } from '../../server/compliance_frameworks.js'
 import { LOCALES } from '../i18n/locales.js'
-import { AVMark } from '../components/AdmireVedaLogo.jsx'
+import { BrandMark as AVMark } from '../components/brand/BrandLogo.jsx'   // the edition's brand mark
 import SiteHeader from '../components/SiteHeader.jsx'   // shared top nav (one link list, mobile disclosure menu) - same as every inner page
 import { revealOnScroll } from '../reveal.js'            // the ONE scroll-reveal mechanism for the site (timing + crawler/print safety)
 import SiteFooter from '../components/SiteFooter.jsx'   // shared footer across the whole site

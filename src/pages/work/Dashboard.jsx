@@ -25,7 +25,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader2, X, Trash2, AlertTriangle, Globe, ChevronRight, Sparkles, Rocket, Compass, ArrowRight, ShieldCheck, RefreshCw, Building2, Phone, MapPin, LayoutDashboard, Zap, BarChart3, Plus, Inbox } from 'lucide-react'
 import { api, friendlyError } from '../../api.js'
-import { AVMark } from '../../components/AdmireVedaLogo.jsx'
+import { BrandMark as AVMark } from '../../components/brand/BrandLogo.jsx'   // the edition's brand mark
 import WorkBilling from '../../components/WorkBilling.jsx'
 import BillingAlert from '../../components/billing/BillingAlert.jsx'   // the one billing state that needs action (past due, ending, pending downgrade)
 import AliveBuddy, { resolveCharacter } from '../../components/AliveBuddy.jsx'

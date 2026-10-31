@@ -37,7 +37,7 @@
 // the labels change (locale switch).
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ArrowRight, Menu, X } from 'lucide-react'
-import AdmireVedaLogo from './AdmireVedaLogo.jsx'
+import BrandLogo from './brand/BrandLogo.jsx'
 import LanguageMenu from './LanguageMenu.jsx'   // globe + language picker (16 locales), lives in the header on every public page
 import { useT, useLocale } from '../i18n/index.jsx'
 import { useEditionView } from '../edition/useCaps.js'
@@ -140,7 +140,7 @@ function OrgHeader({ current, ed }) {
     <header className={'wsh' + (folded ? ' wsh-folded' : '')} ref={rootRef}>
       <style>{CSS}</style>
       <div className="wsh-in" ref={innerRef}>
-        <a className="wsh-brand" href="/" aria-label={t('nav.home')}><AdmireVedaLogo size={26} idSuffix="sh" /></a>
+        <a className="wsh-brand" href="/" aria-label={t('nav.home')}><BrandLogo size={26} idSuffix="sh" /></a>
 
         <nav className={'wsh-links' + (open ? ' open' : '')} id="wsh-menu" aria-label={t('nav.main')}>
           {links.map((l) => (

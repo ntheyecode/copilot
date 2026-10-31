@@ -11,7 +11,7 @@
 // `dark={false}` only if a page ever needs the light variant.
 import React from 'react'
 import { Mail, ArrowUpRight } from 'lucide-react'
-import AdmireVedaLogo from './AdmireVedaLogo.jsx'
+import BrandLogo from './brand/BrandLogo.jsx'
 import { SUPPORT_CONTACT, LEGAL_CONTACT } from './LegalPage.jsx'
 import { useT } from '../i18n/index.jsx'
 import { openPreferences } from '../consent.js'   // re-open the cookie consent panel
@@ -53,7 +53,7 @@ function OrgFooter({ dark, ed }) {
       <style>{CSS}</style>
       <div className="sf-in">
         <div className="sf-brand">
-          <a href="/" aria-label={t('nav.home')}><AdmireVedaLogo size={26} idSuffix="sf" onDark={dark} /></a>
+          <a href="/" aria-label={t('nav.home')}><BrandLogo size={26} idSuffix="sf" onDark={dark} /></a>
           <p className="sf-tag">{t('footer.tag')}</p>
           <div className="sf-ctas">
             <a className="sf-btn" href={start}>{t('common.getStarted')} <ArrowUpRight size={14} aria-hidden="true" className="sf-arrow" /></a>

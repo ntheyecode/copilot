@@ -198,7 +198,10 @@ export default {
   },
   widgets: {
     validate: {
-      workEmailPh: "jordan@example.com"
+      workEmailPh: "jordan@example.com",
+      workEmail: "邮箱",
+      chip1: "把我的 Google 日历切换到周视图并分享给客户",
+      chip5: "把联系人 CSV 导入 HubSpot，并为每个联系人添加潜在客户来源属性"
     }
   },
   setPasswordPage: {

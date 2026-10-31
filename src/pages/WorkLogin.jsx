@@ -7,7 +7,7 @@ import GuideConsole from '../components/GuideConsole.jsx'   // the live guide co
 import { api } from '../api.js'
 import { LEGAL_FALLBACK_DOCS } from '../components/LegalConsentGate.jsx'   // shared fallback agreement list
 import AgreementLinks from '../components/AgreementLinks.jsx'   // the keyed "I have read and agree to ..." sentence
-import { AVMark } from '../components/AdmireVedaLogo.jsx'
+import { BrandMark as AVMark } from '../components/brand/BrandLogo.jsx'   // the edition's brand mark
 import SocialMark from '../components/SocialMark.jsx'   // Google / Microsoft / Facebook marks (shared with the subscribe onboarding)
 import WorkShell from '../workShell.jsx'
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)

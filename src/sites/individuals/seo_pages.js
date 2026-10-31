@@ -1,4 +1,4 @@
-// The individuals site's search-engine identity: ONE source for each page's
+// The LinkNotes site's search-engine identity: ONE source for each page's
 // path, title, description and crawler text (Supreme Rule II).
 //
 //   * The pages call useSeo(indivSeo(t, '<page>')), so the live <title> and
@@ -35,16 +35,19 @@ export function indivSeo(t, page) {
 }
 
 // The crawler's main text for each page: the hero heading and lead the page
-// shows first, then the page's own list (cards, steps, answers), all read
+// shows first, then the page's own lists (cards, steps, answers), all read
 // from the same keys the page renders.
 const list = (v) => (Array.isArray(v) ? v : [])
 const td = (x) => `${x.t}. ${x.d}`
 const MAIN = {
-  home: (t) => ({ lede: [t('indiv.home.hero.p'), t('indiv.home.hours.p')], points: list(t('indiv.home.how.steps')).map(td) }),
+  home: (t) => ({
+    lede: [t('indiv.home.hero.p'), t('indiv.home.brain.p')],
+    points: [...list(t('indiv.home.pillars.items')).map(td), ...list(t('indiv.home.how.steps')).map(td), ...list(t('indiv.home.runs.items')).map(td)],
+  }),
   how: (t) => ({ lede: [t('indiv.how.hero.p')], points: list(t('indiv.how.cards')).map(td) }),
   use: (t) => ({ lede: [t('indiv.use.hero.p')], points: list(t('indiv.use.cases')).map((c) => `${c.tag}: ${c.d}`) }),
   pricing: (t) => ({ lede: [t('indiv.pricing.hero.p')], points: [...list(t('indiv.pricing.included')), ...list(t('indiv.pricing.notes')).map(td)] }),
-  security: (t) => ({ lede: [t('indiv.security.hero.p')], points: list(t('indiv.security.guarantees')).map(td) }),
+  security: (t) => ({ lede: [t('indiv.security.hero.p')], points: [...list(t('indiv.security.guarantees')).map(td), ...list(t('indiv.security.brain.points')).map(td)] }),
   faq: (t) => ({ lede: [t('indiv.faq.hero.p')], points: list(t('indiv.faq.groups')).flatMap((g) => list(g.items).map((i) => `${i.q} ${i.a}`)) }),
 }
 
