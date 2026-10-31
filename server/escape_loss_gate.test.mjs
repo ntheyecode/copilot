@@ -34,3 +34,29 @@ test('no regex digit class lost its backslash (d{N} instead of \\d{N})', () => {
   }
   assert.deepEqual(hits, [])
 })
+
+// The same class, other shape (2026-10-30, editions work): a scripted edit
+// turned the `\b` of a regex into a literal BACKSPACE character (0x08), which is
+// invisible in a terminal and makes the regex never match (company-only FAQ
+// links stayed visible on the individuals edition). No source file has a reason
+// to hold an ASCII control character other than tab, CR and LF.
+const CONTROL = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/
+test('no source file holds an ASCII control character (a lost escape such as \\b turned into 0x08)', () => {
+  const hits = []
+  for (const d of [...DIRS, 'scripts', 'build', 'editions']) {
+    const dir = path.join(ROOT, d)
+    if (!fs.existsSync(dir)) continue
+    for (const f of files(dir)) {
+      fs.readFileSync(f, 'utf8').split(/\r?\n/).forEach((line, i) => {
+        const m = line.match(CONTROL)
+        if (m) hits.push(`${path.relative(ROOT, f)}:${i + 1} (0x${m[0].charCodeAt(0).toString(16).padStart(2, '0')})`)
+      })
+    }
+  }
+  assert.deepEqual(hits, [])
+})
+
+test('the control-character gate catches what it exists for', () => {
+  assert.ok(CONTROL.test('/(enterprise|dpa)' + String.fromCharCode(8) + '|x/'))
+  assert.ok(!CONTROL.test('/(enterprise|dpa)\\b|x/\t'))
+})

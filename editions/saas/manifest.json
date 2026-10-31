@@ -1,5 +1,7 @@
 {
   "edition": "saas",
-  "env": {},
-  "notes": "Hosted, company tenants only."
+  "env": {
+    "WORK_PUBLIC_URL": "https://admireveda.com"
+  },
+  "notes": "admireveda.com: organizations only (company tenants, company SSO, enterprise billing). No personal sign-up and no personal plans are offered or sold (owner, 2026-10-30). Checklist: docs/deployment-editions.md, Deploy checklist."
 }

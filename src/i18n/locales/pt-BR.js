@@ -711,6 +711,21 @@ export default {
           before: 'Escrita depois, se for escrita.',
           now: 'Cada passo registrado. <em>Pronto para auditoria.</em>',
         },
+        {
+          t: 'Carga de trabalho',
+          before: 'Tarefas pendentes se acumulam nas mesmas poucas pessoas.',
+          now: 'O acúmulo é resolvido, <em>um passo guiado de cada vez</em>.',
+        },
+        {
+          t: 'Estresse',
+          before: 'Noites longas travado em trabalho que ninguém tem tempo de explicar.',
+          now: 'Ajuda na tela quando é preciso. <em>Menos estresse.</em>',
+        },
+        {
+          t: 'Manter os bons profissionais',
+          before: 'Pessoas sobrecarregadas se esgotam e vão embora.',
+          now: 'Menos carga e crescimento real no trabalho. <em>Menos motivos para sair.</em>',
+        },
       ],
       controlsLbl: 'Controles de empresa, incluídos',
       note: 'Somente leitura por padrão: ele guia sua equipe e nunca clica, digita ou executa nada por ela.',
@@ -4311,10 +4326,101 @@ export default {
         caption: 'Alertas, do mais recente ao mais antigo.',
       },
     },
+    trainer: {
+      title: 'Conceda a permissão de Instrutor a alguém',
+      lead: 'Os instrutores gravam e publicam os fluxos de trabalho que sua equipe segue. Dê a permissão às pessoas que mais conhecem cada tarefa.',
+      steps: {
+        open: {
+          t: 'Abra Equipe',
+          d: 'Encontre a pessoa na lista de pessoas.',
+        },
+        tick: {
+          t: 'Marque Instrutor',
+          d: 'Aparece abaixo da função para membros e gerentes de projeto, e é salvo na hora.',
+        },
+        studio: {
+          t: 'A pessoa já pode ensinar',
+          d: 'Estúdio de treinamento e Ocorrências de fluxo aparecem no menu dela.',
+        },
+      },
+      shots: {
+        grant: {
+          alt: 'A tabela Equipe: Maya Lin com a função Membro e a caixa Instrutor marcada logo abaixo.',
+          caption: 'Administradores da empresa podem ensinar sem a permissão. Mudar a pessoa para outra função remove a permissão.',
+          marks: {
+            role: '<b>Função.</b> A permissão funciona com a função Membro ou Gerente de projeto.',
+            trainer: '<b>Instrutor.</b> Marque para permitir que esta pessoa grave e publique fluxos de trabalho. Desmarque para retirar.',
+          },
+        },
+      },
+    },
+    developer: {
+      open: 'API e webhooks',
+      title: 'API e webhooks',
+      lead: 'Conecte seus próprios aplicativos ao WorkCoPilot: leia e inicie fluxos de trabalho, leia ocorrências de fluxo, consulte o Cérebro da empresa e saiba na hora quando algo acontece.',
+      steps: {
+        create: {
+          t: 'Crie uma chave',
+          d: 'Dê um nome, marque apenas os escopos de que o aplicativo precisa e defina uma validade.',
+        },
+        store: {
+          t: 'Guarde uma vez',
+          d: 'A chave completa aparece uma única vez. Coloque-a no seu gerenciador de segredos.',
+        },
+        rotate: {
+          t: 'Rotacione ou revogue',
+          d: 'Rotacione com uma breve sobreposição, ou revogue na hora se uma chave vazar.',
+        },
+        hooks: {
+          t: 'Adicione um webhook',
+          d: 'Escolha os eventos e depois confira cada entrega.',
+        },
+      },
+      shots: {
+        keys: {
+          alt: 'Chaves de API: o botão Criar chave e a lista de chaves, uma delas aberta com seus escopos, quem a criou, a lista de IPs permitidos e os botões Rotacionar e Revogar.',
+          caption: 'Depois da criação, só o prefixo e os últimos quatro caracteres da chave aparecem.',
+          marks: {
+            create: '<b>Criar chave.</b> Cria uma nova chave para um aplicativo.',
+            row: '<b>Cada chave em resumo.</b> Status, escopos, validade e quando foi usada pela última vez.',
+            acts: '<b>Rotacionar ou Revogar.</b> Rotacionar emite um novo segredo com as mesmas configurações. Revogar desativa a chave na hora.',
+          },
+        },
+        create: {
+          alt: 'O formulário de nova chave de API: o nome, os escopos que a chave pode usar, a validade e a lista opcional de IPs permitidos.',
+          caption: 'Uma chave por tarefa, para você revogar uma sem mexer nas outras. Criar ou rotacionar uma chave pode pedir o código do seu autenticador.',
+          marks: {
+            scopes: '<b>Escopos.</b> Marque só o que o aplicativo precisa.',
+            expiry: '<b>Expira em.</b> Uma chave que expira é uma a menos para lembrar de revogar.',
+            ip: '<b>Lista de IPs permitidos.</b> Opcional. Aceite chamadas apenas dos seus próprios endereços.',
+          },
+        },
+        secret: {
+          alt: 'O painel Copie sua chave agora com uma chave de exemplo, Copiar chave e Já guardei.',
+          caption: 'Feche o painel somente depois de guardar a chave em segurança.',
+          marks: {
+            copy: '<b>Copiar chave.</b> Esta é a única vez em que a chave completa aparece.',
+            done: '<b>Já guardei.</b> Fecha o painel. A chave completa não pode ser exibida de novo.',
+          },
+        },
+        hooks: {
+          alt: 'Webhooks: um endpoint aberto com seus eventos, seus controles e as entregas recentes com o status de cada uma.',
+          caption: 'Toda entrega é assinada, para que seu aplicativo confirme que ela veio do WorkCoPilot.',
+          marks: {
+            events: '<b>Eventos.</b> Um fluxo de trabalho foi publicado ou uma ocorrência de fluxo foi registrada.',
+            acts: '<b>Gerencie.</b> Ative ou desative, envie um teste, rotacione o segredo de assinatura ou exclua.',
+            deliveries: '<b>Entregas recentes.</b> Cada uma com seu resultado. Repita uma entrega que esgotou as tentativas.',
+          },
+        },
+      },
+    },
   },
   helpShared: {
     flowLabel: 'O fluxo principal',
     open: 'Abrir {label}',
+    callout: 'Destaque {n}',
+    calloutsLabel: 'O que cada número mostra',
+    pathLabel: 'Como fazer',
   },
   helpSuper: {
     flow: {
@@ -5393,6 +5499,7 @@ export default {
       freeAccessOn: 'Acesso gratuito ✓',
       freeAccessGrant: 'Conceder acesso gratuito',
       grantHours: 'Conceder horas',
+      more: 'Mais',
       grantHoursTitle: 'Conceder horas compradas',
       refundLast: 'Reembolsar último',
       refundLastTitle: 'Reembolsar o pagamento mais recente',
@@ -7056,6 +7163,8 @@ export default {
       support: 'Suporte',
       team: 'Equipe',
       exec: 'Painel executivo',
+      teach: 'Estúdio de treinamento',
+      teachTip: 'Grave e publique os fluxos de trabalho que sua equipe segue',
       admin: 'Console de administração',
       queue: 'Minha fila',
       queueTip: 'Tarefas atribuídas a você por um gerente de projeto',
@@ -8789,33 +8898,207 @@ export default {
         ],
       },
     },
+    workflows: {
+      title: 'Fluxos de trabalho da empresa',
+      lead: 'Faça uma tarefa do jeito que sua equipe combinou, com orientação na sua própria tela, um passo de cada vez. Seus instrutores mantêm cada fluxo de trabalho atualizado, então você sempre segue a versão mais recente.',
+      path: [
+        'No seu painel, procure em <b>Fluxos de trabalho da empresa</b>. Se a lista for longa, pesquise ou escolha uma categoria.',
+        'Abra uma linha para ver onde o fluxo começa e o que deixar à mão.',
+        'Pressione <b>Iniciar</b>, compartilhe sua tela e siga cada passo.',
+      ],
+      list: {
+        h: 'Encontre o fluxo de trabalho de que você precisa',
+        alt: 'A seção Fluxos de trabalho da empresa do painel: uma caixa de busca, um filtro de categoria, linhas de fluxos com produto, categoria, passos e tempo, e uma linha aberta mostrando onde começa, o que deixar à mão, quem mantém o fluxo e o botão Iniciar.',
+        caption: 'Todos os fluxos de trabalho que seus instrutores publicaram, prontos para iniciar.',
+        marks: {
+          search: '<b>Busque e filtre.</b> Encontre um fluxo de trabalho pelo nome ou limite a lista a uma categoria.',
+          details: '<b>Saiba antes de começar.</b> Onde começa, o que deixar à mão e quem mantém o fluxo.',
+          run: '<b>Iniciar.</b> Começa uma tarefa guiada a partir deste fluxo de trabalho, com todos os passos já planejados.',
+        },
+      },
+      guide: {
+        h: 'Siga cada passo sabendo como a tela deve ficar',
+        alt: 'A visão de orientação executando o fluxo Emitir reembolso a um cliente: o plano à esquerda, o passo atual com sua verificação de conclusão, a miniatura Como a tela deve ficar, a etiqueta Fluxo de trabalho da empresa e o botão Marcar como concluído.',
+        caption: 'Ao iniciar um fluxo de trabalho, você segue os passos que seu instrutor gravou, na mesma ordem.',
+        marks: {
+          plan: '<b>O plano completo.</b> Todos os passos do fluxo de trabalho e onde você está agora.',
+          shot: '<b>Como a tela deve ficar.</b> A captura de tela que seu instrutor fez deste passo, para você conferir se está no lugar certo.',
+          source: '<b>Fluxo de trabalho da empresa.</b> O fluxo e a versão que você está seguindo.',
+          done: '<b>Marcar como concluído.</b> Avance quando o passo terminar, ou pressione Verificar na minha tela para conferir antes.',
+        },
+      },
+      larger: {
+        h: 'Compare sua tela com a do instrutor',
+        alt: 'A captura de tela do passo aberta em tamanho real dentro do cartão do passo.',
+        caption: 'Pressione Ampliar em qualquer passo que tenha captura de tela.',
+        marks: {
+          full: '<b>A captura de tela completa.</b> Compare com a sua tela antes de agir.',
+        },
+      },
+    },
+    teach: {
+      title: 'Estúdio de treinamento',
+      lead: 'Mostre uma tarefa uma vez e todos na sua empresa poderão segui-la na própria tela. Grave ou escreva os passos, confira, publique e mantenha tudo atualizado conforme seus aplicativos mudam.',
+      path: [
+        'Pressione <b>Novo fluxo de trabalho</b> e preencha os quatro itens essenciais.',
+        'Adicione os passos: grave uma demonstração, importe uma gravação ou escreva os passos.',
+        'Confira cada passo com a captura de tela e fique com as sugestões que você aprovar.',
+        'Pressione <b>Publicar</b>. Depois, use <b>Revisar</b> para atualizar ou <b>Desativar</b> para deixar de oferecê-lo.',
+      ],
+      list: {
+        h: 'Todos os seus fluxos de trabalho em uma lista',
+        alt: 'O Estúdio de treinamento: o botão Novo fluxo de trabalho, Ocorrências de fluxo, os fluxos de trabalho com versão e status, e um fluxo publicado aberto com seus detalhes, seus passos e as ações Revisar, Desativar e Excluir.',
+        caption: 'Abra qualquer linha para ver os detalhes e os passos e agir sobre ela.',
+        marks: {
+          newWorkflow: '<b>Novo fluxo de trabalho.</b> Abre o assistente guiado.',
+          issues: '<b>Ocorrências de fluxo.</b> Momentos em que uma execução não correspondeu à tela. O número conta as novas.',
+          states: '<b>Rascunho, Publicado ou Desativado.</b> Só um fluxo de trabalho publicado chega à sua equipe.',
+          actions: '<b>Revisar, Desativar, Excluir.</b> Revisar cria uma nova versão em rascunho. A versão em uso continua funcionando até você publicar a nova.',
+        },
+      },
+      wizard: {
+        h: 'Cinco etapas curtas, o essencial primeiro',
+        alt: 'O assistente de novo fluxo de trabalho em Básico: as cinco etapas no topo, a linha que confirma o que você está ensinando, os campos obrigatórios e os botões Salvar rascunho e Publicar.',
+        caption: 'Salve um rascunho a qualquer momento e volte a ele depois.',
+        marks: {
+          stepper: '<b>Cinco etapas.</b> Básico, Detalhes, Escopo e privacidade, Passos e Revisão. Volte a qualquer uma delas.',
+          reflect: '<b>Uma conferência rápida.</b> Confirma o produto e a tarefa que você está ensinando.',
+          required: '<b>Quatro itens essenciais.</b> Produto, título, responsável e ponto de partida. Todo o resto é opcional.',
+          footer: '<b>Salvar rascunho ou Publicar.</b> Publicar fica disponível quando os itens essenciais, pelo menos um passo e a nota de escopo estiverem prontos.',
+        },
+      },
+      scope: {
+        h: 'Sem surpresas sobre quem vê',
+        alt: 'A etapa Escopo e privacidade: com quem o fluxo de trabalho é compartilhado, o que ele armazena, a caixa de confirmação e a opção de mascaramento.',
+        caption: 'A publicação só fica liberada depois que você confirma a nota de escopo.',
+        marks: {
+          note: '<b>Quem vê.</b> Todos na sua empresa, assim que for publicado.',
+          ack: '<b>Confirme uma vez.</b> Marque esta opção antes de publicar.',
+          mask: '<b>Mascarar texto sensível.</b> Feito no seu dispositivo, antes que qualquer captura de tela gravada seja salva. Sempre ativo enquanto a proteção de dados da sua empresa estiver ativa.',
+        },
+      },
+      record: {
+        h: 'Grave uma demonstração ao vivo',
+        alt: 'A configuração Gravar uma demonstração: narrar com o microfone e o idioma da narração, captar o áudio da chamada com a caixa de consentimento, a nota de mascaramento e o botão Compartilhar tela e iniciar.',
+        caption: 'O WorkCoPilot vê sua tela, não seus cliques. Pressione Marcar passo sempre que um novo passo deve começar.',
+        marks: {
+          narrate: '<b>Narre.</b> O que você fala vira o texto de cada passo. Nenhum áudio é guardado.',
+          call: '<b>Áudio da chamada.</b> Para uma reunião que você está gravando. O início fica bloqueado até você confirmar que todos na chamada estão cientes.',
+          mask: '<b>Mascarado antes.</b> O texto sensível é mascarado antes que qualquer captura de tela seja salva.',
+          start: '<b>Compartilhar tela e iniciar.</b> Compartilhe apenas a janela do aplicativo que você está ensinando.',
+        },
+      },
+      live: {
+        h: 'Enquanto você grava',
+        alt: 'A barra de gravação ao vivo: o selo Gravando e o cronômetro, as telas e quebras de passo até agora, Marcar passo, Pausar, Parar e revisar e Descartar.',
+        caption: 'Nada é salvo até você parar. Descartar joga a gravação fora.',
+        marks: {
+          time: '<b>Tempo e progresso.</b> Há quanto tempo você está gravando e quantas telas e quebras de passo a gravação tem.',
+          mark: '<b>Marcar passo.</b> Começa um novo passo exatamente aqui.',
+          stop: '<b>Parar e revisar.</b> Seus passos vão para o editor, prontos para conferir.',
+        },
+      },
+      import: {
+        h: 'Ou importe uma gravação que você já tem',
+        alt: 'Importar uma gravação com um vídeo escolhido: o nome e a duração do arquivo, o idioma falado e o botão Criar passos com este vídeo.',
+        caption: 'Serve um vídeo do Teams ou do Zoom. O vídeo é lido no seu dispositivo e não é enviado: só saem dele as capturas de tela usadas nos seus passos e trechos curtos de fala.',
+        marks: {
+          file: '<b>Seu vídeo.</b> Nome e duração, lidos neste dispositivo.',
+          lang: '<b>Idioma falado.</b> Para que o que é dito vire texto dos passos no idioma certo.',
+          start: '<b>Criar passos com este vídeo.</b> Cria um rascunho de passo sempre que a tela para em algo novo.',
+        },
+      },
+      review: {
+        h: 'Confira cada passo com a captura de tela',
+        alt: 'O editor de passos de um rascunho gravado: o cartão Confira cada passo com a captura de tela, um passo aberto com sua captura de tela e uma sugestão marcada como Provavelmente certo, com Analisar de novo e Usar sugestão, e outro passo marcado como Sugestão.',
+        caption: 'As sugestões ficam ao lado do seu próprio texto. Seus passos só mudam quando você escolhe Usar sugestão.',
+        marks: {
+          read: '<b>Analisar passos.</b> Analisa cada passo que tem captura de tela, um de cada vez, enquanto você continua editando.',
+          shot: '<b>A captura de tela do passo.</b> O que um colega deve ver neste passo.',
+          band: '<b>Quão claro pareceu.</b> Parece claro, Provavelmente certo ou Incerto, confira.',
+          use: '<b>Usar sugestão ou Analisar de novo.</b> Você decide, um passo de cada vez.',
+          mark: '<b>Sugestão pendente.</b> Aparece em cada passo que tem uma sugestão para conferir.',
+        },
+      },
+    },
     issues: {
       title: 'Ocorrências de fluxo de trabalho',
-      lead: 'Ocorrências de fluxo de trabalho reúne os momentos em que um fluxo de trabalho publicado não correspondeu ao que um colega viu na tela: a tela mudou, apareceu um erro, a pessoa não conseguiu continuar, precisou de um passo que o fluxo não tem ou um passo foi pulado. Cada ocorrência é sobre o fluxo de trabalho, não sobre o trabalho de ninguém.',
-      shot: {
-        alt: 'Ocorrências de fluxo de trabalho: os chips de resumo, o filtro Ativas, a lista de novidades desde sua última visita e uma ocorrência aberta com o passo sugerido e a tela que o guia viu.',
-        caption: 'Ocorrências de fluxo de trabalho. Repetições no mesmo passo e do mesmo tipo se somam a uma única ocorrência em vez de criar uma nova.',
-      },
-      howTo: 'Como tratar as ocorrências de fluxo de trabalho',
-      steps: [
-        'Abra <b>Ocorrências de fluxo</b> na seção Gestão do menu ou pelo Estúdio de treinamento. O número ao lado conta as ocorrências novas desde sua última visita.',
-        'Os chips no topo contam as ocorrências abertas e assumidas, e as ativas por tipo. Escolha <b>Ativas</b>, <b>Resolvidas</b>, <b>Dispensadas</b> ou <b>Todas</b> e selecione um fluxo de trabalho para filtrar a lista.',
-        'Clique em uma linha para ver o que o guia percebeu, a tela que ele viu e quando aconteceu.',
-        '<b>Assumir</b> uma ocorrência avisa a equipe que alguém está cuidando dela. Depois de atualizar o fluxo de trabalho, clique em <b>Resolver</b>. Se nada precisar mudar, clique em <b>Dispensar</b> e as repetições deixam de ser notificadas. Adicione uma observação para explicar o motivo.',
+      lead: 'Veja cada momento em que um fluxo de trabalho publicado não correspondeu à tela de um colega. Corrija o fluxo uma vez e todos que o usam recebem a correção. Cada ocorrência é sobre o fluxo de trabalho, nunca sobre o trabalho de alguém.',
+      path: [
+        'Abra <b>Ocorrências de fluxo</b> pelo menu ou pelo Estúdio de treinamento. O número conta as ocorrências novas.',
+        'Filtre por status ou por fluxo de trabalho e abra uma ocorrência.',
+        'Clique em <b>Assumir</b>, atualize o fluxo de trabalho e depois clique em <b>Resolver</b>. Ou clique em <b>Dispensar</b> se nada precisar mudar.',
       ],
+      pathWatch: [
+        'Abra <b>Ocorrências de fluxo</b> pelo menu. O número conta as ocorrências novas.',
+        'Filtre por status ou por fluxo de trabalho e abra uma ocorrência para ver o que aconteceu.',
+        'Acompanhe até o fim: as pessoas que mantêm o fluxo de trabalho atualizado assumem a ocorrência, corrigem o fluxo e a resolvem.',
+      ],
+      badge: {
+        h: 'As novas ocorrências chegam até você',
+        alt: 'O menu com Ocorrências de fluxo e a contagem de ocorrências novas.',
+        caption: 'A contagem mostra as ocorrências novas desde sua última visita.',
+        marks: {
+          badge: '<b>Ocorrências de fluxo.</b> Abre a caixa de entrada. O número conta o que é novo.',
+        },
+      },
+      inbox: {
+        h: 'Veja o que aconteceu e aja',
+        alt: 'Ocorrências de fluxo: os chips de resumo, o filtro de status e uma ocorrência aberta com o que o guia percebeu, a tela que ele viu, o passo sugerido, quem encontrou o problema e as ações.',
+        caption: 'Repetições no mesmo passo e do mesmo tipo se somam a uma única ocorrência, então a lista fica curta.',
+        marks: {
+          chips: '<b>Em resumo.</b> Ocorrências abertas e assumidas, e as ativas por tipo.',
+          filters: '<b>Filtrar.</b> Ativas, Resolvidas, Dispensadas ou Todas, e um fluxo de trabalho por vez.',
+          shot: '<b>A tela que o guia viu.</b> Amplie para ver exatamente o que mudou.',
+          suggest: '<b>Passo sugerido.</b> O passo de que um colega precisou e que o fluxo de trabalho ainda não tem.',
+          actions: '<b>Aja.</b> Use Adicionar este passo ao rascunho, Assumir, Resolver ou Dispensar, com uma observação para explicar o motivo.',
+          actionsPlain: '<b>Aja.</b> Use Assumir, Resolver ou Dispensar, com uma observação para explicar o motivo.',
+        },
+      },
       adopt: {
         h: 'Adicionar um passo que falta ao fluxo de trabalho',
-        steps: [
-          'Quando um colega precisou de um passo que o fluxo de trabalho não tem, a ocorrência mostra o passo sugerido.',
-          'O autor do fluxo de trabalho ou um administrador da empresa clica em <b>Adicionar este passo ao rascunho</b> e confirma. O fluxo de trabalho em uso continua funcionando como está.',
-          'Abra o rascunho no Estúdio de treinamento, confira o novo passo e publique quando estiver tudo certo.',
-        ],
-      },
-      shotAdopt: {
         alt: 'A confirmação para adicionar o passo sugerido a um rascunho do fluxo de trabalho.',
         caption: 'Nada muda para sua equipe até alguém publicar o rascunho.',
       },
+      exec: {
+        h: 'No painel executivo',
+        alt: 'O cartão Ocorrências de fluxo no painel executivo: ocorrências ativas contadas por tipo e o botão Ver ocorrências.',
+        caption: 'Veja onde os fluxos de trabalho precisam de atenção sem abrir cada ocorrência.',
+        marks: {
+          kinds: '<b>Ocorrências ativas por tipo.</b> Tela mudou, Erro na tela, Não conseguiu continuar, Passo fora do fluxo, Passo pulado.',
+          review: '<b>Ver ocorrências.</b> Abre a caixa de entrada completa.',
+        },
+      },
       watch: 'GRC e executivos acompanham todas as ocorrências em modo somente leitura. Os executivos também veem as ocorrências ativas por tipo no painel executivo.',
+    },
+    exec: {
+      title: 'Painel executivo',
+      lead: 'Veja em que pé está cada projeto e quem está fazendo o trabalho avançar, sem pedir relatório de status a ninguém.',
+      path: [
+        'Abra o <b>Painel executivo</b> no fim do menu.',
+        'Escolha 7, 30 ou 90 dias e veja as visões de projetos e de pessoas.',
+        'Exporte um PDF, uma imagem ou um CSV quando precisar compartilhar.',
+      ],
+      drill: {
+        h: 'Projetos e pessoas em resumo',
+        alt: 'Os detalhamentos do painel executivo: blocos de status dos projetos, os maiores projetos com gerente, tarefas, pessoas e uma barra de conclusão, e os destaques por tarefas concluídas e por projetos.',
+        caption: 'Somente leitura, e abrange toda a sua empresa.',
+        marks: {
+          status: '<b>Status dos projetos.</b> Quantos projetos estão em andamento, concluídos ou em espera.',
+          table: '<b>Maiores projetos.</b> Gerente, tarefas, pessoas e quanto de cada um já foi concluído.',
+          people: '<b>Destaques, de duas formas.</b> Por tarefas guiadas concluídas e pelos projetos em que a pessoa trabalha ou que gerencia.',
+        },
+      },
+      brain: {
+        h: 'Baixe o Cérebro da empresa (somente executivos)',
+        alt: 'O painel Cérebro da empresa: a nota sobre criptografia, a mensagem de que sua frase-senha de exportação está definida com Ver frase-senha e Substituir frase-senha, e Baixar o Cérebro da empresa.',
+        caption: 'No serviço hospedado, ver ou substituir a frase-senha pede o código do seu autenticador.',
+        marks: {
+          note: '<b>Criptografado com sua frase-senha.</b> Sem ela o arquivo não pode ser aberto, então guarde-a em segurança.',
+          key: '<b>Veja ou substitua.</b> Defina uma vez e depois veja ou altere sempre que precisar.',
+          download: '<b>Baixar o Cérebro da empresa.</b> Um único arquivo .wcpx criptografado com a base de conhecimento da sua empresa.',
+        },
+      },
     },
     admin: {
       title: 'Fluxos e funções',
@@ -9363,6 +9646,57 @@ export default {
       privacy: 'Política de Privacidade',
       terms: 'Termos de Serviço',
       security: 'Segurança',
+    },
+  },
+  edition: {
+    signupClosed: {
+      metaTitle: 'WorkCoPilot é para organizações - AdmireVeda',
+      h1: 'WorkCoPilot é para organizações',
+      p: 'O cadastro pessoal não está disponível aqui. Para levar o WorkCoPilot à sua empresa, fale conosco e nós configuramos a sua equipe.',
+      member: 'Já faz parte de uma empresa que usa o WorkCoPilot? Entre com a sua conta da empresa ou peça acesso ao administrador da sua empresa.',
+      talk: 'Fale conosco',
+      signIn: 'Entrar',
+    },
+    orgPlans: {
+      popular: 'Mais escolhido',
+      cta: 'Fale conosco',
+      note: 'Todo plano inclui proteção de dados em cada dispositivo, política da empresa e logs de auditoria. Os preços são cotados para a sua empresa.',
+      hosted: {
+        name: 'Hospedado para a sua empresa',
+        price: 'Preço por pessoa, conforme o tamanho da empresa',
+        lead: 'Sua empresa no nosso serviço hospedado, pronta no dia em que você assina.',
+        p1: 'Console da empresa, login único e política da empresa que você ativa e bloqueia',
+        p2: 'Um pool de horas guiadas que o administrador da sua empresa distribui',
+        p3: 'Company Brain e fluxos de trabalho ensinados, privados para a sua empresa',
+      },
+      managed: {
+        name: 'Nuvem privada gerenciada',
+        price: 'Cotação sob consulta',
+        lead: 'Uma instalação dedicada que operamos para você na sua própria nuvem.',
+        p1: 'Seus dados ficam no seu próprio banco de dados na nuvem',
+        p2: 'Nós operamos e atualizamos tudo para você',
+        p3: 'Nossa IA, cobrada pelo uso que você faz',
+      },
+      onprem: {
+        name: 'On-premises',
+        price: 'Disponível sob consulta',
+        lead: 'Instalado nos seus próprios servidores, sob o seu controle.',
+        p1: 'Roda com as suas próprias chaves de provedor de IA',
+        p2: 'Ativado por uma licença na instalação',
+        p3: 'Seu próprio banco de dados e sua própria rede',
+      },
+    },
+    validate: {
+      talk: 'Fale conosco sobre a sua equipe',
+      plans: 'Ver planos para organizações',
+    },
+    app: {
+      noPlanTitle: 'Esta conta ainda não tem um plano',
+      noPlanBody: 'Planos pessoais não são vendidos aqui. Seu acesso vem da sua empresa: peça ao administrador da sua empresa para adicionar você.',
+      noPlanTalk: 'Fale conosco',
+    },
+    login: {
+      orgOnly: 'Novo no WorkCoPilot? Ele é para organizações. <a>Fale conosco</a>.',
     },
   },
   enterprisePage: {
@@ -11760,7 +12094,6 @@ export default {
     stepOf: 'Passo {n} de {total}',
     stepN: 'Passo {n}',
     confirmed: 'Passo {n} confirmado',
-    markDone: 'Marcar como concluído',
     yourPlan: 'Seu plano',
     collapse: 'Recolher',
     shot: {

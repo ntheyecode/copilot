@@ -129,5 +129,74 @@ export default {
         caption: 'Alerts, newest first.',
       },
     },
+    // Newer areas (HelpCompanyNewAreas.jsx): annotated screenshots, each shot has
+    // alt, caption and marks.<key> (one rich line per numbered callout).
+    trainer: {
+      title: 'Give someone the Trainer grant',
+      lead: 'Trainers record and publish the workflows your team follows. Give the grant to the people who know a task best.',
+      steps: {
+        open: { t: 'Open Team', d: 'Find the person in the people list.' },
+        tick: { t: 'Tick Trainer', d: 'It shows under the role for members and project managers, and saves right away.' },
+        studio: { t: 'They can teach', d: 'Teach studio and Workflow issues appear in their menu.' },
+      },
+      shots: {
+        grant: {
+          alt: 'The Team table: Maya Lin with the Member role and the Trainer checkbox ticked under it.',
+          caption: 'Company admins can teach without the grant. Changing a person to another role removes it.',
+          marks: {
+            role: '<b>Role.</b> The grant works with the Member or Project manager role.',
+            trainer: '<b>Trainer.</b> Tick to let this person record and publish workflows. Untick to take it away.',
+          },
+        },
+      },
+    },
+    developer: {
+      open: 'API & webhooks',
+      title: 'API and webhooks',
+      lead: 'Connect your own apps to WorkCoPilot: read and run workflows, read workflow issues, query the Company Brain, and hear the moment something happens.',
+      steps: {
+        create: { t: 'Create a key', d: 'Name it, tick only the scopes the app needs, and set an expiry.' },
+        store: { t: 'Store it once', d: 'The full key shows one time. Put it in your secret manager.' },
+        rotate: { t: 'Rotate or revoke', d: 'Rotate with a short overlap, or revoke at once if a key leaks.' },
+        hooks: { t: 'Add a webhook', d: 'Pick the events, then check each delivery.' },
+      },
+      shots: {
+        keys: {
+          alt: 'API keys: the Create key button and the list of keys, one opened with its scopes, creator, IP allowlist and the Rotate and Revoke buttons.',
+          caption: 'After creation, only the prefix and the last four characters of a key are shown.',
+          marks: {
+            create: '<b>Create key.</b> Starts a new key for one app.',
+            row: '<b>Each key at a glance.</b> Status, scopes, expiry and when it was last used.',
+            acts: '<b>Rotate or Revoke.</b> Rotate issues a new secret with the same settings. Revoke stops the key right away.',
+          },
+        },
+        create: {
+          alt: 'The new API key form: the name, the scopes the key may use, the expiry and the optional IP allowlist.',
+          caption: 'One key per job, so you can revoke one without touching the rest. Creating or rotating a key may ask for your authenticator code.',
+          marks: {
+            scopes: '<b>Scopes.</b> Tick only what the app needs.',
+            expiry: '<b>Expires in.</b> A key that expires is one less to remember to revoke.',
+            ip: '<b>IP allowlist.</b> Optional. Accept calls only from your own addresses.',
+          },
+        },
+        secret: {
+          alt: 'The Copy your key now panel with a sample key, Copy key and I have stored it.',
+          caption: 'Close it only after the key is stored safely.',
+          marks: {
+            copy: '<b>Copy key.</b> This is the only time the full key is shown.',
+            done: '<b>I have stored it.</b> Closes the panel. The full key cannot be shown again.',
+          },
+        },
+        hooks: {
+          alt: 'Webhooks: an endpoint opened with its events, its controls and its recent deliveries with their status.',
+          caption: 'Every delivery is signed, so your app can check it came from WorkCoPilot.',
+          marks: {
+            events: '<b>Events.</b> A workflow was published, or a workflow issue was reported.',
+            acts: '<b>Manage it.</b> Turn it on or off, send a test, rotate the signing secret, or delete it.',
+            deliveries: '<b>Recent deliveries.</b> Each one with its result. Retry one that gave up.',
+          },
+        },
+      },
+    },
   },
 }

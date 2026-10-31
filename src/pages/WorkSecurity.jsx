@@ -26,6 +26,7 @@ import SiteHeader from '../components/SiteHeader.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
 import RedactionSweep from '../components/RedactionSweep.jsx'   // "watch it protect": the on-device sweep over the after screen
 import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
+import { useEditionView } from '../edition/useCaps.js'   // edition: the enterprise link + company data residency only where companies exist
 import { useT } from '../i18n/index.jsx'           // every visible string comes from the catalog (securityPage.*, security.*, residency.*)
 import { COMPLIANCE_FRAMEWORKS } from '../../server/compliance_frameworks.js'   // canonical registry (pure data), single source for the roll-call + presets
 
@@ -101,6 +102,7 @@ function groupOf(category) {
 // H3), the two mock screens are labeled images, decorative icons are hidden,
 // and the PDF link says it opens a new tab.
 export default function WorkSecurity() {
+  const ed = useEditionView()
   const nav = useNavigate()
   const t = useT()
   useSeo({
@@ -125,7 +127,7 @@ export default function WorkSecurity() {
         <p>{t('securityPage.hero.p')}</p>
         <div className="wsx-acts">
           <a className="wsx-btn" href="/api/work/security-paper.pdf" target="_blank" rel="noopener noreferrer"><FileText size={16} aria-hidden="true" /> {t('securityPage.hero.paper')}<span className="wsx-sr">{t('securityPage.pdfNewTab')}</span></a>
-          <a className="wsx-btn alt" href="/workcopilot/enterprise">{t('securityPage.hero.enterprise')} <ArrowRight size={15} aria-hidden="true" /></a>
+          {ed.companies && <a className="wsx-btn alt" href="/workcopilot/enterprise">{t('securityPage.hero.enterprise')} <ArrowRight size={15} aria-hidden="true" /></a>}
         </div>
       </section>
 
@@ -184,7 +186,7 @@ export default function WorkSecurity() {
         </div>
         <ul className="wsx-facts" aria-label={t('securityPage.facts.aria')}>
           <li><ShieldCheck size={14} aria-hidden="true" /><span>{t.rich('securityPage.facts.retention')}</span></li>
-          <li><Globe size={14} aria-hidden="true" /><span><b>{t('residency.title')}.</b> {t('residency.sec')}</span></li>
+          {ed.companies && <li><Globe size={14} aria-hidden="true" /><span><b>{t('residency.title')}.</b> {t('residency.sec')}</span></li>}
         </ul>
       </section>
 

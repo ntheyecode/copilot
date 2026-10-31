@@ -28,6 +28,8 @@ import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium
 import FieldVignettes from '../components/FieldVignettes.jsx'   // real-screen photographs per field, each opening its guided session below
 import GuideShowcase from '../components/GuideShowcase.jsx'     // pick a field, watch the guide console on that work
 import useSeo from '../useSeo.js'
+import { useEditionView } from '../edition/useCaps.js'   // edition: where "start" leads (sign-up, or the sales conversation)
+import { startPath } from '../edition/surfaces.js'
 import { useT } from '../i18n/index.jsx'           // every visible string reads from the catalog (fieldsPage.* + seo.fields.*)
 import enFields from '../i18n/locales/en/fieldsPage.js'   // the ENGLISH partial: roster ids, counts and anchors derive from it
 import SiteHeader from '../components/SiteHeader.jsx'
@@ -63,6 +65,7 @@ export const FIELD_TOTAL = FIELD_FAMILIES.reduce((n, f) => n + f.items.length, 0
 const TEX = ['0% 0%', '100% 0%', '50% 100%', '0% 100%', '100% 100%', '50% 0%', '0% 50%', '100% 50%', '25% 25%', '75% 75%']
 
 export default function WorkFields() {
+  const ed = useEditionView()
   const nav = useNavigate()
   const t = useT()
   useSeo({
@@ -90,7 +93,7 @@ export default function WorkFields() {
         <p>{t('fieldsPage.lead')}</p>
         <p className="wfl-note">{t('fieldsPage.note')}</p>
         <div className="wfl-cta-row">
-          <button className="wfl-btn" onClick={() => nav('/workcopilot')}>{t('fieldsPage.startBtn')} <ArrowRight size={15} aria-hidden /></button>
+          <button className="wfl-btn" onClick={() => nav(startPath(ed))}>{t('fieldsPage.startBtn')} <ArrowRight size={15} aria-hidden /></button>
           <a className="wfl-btn alt" href="/workcopilot/use-cases">{t('fieldsPage.useCasesBtn')}</a>
         </div>
       </section>
@@ -145,7 +148,7 @@ export default function WorkFields() {
           <h2>{t('fieldsPage.ctaH2')}</h2>
           <p>{t('fieldsPage.ctaP')}</p>
           <div className="wfl-cta-row">
-            <button className="wfl-btn" onClick={() => nav('/workcopilot')}>{t('fieldsPage.startBtn')} <ArrowRight size={15} aria-hidden /></button>
+            <button className="wfl-btn" onClick={() => nav(startPath(ed))}>{t('fieldsPage.startBtn')} <ArrowRight size={15} aria-hidden /></button>
             <a className="wfl-btn alt" href="/workcopilot/pricing">{t('fieldsPage.pricingBtn')}</a>
           </div>
         </div>

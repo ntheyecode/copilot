@@ -28,6 +28,7 @@ export const CAPABILITIES = Object.freeze({
   saas_companies: 'Many company tenants share this server; the platform superadmin creates and manages companies.',
   single_company: 'This server hosts exactly one company tenant (the customer who runs or owns the installation).',
   paid_only: 'There is no free tier: every individual account needs an active paid plan.',
+  individual_plans: 'Individuals buy their own subscription plan (Lite to Premium) through self-service checkout, and the public pricing shows those plans.',
   stripe_billing: 'Plans, checkout, invoices and refunds run through Stripe.',
   offline_licensing: 'Entitlements come from a signed license on the installation instead of Stripe.',
   onprem_setup: 'A first-run setup configures persistence, the first admin, AI keys and licensing.',
@@ -47,9 +48,10 @@ export const EDITIONS = Object.freeze({
   all: {
     label: 'All-inclusive',
     summary: 'Solo users and SaaS company tenants on our hosted service.',
-    capabilities: ['solo_signup', 'saas_companies', 'stripe_billing', 'platform_ai', 'brain_export', 'brain_query', 'public_site'],
+    capabilities: ['solo_signup', 'saas_companies', 'individual_plans', 'stripe_billing', 'platform_ai', 'brain_export', 'brain_query', 'public_site'],
   },
   // 2. Hosted, companies only: accounts come from company admins and SSO.
+  // No individual plans are sold (admireveda.com, owner 2026-10-30).
   saas: {
     label: 'SaaS companies',
     summary: 'Company tenants on our hosted service; no individual sign-up.',
@@ -59,7 +61,7 @@ export const EDITIONS = Object.freeze({
   paid: {
     label: 'Paying users',
     summary: 'Individual accounts on a paid plan; no free tier and no company tenants.',
-    capabilities: ['solo_signup', 'paid_only', 'stripe_billing', 'platform_ai', 'public_site'],
+    capabilities: ['solo_signup', 'paid_only', 'individual_plans', 'stripe_billing', 'platform_ai', 'public_site'],
   },
   // 4. The customer runs it on their own servers. One company, their own AI
   // keys, offline license, any of the three persistence choices.
@@ -126,4 +128,30 @@ export function makeCaps(editionId) {
     },
     list() { return Object.keys(CAPABILITIES).filter((c) => on.has(c)) },
   })
+}
+
+// ---- derived questions ------------------------------------------------------
+// Answers several call sites share, computed from capabilities only (never from
+// the edition id), so the server and the SPA (src/edition/) read the same rule.
+// `c` is anything with has(cap): makeCaps() here, or the client's capsFromList().
+
+// Company tenants exist on this installation (many hosted tenants, or the one
+// on-prem / managed company). Off means individuals only: every company surface
+// (company console, team invites, PM and executive dashboards, teach studio,
+// Company Brain, API keys, webhooks, launch links) is hidden and refused.
+export function companyTenancy(c) {
+  return c.has('saas_companies') || c.has('single_company')
+}
+
+// Who the public copy speaks to. 'organizations' when no individual can sign up
+// (companies only); 'individuals' when there are no company tenants; null when
+// both are served (the `all` edition: the base catalog, unchanged). The SPA
+// merges the matching i18n overlay (src/i18n/overlays/<audience>/) over the
+// base locale; null merges nothing.
+export const COPY_AUDIENCES = Object.freeze(['organizations', 'individuals'])
+export function copyAudience(c) {
+  const companies = companyTenancy(c)
+  if (companies && !c.has('solo_signup')) return 'organizations'
+  if (!companies && c.has('solo_signup')) return 'individuals'
+  return null
 }

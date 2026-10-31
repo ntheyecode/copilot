@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { api } from '../api.js'
 import { useT } from '../i18n/index.jsx'
+import { useEditionView } from '../edition/useCaps.js'   // edition: plan changes only where personal plans are sold
 import {
   CreditCard, ExternalLink, FileText, AlertTriangle, Loader2, Check,
   ArrowUpRight, ArrowDownRight, CalendarClock, ShieldCheck, Ban, Info, Lock,
@@ -36,6 +37,10 @@ const cap = (s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) :
 
 export default function WorkBilling({ user, pricing, invoices, billingConfigured = true, onReload }) {
   const t = useT()
+  // Where personal plans are not sold, an existing subscriber keeps the
+  // status, invoices and the billing portal, but is not offered a plan change
+  // (the server refuses it: server/edition_route_gates.js).
+  const sellsPlans = useEditionView().individualPlans
   const statusLabel = (s) => (t.has(`billingWidget.status.${s}`) ? t(`billingWidget.status.${s}`) : cap(s))
   const invStatusLabel = (s) => (t.has(`billingWidget.invStatus.${s}`) ? t(`billingWidget.invStatus.${s}`) : cap(s))
   const cycleLower = (c) => (c === 'annual' ? t('billingWidget.cycle.annualLower') : t('billingWidget.cycle.monthlyLower'))
@@ -244,7 +249,7 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
       {/* Change plan: upgrade / downgrade + monthly<->annual. Only for an active
           or trialing subscription; past_due must fix payment first, and a
           canceled / never-started account picks a plan through checkout. */}
-      {canChange && (
+      {canChange && sellsPlans && (
         <div className="wb-change">
           <div className="wb-change-head">
             <h4>{t('billingWidget.change.title')}</h4>

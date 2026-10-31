@@ -42,10 +42,13 @@
 // in the detail-table rows (rowFields / data.rows), never in prose: a reader
 // scans a receipt, they do not read it.
 //
-// No dependencies. US English. No em-dashes anywhere (hyphens only). Never
-// throws: unknown types, missing fields and renderer errors all degrade to a
-// usable branded message rather than aborting a send.
+// No dependencies beyond the edition capabilities (server/edition.js: which
+// audience the default wording speaks to). US English. No em-dashes anywhere
+// (hyphens only). Never throws: unknown types, missing fields and renderer
+// errors all degrade to a usable branded message rather than aborting a send.
 // ---------------------------------------------------------------------------
+import { caps as editionCaps } from './edition.js'
+import { copyAudience } from './edition_registry.js'
 
 // ---------------------------------------------------------------------------
 // Brand constants. Change them here and every email follows.
@@ -1330,6 +1333,12 @@ The WorkCoPilot team`,
 Your purchase is complete and **already available in your account**. Keep this email for your records.
 ---
 Need an invoice with a company name or tax ID on it? Reply to this email with the details and we will send one.`,
+    audience: { individuals: { defaultBody:
+`Hi <First_Name>,
+
+Your purchase is complete and **already available in your account**. Keep this email for your records.
+---
+Need an invoice with your tax ID or billing details on it? Reply to this email with the details and we will send one.` } },
     defaultCtaLabel: 'Open WorkCoPilot',
     ctaUrlToken: 'appUrl',
     placeholders: [
@@ -1374,6 +1383,12 @@ Need an invoice with a company name or tax ID on it? Reply to this email with th
 We received your payment. **Your WorkCoPilot service continues without interruption.** The details are below for your records.
 ---
 Need an invoice with a company name or tax ID on it? Reply to this email with the details and we will send one.`,
+    audience: { individuals: { defaultBody:
+`Hi <First_Name>,
+
+We received your payment. **Your WorkCoPilot service continues without interruption.** The details are below for your records.
+---
+Need an invoice with your tax ID or billing details on it? Reply to this email with the details and we will send one.` } },
     defaultCtaLabel: 'View invoice',
     ctaUrlToken: 'invoiceUrl',
     placeholders: [
@@ -1526,6 +1541,14 @@ Your WorkCoPilot plan has been changed. **Here is what changed and when it takes
 Need an invoice with a company name or tax ID on it? Reply to this email with the details and we will send one.
 
 Questions about your plan? Just reply to this email.`,
+    audience: { individuals: { defaultBody:
+`Hi <First_Name>,
+
+Your WorkCoPilot plan has been changed. **Here is what changed and when it takes effect.**
+---
+Need an invoice with your tax ID or billing details on it? Reply to this email with the details and we will send one.
+
+Questions about your plan? Just reply to this email.` } },
     defaultCtaLabel: 'Manage subscription',
     ctaUrlToken: 'billingUrl',
     placeholders: [
@@ -1922,6 +1945,15 @@ Your WorkCoPilot account was **disabled by an administrator**. You have been sig
 > **Your sessions, documents and settings are kept.** Nothing is deleted.
 ---
 If you believe this was a mistake, contact your administrator or write to <Support_Email>. We will email you if the account is re-enabled.`,
+    // An individuals-only edition never mentions an administrator (defaultsFor).
+    audience: { individuals: { defaultBody:
+`Hi <First_Name>,
+
+Your WorkCoPilot account was **disabled**. You have been signed out everywhere and cannot sign in until it is re-enabled.
+
+> **Your sessions, documents and settings are kept.** Nothing is deleted.
+---
+If you believe this was a mistake, write to <Support_Email>. We will email you if the account is re-enabled.` } },
     defaultCtaLabel: null,
     ctaUrlToken: null,
     placeholders: [
@@ -1957,6 +1989,12 @@ If you believe this was a mistake, contact your administrator or write to <Suppo
 Your WorkCoPilot account was **re-enabled by an administrator**. You can sign in again, and everything you had is right where you left it.
 ---
 > If you did not expect this, write to <Support_Email> and we will look into it.`,
+    audience: { individuals: { defaultBody:
+`Hi <First_Name>,
+
+Your WorkCoPilot account was **re-enabled**. You can sign in again, and everything you had is right where you left it.
+---
+> If you did not expect this, write to <Support_Email> and we will look into it.` } },
     defaultCtaLabel: 'Sign in to WorkCoPilot',
     ctaUrlToken: 'appUrl',
     placeholders: [
@@ -2224,6 +2262,17 @@ for (const [type, def] of Object.entries(DEFS)) {
 export const EMAIL_DEFS = Object.freeze(DEFS)
 export const EMAIL_TYPES = Object.freeze(Object.keys(EMAIL_DEFS))
 
+// The default wording of one template for the edition's audience: a def may
+// carry `audience: { individuals: { defaultBody, ... } }` (an individuals-only
+// edition never mentions a company or an administrator). The ONE resolver, used
+// by renderEmail and by the superadmin template editor's "defaults". The
+// default edition (audience null) reads the base defaults, unchanged.
+export function defaultsFor(def, aud = copyAudience(editionCaps)) {
+  const a = (aud && def && def.audience && def.audience[aud]) || {}
+  const of = (k) => (a[k] !== undefined ? a[k] : def[k])
+  return { subject: of('defaultSubject'), preheader: of('defaultPreheader'), heading: of('defaultHeading'), body: of('defaultBody'), ctaLabel: of('defaultCtaLabel') }
+}
+
 // ---------------------------------------------------------------------------
 // Data enrichment: derived values every template can rely on. Does not
 // overwrite anything the caller supplied.
@@ -2291,13 +2340,14 @@ export function renderEmail(type, data = {}, overrides = {}) {
   const pick = (ov, dflt) => (ov != null && String(ov).trim() !== '' ? String(ov) : (dflt == null ? '' : String(dflt)))
 
   let subject, heading, bodyText, preheader, cta, rows, html, text
+  const dd = defaultsFor(def)
   try {
-    subject = tidyLine(substitute(pick(o.subject, def.defaultSubject), d).replace(/[\r\n]+/g, ' ')) || `A note from ${BRAND.product}`
-    heading = tidyLine(substitute(pick(o.heading, def.defaultHeading), d))
-    bodyText = substitute(pick(o.body, def.defaultBody), d)
-    preheader = clampPreheader(tidyLine(substitute(pick(o.preheader, def.defaultPreheader), d).replace(/[\r\n]+/g, ' ')))
+    subject = tidyLine(substitute(pick(o.subject, dd.subject), d).replace(/[\r\n]+/g, ' ')) || `A note from ${BRAND.product}`
+    heading = tidyLine(substitute(pick(o.heading, dd.heading), d))
+    bodyText = substitute(pick(o.body, dd.body), d)
+    preheader = clampPreheader(tidyLine(substitute(pick(o.preheader, dd.preheader), d).replace(/[\r\n]+/g, ' ')))
 
-    const ctaLabel = tidyLine(substitute(pick(o.ctaLabel, def.defaultCtaLabel), d))
+    const ctaLabel = tidyLine(substitute(pick(o.ctaLabel, dd.ctaLabel), d))
     const ctaUrl = def.ctaUrlToken ? safeUrl(d[def.ctaUrlToken]) : ''
     cta = (ctaLabel && ctaUrl) ? { label: ctaLabel, url: ctaUrl, color: def.ctaColor || C.cta } : null
 

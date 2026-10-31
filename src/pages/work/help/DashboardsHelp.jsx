@@ -12,8 +12,15 @@
 // (src/i18n/locales/en/dashboardsHelp.js); `k` is the entry's key there. Lists
 // are keyed arrays rendered through renderRich so inline <b> stays markup, not
 // HTML. Image paths stay here (they are assets, not copy).
-import { Inbox, Briefcase, Users, ShieldCheck, UserCog, LayoutDashboard, Play, FolderKanban, Compass, FileText, Signpost } from 'lucide-react'
+import { Inbox, Briefcase, Users, ShieldCheck, UserCog, LayoutDashboard, Play, FolderKanban, Compass, FileText } from 'lucide-react'
 import { useT, renderRich } from '../../../i18n/index.jsx'
+// The newer surfaces use annotated screenshots (numbered callouts over the real
+// screen, help/AnnotatedShot.jsx), one small module per surface.
+import { ANNOTATED_SHOT_CSS } from './annotatedShot.css.js'
+import { WORKFLOWS_HELP } from './entries/workflowsHelp.jsx'
+import { TEACH_HELP } from './entries/teachHelp.jsx'
+import { ISSUES_HELP } from './entries/issuesHelp.jsx'
+import { EXEC_HELP } from './entries/execHelp.jsx'
 
 // One screenshot with its caption (the figure recipe the guide already uses).
 function Shot({ src, alt, caption, width = 1280, height }) {
@@ -90,6 +97,7 @@ export const DASHBOARD_HELP = [
       <Steps t={t} k="dashboardsHelp.queue.steps" />
     </>),
   },
+  WORKFLOWS_HELP,
   {
     id: 'dash-pm', k: 'pm', icon: Briefcase, show: (v) => v.showPm,
     body: (v, t) => (<>
@@ -142,21 +150,9 @@ export const DASHBOARD_HELP = [
       <Steps t={t} k="dashboardsHelp.grc.log.steps" />
     </>),
   },
-  {
-    // Workflow issues inbox (Teach Wave 3 part C): trainers, PMs, Sr PMs, GRC,
-    // company admins and executives (roleViewOf .showIncidents).
-    id: 'dash-issues', k: 'issues', icon: Signpost, show: (v) => v.showIncidents,
-    body: (v, t) => (<>
-      <p>{t('dashboardsHelp.issues.lead')}</p>
-      <Shot src="/help/dashboards/workflow-issues.webp" height={1195} alt={t('dashboardsHelp.issues.shot.alt')} caption={t('dashboardsHelp.issues.shot.caption')} />
-      <h3 className="sub">{t('dashboardsHelp.issues.howTo')}</h3>
-      <Steps t={t} k="dashboardsHelp.issues.steps" />
-      <h3 className="sub">{t('dashboardsHelp.issues.adopt.h')}</h3>
-      <Steps t={t} k="dashboardsHelp.issues.adopt.steps" />
-      <Shot src="/help/dashboards/workflow-issues-adopt.webp" width={740} height={314} alt={t('dashboardsHelp.issues.shotAdopt.alt')} caption={t('dashboardsHelp.issues.shotAdopt.caption')} />
-      <p>{t('dashboardsHelp.issues.watch')}</p>
-    </>),
-  },
+  TEACH_HELP,
+  ISSUES_HELP,
+  EXEC_HELP,
   {
     id: 'dash-admin', k: 'admin', icon: UserCog, show: (v) => v.isCompanyAdmin,
     body: (v, t) => (<>
@@ -181,6 +177,7 @@ export default function DashboardsHelp({ roleView }) {
   const t = useT()
   const v = roleView || {}
   return (<>
+    <style>{ANNOTATED_SHOT_CSS}</style>
     {dashboardHelpFor(v).map((s) => (
       <section key={s.id} id={'help-' + s.id}>
         <h2>{dashboardHelpLabel(t, s)}</h2>

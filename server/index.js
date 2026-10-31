@@ -26,7 +26,7 @@ import { verifyReport, attestReport, attestationText, REPORT_CONTACTS } from './
 import { formatWorkReportText } from './report_text.js'
 import { COMPLIANCE_FRAMEWORKS } from './compliance_frameworks.js'
 import { sendTemplate, sendTemplateAsync, sendAccountWelcomeAsync, sendPasswordReset } from './emails.js'
-import { EMAIL_DEFS, renderEmail } from './email_templates.js'
+import { EMAIL_DEFS, renderEmail, defaultsFor } from './email_templates.js'
 import { Writable } from 'node:stream'
 import { registerWorkAdminRoutes } from './work-admin.js'
 import { scheduleFrameSweep } from './workflow_frame_sweep.js'
@@ -90,7 +90,10 @@ import { isPublicHttpUrl } from './egress_guard.js'
 import { PUBLIC_BASE } from './public_url.js'
 // Deployment edition (server/edition_registry.js is the registry): routes ask
 // for a capability, never an edition name.
-import { publicEdition, soloSignupRefusal } from './edition.js'
+import { caps, publicEdition, soloSignupRefusal } from './edition.js'
+import { editionRouteGate } from './edition_route_gates.js'
+import { companyTenancy } from './edition_registry.js'
+import { checkSpaStamp } from './spa_stamp_check.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(__dirname, '..')
@@ -226,6 +229,12 @@ app.use(session({
   saveUninitialized: false,
   cookie: { httpOnly: true, sameSite: 'lax', secure: HOSTED, maxAge: 1000 * 60 * 60 * 8 }, // 8h
 }))
+
+// Edition route gates: personal-plan purchase routes need individual_plans,
+// company-only route families need company tenancy. ONE middleware ahead of
+// every route (server/edition_route_gates.js holds both lists); the default
+// edition passes everything through untouched.
+app.use(editionRouteGate())
 
 // ---- helpers --------------------------------------------------------------
 // Turn any thrown error into a user-safe response. SYSTEM errors (AI provider
@@ -406,7 +415,16 @@ function requireWorkSubscription(req, res, next) {
   // configured (so existing users are never locked out before Stripe is set up).
   // "Configured" is a usable secret key from the store (superadmin set it in the
   // console) OR the env var.
-  if (!billingConfigured(store)) return requireWorkTime(req, res, next)
+  // paid_only (no free tier): an unconfigured Stripe never means "free". The
+  // person sees an honest "not open yet" instead of free guiding, and the
+  // operator gets a log line naming the fix. Comp access still works.
+  if (!billingConfigured(store)) {
+    if (caps.has('paid_only') && !store.userCanUseService(req.workUser.id)) {
+      console.warn('[billing] paid_only: Stripe is not configured, so personal accounts cannot start guiding. Set the Stripe keys in Admin > Billing.')
+      return res.status(503).json({ error: 'Plans are not open on this service yet, so guiding cannot start. Please try again soon, or contact support.', billingNotConfigured: true })
+    }
+    return requireWorkTime(req, res, next)
+  }
   if (!store.userCanUseService(req.workUser.id)) {
     return res.status(402).json({ error: 'A subscription is needed to start guiding.', needsSubscription: true })
   }
@@ -3365,8 +3383,11 @@ app.post('/api/work/leads', wrap((req, res) => {
   const b = req.body || {}
   const email = String(b.email || '').trim()
   const country = String(b.country || '').trim()
-  if (!String(b.firstName || '').trim() || !String(b.lastName || '').trim() || !email || !String(b.company || '').trim() || !country) {
-    return res.status(400).json({ error: 'First name, last name, email, company and country are required.' })
+  // The company field is asked only where company accounts exist (an
+  // individuals-only edition never asks a visitor for a company).
+  const needsCompany = companyTenancy(caps)
+  if (!String(b.firstName || '').trim() || !String(b.lastName || '').trim() || !email || (needsCompany && !String(b.company || '').trim()) || !country) {
+    return res.status(400).json({ error: needsCompany ? 'First name, last name, email, company and country are required.' : 'First name, last name, email and country are required.' })
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return res.status(400).json({ error: 'Enter a valid email address.' })
   const ip = String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim()
@@ -3629,10 +3650,11 @@ app.get('/api/work/admin/email-templates', requireAuth, requireSuperAdmin, wrap(
   const templates = Object.keys(EMAIL_DEFS).map((type) => {
     const d = EMAIL_DEFS[type]
     const ov = overrides[type] || {}
+    const dd = defaultsFor(d)   // the edition audience's default wording (what a send uses when not overridden)
     return {
       type, label: d.label, category: d.category, description: d.description,
       placeholders: d.placeholders || [],
-      defaults: { subject: d.defaultSubject, heading: d.defaultHeading, body: d.defaultBody, ctaLabel: d.defaultCtaLabel || '' },
+      defaults: { subject: dd.subject, heading: dd.heading, body: dd.body, ctaLabel: dd.ctaLabel || '' },
       override: { subject: ov.subject, heading: ov.heading, body: ov.body, ctaLabel: ov.ctaLabel, updatedAt: ov.updatedAt || null },
       hasCta: !!d.ctaUrlToken || !!d.defaultCtaLabel,
     }
@@ -3883,6 +3905,9 @@ app.use('/api', (req, res) => res.status(404).json({ error: 'Unknown API route' 
 
 // ---- static SPA -----------------------------------------------------------
 if (fs.existsSync(DIST)) {
+  // The built SPA must carry this server's capability stamp (logged with the
+  // fix when it does not; server/spa_stamp_check.js).
+  checkSpaStamp(DIST, caps.list())
   app.use(express.static(DIST, {
     etag: true,
     setHeaders: (res, filePath) => {

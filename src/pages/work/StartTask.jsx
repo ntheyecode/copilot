@@ -192,6 +192,7 @@ import { clean } from '../../scrub.js'
 import { useWorkApp } from './WorkAppContext.jsx'
 import { startGateOutcome } from '../../shared/start_gate.js'
 import { useT } from '../../i18n/index.jsx'
+import { useEditionView } from '../../edition/useCaps.js'   // edition: company knowledge spaces only where companies exist
 import { WIZ_CSS } from './wizard.css.js'
 import { ENV_OPTS, STYLE_OPTS, Q_CANON, buildTaskContext } from './plannerContext.js'
 import KbSpacePicker, { spaceSummary, cachedSpaces } from './KbSpacePicker.jsx'
@@ -398,6 +399,7 @@ function DocsAttach({ tier, onDesktopDocs, t }) {
 
 // Route entry: the unified start-a-task wizard.
 export default function StartTask() {
+  const ed = useEditionView()
   const navigate = useNavigate()
   const t = useT()
   const { ready, usage, plan, renewLabel, showGuard, onOpen, setNeedsSub, isCompanyMember, isAdmin, isCompanyAdmin, canBuyHours, buyCredits, refreshUsage, roleView } = useWorkApp()
@@ -717,7 +719,7 @@ export default function StartTask() {
               <DocsAttach tier={tier} onDesktopDocs={setDeskDocs} t={t} />
               {/* Optional: which company knowledge grounds the plan. Renders
                   nothing when the company has no spaces. */}
-              <KbSpacePicker value={space} onChange={setSpace} />
+              {ed.companies && <KbSpacePicker value={space} onChange={setSpace} />}
             </div>
             <div className="wd-coach-choices wd-wiz-reveal" style={{ '--d': '120ms' }}>
               <button type="button" className={`wd-coach-choice primary${docsChoice === 'use' ? ' on' : ''}`} onClick={() => { setDocsChoice('use'); setStep('goal') }}><FileText size={15} /> {t('workStart.docsUse')}</button>

@@ -1088,6 +1088,21 @@ export default {
           before: 'Sonradan yazılır, o da yazılırsa.',
           now: 'Her adım kayıt altında. <em>Denetime hazır.</em>',
         },
+        {
+          t: 'İş yükü',
+          before: 'Bekleyen işler hep aynı birkaç kişinin üstünde birikir.',
+          now: 'Birikmiş işler <em>adım adım, rehberlik eşliğinde</em> temizlenir.',
+        },
+        {
+          t: 'Stres',
+          before: 'Kimsenin açıklamaya vakti olmayan işlerde takılıp geçen uzun akşamlar.',
+          now: 'Gerektiğinde ekranda yardım. <em>Daha az stres.</em>',
+        },
+        {
+          t: 'İyi çalışanları tutmak',
+          before: 'Aşırı yüklenen çalışanlar tükenir ve ayrılır.',
+          now: 'Daha hafif yük ve işte gerçek gelişim. <em>Ayrılmak için daha az neden.</em>',
+        },
       ],
       controlsLbl: 'Kurumsal kontroller dâhil',
       note: 'Tasarımı gereği yalnızca okur: çalışanlarınızı yönlendirir, onların yerine asla tıklamaz, yazmaz ya da bir şey çalıştırmaz.',
@@ -3799,6 +3814,9 @@ export default {
   helpShared: {
     flowLabel: 'Ana akış',
     open: '{label} aç',
+    callout: 'Açıklama {n}',
+    calloutsLabel: 'Her numara neyi gösteriyor',
+    pathLabel: 'Nasıl yapılır',
   },
   overviewAdmin: {
     loading: 'Genel bakış yükleniyor',
@@ -5789,6 +5807,7 @@ export default {
       freeAccessOn: 'Ücretsiz erişim ✓',
       freeAccessGrant: 'Ücretsiz erişim ver',
       grantHours: 'Saat ver',
+      more: 'Daha fazla',
       grantHoursTitle: 'Satın alınan saatler ver',
       refundLast: 'Sonuncuyu geri öde',
       refundLastTitle: 'En son ödemeyi geri öde',
@@ -6211,6 +6230,94 @@ export default {
       shot: {
         alt: 'Şirket için güvenlik uyarıları listesi.',
         caption: 'Uyarılar, en yeniler önce.',
+      },
+    },
+    trainer: {
+      title: 'Birine Eğitmen yetkisi verin',
+      lead: 'Eğitmenler, ekibinizin izlediği iş akışlarını kaydeder ve yayımlar. Bu yetkiyi bir görevi en iyi bilen kişilere verin.',
+      steps: {
+        open: {
+          t: 'Ekip bölümünü açın',
+          d: 'Kişiyi kişiler listesinde bulun.',
+        },
+        tick: {
+          t: 'Eğitmen kutusunu işaretleyin',
+          d: 'Üyeler ve proje yöneticileri için rolün altında görünür ve hemen kaydedilir.',
+        },
+        studio: {
+          t: 'Artık öğretebilirler',
+          d: 'Menülerinde Eğitim stüdyosu ve İş akışı sorunları görünür.',
+        },
+      },
+      shots: {
+        grant: {
+          alt: 'Ekip tablosu: Üye rolündeki Maya Lin ve altında işaretli Eğitmen onay kutusu.',
+          caption: 'Şirket yöneticileri bu yetki olmadan da öğretebilir. Kişinin rolünü başka bir rolle değiştirmek yetkiyi kaldırır.',
+          marks: {
+            role: '<b>Rol.</b> Yetki, Üye veya Proje yöneticisi rolüyle çalışır.',
+            trainer: '<b>Eğitmen.</b> Bu kişinin iş akışı kaydedip yayımlayabilmesi için işaretleyin. Geri almak için işareti kaldırın.',
+          },
+        },
+      },
+    },
+    developer: {
+      open: 'API ve webhook’lar',
+      title: 'API ve webhook’lar',
+      lead: 'Kendi uygulamalarınızı WorkCoPilot\'a bağlayın: iş akışlarını okuyun ve çalıştırın, iş akışı sorunlarını okuyun, Şirket Beyni\'ni sorgulayın ve bir şey olduğu anda haberdar olun.',
+      steps: {
+        create: {
+          t: 'Bir anahtar oluşturun',
+          d: 'Ad verin, yalnızca uygulamanın ihtiyaç duyduğu kapsamları işaretleyin ve bir geçerlilik süresi belirleyin.',
+        },
+        store: {
+          t: 'Bir kez saklayın',
+          d: 'Anahtarın tamamı yalnızca bir kez gösterilir. Gizli bilgi yöneticinize kaydedin.',
+        },
+        rotate: {
+          t: 'Döndürün veya iptal edin',
+          d: 'Kısa bir geçiş süresiyle döndürün ya da bir anahtar sızarsa hemen iptal edin.',
+        },
+        hooks: {
+          t: 'Webhook ekleyin',
+          d: 'Olayları seçin, ardından her teslimatı kontrol edin.',
+        },
+      },
+      shots: {
+        keys: {
+          alt: 'API anahtarları: Anahtar oluştur düğmesi ve anahtar listesi, biri kapsamları, oluşturanı, IP izin listesi ve Döndür ile İptal et düğmeleriyle açılmış.',
+          caption: 'Oluşturulduktan sonra anahtarın yalnızca öneki ve son dört karakteri gösterilir.',
+          marks: {
+            create: '<b>Anahtar oluştur.</b> Tek bir uygulama için yeni bir anahtar başlatır.',
+            row: '<b>Her anahtar tek bakışta.</b> Durum, kapsamlar, geçerlilik süresi ve en son ne zaman kullanıldığı.',
+            acts: '<b>Döndür veya İptal et.</b> Döndür, aynı ayarlarla yeni bir gizli anahtar üretir. İptal et, anahtarı hemen durdurur.',
+          },
+        },
+        create: {
+          alt: 'Yeni API anahtarı formu: ad, anahtarın kullanabileceği kapsamlar, geçerlilik süresi ve isteğe bağlı IP izin listesi.',
+          caption: 'Her iş için bir anahtar kullanın, böylece diğerlerine dokunmadan birini iptal edebilirsiniz. Anahtar oluşturmak veya döndürmek kimlik doğrulayıcı kodunuzu isteyebilir.',
+          marks: {
+            scopes: '<b>Kapsamlar.</b> Yalnızca uygulamanın ihtiyaç duyduğunu işaretleyin.',
+            expiry: '<b>Geçerlilik süresi.</b> Süresi dolan bir anahtar, iptal etmeyi hatırlamanız gereken bir anahtar daha az demektir.',
+            ip: '<b>IP izin listesi.</b> İsteğe bağlı. Yalnızca kendi adreslerinizden gelen çağrıları kabul edin.',
+          },
+        },
+        secret: {
+          alt: 'Örnek bir anahtar, Anahtarı kopyala ve Kaydettim ile Anahtarınızı şimdi kopyalayın paneli.',
+          caption: 'Paneli yalnızca anahtarı güvenle sakladıktan sonra kapatın.',
+          marks: {
+            copy: '<b>Anahtarı kopyala.</b> Anahtarın tamamı yalnızca bu sefer gösterilir.',
+            done: '<b>Kaydettim.</b> Paneli kapatır. Anahtarın tamamı bir daha gösterilemez.',
+          },
+        },
+        hooks: {
+          alt: 'Webhook’lar: olayları, denetimleri ve durumlarıyla son teslimatları gösteren açılmış bir uç nokta.',
+          caption: 'Her teslimat imzalanır, böylece uygulamanız teslimatın WorkCoPilot\'tan geldiğini doğrulayabilir.',
+          marks: {
+            events: '<b>Olaylar.</b> Bir iş akışı yayımlandı ya da bir iş akışı sorunu bildirildi.',
+            acts: '<b>Yönetin.</b> Açın veya kapatın, test gönderin, imzalama sırrını döndürün ya da silin.',
+            deliveries: '<b>Son teslimatlar.</b> Her biri sonucuyla birlikte. Denemeyi bırakmış bir teslimatı yeniden deneyin.',
+          },
+        },
       },
     },
   },
@@ -7424,6 +7531,8 @@ export default {
       support: 'Destek',
       team: 'Ekip',
       exec: 'Yönetici panosu',
+      teach: 'Eğitim stüdyosu',
+      teachTip: 'Ekibinizin izlediği iş akışlarını kaydedin ve yayımlayın',
       admin: 'Yönetim konsolu',
     },
     update: {
@@ -8769,33 +8878,207 @@ export default {
         ],
       },
     },
+    workflows: {
+      title: 'Şirket iş akışları',
+      lead: 'Bir görevi ekibinizin üzerinde anlaştığı şekilde, kendi ekranınızda adım adım rehberlikle yapın. Eğitmenleriniz her iş akışını güncel tutar, böylece her zaman en son sürümü izlersiniz.',
+      path: [
+        'Panonuzda <b>Şirket iş akışları</b> bölümünü bulun. Liste uzunsa arama yapın veya bir kategori seçin.',
+        'Nereden başladığını ve neleri hazır tutmanız gerektiğini görmek için bir satırı açın.',
+        '<b>Çalıştır</b> düğmesine basın, ekranınızı paylaşın ve her adımı izleyin.',
+      ],
+      list: {
+        h: 'İhtiyacınız olan iş akışını bulun',
+        alt: 'Panodaki Şirket iş akışları bölümü: bir arama kutusu, bir kategori filtresi, ürün, kategori, adım sayısı ve süreyi gösteren iş akışı satırları ve nereden başladığını, neyin hazır olması gerektiğini, kimin sürdürdüğünü ve Çalıştır düğmesini gösteren açılmış bir satır.',
+        caption: 'Eğitmenlerinizin yayımladığı her iş akışı, çalıştırılmaya hazır.',
+        marks: {
+          search: '<b>Arayın ve filtreleyin.</b> Bir iş akışını adıyla bulun ya da listeyi tek bir kategoriye daraltın.',
+          details: '<b>Başlamadan önce bilin.</b> Nereden başladığı, neyin hazır olması gerektiği ve kimin sürdürdüğü.',
+          run: '<b>Çalıştır.</b> Bu iş akışından, tüm adımları önceden planlanmış rehberli bir görev başlatır.',
+        },
+      },
+      guide: {
+        h: 'Her adımı, beklenen ekranla birlikte izleyin',
+        alt: 'Müşteriye iade yap iş akışını çalıştıran rehberlik görünümü: solda plan, tamamlanma kontrolüyle mevcut adım, Ekran nasıl görünmeli küçük resmi, Şirket iş akışı etiketi ve Tamamlandı işaretle düğmesi.',
+        caption: 'Bir iş akışını çalıştırdığınızda, eğitmeninizin kaydettiği adımları aynı sırayla izlersiniz.',
+        marks: {
+          plan: '<b>Planın tamamı.</b> İş akışının her adımı ve şu an nerede olduğunuz.',
+          shot: '<b>Ekran nasıl görünmeli.</b> Eğitmeninizin bu adım için aldığı ekran görüntüsü. Doğru yerde olup olmadığınızı buradan kontrol edin.',
+          source: '<b>Şirket iş akışı.</b> İzlediğiniz iş akışı ve sürümü.',
+          done: '<b>Tamamlandı işaretle.</b> Adım bittiğinde ilerleyin ya da önce kontrol etmek için Ekranımda doğrula düğmesine basın.',
+        },
+      },
+      larger: {
+        h: 'Ekranınızı eğitmeninkiyle karşılaştırın',
+        alt: 'Adım kartının içinde tam boyutta açılmış adım ekran görüntüsü.',
+        caption: 'Ekran görüntüsü olan herhangi bir adımda Büyüt düğmesine basın.',
+        marks: {
+          full: '<b>Ekran görüntüsünün tamamı.</b> Bir işlem yapmadan önce kendi ekranınızla karşılaştırın.',
+        },
+      },
+    },
+    teach: {
+      title: 'Eğitim stüdyosu',
+      lead: 'Bir görevi bir kez gösterin, şirketinizdeki herkes kendi ekranında izleyebilsin. Adımları kaydedin veya yazın, kontrol edin, yayımlayın ve uygulamalarınız değiştikçe güncel tutun.',
+      path: [
+        '<b>Yeni iş akışı</b> düğmesine basın ve dört temel alanı doldurun.',
+        'Adımları ekleyin: bir demo kaydedin, bir kaydı içe aktarın ya da adımları kendiniz yazın.',
+        'Her adımı ekran görüntüsüyle karşılaştırın ve katıldığınız önerileri kullanın.',
+        '<b>Yayımla</b> düğmesine basın. Daha sonra güncellemek için <b>Revize et</b>, artık sunmamak için <b>Arşivle</b> seçeneğini kullanın.',
+      ],
+      list: {
+        h: 'Tüm iş akışlarınız tek listede',
+        alt: 'Eğitim stüdyosu: Yeni iş akışı düğmesi, İş akışı sorunları, sürümü ve durumuyla iş akışları ve ayrıntıları, adımları ile Revize et, Arşivle ve Sil işlemleri görünen, açılmış yayımlanmış bir iş akışı.',
+        caption: 'Ayrıntılarını ve adımlarını görmek ve işlem yapmak için herhangi bir satırı açın.',
+        marks: {
+          newWorkflow: '<b>Yeni iş akışı.</b> Rehberli sihirbazı açar.',
+          issues: '<b>İş akışı sorunları.</b> Bir çalıştırmanın ekranla eşleşmediği anlar. Sayı yenileri gösterir.',
+          states: '<b>Taslak, Yayımlandı veya Arşivlendi.</b> Ekibinize yalnızca yayımlanmış bir iş akışı ulaşır.',
+          actions: '<b>Revize et, Arşivle, Sil.</b> Revize et yeni bir taslak sürüm başlatır. Yayındaki sürüm, siz yenisini yayımlayana kadar çalışmaya devam eder.',
+        },
+      },
+      wizard: {
+        h: 'Beş kısa aşama, önce temeller',
+        alt: 'Temeller aşamasındaki yeni iş akışı sihirbazı: üstte beş aşama, neyi öğrettiğinizi doğrulayan satır, zorunlu alanlar ve Taslağı kaydet ile Yayımla düğmeleri.',
+        caption: 'İstediğiniz an taslak kaydedin, sonra kaldığınız yerden devam edin.',
+        marks: {
+          stepper: '<b>Beş aşama.</b> Temeller, Ayrıntılar, Kapsam ve gizlilik, Adımlar ve Gözden geçir. Herhangi birine geri dönebilirsiniz.',
+          reflect: '<b>Hızlı bir kontrol.</b> Öğrettiğiniz ürünü ve görevi doğrular.',
+          required: '<b>Dört temel alan.</b> Ürün, başlık, sahip ve başlangıç noktası. Geri kalan her şey isteğe bağlı.',
+          footer: '<b>Taslağı kaydet veya Yayımla.</b> Temel alanlar, en az bir adım ve kapsam notu hazır olduğunda Yayımla etkinleşir.',
+        },
+      },
+      scope: {
+        h: 'Kimin göreceği konusunda sürpriz yok',
+        alt: 'Kapsam ve gizlilik aşaması: iş akışının kimlerle paylaşıldığı, neleri sakladığı, onay kutusu ve maskeleme seçeneği.',
+        caption: 'Kapsam notunu onaylayana kadar yayımlama bekler.',
+        marks: {
+          note: '<b>Kim görür.</b> Yayımlandıktan sonra şirketinizdeki herkes.',
+          ack: '<b>Bir kez onaylayın.</b> Yayımlamadan önce bunu işaretleyin.',
+          mask: '<b>Hassas metni maskele.</b> Kaydedilen herhangi bir ekran görüntüsü saklanmadan önce cihazınızda yapılır. Şirketinizin veri koruması açıkken her zaman açıktır.',
+        },
+      },
+      record: {
+        h: 'Canlı bir demo kaydedin',
+        alt: 'Bir demo kaydedin kurulumu: mikrofon ve anlatım diliyle anlatım, onay kutusuyla birlikte görüşme sesini kaydetme, maskeleme notu ve Ekranı paylaş ve başla düğmesi.',
+        caption: 'WorkCoPilot tıklamalarınızı değil, ekranınızı görür. Yeni bir adımın başlaması gereken her an Yeni adım düğmesine basın.',
+        marks: {
+          narrate: '<b>Anlatın.</b> Söyledikleriniz her adımın metni olur. Hiçbir ses saklanmaz.',
+          call: '<b>Görüşme sesi.</b> Kaydettiğiniz bir toplantı için. Görüşmedeki herkesin haberdar olduğunu onaylayana kadar başlatılamaz.',
+          mask: '<b>Önce maskelenir.</b> Hassas metin, herhangi bir ekran görüntüsü kaydedilmeden önce maskelenir.',
+          start: '<b>Ekranı paylaş ve başla.</b> Yalnızca öğrettiğiniz uygulamanın penceresini paylaşın.',
+        },
+      },
+      live: {
+        h: 'Kayıt sırasında',
+        alt: 'Canlı kayıt çubuğu: Kayıt yapılıyor rozeti ve zamanlayıcı, şu ana kadarki ekranlar ve adım ayrımları, Yeni adım, Duraklat, Durdur ve incele ve Vazgeç.',
+        caption: 'Durdurana kadar hiçbir şey kaydedilmez. Vazgeç kaydı tamamen siler.',
+        marks: {
+          time: '<b>Süre ve ilerleme.</b> Ne kadar süredir kayıt yaptığınız ve kayıtta kaç ekran ve adım ayrımı olduğu.',
+          mark: '<b>Yeni adım.</b> Tam burada yeni bir adım başlatır.',
+          stop: '<b>Durdur ve incele.</b> Adımlarınız düzenleyiciye yüklenir ve kontrole hazır olur.',
+        },
+      },
+      import: {
+        h: 'Ya da elinizdeki bir kaydı içe aktarın',
+        alt: 'Bir video seçilmiş Kayıt içe aktar ekranı: dosya adı ve süresi, konuşulan dil ve Bu videodan adım oluştur düğmesi.',
+        caption: 'Teams veya Zoom videosu kullanılabilir. Video cihazınızda okunur ve yüklenmez: cihazdan yalnızca adımlarınızın kullandığı ekran görüntüleri ve kısa konuşma parçaları çıkar.',
+        marks: {
+          file: '<b>Videonuz.</b> Bu cihazda okunan adı ve süresi.',
+          lang: '<b>Konuşulan dil.</b> Söylenenler doğru dilde adım metnine dönüşsün diye.',
+          start: '<b>Bu videodan adım oluştur.</b> Ekran her yeni bir şeyde durduğunda bir adım taslağı hazırlar.',
+        },
+      },
+      review: {
+        h: 'Her adımı ekran görüntüsüyle karşılaştırın',
+        alt: 'Kaydedilmiş bir taslağın Adımlar düzenleyicisi: Her adımı ekran görüntüsüyle karşılaştırın kartı, ekran görüntüsü ve Muhtemelen doğru olarak işaretlenmiş bir öneriyle açılmış bir adım, Yeniden oku ve Öneriyi kullan düğmeleri ve Öneri olarak işaretlenmiş başka bir adım.',
+        caption: 'Öneriler kendi metninizin yanında durur. Adımlarınız yalnızca Öneriyi kullan düğmesine bastığınızda değişir.',
+        marks: {
+          read: '<b>Adımları oku.</b> Siz düzenlemeye devam ederken ekran görüntüsü olan her adımı tek tek okur.',
+          shot: '<b>Adımın ekran görüntüsü.</b> Bir ekip arkadaşının bu adımda görmesi gereken ekran.',
+          band: '<b>Ne kadar net göründüğü.</b> Net görünüyor, Muhtemelen doğru veya Kesin değil, bakın.',
+          use: '<b>Öneriyi kullan veya Yeniden oku.</b> Her adımda kararı siz verirsiniz.',
+          mark: '<b>Bekleyen öneri.</b> Kontrol edilecek önerisi olan her adımda görünür.',
+        },
+      },
+    },
     issues: {
       title: 'İş akışı sorunları',
-      lead: 'İş akışı sorunları, yayımlanmış bir iş akışının bir ekip arkadaşının ekranda gördüğüyle eşleşmediği anları bir araya getirir: ekran değişti, bir hata göründü, devam edilemedi, iş akışında olmayan bir adım gerekti ya da bir adım atlandı. Her sorun iş akışıyla ilgilidir, kimsenin işiyle değil.',
-      shot: {
-        alt: 'İş akışı sorunları: özet çipleri, Etkin filtresi, son ziyaretinizden bu yana yeni olanlar listesi ve önerilen adımla rehberin gördüğü ekranı gösteren açılmış bir sorun.',
-        caption: 'İş akışı sorunları. Aynı adım ve türdeki tekrarlar yeni bir sorun açmak yerine tek bir soruna eklenir.',
-      },
-      howTo: 'İş akışı sorunları nasıl ele alınır',
-      steps: [
-        '<b>İş akışı sorunları</b>\'nı menünün Yönetim bölümünden ya da Eğitim stüdyosundan açın. Yanındaki sayı, son ziyaretinizden bu yana gelen yeni sorunları gösterir.',
-        'Üstteki çipler açık ve incelenen sorunları, ayrıca türe göre etkin sorunları sayar. <b>Etkin</b>, <b>Çözüldü</b>, <b>Yok sayıldı</b> veya <b>Tümü</b> seçeneğini belirleyin ve listeyi daraltmak için bir iş akışı seçin.',
-        'Rehberin neyi fark ettiğini, gördüğü ekranı ve ne zaman olduğunu görmek için bir satıra tıklayın.',
-        'Ekip birinin ilgilendiğini bilsin diye <b>İncelemeye al</b>\'a basın. İş akışını güncelledikten sonra <b>Çözüldü</b>\'ye basın. Değişmesi gereken bir şey yoksa <b>Yok say</b>\'a basın, tekrarlar için bildirim gelmez. Nedenini açıklamak için bir not ekleyin.',
+      lead: 'Yayımlanmış bir iş akışının bir ekip arkadaşının ekranıyla eşleşmediği her anı görün. İş akışını bir kez düzeltin, onu çalıştıran herkes düzeltmeden yararlansın. Her sorun iş akışıyla ilgilidir, asla bir kişinin işiyle değil.',
+      path: [
+        'Menüden veya Eğitim stüdyosundan <b>İş akışı sorunları</b> bölümünü açın. Sayı yeni sorunları gösterir.',
+        'Duruma veya iş akışına göre filtreleyin, ardından bir sorunu açın.',
+        '<b>İncelemeye al</b> düğmesine basın, iş akışını güncelleyin, ardından <b>Çözüldü</b> düğmesine basın. Değişmesi gereken bir şey yoksa <b>Yok say</b> düğmesine basın.',
       ],
+      pathWatch: [
+        'Menüden <b>İş akışı sorunları</b> bölümünü açın. Sayı yeni sorunları gösterir.',
+        'Duruma veya iş akışına göre filtreleyin, ardından ne olduğunu görmek için bir sorunu açın.',
+        'Sonuna kadar takip edin: iş akışını güncel tutan kişiler sorunu incelemeye alır, iş akışını düzeltir ve sorunu çözer.',
+      ],
+      badge: {
+        h: 'Yeni sorunlar sizi bulur',
+        alt: 'İş akışı sorunları ve yeni sorun sayısıyla menü.',
+        caption: 'Sayı, son ziyaretinizden bu yana yeni olan sorunları gösterir.',
+        marks: {
+          badge: '<b>İş akışı sorunları.</b> Gelen kutusunu açar. Sayı yenileri gösterir.',
+        },
+      },
+      inbox: {
+        h: 'Ne olduğunu görün ve harekete geçin',
+        alt: 'İş akışı sorunları: özet çipleri, durum filtresi ve rehberin neyi fark ettiğini, gördüğü ekranı, önerilen adımı, kimin karşılaştığını ve işlemleri gösteren açılmış bir sorun.',
+        caption: 'Aynı adım ve türdeki tekrarlar tek bir soruna eklenir, böylece liste kısa kalır.',
+        marks: {
+          chips: '<b>Tek bakışta.</b> Açık ve incelenen sorunlar ile türe göre etkin sorunlar.',
+          filters: '<b>Filtre.</b> Etkin, Çözüldü, Yok sayıldı veya Tümü, ayrıca bir seferde tek bir iş akışı.',
+          shot: '<b>Rehberin gördüğü ekran.</b> Tam olarak neyin değiştiğini görmek için büyütün.',
+          suggest: '<b>Önerilen adım.</b> Bir ekip arkadaşının ihtiyaç duyduğu ama iş akışında henüz olmayan adım.',
+          actions: '<b>Harekete geçin.</b> Bu adımı iş akışı taslağına ekle, İncelemeye al, Çözüldü veya Yok say seçeneklerini kullanın ve nedenini bir notla açıklayın.',
+          actionsPlain: '<b>Harekete geçin.</b> İncelemeye al, Çözüldü veya Yok say seçeneklerini kullanın ve nedenini bir notla açıklayın.',
+        },
+      },
       adopt: {
         h: 'Eksik bir adımı iş akışına ekleyin',
-        steps: [
-          'Bir ekip arkadaşı iş akışında olmayan bir adıma ihtiyaç duyduğunda, sorun önerilen adımı gösterir.',
-          'İş akışının yazarı veya bir şirket yöneticisi <b>Bu adımı iş akışı taslağına ekle</b> düğmesine basıp onaylar. Yayındaki iş akışı olduğu gibi çalışmaya devam eder.',
-          'Taslağı Eğitim stüdyosunda açın, yeni adımı kontrol edin ve doğru göründüğünde yayımlayın.',
-        ],
-      },
-      shotAdopt: {
         alt: 'Önerilen adımı iş akışının bir taslağına ekleme onayı.',
         caption: 'Biri taslağı yayımlayana kadar ekibiniz için hiçbir şey değişmez.',
       },
+      exec: {
+        h: 'Yönetici panosunda',
+        alt: 'Yönetici panosundaki İş akışı sorunları kartı: türe göre sayılan etkin sorunlar ve İş akışı sorunlarını incele düğmesi.',
+        caption: 'Her sorunu açmadan iş akışlarının nerede ilgi beklediğini görün.',
+        marks: {
+          kinds: '<b>Türe göre etkin sorunlar.</b> Ekran değişti, ekranda hata, devam edilemedi, iş akışında olmayan adım, adım atlandı.',
+          review: '<b>İş akışı sorunlarını incele.</b> Gelen kutusunun tamamını açar.',
+        },
+      },
       watch: 'GRC ve üst düzey yöneticiler her sorunu salt okunur olarak takip eder. Üst düzey yöneticiler ayrıca yönetici panosunda etkin sorunları türe göre görür.',
+    },
+    exec: {
+      title: 'Yönetici panosu',
+      lead: 'Kimseden durum raporu istemeden her projenin ne durumda olduğunu ve işi kimin ilerlettiğini görün.',
+      path: [
+        'Menünün en altındaki <b>Yönetici panosu</b> bölümünü açın.',
+        '7, 30 veya 90 gün seçin, ardından proje ve kişi görünümlerine bakın.',
+        'Paylaşmanız gerektiğinde PDF, görüntü veya CSV olarak dışa aktarın.',
+      ],
+      drill: {
+        h: 'Projeler ve kişiler tek bakışta',
+        alt: 'Yönetici panosunun ayrıntı görünümleri: proje durumu kutucukları, yönetici, görev, kişi sayısı ve tamamlanma çubuğuyla en büyük projeler ve tamamlanan görevlere ve projelere göre en iyi performans gösterenler.',
+        caption: 'Salt okunurdur ve tüm şirketinizi kapsar.',
+        marks: {
+          status: '<b>Proje durumu.</b> Kaç projenin sürdüğü, bittiği veya beklemede olduğu.',
+          table: '<b>En büyük projeler.</b> Yönetici, görevler, kişiler ve her birinin ne kadar tamamlandığı.',
+          people: '<b>En iyi performans, iki açıdan.</b> Tamamlanan rehberli görevlere ve üzerinde çalıştıkları ya da yönettikleri projelere göre.',
+        },
+      },
+      brain: {
+        h: 'Şirket Beyni\'ni indirin (yalnızca üst düzey yöneticiler)',
+        alt: 'Şirket Beyni paneli: şifreleme notu, dışa aktarma parola ifadenizin ayarlandığını belirten mesaj ile Parola ifadesini göster ve Parola ifadesini değiştir düğmeleri ve Şirket Beyni\'ni indir.',
+        caption: 'Barındırılan hizmette parola ifadesini görüntülemek veya değiştirmek için kimlik doğrulayıcı kodunuz istenir.',
+        marks: {
+          note: '<b>Parola ifadenizle şifrelenir.</b> O olmadan dosya açılamaz, bu yüzden güvenli bir yerde saklayın.',
+          key: '<b>Görüntüleyin veya değiştirin.</b> Bir kez belirleyin, sonra gerektiğinde görüntüleyin ya da değiştirin.',
+          download: '<b>Şirket Beyni\'ni indir.</b> Şirketinizin bilgi deposunu içeren tek bir şifreli .wcpx dosyası.',
+        },
+      },
     },
     admin: {
       title: 'Akışlar ve roller',
@@ -9343,6 +9626,57 @@ export default {
       privacy: 'Gizlilik Politikası',
       terms: 'Hizmet Şartları',
       security: 'Güvenlik',
+    },
+  },
+  edition: {
+    signupClosed: {
+      metaTitle: 'WorkCoPilot kuruluşlar içindir - AdmireVeda',
+      h1: 'WorkCoPilot kuruluşlar içindir',
+      p: 'Bireysel kayıt burada yapılamaz. WorkCoPilot\'u şirketinize getirmek için bizimle konuşun, ekibinizi biz kuralım.',
+      member: 'WorkCoPilot kullanan bir şirkette misiniz? Şirket hesabınızla giriş yapın ya da şirket yöneticinizden erişim isteyin.',
+      talk: 'Bizimle konuşun',
+      signIn: 'Giriş yap',
+    },
+    orgPlans: {
+      popular: 'En çok seçilen',
+      cta: 'Bizimle konuşun',
+      note: 'Her plan, her cihazda veri koruması, şirket politikası ve denetim günlükleri içerir. Fiyatlar şirketiniz için teklif olarak verilir.',
+      hosted: {
+        name: 'Şirketiniz için barındırılan',
+        price: 'Şirket büyüklüğüne göre kişi başı fiyat',
+        lead: 'Şirketiniz bizim barındırılan hizmetimizde, imzaladığınız gün hazır.',
+        p1: 'Şirket konsolu, tek oturum açma ve etkinleştirip kilitlediğiniz şirket politikası',
+        p2: 'Şirket yöneticinizin dağıttığı bir rehberlik saati havuzu',
+        p3: 'Şirket Beyni ve öğretilen iş akışları, şirketinize özel ve gizli',
+      },
+      managed: {
+        name: 'Yönetilen özel bulut',
+        price: 'Talep üzerine teklif',
+        lead: 'Kendi bulutunuzda sizin için işlettiğimiz, size ayrılmış bir kurulum.',
+        p1: 'Verileriniz kendi bulut veritabanınızda kalır',
+        p2: 'İşletmesini ve güncellemesini sizin için biz yaparız',
+        p3: 'Bizim yapay zekamız, kullandığınız kadar faturalanır',
+      },
+      onprem: {
+        name: 'Şirket içi (on-premises)',
+        price: 'Talep üzerine sunulur',
+        lead: 'Kendi sunucularınıza kurulur, kontrol tamamen sizde.',
+        p1: 'Kendi yapay zeka sağlayıcı anahtarlarınızla çalışır',
+        p2: 'Kurulum üzerindeki bir lisansla etkinleştirilir',
+        p3: 'Kendi veritabanınız ve kendi ağınız',
+      },
+    },
+    validate: {
+      talk: 'Ekibiniz için bizimle konuşun',
+      plans: 'Kuruluşlar için planları görün',
+    },
+    app: {
+      noPlanTitle: 'Bu hesapta henüz plan yok',
+      noPlanBody: 'Bireysel planlar burada satılmaz. Erişiminiz şirketinizden gelir: şirket yöneticinizden sizi eklemesini isteyin.',
+      noPlanTalk: 'Bizimle konuşun',
+    },
+    login: {
+      orgOnly: 'WorkCoPilot\'ta yeni misiniz? Kuruluşlar için tasarlandı. <a>Bizimle konuşun</a>.',
     },
   },
   enterprisePage: {
@@ -11740,7 +12074,6 @@ export default {
     stepOf: 'Adım {n} / {total}',
     stepN: 'Adım {n}',
     confirmed: 'Adım {n} onaylandı',
-    markDone: 'Tamamlandı olarak işaretle',
     yourPlan: 'Planınız',
     collapse: 'Daralt',
     shot: {

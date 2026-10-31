@@ -109,6 +109,7 @@ export default {
       freeAccessOn: 'Free access ✓',
       freeAccessGrant: 'Grant free access',
       grantHours: 'Grant hours',
+      more: 'More',
       grantHoursTitle: 'Grant purchased hours',
       refundLast: 'Refund last',
       refundLastTitle: 'Refund the most recent payment',

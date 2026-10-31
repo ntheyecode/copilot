@@ -14,8 +14,8 @@ export default {
     vulnsIds_one: '<b>{pkg}</b> has {n} known vulnerability ({ids}).',
     vulnsIds_other: '<b>{pkg}</b> has {n} known vulnerabilities ({ids}).',
     idsMore: '{ids}, and more',
-    upgradeLatest: 'Upgrade to {version} (latest).',
-    upgradeLater: 'Upgrade to {version} or later.',
+    upgradeLatest: 'Update to {version} (latest).',
+    upgradeLater: 'Update to {version} or later.',
     patchedVersion: 'a patched version',
   },
 }

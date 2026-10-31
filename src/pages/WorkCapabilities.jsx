@@ -19,6 +19,8 @@ import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium
 import GuideConsole from '../components/GuideConsole.jsx'   // the live guide console: watch -> step -> correct -> confirm
 import { DifferenceStrip } from '../components/NotAChatBox.jsx'   // the three things a chat box does not do
 import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
+import { useEditionView } from '../edition/useCaps.js'   // edition: start destination + company-only CTA
+import { startPath } from '../edition/surfaces.js'
 import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys) + the howItWorks.* / how.* / guide.* strings
 
 // Viz palette on brand tokens: the frame surface and inks follow the page theme
@@ -297,6 +299,7 @@ const CARD_META = [
 // order would jump H1 -> H3), every illustration is a labeled image, decorative
 // icons are hidden, and focus rings are visible.
 export default function WorkCapabilities() {
+  const ed = useEditionView()
   const nav = useNavigate()
   const t = useT()
   useSeo({
@@ -412,8 +415,8 @@ export default function WorkCapabilities() {
       </section>
 
       <section className="wcap-cta" aria-label={t('howItWorks.cta.aria')}>
-        <button className="wcap-btn" onClick={() => nav('/workcopilot')}>{t('howItWorks.cta.start')} <ArrowRight size={15} aria-hidden="true" /></button>
-        <a className="wcap-btn alt" href="/workcopilot/enterprise">{t('howItWorks.cta.enterprise')}</a>
+        <button className="wcap-btn" onClick={() => nav(startPath(ed))}>{t('howItWorks.cta.start')} <ArrowRight size={15} aria-hidden="true" /></button>
+        {ed.companies && <a className="wcap-btn alt" href="/workcopilot/enterprise">{t('howItWorks.cta.enterprise')}</a>}
         <a className="wcap-btn alt" href="/demo">{t('howItWorks.cta.demo')}</a>
       </section>
       <ReleaseNote groups={['global']} />

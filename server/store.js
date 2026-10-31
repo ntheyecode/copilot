@@ -67,6 +67,7 @@ import { createWorkflowIncidents, alertInboxOf } from './workflow_incidents.js'
 import { createAiUsageLedger } from './ai_usage_ledger.js'
 import { createInbox } from './notifications.js'
 import { createWorkflowFrames } from './workflow_frames.js'
+import { caps as editionCaps } from './edition.js'   // edition capabilities: personal plans are only offered where individual_plans is on
 import { createWorkflowFrameSweep } from './workflow_frame_sweep.js'
 import { execOverview } from './exec_overview.js'
 import { makeExportKey } from './export_key.js'
@@ -704,9 +705,11 @@ export function publicWorkUser(u) {
     // Per-tier feature gates (Lite has no roadmaps / diagrams) so the client can
     // hide what the plan does not include and keep the marketing claim honest.
     caps: TIER_FEATURES[(WORK_TIERS.includes(u.tier) ? u.tier : 'basic')] || TIER_FEATURES.basic,
-    // Show an Upgrade button to anyone below premium who is NOT a company user.
-    canUpgrade: !u.companyId && (WORK_TIERS.includes(u.tier) ? u.tier : 'basic') !== 'premium',
-    nextTier: u.companyId ? null : nextTierUp(WORK_TIERS.includes(u.tier) ? u.tier : 'basic'),
+    // Show an Upgrade button to anyone below premium who is NOT a company user,
+    // on an edition that sells personal plans (every upgrade prompt in the app
+    // reads these two fields, so the edition rule lives here once).
+    canUpgrade: editionCaps.has('individual_plans') && !u.companyId && (WORK_TIERS.includes(u.tier) ? u.tier : 'basic') !== 'premium',
+    nextTier: (u.companyId || !editionCaps.has('individual_plans')) ? null : nextTierUp(WORK_TIERS.includes(u.tier) ? u.tier : 'basic'),
     mfaEnabled: !!(u.mfa && u.mfa.enabled),       // TOTP authenticator set up
     mfaEnrolledAt: (u.mfa && u.mfa.enrolledAt) || null,
     disabled: !!u.disabled,                       // superadmin-disabled (blocked from sign-in + service)
@@ -4553,8 +4556,8 @@ export function financialSummary(now = new Date()) {
     const prevStart = (() => {
       const s = new Date(start)
       if (startFn === startOfWeek) s.setUTCDate(s.getUTCDate() - 7)
-      else if (startFn === startOfMonth) s.setUTCMonth(s.getUTCMonth() - 1)
-      else if (startFn === startOfQuarter) s.setUTCMonth(s.getUTCMonth() - 3)
+      else if (startFn === startOfMonth) return new Date(Date.UTC(s.getUTCFullYear(), s.getUTCMonth() - 1, 1))
+      else if (startFn === startOfQuarter) return new Date(Date.UTC(s.getUTCFullYear(), s.getUTCMonth() - 3, 1))
       else s.setUTCFullYear(s.getUTCFullYear() - 1)
       return s
     })()

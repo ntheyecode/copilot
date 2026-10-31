@@ -11,6 +11,7 @@ a fork. The security and key-custody posture of each configuration is in
 | 2. Storage drivers (json, postgres) | BUILT (document-per-record first cut) |
 | 3. Folder split | BUILT (minimal: editions/ + build/ composer); full move PLANNED |
 | 4. On-prem and managed first-run setup | DESIGNED, not built (decisions needed) |
+| 5. Edition-aware SPA, wording overlays, per-server deploy | BUILT (section 5, with the deploy checklist) |
 
 ---
 
@@ -49,9 +50,9 @@ if any server module imports from outside `server/`.
 
 | Edition | Who | Capabilities on |
 |---|---|---|
-| `all` (default) | solo users + SaaS companies, hosted | solo_signup, saas_companies, stripe_billing, platform_ai, brain_export, brain_query, public_site |
+| `all` (default) | solo users + SaaS companies, hosted | solo_signup, saas_companies, individual_plans, stripe_billing, platform_ai, brain_export, brain_query, public_site |
 | `saas` | SaaS companies only, hosted | saas_companies, stripe_billing, platform_ai, brain_export, brain_query, public_site |
-| `paid` | paying individuals only, hosted | solo_signup, paid_only, stripe_billing, platform_ai, public_site |
+| `paid` | paying individuals only, hosted | solo_signup, paid_only, individual_plans, stripe_billing, platform_ai, public_site |
 | `onprem` | the customer's own servers | single_company, offline_licensing, onprem_setup, ai_custody_customer, brain_export, brain_query, external_db |
 | `managed` | a dedicated install we operate in the customer's cloud | single_company, onprem_setup, platform_ai, ai_custody_customer, brain_export, brain_query, external_db |
 
@@ -65,11 +66,17 @@ own provider keys; and a managed install is invoiced by us, while on-prem is
 activated by an offline license (`offline_licensing`). Both are single-company,
 both run the first-run setup, both can sit on the customer's database.
 
+**Owner decisions (2026-10-30).** admireveda.com becomes organizations only
+(`saas`); today's all-inclusive product is kept as it is on another server
+(`all`); a separate individuals-only site sells personal subscriptions with no
+company wording (`paid`). `individual_plans` was added for this: it is what
+`saas` turns off (no personal plan is offered or sold) while it keeps company
+tenants and Stripe for enterprise billing.
+
 **For the owner to confirm.**
 
 - "Paying users only" is read as individual accounts on a paid plan, with no
-  company tenants and no free tier. If it should also allow paying companies,
-  add `saas_companies` to `paid` (one line).
+  company tenants and no free tier.
 - `solo_signup` gates SELF-service sign-up only. A superadmin can still create a
   standalone individual account by hand in every edition, and company admins
   still add their own users. Say if `saas` / `onprem` should refuse that too.
@@ -81,21 +88,22 @@ both run the first-run setup, both can sit on the customer's database.
 | `solo_signup` | `POST /api/work/signup` (index.js), `POST /api/work/onboarding/signup` (onboarding.js), first-time social sign-in (`resolveSocialAccount`, onboarding.js) | 403 `{ error, signupDisabled: true }` from `soloSignupRefusal()`, nothing created. Existing accounts still sign in. |
 | `saas_companies` / `single_company` | `POST /api/work/admin/companies` (work-admin.js) via `companyCreationRefusal()` | `single_company`: the first company is created, a second gets 409 `{ singleCompany: true }`. Neither: 403 `{ companiesDisabled: true }`. |
 | `stripe_billing` | `cfg()` in billing.js; `GET /api/work/admin/billing` | Every Stripe path takes its existing "not configured" branch and no Stripe call is made, even with keys in the env or the store. The superadmin billing panel response carries `offByEdition: true` and an `offReason`. |
+| `individual_plans` | `server/edition_route_gates.js` (one middleware ahead of every route): `POST /api/work/checkout`, `/checkout/credits`, `/subscription/change`, `/onboarding/plan`, `/onboarding/checkout`; also inside `createSubscriptionCheckout()`; `canUpgrade` / `nextTier` in `store.publicWorkUser()` | 403 `{ error, individualPlansDisabled: true, contact }` from `individualPlanRefusal()` ("WorkCoPilot is for organizations ... talk to us"). Reading an existing subscription, invoices and the Stripe portal stay open. |
+| company tenancy (`saas_companies` or `single_company`: `companyTenancy()`) | `server/edition_route_gates.js` prefixes: `/api/work/company/`, `/team/`, `/my-company`, `/exec/`, `/pm/`, `/grc/`, `/brain/`, `/workflows`, `/workflow-incidents*`, `/templates`, `/kb-spaces`, `/customers`, `/my/assigned`, `/app/msi`, `/launch/`, `/sso/`, `/api/v1/` | 403 `{ error: 'This feature is not available on this service.', companiesDisabled: true }` (neutral wording: the individuals site never talks about companies). |
+| `paid_only` | `requireWorkSubscription` (index.js) | With Stripe not configured, a personal account without comp access gets 503 `{ billingNotConfigured: true }` instead of free guiding; the server logs the fix for the operator. |
+| `solo_signup` (wording) | `soloSignupRefusal()` | Where the public site is served, the refusal says WorkCoPilot is for organizations and carries `contact: '/workcopilot/contact'`. |
+| lead form | `POST /api/work/leads` | The company field is required only where company tenants exist. |
 
 ### Not wired yet (defined in the registry, not enforced)
 
 These capabilities exist so editions can be described completely, but setting
 `WORK_EDITION=paid` or `onprem` today does not yet change these behaviors:
 
-1. **SPA**: read `GET /api/work/edition` once at boot; hide Sign up, pricing and
-   checkout when `solo_signup` / `stripe_billing` are off; hide the marketing
-   routes when `public_site` is off; show `offReason` in the billing panel. The
-   server already refuses sign-up and company creation, so for those this is
-   presentation; for `public_site` the server side is item 3.
-2. **`paid_only`**: the subscription gate (`requireWorkSubscription`) enforces a
-   plan only once Stripe is configured, so `paid` still has the free tier.
-   Under `paid_only` it should always enforce it, with an actionable "billing
-   is not set up yet" message for the operator.
+1. **SPA, remaining**: the SPA is edition-aware (section 5). Still open: hide
+   the marketing routes when `public_site` is off, and show `offReason` in the
+   superadmin billing panel. (The superadmin console still lists its Companies
+   section on `paid`; creating one is refused.)
+2. (Done: `paid_only` is enforced, see the table above.)
 3. **`public_site`**: the "validate it live" lead endpoints and the prerendered
    marketing pages are still served in every edition.
 4. **`platform_ai`** (refuse platform AI providers where it is off) and
@@ -491,3 +499,141 @@ not repeat steps 1 to 3.
    `offline_licensing` (also closes "Not wired yet" item 6).
 4. The `platform_ai` and `ai_custody_customer` call sites (item 4).
 5. The wizard UI on top of the same setup API.
+
+---
+
+## 5. Edition-aware SPA, wording overlays and per-server deploy (BUILT)
+
+### How the SPA knows its edition
+
+- `src/shared/edition_caps.js` is the client view of the registry. It imports
+  `server/edition_registry.js` directly (pure data), so there is no client copy
+  to drift; `src/shared/edition_caps.test.mjs` proves the client answers every
+  capability, `companyTenancy()` and `copyAudience()` exactly like the server,
+  for every edition, from the public `GET /api/work/edition` payload.
+- `src/edition/active.js` holds the ONE live capability set: first from the
+  page's `<meta name="wcp-capabilities">` stamp (so the first paint is already
+  right), then confirmed with `GET /api/work/edition` at boot. The server wins
+  and a mismatch is logged with the fix. An unstamped build assumes the default
+  edition, which is today's product.
+- `src/edition/useCaps.js` (`useCaps()`, `useEditionView()`) and
+  `src/edition/surfaces.js` (`shows(view, needs)`, `startPath()`) answer the
+  view questions once: `companies`, `individualPlans`, `soloSignup`,
+  `audience`. `src/edition/EditionRoute.jsx` gates routes.
+- The class gate in `server/edition.test.mjs` still holds: no SPA code names
+  an edition; everything asks for a capability.
+
+### What each hosted edition shows and refuses
+
+| | `all` (another server) | `saas` (admireveda.com) | `paid` (individuals site) |
+|---|---|---|---|
+| Wording | base catalog, unchanged | organizations overlay | individuals overlay |
+| Home | as today | the personal plan cards become the organization plans (hosted, managed, on-premises); every "start" leads to Talk to us | no enterprise section, no company wording |
+| Pricing | as today | organization plans only: no personal plan, price, checkout or Stripe line | Lite to Premium only: no Enterprise column, seat or enterprise rows |
+| Sign-up | as today | `/workcopilot/signup` shows "WorkCoPilot is for organizations" with Talk to us and Sign in; the sign-in page has no create switch | as today, without the company field or company SSO |
+| App | as today | no personal upgrade, top-up or plan chooser; an account with no plan is told to ask its company administrator | no company routes (company console, exec, teach, PM, GRC, templates, launch); no knowledge-space picker |
+| Header / footer | as today | "Get started" reads Talk to us and goes to contact | no Enterprise or DPA link |
+| FAQ | as today | personal-plan questions hidden, cost and getting-started answers for organizations | company questions hidden, company links filtered |
+| Server refuses | nothing new | every personal-plan purchase path | every company route family |
+
+### Wording overlays
+
+`src/i18n/overlays/<audience>/<locale>.js` (audiences `organizations` and
+`individuals`, from `copyAudience()`), merged over the base catalog at load by
+`src/i18n/overlay.js` with the ONE merge in `src/i18n/overlay_merge.js` (an
+object keyed by array indexes patches single list elements). The prerender
+uses the same merge. Copy an edition renders INSTEAD of a missing surface
+(sign-up closed, the organization plans, the no-plan notice) lives in the base
+namespace `edition` (`src/i18n/locales/en/editionPages.js`) and goes through
+the normal locale-parity gate.
+
+Gate `scripts/check-edition-copy.mjs` (prebuild; also
+`src/shared/edition_copy.test.mjs`): every overlay only replaces existing base
+keys with the same type, every locale has exactly its audience's en overlay
+keys, and the merged English an audience reads carries no banned wording in
+any namespace it can see.
+- Banned for individuals: company, team, enterprise, organization, SSO, single
+  sign-on, governance, admin, administrator, admin console, executive, trainer,
+  project manager, seat, tenant, employee, colleague, Company Brain.
+- Banned for organizations: free account / trial / plan, start free, create an
+  account, pick or choose a plan, self-service plans.
+- Skipped keys are listed with their reason: a surface the edition hides, or
+  work content (the field roster, demo task scenarios, example task lines).
+- The prerendered pages of `paid` are scanned for the same words in
+  `build/spa_stamp.test.mjs`; the rendered pages were scanned in the browser.
+
+### The SPA stamp
+
+`build/spa_stamp.js` stamps a built `dist/` for one capability set: the meta
+tag in every page, the audience copy of the static shell (JSON-LD offers, the
+cost FAQ answer, the noscript plans line), the public origin, and the
+prerendered marketing routes regenerated for that audience
+(`scripts/prerender-marketing.mjs --audience --origin`; removed where the
+public site is off). The default edition at the default origin is left byte
+for byte. `npm run compose` stamps its staged copy (the repository's `dist/` is
+never changed). `npm run stamp:spa -- --edition <id> [--origin <url>]` stamps
+a `dist/` in place for the tar-over-ssh deploy; it refuses a dist already
+stamped for something else (rebuild first).
+
+### Deploy checklist (per server; nothing is deployed by any build step)
+
+Deploy order on every server: the server first, then the SPA. A new SPA in
+front of an older server reads that server's capability list, which has no
+`individual_plans` yet, and would show the organizations-only pricing on
+`all`. (The server logs at start when `dist/index.html` carries a stamp for
+other capabilities: `server/spa_stamp_check.js`.)
+
+Common to all three: Node LTS, `npm ci --omit=dev`, a fresh `WORK_DATA_DIR`
+(never copy another server's data), `SESSION_SECRET`, `WORK_ENC_KEY` (or let
+the server create `<data dir>/.enc.key`, and back it up), `WORK_HOSTED=1`
+behind TLS, and the systemd + nginx setup in `docs/WORKCOPILOT-HANDOFF.md`.
+After each deploy: `GET /api/work/edition` answers the edition and its
+capabilities, and the page source carries the matching
+`<meta name="wcp-capabilities">` (a mismatch is logged in the browser console).
+
+**`all`: today's product, on its own server**
+- Bundle: `npm run build && npm run compose -- --edition all --out out/all --origin https://<all-domain>`.
+  At the admireveda.com origin `all` needs no stamp at all; on its own domain
+  the stamp only rewrites the canonical and social URLs.
+- Env: `WORK_EDITION=all` (or unset), `WORK_PUBLIC_URL=https://<all-domain>`.
+- Domain: owner to choose.
+- Stripe: the personal Lite, Basic, Advanced and Premium prices (monthly and
+  annual) and the company billing as today; extra hours and images are priced
+  dynamically. Webhook: `https://<all-domain>/api/work/stripe/webhook`.
+- Serves: everything, exactly as today.
+
+**`saas`: admireveda.com, organizations only**
+- Bundle: `npm run build && npm run compose -- --edition saas --out out/saas`
+  (the manifest defaults the origin to `https://admireveda.com`), or for the
+  tar flow `npm run build && npm run stamp:spa -- --edition saas`.
+- Env: `WORK_EDITION=saas`, `WORK_PUBLIC_URL=https://admireveda.com`.
+- Stripe: company billing only. Personal plan prices are not needed, and no
+  personal checkout can start. The Stripe customer portal opens with a
+  configuration the server creates (invoices, card, cancel; no plan switch),
+  so a legacy personal subscriber cannot change plans there either.
+- Before the switch (owner decision): today's personal subscribers on
+  admireveda.com need a home on the `all` or `paid` server. On `saas` they
+  can still sign in, read invoices and open the Stripe portal, but cannot buy
+  or change a personal plan.
+- Serves: the marketing site in the organizations wording, company sign-in and
+  SSO, the company console, Company Brain, teach workflows, enterprise billing.
+- Refuses: personal sign-up on every path, personal checkout, plan change and
+  top-ups.
+
+**`paid`: the individuals-only site**
+- Bundle: `npm run build && npm run compose -- --edition paid --out out/paid --origin https://<paid-domain>`.
+- Env: `WORK_EDITION=paid`, `WORK_PUBLIC_URL=https://<paid-domain>`.
+- Domain: owner to choose.
+- Stripe: the personal Lite, Basic, Advanced and Premium prices (monthly and
+  annual). Webhook: `https://<paid-domain>/api/work/stripe/webhook`. Until
+  Stripe is configured, guiding does not start (`paid_only`).
+- Legal pages (terms, privacy, refund, acceptable use) still carry the base
+  legal text, which mentions company accounts in places; they need a
+  counsel-reviewed individuals version before launch (owner decision); the
+  copy gate prints how many legal strings still mention companies
+  (`LEGAL_PENDING`). The DPA footer link is hidden; the page stays reachable
+  because the terms link to it.
+- Serves: the marketing site in the individuals wording, personal sign-up,
+  personal plans and checkout, the app for individuals.
+- Refuses: every company route family (403, neutral wording) and company
+  creation.

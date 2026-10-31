@@ -35,6 +35,8 @@ export default {
       support: 'Support',
       team: 'Team',
       exec: 'Executive dashboard',
+      teach: 'Teach studio',
+      teachTip: 'Record and publish the workflows your team follows',
       admin: 'Admin console',
       // Enterprise project management (role-based; src/shared/work_roles_options.js decides who sees which)
       queue: 'My queue',

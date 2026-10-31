@@ -711,6 +711,21 @@ export default {
           before: 'Scritta dopo, se viene scritta.',
           now: "Ogni passo registrato. <em>Pronto per l'audit.</em>",
         },
+        {
+          t: 'Carico di lavoro',
+          before: 'Le attività in sospeso si accumulano sulle solite poche persone.',
+          now: 'L\'arretrato si smaltisce, <em>un passo guidato alla volta</em>.',
+        },
+        {
+          t: 'Stress',
+          before: 'Serate lunghe bloccati su lavori che nessuno ha tempo di spiegare.',
+          now: 'Aiuto sullo schermo quando serve. <em>Meno stress.</em>',
+        },
+        {
+          t: 'Trattenere le persone migliori',
+          before: 'Le persone sovraccariche si esauriscono e se ne vanno.',
+          now: 'Meno carico e una crescita reale sul lavoro. <em>Meno motivi per andarsene.</em>',
+        },
       ],
       controlsLbl: 'Controlli aziendali, inclusi',
       note: 'Sola lettura per progettazione: guida le tue persone e non clicca, digita o esegue mai nulla al posto loro.',
@@ -5063,10 +5078,101 @@ export default {
         caption: 'Avvisi, dal più recente.',
       },
     },
+    trainer: {
+      title: 'Concedi a qualcuno il permesso Formatore',
+      lead: 'I formatori registrano e pubblicano i flussi di lavoro che il tuo team segue. Concedi il permesso alle persone che conoscono meglio un\'attività.',
+      steps: {
+        open: {
+          t: 'Apri Team',
+          d: 'Trova la persona nell\'elenco delle persone.',
+        },
+        tick: {
+          t: 'Spunta Formatore',
+          d: 'Compare sotto il ruolo per membri e responsabili di progetto, e si salva subito.',
+        },
+        studio: {
+          t: 'Ora può insegnare',
+          d: 'Studio di formazione e Segnalazioni sui flussi compaiono nel suo menu.',
+        },
+      },
+      shots: {
+        grant: {
+          alt: 'La tabella Team: Maya Lin con il ruolo Membro e, sotto, la casella Formatore spuntata.',
+          caption: 'Gli amministratori aziendali possono insegnare senza il permesso. Passare una persona a un altro ruolo lo rimuove.',
+          marks: {
+            role: '<b>Ruolo.</b> Il permesso funziona con il ruolo Membro o Responsabile di progetto.',
+            trainer: '<b>Formatore.</b> Spunta per permettere a questa persona di registrare e pubblicare flussi di lavoro. Togli la spunta per revocarlo.',
+          },
+        },
+      },
+    },
+    developer: {
+      open: 'API e webhook',
+      title: 'API e webhook',
+      lead: 'Collega le tue app a WorkCoPilot: leggi ed esegui flussi di lavoro, leggi le segnalazioni sui flussi, interroga il Company Brain e ricevi un avviso nel momento in cui succede qualcosa.',
+      steps: {
+        create: {
+          t: 'Crea una chiave',
+          d: 'Dagli un nome, spunta solo gli ambiti che servono all\'app e imposta una scadenza.',
+        },
+        store: {
+          t: 'Salvala una volta',
+          d: 'La chiave completa viene mostrata una sola volta. Mettila nel tuo gestore di segreti.',
+        },
+        rotate: {
+          t: 'Ruota o revoca',
+          d: 'Ruota con una breve sovrapposizione, oppure revoca subito se una chiave è trapelata.',
+        },
+        hooks: {
+          t: 'Aggiungi un webhook',
+          d: 'Scegli gli eventi, poi controlla ogni consegna.',
+        },
+      },
+      shots: {
+        keys: {
+          alt: 'Chiavi API: il pulsante Crea chiave e l\'elenco delle chiavi, una aperta con i suoi ambiti, chi l\'ha creata, l\'allowlist IP e i pulsanti Ruota e Revoca.',
+          caption: 'Dopo la creazione, di una chiave vengono mostrati solo il prefisso e gli ultimi quattro caratteri.',
+          marks: {
+            create: '<b>Crea chiave.</b> Crea una nuova chiave per un\'app.',
+            row: '<b>Ogni chiave a colpo d\'occhio.</b> Stato, ambiti, scadenza e ultimo utilizzo.',
+            acts: '<b>Ruota o Revoca.</b> Ruota emette un nuovo segreto con le stesse impostazioni. Revoca blocca subito la chiave.',
+          },
+        },
+        create: {
+          alt: 'Il modulo per una nuova chiave API: il nome, gli ambiti che la chiave può usare, la scadenza e l\'allowlist IP facoltativa.',
+          caption: 'Una chiave per ogni compito, così puoi revocarne una senza toccare le altre. Creare o ruotare una chiave può richiedere il codice dell\'app di autenticazione.',
+          marks: {
+            scopes: '<b>Cosa può fare questa chiave.</b> Spunta solo ciò che serve all\'app.',
+            expiry: '<b>Scade tra.</b> Una chiave che scade è una cosa in meno da ricordarsi di revocare.',
+            ip: '<b>Allowlist IP.</b> Facoltativa. Accetta chiamate solo dai tuoi indirizzi.',
+          },
+        },
+        secret: {
+          alt: 'Il pannello Copia la tua chiave adesso con una chiave di esempio, Copia chiave e L\'ho salvata.',
+          caption: 'Chiudilo solo dopo aver salvato la chiave in un posto sicuro.',
+          marks: {
+            copy: '<b>Copia chiave.</b> È l\'unica volta in cui viene mostrata la chiave completa.',
+            done: '<b>L\'ho salvata.</b> Chiude il pannello. La chiave completa non potrà più essere mostrata.',
+          },
+        },
+        hooks: {
+          alt: 'Webhook: un endpoint aperto con i suoi eventi, i suoi comandi e le consegne recenti con il relativo stato.',
+          caption: 'Ogni consegna è firmata, così la tua app può verificare che arrivi da WorkCoPilot.',
+          marks: {
+            events: '<b>Eventi.</b> Un flusso di lavoro è stato pubblicato, oppure è arrivata una segnalazione su un flusso di lavoro.',
+            acts: '<b>Gestiscilo.</b> Attivalo o disattivalo, invia un test, ruota il segreto di firma o eliminalo.',
+            deliveries: '<b>Consegne recenti.</b> Ognuna con il suo esito. Riprova quella che è stata abbandonata.',
+          },
+        },
+      },
+    },
   },
   helpShared: {
     flowLabel: 'Il flusso principale',
     open: 'Apri {label}',
+    callout: 'Riferimento {n}',
+    calloutsLabel: 'Cosa indica ogni numero',
+    pathLabel: 'Come fare',
   },
   helpSuper: {
     flow: {
@@ -6145,6 +6251,7 @@ export default {
       freeAccessOn: 'Accesso gratuito ✓',
       freeAccessGrant: 'Concedi accesso gratuito',
       grantHours: 'Concedi ore',
+      more: 'Altro',
       grantHoursTitle: 'Concedi ore acquistate',
       refundLast: 'Rimborsa ultimo',
       refundLastTitle: 'Rimborsa il pagamento più recente',
@@ -7062,6 +7169,8 @@ export default {
       support: 'Supporto',
       team: 'Team',
       exec: 'Dashboard direzionale',
+      teach: 'Studio di formazione',
+      teachTip: 'Registrare e pubblicare i flussi di lavoro seguiti dal team',
       admin: 'Console di amministrazione',
       queue: 'La mia coda',
       queueTip: 'Attività che le assegna un responsabile di progetto',
@@ -8795,33 +8904,207 @@ export default {
         ],
       },
     },
+    workflows: {
+      title: 'Flussi di lavoro aziendali',
+      lead: 'Svolga un\'attività come ha concordato il Suo team, con una guida sul Suo schermo, un passaggio alla volta. I formatori mantengono aggiornato ogni flusso di lavoro, così segue sempre la versione più recente.',
+      path: [
+        'Nella Sua dashboard lo trova in <b>Flussi di lavoro aziendali</b>. Se l\'elenco è lungo, cerchi o scelga una categoria.',
+        'Apra una riga per vedere da dove parte e cosa tenere a portata di mano.',
+        'Prema <b>Avvia</b>, condivida lo schermo e segua ogni passaggio.',
+      ],
+      list: {
+        h: 'Trovi il flusso di lavoro che Le serve',
+        alt: 'La sezione Flussi di lavoro aziendali della dashboard: una casella di ricerca, un filtro per categoria, righe di flussi di lavoro con prodotto, categoria, passaggi e durata, e una riga aperta con il punto di partenza, cosa tenere a portata di mano, chi lo cura e il pulsante Avvia.',
+        caption: 'Ogni flusso di lavoro pubblicato dai Suoi formatori, pronto da avviare.',
+        marks: {
+          search: '<b>Cerchi e filtri.</b> Trovi un flusso di lavoro per nome o limiti l\'elenco a una categoria.',
+          details: '<b>Prima di iniziare.</b> Da dove parte, cosa tenere a portata di mano e chi lo cura.',
+          run: '<b>Avvia.</b> Fa partire un\'attività guidata da questo flusso di lavoro, con tutti i passaggi già pianificati.',
+        },
+      },
+      guide: {
+        h: 'Segua ogni passaggio, con lo schermo che deve aspettarsi',
+        alt: 'La vista guidata che esegue il flusso di lavoro Emetti un rimborso al cliente: il piano a sinistra, il passaggio corrente con il suo controllo di completamento, la miniatura Come dovrebbe apparire lo schermo, l\'etichetta Flusso di lavoro aziendale e il pulsante Segna come fatto.',
+        caption: 'Un flusso di lavoro segue i passaggi registrati dal Suo formatore, nel loro ordine.',
+        marks: {
+          plan: '<b>Il piano completo.</b> Ogni passaggio del flusso di lavoro e il punto in cui si trova adesso.',
+          shot: '<b>Come dovrebbe apparire lo schermo.</b> Lo screenshot del formatore per questo passaggio, così può verificare di essere nel posto giusto.',
+          source: '<b>Flusso di lavoro aziendale.</b> Il flusso di lavoro e la versione che sta seguendo.',
+          done: '<b>Segna come fatto.</b> Vada avanti quando il passaggio è concluso, oppure prema prima Verifica sul mio schermo per controllarlo.',
+        },
+      },
+      larger: {
+        h: 'Confronti il Suo schermo con quello del formatore',
+        alt: 'Lo screenshot del passaggio aperto a dimensione intera nella scheda del passaggio.',
+        caption: 'Prema Ingrandisci su qualsiasi passaggio che abbia uno screenshot.',
+        marks: {
+          full: '<b>Lo screenshot completo.</b> Lo confronti con il Suo schermo prima di agire.',
+        },
+      },
+    },
+    teach: {
+      title: 'Studio di formazione',
+      lead: 'Mostri un\'attività una volta e tutti nella Sua azienda potranno seguirla sul proprio schermo. Registri o scriva i passaggi, li controlli, li pubblichi e li mantenga aggiornati quando le Sue app cambiano.',
+      path: [
+        'Prema <b>Nuovo flusso di lavoro</b> e compili le quattro informazioni essenziali.',
+        'Aggiunga i passaggi: registri una dimostrazione, importi una registrazione oppure li scriva.',
+        'Controlli ogni passaggio con il suo screenshot e tenga i suggerimenti che condivide.',
+        'Prema <b>Pubblica</b>. In seguito usi <b>Rivedi</b> per aggiornarlo o <b>Ritira</b> per non proporlo più.',
+      ],
+      list: {
+        h: 'Tutti i Suoi flussi di lavoro in un unico elenco',
+        alt: 'Lo Studio di formazione: il pulsante Nuovo flusso di lavoro, Segnalazioni sui flussi, i flussi di lavoro con versione e stato, e un flusso pubblicato aperto con i suoi dettagli, i suoi passaggi e le azioni Rivedi, Ritira ed Elimina.',
+        caption: 'Apra una riga per vederne dettagli e passaggi e intervenire.',
+        marks: {
+          newWorkflow: '<b>Nuovo flusso di lavoro.</b> Apre la procedura guidata.',
+          issues: '<b>Segnalazioni sui flussi.</b> I momenti in cui un\'esecuzione non corrispondeva allo schermo. Il numero indica quelle nuove.',
+          states: '<b>Bozza, Pubblicato o Ritirato.</b> Solo un flusso di lavoro pubblicato arriva al Suo team.',
+          actions: '<b>Rivedi, Ritira, Elimina.</b> Rivedi crea una nuova versione in bozza. Quella attiva continua a funzionare finché non pubblica la nuova.',
+        },
+      },
+      wizard: {
+        h: 'Cinque brevi passaggi, prima l\'essenziale',
+        alt: 'La procedura guidata per un nuovo flusso di lavoro su Base: i cinque passaggi in alto, la riga che conferma cosa sta insegnando, i campi obbligatori e i pulsanti Salva bozza e Pubblica.',
+        caption: 'Salvi una bozza in qualsiasi momento e la riprenda più tardi.',
+        marks: {
+          stepper: '<b>Cinque passaggi.</b> Base, Dettagli, Ambito e privacy, Passaggi e Riepilogo. Può tornare a ognuno di essi.',
+          reflect: '<b>Un controllo veloce.</b> Conferma il prodotto e l\'attività che sta insegnando.',
+          required: '<b>Quattro informazioni essenziali.</b> Prodotto, titolo, responsabile e punto di partenza. Tutto il resto è facoltativo.',
+          footer: '<b>Salva bozza o Pubblica.</b> Pubblica si attiva quando ci sono le informazioni essenziali, almeno un passaggio e la nota sull\'ambito.',
+        },
+      },
+      scope: {
+        h: 'Nessuna sorpresa su chi lo vede',
+        alt: 'Il passaggio Ambito e privacy: con chi viene condiviso il flusso di lavoro, cosa conserva, la casella di conferma e l\'opzione di oscuramento.',
+        caption: 'La pubblicazione resta in attesa finché non conferma la nota sull\'ambito.',
+        marks: {
+          note: '<b>Chi lo vede.</b> Tutti nella Sua azienda, una volta pubblicato.',
+          ack: '<b>Confermi una volta.</b> Spunti questa casella prima di pubblicare.',
+          mask: '<b>Oscura il testo sensibile.</b> Avviene sul Suo dispositivo, prima che venga salvato qualsiasi screenshot registrato. Sempre attivo finché è attiva la protezione dei dati della Sua azienda.',
+        },
+      },
+      record: {
+        h: 'Registri una dimostrazione dal vivo',
+        alt: 'La preparazione di Registra una dimostrazione: commento con il microfono e lingua del commento vocale, acquisizione dell\'audio della chiamata con la relativa casella di consenso, la nota sull\'oscuramento e il pulsante Condividi schermo e avvia.',
+        caption: 'WorkCoPilot vede il Suo schermo, non i Suoi clic. Prema Segna passaggio ogni volta che deve iniziare un nuovo passaggio.',
+        marks: {
+          narrate: '<b>Commenti a voce.</b> Ciò che dice diventa il testo di ogni passaggio. Nessun audio viene conservato.',
+          call: '<b>Audio della chiamata.</b> Per una riunione che sta registrando. L\'avvio resta disattivato finché non conferma che tutti i partecipanti alla chiamata ne sono al corrente.',
+          mask: '<b>Prima l\'oscuramento.</b> Il testo sensibile viene oscurato prima che venga salvato qualsiasi screenshot.',
+          start: '<b>Condividi schermo e avvia.</b> Condivida solo la finestra dell\'app che sta insegnando.',
+        },
+      },
+      live: {
+        h: 'Mentre registra',
+        alt: 'La barra di registrazione: il badge In registrazione e il timer, le schermate e le interruzioni di passaggio fin qui, Segna passaggio, Pausa, Ferma e rivedi, e Scarta.',
+        caption: 'Nulla viene salvato finché non si ferma. Scarta elimina la registrazione.',
+        marks: {
+          time: '<b>Tempo e avanzamento.</b> Da quanto sta registrando e quante schermate e interruzioni di passaggio contiene.',
+          mark: '<b>Segna passaggio.</b> Inizia un nuovo passaggio proprio qui.',
+          stop: '<b>Ferma e rivedi.</b> I Suoi passaggi arrivano nell\'editor, pronti da controllare.',
+        },
+      },
+      import: {
+        h: 'Oppure importi una registrazione che ha già',
+        alt: 'Importa una registrazione con un video scelto: il nome del file e la durata, la lingua parlata e il pulsante Crea i passaggi da questo video.',
+        caption: 'Va bene un video di Teams o Zoom. Il video viene letto sul Suo dispositivo e non viene caricato: escono dal dispositivo solo gli screenshot usati nei Suoi passaggi e brevi clip del parlato.',
+        marks: {
+          file: '<b>Il Suo video.</b> Nome e durata, letti su questo dispositivo.',
+          lang: '<b>Lingua parlata.</b> Così ciò che viene detto diventa testo dei passaggi nella lingua giusta.',
+          start: '<b>Crea i passaggi da questo video.</b> Prepara una bozza di passaggio ogni volta che lo schermo si ferma su qualcosa di nuovo.',
+        },
+      },
+      review: {
+        h: 'Controlli ogni passaggio con il suo screenshot',
+        alt: 'L\'editor dei passaggi di una bozza registrata: la scheda Controlla ogni passaggio con il suo screenshot, un passaggio aperto con il suo screenshot e un suggerimento segnato Probabilmente giusto con Analizza di nuovo e Usa il suggerimento, e un altro passaggio segnato Suggerimento.',
+        caption: 'I suggerimenti compaiono accanto al Suo testo. I Suoi passaggi cambiano solo quando sceglie Usa il suggerimento.',
+        marks: {
+          read: '<b>Analizza i passaggi.</b> Analizza uno alla volta ogni passaggio che ha uno screenshot, mentre Lei continua a modificare.',
+          shot: '<b>Lo screenshot del passaggio.</b> Ciò che un collega dovrebbe vedere in questo passaggio.',
+          band: '<b>Quanto sembrava chiaro.</b> Sembra chiaro, Probabilmente giusto oppure Incerto, controlla.',
+          use: '<b>Usa il suggerimento o Analizza di nuovo.</b> Decide Lei, un passaggio alla volta.',
+          mark: '<b>Suggerimento in attesa.</b> Compare su ogni passaggio che ne ha uno da controllare.',
+        },
+      },
+    },
     issues: {
       title: 'Segnalazioni sui flussi di lavoro',
-      lead: 'Segnalazioni sui flussi di lavoro raccoglie i momenti in cui un flusso di lavoro pubblicato non corrispondeva a ciò che un collega vedeva sullo schermo: lo schermo era cambiato, è comparso un errore, non è riuscito a proseguire, gli serviva un passaggio che il flusso non prevede, oppure un passaggio è stato saltato. Ogni segnalazione riguarda il flusso di lavoro, non il lavoro di qualcuno.',
-      shot: {
-        alt: 'Segnalazioni sui flussi di lavoro: i chip di riepilogo, il filtro Attive, l\'elenco delle novità dall\'ultima visita e una segnalazione aperta con il passaggio suggerito e lo schermo visto dalla guida.',
-        caption: 'Segnalazioni sui flussi di lavoro. Le ripetizioni sullo stesso passaggio e dello stesso tipo confluiscono in un\'unica segnalazione invece di crearne una nuova.',
-      },
-      howTo: 'Come gestire le segnalazioni sui flussi di lavoro',
-      steps: [
-        'Apra <b>Segnalazioni sui flussi</b> dalla sezione Gestione del menu oppure dallo Studio di formazione. Il numero accanto indica le segnalazioni nuove dalla Sua ultima visita.',
-        'I chip in alto contano le segnalazioni aperte e prese in carico, e quelle attive per tipo. Scelga <b>Attive</b>, <b>Risolte</b>, <b>Archiviate</b> o <b>Tutte</b> e selezioni un flusso di lavoro per restringere l\'elenco.',
-        'Faccia clic su una riga per vedere cosa ha notato la guida, lo schermo che ha visto e quando è successo.',
-        'Con <b>Prendi in carico</b> il team sa che qualcuno se ne sta occupando. Dopo aver aggiornato il flusso di lavoro, prema <b>Risolvi</b>. Se non serve cambiare nulla, prema <b>Archivia</b> e le ripetizioni non verranno più notificate. Aggiunga una nota per spiegare il motivo.',
+      lead: 'Veda ogni momento in cui un flusso di lavoro pubblicato non corrispondeva allo schermo di un collega. Corregga il flusso una volta e la correzione arriva a tutti quelli che lo eseguono. Ogni segnalazione riguarda il flusso di lavoro, mai il lavoro di una persona.',
+      path: [
+        'Apra <b>Segnalazioni sui flussi</b> dal menu o dallo Studio di formazione. Il numero indica le segnalazioni nuove.',
+        'Filtri per stato o per flusso di lavoro, poi apra una segnalazione.',
+        'Prema <b>Prendi in carico</b>, aggiorni il flusso di lavoro, poi prema <b>Risolvi</b>. Oppure prema <b>Archivia</b> se non serve cambiare nulla.',
       ],
+      pathWatch: [
+        'Apra <b>Segnalazioni sui flussi</b> dal menu. Il numero indica le segnalazioni nuove.',
+        'Filtri per stato o per flusso di lavoro, poi apra una segnalazione per vedere cosa è successo.',
+        'La segua fino in fondo: chi tiene aggiornato il flusso di lavoro la prende in carico, corregge il flusso e la risolve.',
+      ],
+      badge: {
+        h: 'Le nuove segnalazioni La raggiungono',
+        alt: 'Il menu con Segnalazioni sui flussi e il numero di segnalazioni nuove.',
+        caption: 'Il numero indica le segnalazioni arrivate dalla Sua ultima visita.',
+        marks: {
+          badge: '<b>Segnalazioni sui flussi.</b> Apre la casella delle segnalazioni. Il numero indica le novità.',
+        },
+      },
+      inbox: {
+        h: 'Veda cosa è successo e intervenga',
+        alt: 'Segnalazioni sui flussi di lavoro: i chip di riepilogo, il filtro per stato e una segnalazione aperta con ciò che ha notato la guida, lo schermo che ha visto, il passaggio suggerito, chi ha incontrato il problema e le azioni.',
+        caption: 'Le ripetizioni sullo stesso passaggio e dello stesso tipo confluiscono in un\'unica segnalazione, così l\'elenco resta breve.',
+        marks: {
+          chips: '<b>A colpo d\'occhio.</b> Segnalazioni aperte e prese in carico, e segnalazioni attive per tipo.',
+          filters: '<b>Filtro.</b> Attive, Risolte, Archiviate o Tutte, e un flusso di lavoro alla volta.',
+          shot: '<b>Lo schermo visto dalla guida.</b> Lo apra più grande per vedere esattamente cosa è cambiato.',
+          suggest: '<b>Passaggio suggerito.</b> Il passaggio di cui un collega aveva bisogno e che il flusso di lavoro non prevede ancora.',
+          actions: '<b>Intervenga.</b> Aggiunga il passaggio a una bozza, oppure scelga Prendi in carico, Risolvi o Archivia, con una nota che spieghi il motivo.',
+          actionsPlain: '<b>Intervenga.</b> Scelga Prendi in carico, Risolvi o Archivia, con una nota che spieghi il motivo.',
+        },
+      },
       adopt: {
         h: 'Aggiungere un passaggio mancante al flusso di lavoro',
-        steps: [
-          'Quando a un collega è servito un passaggio che il flusso di lavoro non prevede, la segnalazione mostra il passaggio suggerito.',
-          'L\'autore del flusso di lavoro o un amministratore aziendale preme <b>Aggiungi questo passaggio alla bozza</b> e conferma. Il flusso di lavoro attivo continua a funzionare così com\'è.',
-          'Apra la bozza nello Studio di formazione, controlli il nuovo passaggio e la pubblichi quando è corretta.',
-        ],
-      },
-      shotAdopt: {
         alt: 'La conferma per aggiungere il passaggio suggerito a una bozza del flusso di lavoro.',
         caption: 'Per il Suo team non cambia nulla finché qualcuno non pubblica la bozza.',
       },
+      exec: {
+        h: 'Nella dashboard direzionale',
+        alt: 'La scheda Segnalazioni sui flussi di lavoro nella dashboard direzionale: le segnalazioni attive contate per tipo e il pulsante Vedi le segnalazioni.',
+        caption: 'Veda dove i flussi di lavoro richiedono attenzione senza aprire ogni segnalazione.',
+        marks: {
+          kinds: '<b>Segnalazioni attive per tipo.</b> Schermo cambiato, Errore sullo schermo, Impossibile proseguire, Passaggio non previsto, Passaggio saltato.',
+          review: '<b>Vedi le segnalazioni.</b> Apre l\'elenco completo delle segnalazioni.',
+        },
+      },
       watch: 'GRC e dirigenti seguono ogni segnalazione in sola lettura. I dirigenti vedono anche le segnalazioni attive per tipo nella dashboard direzionale.',
+    },
+    exec: {
+      title: 'Dashboard direzionale',
+      lead: 'Veda a che punto è ogni progetto e chi sta facendo avanzare il lavoro, senza chiedere a nessuno un aggiornamento sullo stato.',
+      path: [
+        'Apra <b>Dashboard direzionale</b> in fondo al menu.',
+        'Scelga 7, 30 o 90 giorni, poi consulti le viste su progetti e persone.',
+        'Esporti un PDF, un\'immagine o un CSV quando deve condividerla.',
+      ],
+      drill: {
+        h: 'Progetti e persone a colpo d\'occhio',
+        alt: 'I dettagli della dashboard direzionale: i riquadri sullo stato dei progetti, i progetti più grandi con responsabile, attività, persone e barra di completamento, e i migliori collaboratori per attività completate e per progetti.',
+        caption: 'In sola lettura, e copre tutta la Sua azienda.',
+        marks: {
+          status: '<b>Stato dei progetti.</b> Quanti progetti sono in corso, completati o in pausa.',
+          table: '<b>I progetti più grandi.</b> Responsabile, attività, persone e a che punto è ciascuno.',
+          people: '<b>Migliori collaboratori, in due modi.</b> Per attività guidate completate e per i progetti su cui lavorano o che gestiscono.',
+        },
+      },
+      brain: {
+        h: 'Scarichi il Cervello aziendale (solo dirigenti)',
+        alt: 'Il pannello Cervello aziendale: la nota sulla crittografia, il messaggio che indica che la passphrase di esportazione è impostata con Mostra passphrase e Sostituisci passphrase, e Scarica il Cervello aziendale.',
+        caption: 'Sul servizio in hosting, per mostrare o sostituire la passphrase Le viene chiesto il codice dell\'app di autenticazione.',
+        marks: {
+          note: '<b>Crittografato con la Sua passphrase.</b> Senza di essa il file non si può aprire, quindi la conservi al sicuro.',
+          key: '<b>La mostri o la sostituisca.</b> La imposti una volta, poi la visualizzi o la cambi quando serve.',
+          download: '<b>Scarica il Cervello aziendale.</b> Un unico file .wcpx crittografato con l\'archivio delle conoscenze della Sua azienda.',
+        },
+      },
     },
     admin: {
       title: 'Flussi e ruoli',
@@ -9369,6 +9652,57 @@ export default {
       privacy: 'Informativa sulla privacy',
       terms: 'Termini di servizio',
       security: 'Sicurezza',
+    },
+  },
+  edition: {
+    signupClosed: {
+      metaTitle: 'WorkCoPilot è per le organizzazioni - AdmireVeda',
+      h1: 'WorkCoPilot è per le organizzazioni',
+      p: 'La registrazione personale non è disponibile qui. Per portare WorkCoPilot nella tua azienda, parla con noi e configureremo il tuo team.',
+      member: 'Fai già parte di un\'azienda che usa WorkCoPilot? Accedi con il tuo account aziendale, oppure chiedi l\'accesso all\'amministratore della tua azienda.',
+      talk: 'Parla con noi',
+      signIn: 'Accedi',
+    },
+    orgPlans: {
+      popular: 'Il più scelto',
+      cta: 'Parla con noi',
+      note: 'Ogni piano include la protezione dei dati su ogni dispositivo, la policy aziendale e i log di audit. I prezzi sono quotati per la tua azienda.',
+      hosted: {
+        name: 'In hosting per la tua azienda',
+        price: 'Prezzo per persona in base alla dimensione dell\'azienda',
+        lead: 'La tua azienda sul nostro servizio in hosting, pronta il giorno stesso della firma.',
+        p1: 'Console aziendale, single sign-on e policy aziendale che attivi e blocchi',
+        p2: 'Un pool di ore guidate che l\'amministratore della tua azienda distribuisce',
+        p3: 'Company Brain e flussi di lavoro insegnati, privati per la tua azienda',
+      },
+      managed: {
+        name: 'Cloud privato gestito',
+        price: 'Quotazione su richiesta',
+        lead: 'Un\'installazione dedicata che gestiamo per te nel tuo cloud.',
+        p1: 'I tuoi dati restano nel tuo database cloud',
+        p2: 'La gestiamo e la aggiorniamo noi per te',
+        p3: 'La nostra IA, fatturata in base all\'uso effettivo',
+      },
+      onprem: {
+        name: 'On-premise',
+        price: 'Disponibile su richiesta',
+        lead: 'Installato sui tuoi server, sotto il tuo controllo.',
+        p1: 'Funziona con le tue chiavi del fornitore di IA',
+        p2: 'Attivato da una licenza sull\'installazione',
+        p3: 'Il tuo database e la tua rete',
+      },
+    },
+    validate: {
+      talk: 'Parla con noi del tuo team',
+      plans: 'Vedi i piani per le organizzazioni',
+    },
+    app: {
+      noPlanTitle: 'Questo account non ha ancora un piano',
+      noPlanBody: 'I piani personali non sono in vendita qui. Il tuo accesso arriva dalla tua azienda: chiedi all\'amministratore della tua azienda di aggiungerti.',
+      noPlanTalk: 'Parla con noi',
+    },
+    login: {
+      orgOnly: 'Nuovo su WorkCoPilot? È per le organizzazioni. <a>Parla con noi</a>.',
     },
   },
   enterprisePage: {
@@ -11766,7 +12100,6 @@ export default {
     stepOf: 'Passaggio {n} di {total}',
     stepN: 'Passaggio {n}',
     confirmed: 'Passaggio {n} confermato',
-    markDone: 'Segna come completato',
     yourPlan: 'Il Suo piano',
     collapse: 'Comprimi',
     shot: {

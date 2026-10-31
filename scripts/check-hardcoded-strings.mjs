@@ -178,6 +178,7 @@ function scan(src, rel, out = findings) {
     const txt = raw.replace(/^[.,:;!?)\]\s]+/, '').trim()
     if (!txt || JS_KEYWORD.test(txt) || ignorable(txt.replace(/[.,:;!?]+$/, ''))) continue
     if (/\w\.\w|[a-z][A-Z]|\w:\S/.test(txt)) continue                 // property access / object keys, not text
+    if (/^[\s,A-Z0-9_]+$/.test(txt) && /_/.test(txt)) continue       // a list of CONSTANT identifiers (array items)
     if (words(txt).length >= 2 || /^[A-Z][a-z]/.test(txt)) add(m.index, 'jsx-expr', raw)
   }
 
@@ -213,6 +214,7 @@ function scan(src, rel, out = findings) {
   // ... and in template literals (static text; ${...} counts as a blank).
   while ((m = TEMPLATE.exec(src))) {
     const body = m[0].slice(1, -1)
+    if (/^[a-z][A-Za-z0-9]*(?:\.(?:[A-Za-z0-9_]+|\$\{[^}]*\}))+$/.test(body)) continue  // an i18n key path: `ns.${area}.steps.${id}.t`
     const stat = body.replace(/\$\{[^}]*\}/g, ' ').replace(/\s+/g, ' ').trim()
     if (CODE_CHARS.test(stat.replace(/[{}$]/g, '')) || /[{};]/.test(stat)) continue
     if (/[A-Za-z]\(|\d(?:px|deg|%|ms|s)\b|\w\.\w/.test(stat)) continue  // CSS functions / units, i18n key paths
@@ -240,6 +242,8 @@ const SELF_TEST = [
   '    <button aria-label={`Buddy for you (${name})`}>x</button>',
   "    {a ? 'Continue with the updated plan' : 'Continue guiding'}",
   "    <span className={`wc-x${a ? ' on' : ''}`} style={{ fontFamily: 'JetBrains Mono, ui-monospace, monospace' }} />",
+  '    {t(`helpCompany.${a}.steps.${n}.t`)}',
+  '    {[0].map(() => 1)}, TEACH_HELP, ISSUES_HELP, EXEC_HELP,{null}',
   '  </div>)',
   '}',
 ].join('\n')
@@ -250,7 +254,7 @@ const SELF_TEST = [
   const expect = [['label', 'label=Copy'], ['label', 'label=Notes'], ['jsx-expr', 'Step'], ['jsx-expr', 'Read it carefully'],
     ['attr-tpl', 'Buddy for you'], ['prose', 'Continue with the updated plan'], ['prose', 'Continue guiding']]
   const missing = expect.filter(([k, x]) => !has(k, x))
-  const leaked = got.filter((f) => /Image export|English fallback|Too short|JetBrains|wc-x/.test(f.txt))
+  const leaked = got.filter((f) => /Image export|English fallback|Too short|JetBrains|wc-x|helpCompany|TEACH_HELP/.test(f.txt))
   if (missing.length || leaked.length) {
     console.error('[hardcoded-strings] SELF-TEST FAILED: a rule stopped firing or a skip shape started firing.')
     for (const [k, x] of missing) console.error(`  missing [${k}] ${x}`)

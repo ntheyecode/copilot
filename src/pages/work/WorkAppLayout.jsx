@@ -17,6 +17,7 @@ import PreferencesPanel from '../../components/PreferencesPanel.jsx'
 import { AVMark } from '../../components/AdmireVedaLogo.jsx'
 import { readBuddyPref } from '../../components/AliveBuddy.jsx'
 import { useLocale, useT } from '../../i18n/index.jsx'
+import { useEditionView } from '../../edition/useCaps.js'   // edition: personal top-ups only where personal plans are sold
 import { WD_CSS } from './workApp.css.js'
 import { card, shell } from './lib.js'
 import { WorkAppContext } from './WorkAppContext.jsx'
@@ -159,13 +160,16 @@ export default function WorkAppLayout() {
   const user = sess && sess.user
   const isAdmin = !!(user && (user.role === 'superadmin' || user.role === 'admin'))
   const isCompanyMember = !!(user && user.companyId)
+  const ed = useEditionView()
   const isCompanyAdmin = !!(user && user.companyRole === 'company_admin' && user.companyId)
-  const isExecutive = !!(user && user.companyId && ['executive', 'company_admin'].includes(user.companyRole))
   const covered = isAdmin || isCompanyMember || !!(user && user.canUseService)
   // Enterprise flow + role view: ONE derivation (src/shared/work_roles_options.js)
   // read by the rail, the dashboard (queue vs Start), the Start page and every
   // management page, so a role is never gated differently in two places.
   const roleView = useMemo(() => roleViewOf(user), [user])
+  // The exec dashboard link (executive or company admin) reads the same registry
+  // as the role-gated Help, so the link and its help can never disagree.
+  const isExecutive = roleView.showExec
   const hasPlan = !!(user && !user.companyId && user.subscription && ['active', 'trialing', 'past_due', 'canceled'].includes(user.subscription.status))
 
   const [company, setCompany] = useState(null)
@@ -211,10 +215,13 @@ export default function WorkAppLayout() {
       setBillingOn(on)
       const adm = !!(user && (user.role === 'superadmin' || user.role === 'admin'))
       const cov = adm || !!(user && (user.companyId || user.canUseService))
-      setNeedsSub(!cov && on)
+      // paid_only (no free tier): an account without a plan needs one even
+      // before billing is configured, matching the server's subscription gate,
+      // so the dashboard never reads "free access" on such an edition.
+      setNeedsSub(!cov && (on || ed.caps.has('paid_only')))
     }).catch(() => {})
     if (user && !user.companyId) api.workInvoices().then((r) => setInvoices(r.invoices || [])).catch(() => setInvoices([]))
-  }, [authed, user])
+  }, [authed, user, ed.caps])
   useEffect(() => { reload() }, [reload])
 
   const refreshUsage = useCallback(async () => { try { const u = await api.workUsage(); setUsage(u) } catch { /* ignore */ } }, [])
@@ -294,7 +301,7 @@ export default function WorkAppLayout() {
   const titleCase = useCallback((s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : ''), [])
   const money = useCallback((n) => (n == null ? '' : `$${Number(n) % 1 ? Number(n).toFixed(2) : Number(n)}`), [])
   const showBilling = hasPlan || (Array.isArray(invoices) && invoices.length > 0)
-  const canBuyHours = !!(user && !user.companyId && !isAdmin && usage != null)
+  const canBuyHours = !!(user && !user.companyId && !isAdmin && usage != null && ed.individualPlans)
   const upgradeHref = '/workcopilot/pricing'
 
   const stopImpersonate = async () => {

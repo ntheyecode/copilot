@@ -4,7 +4,12 @@
 //                               tests, test helpers, the eval corpus or any
 //                               data/key/env file; plus the public benchmark
 //                               results, which the public site reads
-//   <out>/dist/...              the built SPA (npm run build first)
+//   <out>/dist/...              the built SPA (npm run build first), stamped for
+//                               the edition's capabilities (build/spa_stamp.js:
+//                               capability meta tag, audience copy in the static
+//                               shell, prerendered routes, public origin). The
+//                               default edition at the default origin ships the
+//                               build byte-for-byte.
 //   <out>/editions/start.mjs, profile.js, <edition>/manifest.json
 //   <out>/package.json, package-lock.json   (install with npm ci --omit=dev)
 //   <out>/ship-manifest.json    edition, capabilities, commit (+ dirty flag),
@@ -28,6 +33,7 @@ import { fileURLToPath } from 'node:url'
 import { EDITIONS, EDITION_IDS, makeCaps } from '../server/edition_registry.js'
 import { loadManifest } from '../editions/profile.js'
 import { importsOf, packagesOf } from './import_check.js'
+import { stampSpa, DEFAULT_ORIGIN } from './spa_stamp.js'
 
 export const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const MARKER = 'ship-manifest.json'
@@ -132,7 +138,7 @@ function foreignFiles(dir) {
   return found
 }
 
-export function compose({ edition, out, root = ROOT, spa = true, replace = false } = {}) {
+export function compose({ edition, out, root = ROOT, spa = true, replace = false, origin } = {}) {
   if (!EDITION_IDS.includes(edition)) throw new Error(`[compose] unknown edition "${edition}". Choose one of: ${EDITION_IDS.join(', ')}.`)
   if (!out) throw new Error('[compose] --out <folder> is required.')
   const outAbs = path.resolve(out)
@@ -155,14 +161,27 @@ export function compose({ edition, out, root = ROOT, spa = true, replace = false
   }
   if (problems.length) throw new Error(`[compose] the bundle would not start:\n  ${problems.join('\n  ')}`)
 
+  // The public origin the SPA is stamped with: --origin, else the edition's
+  // manifest WORK_PUBLIC_URL default, else admireveda.com.
+  const manifest = loadManifest(edition, path.join(root, 'editions'))
+  const publicOrigin = String(origin || (manifest.env && manifest.env.WORK_PUBLIC_URL) || DEFAULT_ORIGIN).replace(/\/+$/, '')
+
   const staging = `${outAbs}.staging-${process.pid}-${Date.now()}`
   try {
-    const listed = []
     for (const rel of files) {
       const dst = path.join(staging, ...rel.split('/'))
       fs.mkdirSync(path.dirname(dst), { recursive: true })
       fs.copyFileSync(path.join(root, ...rel.split('/')), dst)
-      const buf = fs.readFileSync(dst)
+    }
+    // Stamp the staged copy only (the repository's dist/ is never changed).
+    let stamp = null
+    if (spa) stamp = stampSpa(path.join(staging, 'dist'), makeCaps(edition).list(), { origin: publicOrigin })
+    // List what actually ships, after the stamp (it adds and removes pages).
+    const listed = []
+    const shippedNow = [...files.filter((rel) => !rel.startsWith('dist/'))]
+    if (spa) { const found = []; walk(staging, 'dist', found); shippedNow.push(...found) }
+    for (const rel of shippedNow.sort()) {
+      const buf = fs.readFileSync(path.join(staging, ...rel.split('/')))
       listed.push({ path: rel, bytes: buf.length, sha256: crypto.createHash('sha256').update(buf).digest('hex') })
     }
     const status = git(root, ['status', '--porcelain', '--untracked-files=no', '--', 'server', 'editions', 'package.json', 'package-lock.json'])
@@ -175,6 +194,7 @@ export function compose({ edition, out, root = ROOT, spa = true, replace = false
       dirty: status === null ? null : status.length > 0,
       builtAt: new Date().toISOString(),
       spa,
+      ...(spa ? { spaStamp: stamp && stamp.stamped ? { capabilities: stamp.capabilities, origin: stamp.origin, audience: stamp.audience, prerenderedRoutes: stamp.prerenderedRoutes } : { unstamped: stamp ? stamp.reason : 'no SPA' } } : {}),
       install: 'npm ci --omit=dev',
       start: `node editions/start.mjs ${edition}`,
       files: listed,

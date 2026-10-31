@@ -12,7 +12,6 @@ export default {
     stepOf: 'Step {n} of {total}',
     stepN: 'Step {n}',
     confirmed: 'Step {n} confirmed',
-    markDone: 'Mark done',
     // The quiet goal line above the step card (GoalLine.jsx).
     yourPlan: 'Your plan',
     collapse: 'Collapse',
