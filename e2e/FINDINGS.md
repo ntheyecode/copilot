@@ -77,3 +77,11 @@ cannot come back unnoticed even when the E2E suite is not run.
 - **Symptom:** `server/api_v1_http.test.mjs` failed now and then: "secret never listed" and the tenant-isolation leak check ("14").
 - **Root cause:** both checked a short fragment as a raw substring of a JSON body. The API key secret is base64url and can contain `_`, so `split('_').pop()` sometimes returned a 1 to 3 character tail; company B's workflow id is a short number ("14") that a timestamp can contain.
 - **Fix:** the test extracts the whole secret with the key's format, and matches B's id as an `"id":"..."` value. 8 of 8 repeated runs green.
+
+## 10. The organizations site told company members to buy top-up time
+
+- **Scenario:** `specs/editions.spec.mjs` › saas: no personal plan, price, sign-up or upgrade path on any public or member screen (after merging the editions branch).
+- **Symptom:** on the saas (organizations only) edition, a company member's Help page read "Purchased top-up time never expires ..." and "Need more now? Use Add time ...", although no personal plan or top-up is sold there. Company members on the `all` edition read the same lines although their hours come from the company.
+- **Root cause:** the build gate's audience scan listed `helpPage.time` as hidden for organizations ("help section for personal accounts"), but `Help.jsx` renders that section for every viewer. The exemption described an intent the page did not implement, so the gate passed while the screen showed the copy.
+- **Fix:** the two purchase lines moved to their own key, `helpPage.time.buyItems` (each locale's existing translations reused, 14 locales), which `Help.jsx` appends only for a personal account where personal plans are sold (`useEditionView().individualPlans`); the pause and reset lines stay for everyone. The scan's exemption now names exactly `helpPage.time.buyItems`, so the rest of the section is scanned again.
+- **Regression gate:** `specs/editions.spec.mjs` scans the RENDERED public and member screens with the same audience rules the build gate applies to the catalogs, so an exemption that does not match what renders fails; `specs/help.spec.mjs` checks company members never read the top-up lines and personal accounts still do.

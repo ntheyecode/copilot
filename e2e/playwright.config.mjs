@@ -35,6 +35,9 @@ export default defineConfig({
     { name: 'all', testDir: './specs', use: { edition: 'all' } },
     { name: 'saas', testDir: './specs', use: { edition: 'saas' } },
     { name: 'paid', testDir: './specs', use: { edition: 'paid' } },
+    // Customer-run editions: boot and sign-in only.
+    { name: 'onprem', testDir: './editions-boot', use: { edition: 'onprem' } },
+    { name: 'managed', testDir: './editions-boot', use: { edition: 'managed' } },
     // The desktop overlay drives real windows on this desktop: one at a time.
     { name: 'floater', testDir: './floater', workers: 1, use: { edition: 'all' } },
   ],

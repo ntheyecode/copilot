@@ -10,6 +10,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Play, ShieldCheck, Printer, Sparkles, Zap, AppWindow } from 'lucide-react'
 import { useWorkApp } from './WorkAppContext.jsx'
+import { useEditionView } from '../../edition/useCaps.js'
 import { useT, renderRich } from '../../i18n/index.jsx'
 // Role-aware help for every dashboard (own module; the entries + their
 // screenshots live in help/DashboardsHelp.jsx, gated by the viewer's role).
@@ -86,9 +87,9 @@ const FLOW_STEPS = [
   { k: 'answer', src: '/help/user/answer.png', w: 684, h: 968, cls: 'mid' },
 ]
 // A keyed list: the array under `k` translates as a unit; inline <b> stays markup.
-function RichList({ t, k, ordered = false, className }) {
-  const items = t(k)
-  const rows = (Array.isArray(items) ? items : []).map((s, i) => <li key={i}>{renderRich(s)}</li>)
+function RichList({ t, k, more = null, ordered = false, className }) {
+  const list = (key) => { const v = key ? t(key) : null; return Array.isArray(v) ? v : [] }
+  const rows = [...list(k), ...list(more)].map((s, i) => <li key={i}>{renderRich(s)}</li>)
   return ordered ? <ol className={className}>{rows}</ol> : <ul className={className}>{rows}</ul>
 }
 // A keyed FAQ: an array of { q, a } under `k`.
@@ -98,6 +99,11 @@ function Faq({ t, k }) {
 }
 function HelpDocs({ onStart, roleView }) {
   const t = useT()
+  // Buying hours is a personal-plan matter: only a personal account, where
+  // personal plans are sold, reads the top-up lines (a company member draws on
+  // the company's hours; the organizations edition sells no personal plans).
+  const { individualPlans } = useEditionView()
+  const buysHours = individualPlans && !(roleView && roleView.company)
   const desktop = typeof window !== 'undefined' ? !!window.workDesktop : false
   // In the desktop app, lead with desktop-specific guidance + its own security
   // and safety FAQ, then the shared how-to. The per-dashboard how-tos (role
@@ -235,7 +241,7 @@ function HelpDocs({ onStart, roleView }) {
 
         <section id="help-time"><h2>{t('helpPage.time.h2')}</h2>
           <p>{t.rich('helpPage.time.lead')}</p>
-          <RichList t={t} k="helpPage.time.items" />
+          <RichList t={t} k="helpPage.time.items" more={buysHours ? 'helpPage.time.buyItems' : null} />
         </section>
 
         <section id="help-record"><h2>{t('helpPage.record.h2')}</h2>

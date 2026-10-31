@@ -11170,13 +11170,15 @@ export default {
       ],
     },
     time: {
+      buyItems: [
+        'Gekaufte Zusatzzeit verfällt nie und wird erst genutzt, nachdem Ihre täglichen Minuten aufgebraucht sind.',
+        'Jetzt mehr nötig? Nutzen Sie <b>Zeit hinzufügen</b> oben auf dem Dashboard.',
+      ],
       h2: 'Ihre Zeit und das Pausieren',
       lead: 'Ihr Tarif gibt Ihnen täglich Stunden Live-Anleitung, nur gezählt, während aktiv angeleitet wird, nie im Leerlauf. Das Abzeichen <b>Min. übrig</b> oben zeigt, wie viel Zeit heute noch bleibt, und es wird bernsteinfarben, um Sie zu warnen, bevor Ihnen die Zeit knapp wird.',
       items: [
         'Tippen Sie auf <b>Pausieren</b>, um die Uhr und Ihre Sitzung anzuhalten, während Sie weg sind oder andere Arbeit erledigen, dann auf <b>Fortsetzen</b>, wenn Sie zurück sind.',
         'Die täglichen Minuten setzen sich um <b>23:59 Uhr ET</b> zurück.',
-        'Gekaufte Zusatzzeit verfällt nie und wird erst genutzt, nachdem Ihre täglichen Minuten aufgebraucht sind.',
-        'Jetzt mehr nötig? Nutzen Sie <b>Zeit hinzufügen</b> oben auf dem Dashboard.',
       ],
     },
     record: {

@@ -11157,13 +11157,15 @@ export default {
       ],
     },
     time: {
+      buyItems: [
+        'Satın alınan ek paket süresi asla sona ermez ve yalnızca günlük dakikalarınız bittikten sonra kullanılır.',
+        'Şimdi daha fazlası mı gerekiyor? Panonun üstündeki <b>Zaman ekle</b>\'yi kullanın.',
+      ],
       h2: 'Süreniz ve duraklatma',
       lead: 'Planınız size her gün saatlerce canlı rehberlik verir; yalnızca etkin biçimde rehberlik ederken sayılır, boştayken asla. Üstteki <b>kalan dk</b> rozeti bugün ne kadar süre kaldığını gösterir ve azalmadan önce sizi uyarmak için kehribar rengine döner.',
       items: [
-        "Ara verirken ya da başka işler yaparken saati ve oturumunuzu dondurmak için <b>Duraklat</b>'a, döndüğünüzde <b>Devam et</b>'e dokunun.",
-        "Günlük dakikalar <b>23:59 ABD Doğu Saati</b>'nde sıfırlanır.",
-        'Satın alınan ek paket süresi asla sona ermez ve yalnızca günlük dakikalarınız bittikten sonra kullanılır.',
-        "Şimdi daha fazlası mı gerekiyor? Panonun üstündeki <b>Zaman ekle</b>'yi kullanın.",
+        'Ara verirken ya da başka işler yaparken saati ve oturumunuzu dondurmak için <b>Duraklat</b>\'a, döndüğünüzde <b>Devam et</b>\'e dokunun.',
+        'Günlük dakikalar <b>23:59 ABD Doğu Saati</b>\'nde sıfırlanır.',
       ],
     },
     record: {

@@ -11183,13 +11183,15 @@ export default {
       ],
     },
     time: {
+      buyItems: [
+        'Le temps de recharge acheté n\'expire jamais et n\'est utilisé qu\'une fois vos minutes quotidiennes épuisées.',
+        'Besoin de plus maintenant ? Utilisez <b>Ajouter du temps</b> en haut du Tableau de bord.',
+      ],
       h2: 'Votre temps et la mise en pause',
       lead: "Votre offre vous donne des heures de guidage en direct chaque jour, comptées uniquement pendant qu'il guide activement, jamais à l'inactivité. La pastille <b>min restantes</b> en haut montre le temps qu'il reste aujourd'hui, et elle passe à l'ambre pour vous avertir avant d'être à court.",
       items: [
         'Touchez <b>Pause</b> pour figer le chrono et votre session pendant que vous vous absentez ou faites autre chose, puis <b>Reprendre</b> à votre retour.',
-        "Les minutes quotidiennes se réinitialisent à <b>23 h 59, heure de l'Est</b>.",
-        "Le temps de recharge acheté n'expire jamais et n'est utilisé qu'une fois vos minutes quotidiennes épuisées.",
-        'Besoin de plus maintenant ? Utilisez <b>Ajouter du temps</b> en haut du Tableau de bord.',
+        'Les minutes quotidiennes se réinitialisent à <b>23 h 59, heure de l\'Est</b>.',
       ],
     },
     record: {

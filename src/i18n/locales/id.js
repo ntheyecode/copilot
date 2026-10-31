@@ -11149,13 +11149,15 @@ export default {
       ],
     },
     time: {
+      buyItems: [
+        'Waktu isi ulang yang dibeli tidak pernah kedaluwarsa dan hanya digunakan setelah menit harian Anda habis.',
+        'Butuh lebih banyak sekarang? Gunakan <b>Tambah waktu</b> di bagian atas Dasbor.',
+      ],
       h2: 'Waktu Anda dan menjeda',
       lead: 'Paket Anda memberi Anda jam panduan langsung setiap hari, dihitung hanya saat ia aktif memandu, tidak pernah saat diam. Lencana <b>mnt tersisa</b> di bagian atas menunjukkan berapa banyak waktu yang tersisa hari ini, dan berubah kuning untuk memperingatkan Anda sebelum waktu hampir habis.',
       items: [
         'Ketuk <b>Jeda</b> untuk membekukan jam dan sesi Anda saat Anda menjauh atau mengerjakan hal lain, lalu <b>Lanjutkan</b> saat Anda kembali.',
         'Menit harian disetel ulang pada <b>pukul 23:59 ET</b>.',
-        'Waktu isi ulang yang dibeli tidak pernah kedaluwarsa dan hanya digunakan setelah menit harian Anda habis.',
-        'Butuh lebih banyak sekarang? Gunakan <b>Tambah waktu</b> di bagian atas Dasbor.',
       ],
     },
     record: {

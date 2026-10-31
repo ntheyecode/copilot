@@ -11153,13 +11153,15 @@ export default {
       ],
     },
     time: {
+      buyItems: [
+        'Thời gian nạp thêm đã mua không bao giờ hết hạn và chỉ được dùng sau khi số phút hằng ngày của bạn đã hết.',
+        'Cần thêm ngay bây giờ? Dùng <b>Thêm thời gian</b> ở trên cùng Bảng điều khiển.',
+      ],
       h2: 'Thời lượng và tạm dừng',
       lead: 'Gói của bạn cho bạn nhiều giờ hướng dẫn trực tiếp mỗi ngày, chỉ tính khi đang hướng dẫn thực sự, không bao giờ tính lúc rảnh. Huy hiệu <b>phút còn lại</b> ở trên cùng cho thấy còn bao nhiêu thời gian hôm nay, và nó chuyển sang màu hổ phách để cảnh báo bạn trước khi sắp hết.',
       items: [
         'Chạm <b>Tạm dừng</b> để đóng băng đồng hồ và phiên của bạn khi bạn rời đi hoặc làm việc khác, rồi <b>Tiếp tục</b> khi bạn quay lại.',
         'Số phút hằng ngày được đặt lại vào <b>11:59 PM ET</b>.',
-        'Thời gian nạp thêm đã mua không bao giờ hết hạn và chỉ được dùng sau khi số phút hằng ngày của bạn đã hết.',
-        'Cần thêm ngay bây giờ? Dùng <b>Thêm thời gian</b> ở trên cùng Bảng điều khiển.',
       ],
     },
     record: {

@@ -11183,13 +11183,15 @@ export default {
       ],
     },
     time: {
+      buyItems: [
+        'Il tempo aggiuntivo acquistato non scade mai e viene usato solo dopo che i minuti giornalieri sono finiti.',
+        'Ha bisogno di piu\' tempo adesso? Usi <b>Aggiungi tempo</b> in cima alla Dashboard.',
+      ],
       h2: 'Il suo tempo e le pause',
       lead: "Il suo piano le offre ore di guida dal vivo ogni giorno, conteggiate solo mentre sta guidando attivamente, mai quando e' inattiva. Il badge <b>min rimasti</b> in alto mostra quanto tempo resta oggi, e diventa ambra per avvisarla prima che si esaurisca.",
       items: [
         'Tocchi <b>Pausa</b> per congelare il cronometro e la sua sessione mentre si allontana o fa altro lavoro, poi <b>Riprendi</b> quando torna.',
         'I minuti giornalieri si azzerano alle <b>23:59 ET</b>.',
-        'Il tempo aggiuntivo acquistato non scade mai e viene usato solo dopo che i minuti giornalieri sono finiti.',
-        "Ha bisogno di piu' tempo adesso? Usi <b>Aggiungi tempo</b> in cima alla Dashboard.",
       ],
     },
     record: {

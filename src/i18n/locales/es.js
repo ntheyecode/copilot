@@ -11183,13 +11183,15 @@ export default {
       ],
     },
     time: {
+      buyItems: [
+        'El tiempo de recarga comprado nunca caduca y se usa solo después de que se agoten tus minutos diarios.',
+        '¿Necesitas más ahora? Usa <b>Añadir tiempo</b> en la parte superior del Panel.',
+      ],
       h2: 'Tu tiempo y las pausas',
       lead: 'Tu plan te da horas de guía en vivo cada día, contadas solo mientras guía activamente, nunca mientras está inactivo. El indicador <b>min restantes</b> de arriba muestra cuánto tiempo queda hoy, y se pone ámbar para avisarte antes de que te quedes sin saldo.',
       items: [
         'Pulsa <b>Pausar</b> para congelar el reloj y tu sesión mientras te alejas o haces otro trabajo, y luego <b>Reanudar</b> cuando vuelvas.',
         'Los minutos diarios se restablecen a las <b>11:59 PM ET</b>.',
-        'El tiempo de recarga comprado nunca caduca y se usa solo después de que se agoten tus minutos diarios.',
-        '¿Necesitas más ahora? Usa <b>Añadir tiempo</b> en la parte superior del Panel.',
       ],
     },
     record: {

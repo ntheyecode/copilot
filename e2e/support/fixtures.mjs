@@ -14,6 +14,7 @@ import { bootServer } from './server.mjs'
 import { apiClient, wrap } from './api.mjs'
 import { prepContext } from '../pages/browser-prep.mjs'
 import { guardBrowserEgress } from '../pages/browser-egress.mjs'
+import { stampLikeDeploy } from '../pages/edition-stamp.mjs'
 
 export const test = base.extend({
   edition: ['all', { option: true, scope: 'worker' }],
@@ -68,6 +69,7 @@ export const test = base.extend({
         const context = await browser.newContext({ baseURL: server.baseURL, viewport: { width: 1280, height: 800 }, locale: 'en-US', ...contextOptions })
         opened.push({ dispose: () => context.close() })
         externalCalls.push(await guardBrowserEgress(context))
+        await stampLikeDeploy(context, { edition: server.edition, baseURL: server.baseURL })
         await prepContext(context, { locale, theme, syntheticScreen })
         return { context, page: null }
       },

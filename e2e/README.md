@@ -47,6 +47,7 @@ npx playwright test -c e2e/playwright.config.mjs --project=saas specs/teach.spec
 | Webhook receiver | `support/boot/webhook-receiver.mjs` | Records deliveries (headers, body, signature); can be switched "down" (503) to drive retries and dead-lettering. |
 | Fake clock | `support/boot/clock.mjs` | Moves the server's `Date` forward (`clock.advance`) to exercise expiry rules for real: the 8 h session, API key grace and expiry, SLA risks, webhook retry backoff. Reset before every test. |
 | Seeding | `support/boot/ctl.mjs` | Each test seeds its own tenant through the product's exported store calls: a company with admin, executive, PM, Sr PM, GRC, member (mixed flow), worker and trainer, or a solo user. |
+| Edition stamp | `pages/edition-stamp.mjs` | A deployed edition serves an SPA shell stamped with its capabilities; for non-default editions the test browser gets the same `stampShell` transform on every HTML document, so the first paint is the edition's, as in production. |
 | Editions | `support/editions.mjs` | Expectations come from `server/edition_registry.js` (one source). A flow an edition does not have is skipped with the capability named. |
 | Synthetic screen | `pages/browser-prep.mjs` | `getDisplayMedia` returns a canvas stream (`captureStream`) of a fake app; `window.__e2eScreen.act()` changes it once, like a person clicking, so the watch loop and the recorder run their real code. |
 | Page objects | `pages/*.mjs` | One per surface: login, shell, start task, guiding, PM pages, Teach studio, company admin, legal gate. |
@@ -65,6 +66,9 @@ npx playwright test -c e2e/playwright.config.mjs --project=saas specs/teach.spec
 | `specs/exec.spec.mjs` | executive dashboard and drill-downs; Company Brain export with the passphrase; admin and PM refused |
 | `specs/company-admin.spec.mjs` | trainer grant; API keys created in the console, scopes on /api/v1, revoke; signed webhook delivery; launch link |
 | `specs/superadmin.spec.mjs` | companies and users consoles; AI usage ledger; admin routes refused to others |
+| `specs/editions.spec.mjs` | saas: every personal plan and sign-up route refused (route lists from `server/edition_route_gates.js`, original and mixed case, signed in and anonymous) and no personal plan, price, sign-up or upgrade wording on any rendered public or member screen; paid: every company route family refused (mixed case too), no company wording on rendered screens, company pages do not open; all: both open, as before |
+| `specs/help.spec.mjs` | each role sees exactly its help entries; personal accounts never see Teach, Company workflows, Workflow issues or Executive; company members never read top-up lines; callouts are in the tab order, reachable with Tab and pinned with Enter; no overflow at 1280/640 and no raw keys in en, de, ar |
+| `editions-boot/boot.spec.mjs` | onprem and managed: boot as the edition, one company only, no self sign-up, superadmin and member sign in through the login page |
 | `specs/i18n.spec.mjs` | key screens in German, Japanese and Arabic: no raw keys, no English left, Arabic right to left |
 | `specs/layout.spec.mjs` | every role's key screens at 1280 and 640, light and dark: no sideways scroll, theme applied |
 | `specs/invented.spec.mjs` | two tabs on one draft (API and browser); network drop while saving a recording; expired API key; member removed mid-session; workflow deleted while running; a 100-step workflow; double-clicks on Publish and Run; Back in the wizard; webhook endpoint down until dead-letter; cross-tenant attempts by key and by session |
@@ -77,4 +81,3 @@ npx playwright test -c e2e/playwright.config.mjs --project=saas specs/teach.spec
 - **Content protection against a real screen recorder**: verified as the OS state Windows uses for it (`WDA_EXCLUDEFROMCAPTURE`), not by recording the screen.
 - **Click-through with a real mouse**: verified as `WS_EX_TRANSPARENT` on the window; the suite does not move the person's cursor.
 - **Stripe, email delivery and SSO providers**: Stripe is off (no keys), emails go to the dev sink file, SSO needs a provider tenant.
-- **Not on this branch yet**: the saas corporate-only and paid individuals-only screens (branch `claude/editions-corp-indiv-11f78f`) and the graphical in-app help (branch `claude/help-new-features-0a5221`). The edition rules that exist server side are asserted for all three editions; see `PENDING_UI` in `support/editions.mjs` for what to add after those merges.

@@ -11177,13 +11177,15 @@ export default {
       ],
     },
     time: {
+      buyItems: [
+        'O tempo extra comprado nunca expira e só é usado depois que seus minutos diários acabam.',
+        'Precisa de mais agora? Use <b>Adicionar tempo</b> no topo do Painel.',
+      ],
       h2: 'Seu tempo e as pausas',
       lead: 'Seu plano te dá horas de orientação ao vivo por dia, contadas apenas enquanto ele está guiando ativamente, nunca enquanto ocioso. O selo <b>min restantes</b> no topo mostra quanto tempo resta hoje, e fica âmbar para avisar antes de você ficar com pouco.',
       items: [
         'Toque em <b>Pausar</b> para congelar o relógio e sua sessão enquanto você se afasta ou faz outro trabalho, depois <b>Retomar</b> quando voltar.',
         'Os minutos diários são renovados às <b>23:59 (horário do Leste dos EUA)</b>.',
-        'O tempo extra comprado nunca expira e só é usado depois que seus minutos diários acabam.',
-        'Precisa de mais agora? Use <b>Adicionar tempo</b> no topo do Painel.',
       ],
     },
     record: {

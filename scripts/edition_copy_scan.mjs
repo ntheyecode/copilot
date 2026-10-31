@@ -199,7 +199,7 @@ export const HIDDEN = {
     'workShell.plan.actBuy': 'needs canBuy', 'workShell.plan.actUpgrade': 'needs canUpgrade', 'workShell.buy': 'buy modal needs canBuyHours',
     'workProjects.outcome.upgradeBody': 'needs canUpgrade', 'workStart.docsCapUpgrade': 'personal plan document cap',
     'workStart.docsCapFull': 'personal plan document cap', 'workStart.qUpgrade': 'needs canUpgrade',
-    'helpPage.time': 'personal plan time rules (help section for personal accounts)',
+    'helpPage.time.buyItems': 'Help.jsx renders the top-up lines only for a personal account where personal plans are sold (the rest of the time section applies to everyone and is scanned)',
     'usage.outIndividual': 'personal account only', 'usage.lowNote': 'personal account only',
   },
 }
