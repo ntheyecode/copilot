@@ -36,6 +36,11 @@ const PARTITION = 'persist:workcopilot'   // its own cookie jar, separate from t
 let SERVER_ORIGIN = ''
 try { SERVER_ORIGIN = new URL(SERVER_URL).origin } catch { SERVER_ORIGIN = SERVER_URL }
 
+// Every frameless window spreads this. Electron 43+ rounds frameless windows by
+// default; ours draw their own shape (the buddy is transparent), so they keep
+// square corners as they had before.
+const FRAMELESS = { frame: false, roundedCorners: false }
+
 // Guide redesign (owner): roughly double the comfortable default so the
 // step card reads at quality; clampBounds still fits it to a small screen.
 const BUDDY_W = 480
@@ -436,7 +441,7 @@ function promptForMonitor(sources) {
       width: 760,
       height: 560,
       resizable: false,
-      frame: false,
+      ...FRAMELESS,
       skipTaskbar: true,
       alwaysOnTop: true,
       backgroundColor: '#0b0b0f',
@@ -686,7 +691,7 @@ function createWindow() {
     minWidth: 380,
     minHeight: 480,
     title: 'WorkCoPilot',
-    frame: false,          // custom Fluent title bar lives in the web UI (WorkShell)
+    ...FRAMELESS,          // custom Fluent title bar lives in the web UI (WorkShell)
     center: true,
     alwaysOnTop: false,    // plan mode is the default; applyMode() controls on-top
     backgroundColor: '#0b0b0f',
@@ -840,7 +845,7 @@ function createBuddy() {
     x: pos.x,
     y: pos.y,
     show: false,
-    frame: false,
+    ...FRAMELESS,
     transparent: true,
     resizable: false,
     skipTaskbar: true,
@@ -1131,14 +1136,31 @@ async function extractDocLocally(filePath) {
   }
   throw new Error('Unsupported file type')
 }
+// The picker opens where the user last picked from. Electron 43+ defaults an
+// open dialog to Downloads; before, Windows remembered the last folder itself.
+function pickDirPath() {
+  try { return path.join(app.getPath('userData'), 'pick-doc-dir.json') } catch { return null }
+}
+function loadPickDir() {
+  try {
+    const p = pickDirPath()
+    const dir = p && fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')).dir : ''
+    return dir && fs.existsSync(dir) ? dir : undefined
+  } catch { return undefined }
+}
+function savePickDir(filePath) {
+  try { const p = pickDirPath(); if (p && filePath) fs.writeFileSync(p, JSON.stringify({ dir: path.dirname(filePath) })) } catch { /* best effort */ }
+}
 ipcMain.handle('work:pick-doc', async () => {
   try {
     const r = await dialog.showOpenDialog(win && !win.isDestroyed() ? win : undefined, {
+      defaultPath: loadPickDir(),
       title: 'Add reference documents or diagrams - they stay on this computer',
       properties: ['openFile', 'multiSelections'],
       filters: [{ name: 'Documents & diagrams', extensions: ['pdf', 'docx', 'txt', 'md', 'markdown', 'png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif', 'tif', 'tiff'] }],
     })
     if (r.canceled || !r.filePaths || !r.filePaths.length) return { ok: true, docs: [] }
+    savePickDir(r.filePaths[0])
     const out = []
     for (const fp of r.filePaths.slice(0, 8)) {
       const name = path.basename(fp)

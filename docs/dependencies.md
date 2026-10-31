@@ -54,14 +54,14 @@ The desktop app is a thin Electron wrapper that loads the live web console
 | `tesseract.js` | ^5.1.1 | `workcopilot/main.js` (+ the web path, see note) | On-device OCR for the screen-redaction privacy feature and for reading images/diagrams in documents - entirely on the user's machine, offline-capable. |
 | `mammoth` | ^1.12.1 | desktop document reading | `.docx` text extraction on the device, so the original file never leaves the machine. |
 | `pdf-parse` | ^2.4.5 | desktop document reading | PDF text extraction on the device, same privacy boundary. |
-| `electron-updater` | ^6.3.9 | `workcopilot/main.js` | Signed auto-update against the generic update feed. |
+| `electron-updater` | ^6.8.11 | `workcopilot/main.js` | Signed auto-update against the generic update feed. |
 
 ## 4. Desktop shell - build-time (dev) dependencies
 
 | Package | Version | Where used | Why |
 |---|---|---|---|
-| `electron` | ^30.0.0 | `npm start` / packaging | The desktop runtime (Chromium + Node). |
-| `electron-builder` | ^24.0.0 | `npm run dist` | Builds the signed Windows NSIS installer (`WorkCoPilot-Setup.exe`). |
+| `electron` | ^45.2.1 | `npm start` / packaging | The desktop runtime (Chromium + Node). Since Electron 42 the binary is not downloaded at install; the desktop app's own `postinstall` runs `install-electron`. |
+| `electron-builder` | ^26.18.0 | `npm run dist` | Builds the signed Windows NSIS installer (`WorkCoPilot-Setup.exe`) and MSI. Signing settings live under `build.win.signtoolOptions` (26.x). Known residual: a moderate minimatch advisory (GHSA-g3hv-75wg-m249) inside its own packaging internals, build time only, never shipped; no fixed release yet, and minimatch 11 cannot be forced on its minimatch 3/5 users. Recheck on each electron-builder release. |
 
 ---
 
