@@ -106,17 +106,32 @@ export function validateSteps(steps) {
 }
 
 // Readings are written by the step reader only. On a save, each step keeps the
-// reading the server already holds for its screenshot (the client's copy is never
-// trusted), and loses it when the frame it was read with is no longer the next
-// step's frame (the "done when" described a screen that is not there now).
+// reading the server already holds for it (the client's copy is never trusted),
+// and loses it when the frame it was read with is no longer its frame, or its
+// after-frame is no longer the next step's frame (the "done when" described a
+// screen that is not there now).
+// A reading belongs to its STEP, not to its frame: two steps can share a frame
+// (a click that does not change the screen), so the same step id with the same
+// frame wins; only a step with a new id falls back to an unclaimed reading of
+// the same frame whose after-frame fits (an exact after-frame match first).
 export function carryReadings(prevSteps, nextSteps) {
-  const byShot = new Map()
-  for (const s of (Array.isArray(prevSteps) ? prevSteps : [])) if (s && s.shot && s.reading) byShot.set(s.shot, s.reading)
+  const held = (Array.isArray(prevSteps) ? prevSteps : []).filter((s) => s && s.shot && s.reading)
+  const byId = new Map(held.filter((s) => s.id).map((s) => [s.id, s]))
+  const nextIds = new Set(nextSteps.map((s) => s.id))
+  const claimed = new Set(held.filter((p) => nextIds.has(p.id)))   // owned by a step still present
   return nextSteps.map((s, i) => {
-    const r = s.shot ? byShot.get(s.shot) : null
+    if (!s.shot) return { ...s, reading: null }
     const after = nextSteps[i + 1] ? nextSteps[i + 1].shot : null
-    const ok = r && (!r.afterShot || r.afterShot === after)
-    return { ...s, reading: ok ? normalizeReading(r, s.shot) : null }
+    const fits = (p) => p && p.shot === s.shot && (!p.reading.afterShot || p.reading.afterShot === after)
+    const own = byId.get(s.id)
+    let src = null
+    if (own) src = fits(own) ? own : null
+    else {
+      const open = held.filter((p) => !claimed.has(p) && fits(p))
+      src = open.find((p) => p.reading.afterShot === after) || open[0] || null
+      if (src) claimed.add(src)
+    }
+    return { ...s, reading: src ? normalizeReading(src.reading, s.shot) : null }
   })
 }
 
